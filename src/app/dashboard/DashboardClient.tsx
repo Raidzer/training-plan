@@ -27,7 +27,7 @@ export function DashboardClient({ session }: Props) {
           <SignOutButton />
         </div>
         <div className={styles.cards}>
-          <Link href="/plan" legacyBehavior passHref>
+          <Link href="/plan" passHref>
             <a className={styles.cardLink}>
               <Card
                 hoverable
@@ -40,7 +40,7 @@ export function DashboardClient({ session }: Props) {
               </Card>
             </a>
           </Link>
-          <Link href="/workouts" legacyBehavior passHref>
+          <Link href="/workouts" passHref>
             <a className={styles.cardLink}>
               <Card
                 hoverable
@@ -53,7 +53,7 @@ export function DashboardClient({ session }: Props) {
               </Card>
             </a>
           </Link>
-          <Link href="/dashboard" legacyBehavior passHref>
+          <Link href="/dashboard" passHref>
             <a className={styles.cardLink}>
               <Card
                 hoverable

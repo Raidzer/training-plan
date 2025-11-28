@@ -1,0 +1,33 @@
+.header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.headerInner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+  color: var(--brand-color);
+  text-decoration: none;
+}
+
+.themeLabel {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

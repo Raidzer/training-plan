@@ -1,7 +1,5 @@
 "use client";
-import { BulbOutlined, MoonFilled } from "@ant-design/icons";
-import { App, ConfigProvider, Switch, theme as antdTheme } from "antd";
-import Link from "next/link";
+import { App, ConfigProvider, theme as antdTheme } from "antd";
 import clsx from "clsx";
 import {
   createContext,
@@ -12,8 +10,9 @@ import {
   type ReactNode,
 } from "react";
 import styles from "./ThemeProvider.module.scss";
+import { Header } from "../Header/Header";
 
-type Mode = "light" | "dark";
+export type Mode = "light" | "dark";
 type ThemeContextValue = { mode: Mode; setMode: (next: Mode) => void };
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -73,33 +72,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         </App>
       </ConfigProvider>
     </ThemeContext.Provider>
-  );
-}
-
-function Header({
-  mode,
-  onToggle,
-}: {
-  mode: Mode;
-  onToggle: (next: Mode) => void;
-}) {
-  return (
-    <header className={styles.header}>
-      <div className={styles.headerInner}>
-        <Link href="/" className={styles.brand}>
-          RunLog
-        </Link>
-        <div className={styles.controls}>
-          <span className={styles.themeLabel}>Тема</span>
-          <Switch
-            checked={mode === "dark"}
-            onChange={(checked) => onToggle(checked ? "dark" : "light")}
-            checkedChildren={<MoonFilled />}
-            unCheckedChildren={<BulbOutlined />}
-          />
-        </div>
-      </div>
-    </header>
   );
 }
 
