@@ -1,24 +1,20 @@
-import { auth } from "../../auth";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "../../auth";
 
 export default async function Dashboard() {
-  const session = false;
-  if (!session)
-    return (
-      <main>
-        <p>Не авторизован</p>
-        <a href="/login">Войти</a>
-      </main>
-    );
+  const session = await auth();
+  if (!session) redirect("/login");
+
   return (
     <main>
-      <h1>Привет, {session.user?.name}</h1>
+      <h1>Hi, {session.user?.name ?? session.user?.email}</h1>
       <ul>
         <li>
-          <Link href="/plan">План</Link>
+          <Link href="/plan">Plan</Link>
         </li>
         <li>
-          <Link href="/workouts">Дневник</Link>
+          <Link href="/workouts">Workouts</Link>
         </li>
       </ul>
     </main>

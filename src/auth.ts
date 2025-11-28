@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -11,12 +12,15 @@ const schema = z.object({
   password: z.string().min(6),
 });
 
-export const { handlers, auth } = NextAuth({
+export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   providers: [
     Credentials({
       name: "credentials",
-      credentials: { email: {}, password: {} },
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
       authorize: async (creds) => {
         const parsed = schema.safeParse(creds);
         if (!parsed.success) return null;
@@ -53,4 +57,9 @@ export const { handlers, auth } = NextAuth({
       return token;
     },
   },
-});
+};
+
+export const auth = () => getServerSession(authOptions);
+
+const handler = NextAuth(authOptions);
+export { handler };
