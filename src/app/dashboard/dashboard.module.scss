@@ -1,0 +1,29 @@
+.wrapper {
+  display: flex;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cardLink {
+  text-decoration: none;
+}
+
+.card {
+  width: 240px;
+}
+
+.paragraphTight {
+  margin: 0;
+}

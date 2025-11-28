@@ -2,6 +2,7 @@
 import { BulbOutlined, MoonFilled } from "@ant-design/icons";
 import { App, ConfigProvider, Switch, theme as antdTheme } from "antd";
 import Link from "next/link";
+import clsx from "clsx";
 import {
   createContext,
   useContext,
@@ -10,6 +11,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import styles from "./ThemeProvider.module.scss";
 
 type Mode = "light" | "dark";
 type ThemeContextValue = { mode: Mode; setMode: (next: Mode) => void };
@@ -47,8 +49,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [mode]
   );
 
-  const bg = mode === "dark" ? "#0f172a" : "#f5f6fb";
-
   return (
     <ThemeContext.Provider value={{ mode, setMode }}>
       <ConfigProvider
@@ -62,22 +62,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       >
         <App>
           <div
-            style={{
-              minHeight: "100vh",
-              background: bg,
-              transition: "background 0.3s ease",
-            }}
+            className={clsx(
+              styles.root,
+              mode === "dark" ? styles.dark : styles.light
+            )}
           >
             <Header mode={mode} onToggle={(next) => setMode(next)} />
-            <main
-              style={{
-                maxWidth: 980,
-                margin: "0 auto",
-                padding: "0 16px 48px",
-              }}
-            >
-              {children}
-            </main>
+            <main className={styles.main}>{children}</main>
           </div>
         </App>
       </ConfigProvider>
@@ -93,39 +84,13 @@ function Header({
   onToggle: (next: Mode) => void;
 }) {
   return (
-    <header
-      style={{
-        borderBottom: "1px solid rgba(0,0,0,0.06)",
-        marginBottom: 24,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 980,
-          margin: "0 auto",
-          padding: "16px 16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            fontWeight: 700,
-            fontSize: 18,
-            letterSpacing: 0.2,
-            color: mode === "dark" ? "#f0f4ff" : "#0f172a",
-            textDecoration: "none",
-          }}
-        >
+    <header className={styles.header}>
+      <div className={styles.headerInner}>
+        <Link href="/" className={styles.brand}>
           RunLog
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 13, color: "rgba(0,0,0,0.55)" }}>
-            Тема
-          </span>
+        <div className={styles.controls}>
+          <span className={styles.themeLabel}>Тема</span>
           <Switch
             checked={mode === "dark"}
             onChange={(checked) => onToggle(checked ? "dark" : "light")}

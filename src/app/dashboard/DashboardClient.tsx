@@ -3,39 +3,35 @@ import { BookOutlined, CalendarOutlined, HeartOutlined } from "@ant-design/icons
 import { Card, Space, Typography } from "antd";
 import Link from "next/link";
 import type { Session } from "next-auth";
-import { SignOutButton } from "../../components/SignOutButton";
+import styles from "./dashboard.module.scss";
+import { SignOutButton } from "@/components/SingOutButton/SignOutButton";
 
 type Props = { session: Session };
 
 export function DashboardClient({ session }: Props) {
   return (
-    <Space size="middle" style={{ display: "flex" }}>
+    <Space size="middle" className={styles.wrapper}>
       <Card>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            marginBottom: 12,
-          }}
-        >
+        <div className={styles.cardHeader}>
           <div>
-            <Typography.Title level={3} style={{ margin: 0 }}>
+            <Typography.Title level={3} className={styles.paragraphTight}>
               Привет, {session.user?.name ?? session.user?.email}
             </Typography.Title>
-            <Typography.Paragraph type="secondary" style={{ margin: 0 }}>
+            <Typography.Paragraph
+              type="secondary"
+              className={styles.paragraphTight}
+            >
               Что делаем сегодня?
             </Typography.Paragraph>
           </div>
           <SignOutButton />
         </div>
-        <Space size="middle" wrap>
+        <div className={styles.cards}>
           <Link href="/plan" legacyBehavior passHref>
-            <a style={{ textDecoration: "none" }}>
+            <a className={styles.cardLink}>
               <Card
                 hoverable
-                style={{ width: 240 }}
+                className={styles.card}
                 title={<CardTitle icon={<CalendarOutlined />} title="План" />}
               >
                 <Typography.Text type="secondary">
@@ -45,10 +41,10 @@ export function DashboardClient({ session }: Props) {
             </a>
           </Link>
           <Link href="/workouts" legacyBehavior passHref>
-            <a style={{ textDecoration: "none" }}>
+            <a className={styles.cardLink}>
               <Card
                 hoverable
-                style={{ width: 240 }}
+                className={styles.card}
                 title={<CardTitle icon={<HeartOutlined />} title="Тренировки" />}
               >
                 <Typography.Text type="secondary">
@@ -58,10 +54,10 @@ export function DashboardClient({ session }: Props) {
             </a>
           </Link>
           <Link href="/dashboard" legacyBehavior passHref>
-            <a style={{ textDecoration: "none" }}>
+            <a className={styles.cardLink}>
               <Card
                 hoverable
-                style={{ width: 240 }}
+                className={styles.card}
                 title={<CardTitle icon={<BookOutlined />} title="Отчеты" />}
               >
                 <Typography.Text type="secondary">
@@ -70,7 +66,7 @@ export function DashboardClient({ session }: Props) {
               </Card>
             </a>
           </Link>
-        </Space>
+        </div>
       </Card>
     </Space>
   );

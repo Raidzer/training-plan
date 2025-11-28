@@ -4,6 +4,7 @@ import { Button, Card, Form, Input, Typography, message } from "antd";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import type { FormProps } from "antd";
+import styles from "./login.module.scss";
 
 type LoginFields = {
   email: string;
@@ -29,13 +30,13 @@ export default function LoginPage() {
   };
 
   return (
-    <main style={{ display: "grid", placeItems: "center", minHeight: "70vh" }}>
+    <main className={styles.page}>
       {contextHolder}
-      <Card style={{ width: 380 }}>
-        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 8 }}>
+      <Card className={styles.card}>
+        <Typography.Title level={3} className={styles.title}>
           Вход
         </Typography.Title>
-        <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
+        <Typography.Paragraph type="secondary" className={styles.subtitle}>
           Используйте учетные данные, созданные при инициализации
           (you@example.com / password123).
         </Typography.Paragraph>
