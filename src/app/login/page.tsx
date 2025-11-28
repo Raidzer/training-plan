@@ -1,8 +1,14 @@
 "use client";
-import { LockOutlined, MailOutlined, LoginOutlined } from "@ant-design/icons";
+import {
+  LockOutlined,
+  MailOutlined,
+  LoginOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import { Button, Card, Form, Input, Typography, message } from "antd";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { FormProps } from "antd";
 import styles from "./login.module.scss";
 
@@ -77,6 +83,17 @@ export default function LoginPage() {
           >
             Войти
           </Button>
+          <Link href="/register" legacyBehavior passHref>
+            <a>
+              <Button
+                block
+                icon={<UserAddOutlined />}
+                style={{ marginTop: 8 }}
+              >
+                Зарегистрироваться
+              </Button>
+            </a>
+          </Link>
         </Form>
       </Card>
     </main>
