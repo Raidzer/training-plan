@@ -1,3 +1,6 @@
+import "./globals.css";
+import { ThemeProvider } from "../components/ThemeProvider";
+
 export default function RootLayout({
   children,
 }: {
@@ -5,8 +8,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body style={{ fontFamily: "system-ui, sans-serif", padding: 20 }}>
-        {children}
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
