@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "../../auth";
-import { DashboardClient } from "./DashboardClient";
+import { DashboardClient } from "./DashboardClient/DashboardClient";
 
 export default async function Dashboard() {
   const session = await auth();
