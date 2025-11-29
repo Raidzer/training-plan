@@ -14,6 +14,9 @@ const schema = z.object({
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
+  ...(process.env.NEXTAUTH_SECRET
+    ? { secret: process.env.NEXTAUTH_SECRET }
+    : {}),
   providers: [
     Credentials({
       name: "credentials",

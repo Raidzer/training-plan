@@ -1,5 +1,9 @@
 "use client";
-import { BookOutlined, CalendarOutlined, HeartOutlined } from "@ant-design/icons";
+import {
+  BookOutlined,
+  CalendarOutlined,
+  HeartOutlined,
+} from "@ant-design/icons";
 import { Card, Space, Typography } from "antd";
 import Link from "next/link";
 import type { Session } from "next-auth";
@@ -27,44 +31,38 @@ export function DashboardClient({ session }: Props) {
           <SignOutButton />
         </div>
         <div className={styles.cards}>
-          <Link href="/plan" legacyBehavior passHref>
-            <a className={styles.cardLink}>
-              <Card
-                hoverable
-                className={styles.card}
-                title={<CardTitle icon={<CalendarOutlined />} title="План" />}
-              >
-                <Typography.Text type="secondary">
-                  Посмотреть цели и запланированные тренировки.
-                </Typography.Text>
-              </Card>
-            </a>
+          <Link href="/plan" passHref>
+            <Card
+              hoverable
+              className={styles.card}
+              title={<CardTitle icon={<CalendarOutlined />} title="План" />}
+            >
+              <Typography.Text type="secondary">
+                Посмотреть цели и запланированные тренировки.
+              </Typography.Text>
+            </Card>
           </Link>
-          <Link href="/workouts" legacyBehavior passHref>
-            <a className={styles.cardLink}>
-              <Card
-                hoverable
-                className={styles.card}
-                title={<CardTitle icon={<HeartOutlined />} title="Тренировки" />}
-              >
-                <Typography.Text type="secondary">
-                  Добавить новую тренировку или оценку нагрузки.
-                </Typography.Text>
-              </Card>
-            </a>
+          <Link href="/workouts" passHref>
+            <Card
+              hoverable
+              className={styles.card}
+              title={<CardTitle icon={<HeartOutlined />} title="Тренировки" />}
+            >
+              <Typography.Text type="secondary">
+                Добавить новую тренировку или оценку нагрузки.
+              </Typography.Text>
+            </Card>
           </Link>
-          <Link href="/dashboard" legacyBehavior passHref>
-            <a className={styles.cardLink}>
-              <Card
-                hoverable
-                className={styles.card}
-                title={<CardTitle icon={<BookOutlined />} title="Отчеты" />}
-              >
-                <Typography.Text type="secondary">
-                  Скоро: сводки, графики и метрики восстановления.
-                </Typography.Text>
-              </Card>
-            </a>
+          <Link href="/dashboard" passHref>
+            <Card
+              hoverable
+              className={styles.card}
+              title={<CardTitle icon={<BookOutlined />} title="Отчеты" />}
+            >
+              <Typography.Text type="secondary">
+                Скоро: сводки, графики и метрики восстановления.
+              </Typography.Text>
+            </Card>
           </Link>
         </div>
       </Card>

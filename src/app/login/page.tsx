@@ -83,16 +83,10 @@ export default function LoginPage() {
           >
             Войти
           </Button>
-          <Link href="/register" legacyBehavior passHref>
-            <a>
-              <Button
-                block
-                icon={<UserAddOutlined />}
-                style={{ marginTop: 8 }}
-              >
-                Зарегистрироваться
-              </Button>
-            </a>
+          <Link href="/register" passHref>
+            <Button block icon={<UserAddOutlined />} style={{ marginTop: 8 }}>
+              Зарегистрироваться
+            </Button>
           </Link>
         </Form>
       </Card>

@@ -9,7 +9,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - ./tmp/pgdata:/var/lib/postgresql/data
+      #- pg-data:/var/lib/postgresql/data
     restart: unless-stopped
-volumes:
-  db_data:

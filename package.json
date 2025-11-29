@@ -8,10 +8,11 @@
     "build": "next build",
     "start": "next start -p 3000",
     "db:up": "docker compose up -d db",
+    "db:wait": "node wait-for-db.js",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx src/scripts/seed.ts",
-    "dev:init": "npm run db:up && npm run db:push && npm run seed"
+    "dev:init": "node init.js && npm run db:up && npm run db:wait && npm run db:push && npm run seed"
   },
   "keywords": [],
   "author": "",
