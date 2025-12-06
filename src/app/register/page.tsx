@@ -19,7 +19,7 @@ import {
   UserOutlined,
   UserAddOutlined,
 } from "@ant-design/icons";
-import styles from "../login/login.module.scss";
+import styles from "./register.module.scss";
 
 type RegisterFields = {
   name: string;
@@ -130,11 +130,7 @@ export default function RegisterPage() {
           >
             Зарегистрироваться
           </Button>
-          <Typography.Paragraph
-            type="secondary"
-            className={styles.subtitle}
-            style={{ marginBottom: 0, marginTop: 12 }}
-          >
+          <Typography.Paragraph type="secondary" className={styles.subtitle}>
             Уже есть аккаунт?{" "}
             <Link href="/login" passHref>
               Войти
