@@ -41,9 +41,9 @@ export default function RegisterPage() {
         body: JSON.stringify(values),
       });
 
-      const data = (await res.json().catch(() => null)) as
-        | { error?: string }
-        | null;
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
 
       if (!res.ok) {
         messageApi.error(data?.error ?? "Не удалось создать аккаунт");
@@ -119,10 +119,7 @@ export default function RegisterPage() {
               },
             ]}
           >
-            <Input.Password
-              prefix={<LockOutlined />}
-              placeholder="••••••••"
-            />
+            <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
           </Form.Item>
           <Button
             type="primary"
@@ -139,8 +136,8 @@ export default function RegisterPage() {
             style={{ marginBottom: 0, marginTop: 12 }}
           >
             Уже есть аккаунт?{" "}
-            <Link href="/login" legacyBehavior passHref>
-              <a>Войти</a>
+            <Link href="/login" passHref>
+              Войти
             </Link>
           </Typography.Paragraph>
         </Form>
