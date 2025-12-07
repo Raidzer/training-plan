@@ -72,7 +72,7 @@ export default function PlanPage() {
       {contextHolder}
       <Card className={styles.cardStyle}>
         <Space
-          direction="vertical"
+          orientation="vertical"
           size="large"
           className={styles.spaceStyle}
         >
