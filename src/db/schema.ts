@@ -8,6 +8,7 @@ import {
   numeric,
   varchar,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -33,41 +34,30 @@ export const plans = pgTable("plans", {
   comment: text("comment"),
 });
 
-export const workouts = pgTable("workouts", {
+export const planImports = pgTable("plan_imports", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id),
+  filename: varchar("filename", { length: 255 }),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+  rowCount: integer("row_count"),
+  insertedCount: integer("inserted_count"),
+  skippedCount: integer("skipped_count"),
+  error: text("error"),
+});
+
+export const planEntries = pgTable("plan_entries", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  importId: integer("import_id").references(() => planImports.id),
   date: date("date").notNull(),
-  type: varchar("type", { length: 64 }).notNull(),
-  distanceKm: numeric("distance_km", { precision: 6, scale: 2 }),
-  timeSec: integer("time_sec"),
-  avgHr: integer("avg_hr"),
-  rpe: integer("rpe"),
-  comment: text("comment"),
+  sessionOrder: integer("session_order").notNull().default(1),
+  taskText: text("task_text").notNull(),
+  commentText: text("comment_text"),
+  rawRow: jsonb("raw_row"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const metrics = pgTable("metrics", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  date: date("date").notNull(),
-  hrRest: integer("hr_rest"),
-  hrv: integer("hrv"),
-  sleepH: numeric("sleep_h", { precision: 4, scale: 2 }),
-  weight: numeric("weight", { precision: 5, scale: 2 }),
-  soreness: integer("soreness"),
-  mood: integer("mood"),
-});
-
-export const shoes = pgTable("shoes", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  name: varchar("name", { length: 128 }).notNull(),
-  startKm: numeric("start_km", { precision: 6, scale: 2 }).default("0"),
-  retired: boolean("retired").notNull().default(false),
 });
