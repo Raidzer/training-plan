@@ -28,11 +28,6 @@ export default function PlanPage() {
         width: 120,
       },
       {
-        title: "Сессия",
-        dataIndex: "sessionOrder",
-        width: 90,
-      },
-      {
         title: "Задание",
         dataIndex: "taskText",
       },
