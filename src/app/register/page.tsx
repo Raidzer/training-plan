@@ -19,7 +19,7 @@ import {
   UserOutlined,
   UserAddOutlined,
 } from "@ant-design/icons";
-import styles from "../login/login.module.scss";
+import styles from "./register.module.scss";
 
 type RegisterFields = {
   name: string;
@@ -41,9 +41,9 @@ export default function RegisterPage() {
         body: JSON.stringify(values),
       });
 
-      const data = (await res.json().catch(() => null)) as
-        | { error?: string }
-        | null;
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
 
       if (!res.ok) {
         messageApi.error(data?.error ?? "Не удалось создать аккаунт");
@@ -119,10 +119,7 @@ export default function RegisterPage() {
               },
             ]}
           >
-            <Input.Password
-              prefix={<LockOutlined />}
-              placeholder="••••••••"
-            />
+            <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
           </Form.Item>
           <Button
             type="primary"
@@ -133,14 +130,10 @@ export default function RegisterPage() {
           >
             Зарегистрироваться
           </Button>
-          <Typography.Paragraph
-            type="secondary"
-            className={styles.subtitle}
-            style={{ marginBottom: 0, marginTop: 12 }}
-          >
+          <Typography.Paragraph type="secondary" className={styles.subtitle}>
             Уже есть аккаунт?{" "}
-            <Link href="/login" legacyBehavior passHref>
-              <a>Войти</a>
+            <Link href="/login" passHref>
+              Войти
             </Link>
           </Typography.Paragraph>
         </Form>
