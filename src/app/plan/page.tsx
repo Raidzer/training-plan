@@ -1,5 +1,6 @@
 "use client";
 
+import { HomeOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Card, Space, Table, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
@@ -47,13 +48,13 @@ export default function PlanPage() {
         | { entries?: PlanEntry[]; error?: string }
         | null;
       if (!res.ok || !data?.entries) {
-        msgApi.error(data?.error ?? "Не удалось загрузить план");
+        msgApi.error(data?.error ?? "Не удалось загрузить записи плана");
         return;
       }
       setEntries(data.entries);
     } catch (err) {
       console.error(err);
-      msgApi.error("Ошибка запроса");
+      msgApi.error("Произошла ошибка при загрузке плана");
     } finally {
       setLoading(false);
     }
@@ -72,26 +73,37 @@ export default function PlanPage() {
           size="large"
           className={styles.spaceStyle}
         >
-          <div>
-            <Typography.Title level={3} className={styles.typographyTitle}>
-              План тренировок
-            </Typography.Title>
-            <Typography.Paragraph
-              type="secondary"
-              className={styles.typographyParagraph}
-            >
-              Ниже — записи плана из базы (сортировка по дате и порядку сессии).
-              Для загрузки нового файла воспользуйтесь кнопкой ниже.
-            </Typography.Paragraph>
+          <div className={styles.headerRow}>
+            <div className={styles.headerText}>
+              <Typography.Title level={3} className={styles.typographyTitle}>
+                План тренировок
+              </Typography.Title>
+              <Typography.Paragraph
+                type="secondary"
+                className={styles.typographyParagraph}
+              >
+                Ниже — записи плана из базы (сортировка по дате и порядку
+                сессии). Для загрузки нового файла воспользуйтесь кнопкой ниже.
+              </Typography.Paragraph>
+            </div>
+            <Space size="small" className={styles.headerActions}>
+              <Link href="/dashboard" passHref>
+                <Button icon={<HomeOutlined />}>Главная</Button>
+              </Link>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={load}
+                loading={loading}
+              >
+                Обновить план
+              </Button>
+            </Space>
           </div>
           <Link href="/plan/import" passHref>
             <Button type="primary" block>
               Импортировать план из Excel
             </Button>
           </Link>
-          <Button onClick={load} loading={loading} block>
-            Обновить план
-          </Button>
           <Table
             size="small"
             columns={columns}
