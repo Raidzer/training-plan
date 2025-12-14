@@ -1,7 +1,7 @@
 "use client";
 
-import { HomeOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Card, Space, Table, Typography, message } from "antd";
+import { HomeOutlined, ReloadOutlined, FireOutlined } from "@ant-design/icons";
+import { Button, Card, Space, Table, Tag, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -14,6 +14,7 @@ type PlanEntry = {
   taskText: string;
   commentText: string | null;
   importId: number | null;
+  isWorkload: boolean;
 };
 
 export default function PlanPage() {
@@ -23,6 +24,17 @@ export default function PlanPage() {
 
   const columns: ColumnsType<PlanEntry> = useMemo(
     () => [
+      {
+        title: "Нагрузка",
+        dataIndex: "isWorkload",
+        width: 120,
+        render: (value: boolean) =>
+          value ? (
+            <Tag icon={<FireOutlined />} color="volcano">
+              Рабочая
+            </Tag>
+          ) : null,
+      },
       {
         title: "Дата",
         dataIndex: "date",
@@ -110,6 +122,9 @@ export default function PlanPage() {
             dataSource={entries}
             loading={loading}
             rowKey="id"
+            rowClassName={(record) =>
+              record.isWorkload ? styles.workloadRow : ""
+            }
             pagination={{ pageSize: 20 }}
           />
         </Space>

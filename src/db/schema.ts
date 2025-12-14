@@ -58,6 +58,7 @@ export const planEntries = pgTable("plan_entries", {
   sessionOrder: integer("session_order").notNull().default(1),
   taskText: text("task_text").notNull(),
   commentText: text("comment_text"),
+  isWorkload: boolean("is_workload").notNull().default(false),
   rawRow: jsonb("raw_row"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -19,6 +19,7 @@ export async function GET() {
       taskText: planEntries.taskText,
       commentText: planEntries.commentText,
       importId: planEntries.importId,
+      isWorkload: planEntries.isWorkload,
     })
     .from(planEntries)
     .where(eq(planEntries.userId, userId))

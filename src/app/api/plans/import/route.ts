@@ -11,7 +11,8 @@ type ParsedRow = {
   date: string;
   taskText: string;
   commentText: string | null;
-  rawRow: { date: string; task: string; comment?: string };
+  isWorkload: boolean;
+  rawRow: { date: string; task: string; comment?: string; isWorkload: boolean };
 };
 
 type ParseResult = {
@@ -49,7 +50,8 @@ const excelSerialToDate = (serial: number) => {
 
 const toDateString = (value: unknown): string | null => {
   if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === "number") return excelSerialToDate(value).toISOString().slice(0, 10);
+  if (typeof value === "number")
+    return excelSerialToDate(value).toISOString().slice(0, 10);
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return null;
@@ -60,12 +62,23 @@ const toDateString = (value: unknown): string | null => {
       const month = Number(mm) - 1;
       const day = Number(dd);
       const parsed = new Date(Date.UTC(year, month, day));
-      if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+      if (!Number.isNaN(parsed.getTime()))
+        return parsed.toISOString().slice(0, 10);
     }
     const parsed = new Date(trimmed);
-    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+    if (!Number.isNaN(parsed.getTime()))
+      return parsed.toISOString().slice(0, 10);
   }
   return null;
+};
+
+const hasFillColor = (cell: ExcelJS.Cell | undefined) => {
+  if (!cell) return false;
+  const fill: any = (cell as any).fill;
+  if (!fill) return false;
+  if (fill.fgColor || fill.bgColor) return true;
+  if (Array.isArray(fill.stops)) return fill.stops.some((s: any) => s?.color);
+  return false;
 };
 
 async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
@@ -81,18 +94,25 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
     const header = normalizeHeader(cell.text || cell.value);
     if (!dateCol && isHeader(header, ["дата", "date"])) dateCol = colNumber;
-    if (!taskCol && isHeader(header, ["задан", "task", "workout"])) taskCol = colNumber;
-    if (!commentCol && isHeader(header, ["коммент", "comment"])) commentCol = colNumber;
+    if (!taskCol && isHeader(header, ["задан", "task", "workout"]))
+      taskCol = colNumber;
+    if (!commentCol && isHeader(header, ["коммент", "comment"]))
+      commentCol = colNumber;
   });
 
-  if (!dateCol || !taskCol) throw new Error("Не найдены колонки Дата/Задание в первой строке");
+  if (!dateCol || !taskCol)
+    throw new Error("Не найдены колонки Дата/Задание в первой строке");
 
   const rows: ParsedRow[] = [];
   const errors: ParseResult["errors"] = [];
   for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
     const row = sheet.getRow(rowNumber);
-    const dateCell = row.getCell(dateCol).value;
-    const taskCell = row.getCell(taskCol).value;
+    const dateCellObj = row.getCell(dateCol);
+    const taskCellObj = row.getCell(taskCol);
+    const commentCellObj = commentCol > 0 ? row.getCell(commentCol) : undefined;
+
+    const dateCell = dateCellObj.value;
+    const taskCell = taskCellObj.value;
     const commentCell = commentCol > 0 ? row.getCell(commentCol).value : "";
 
     const date = toDateString(dateCell);
@@ -109,13 +129,20 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
       continue;
     }
 
+    const isWorkload =
+      hasFillColor(taskCellObj) ||
+      hasFillColor(dateCellObj) ||
+      (commentCellObj ? hasFillColor(commentCellObj) : false);
+
     rows.push({
       date,
       taskText,
       commentText: commentTextRaw || null,
+      isWorkload,
       rawRow: {
         date,
         task: taskText,
+        isWorkload,
         ...(commentTextRaw ? { comment: commentTextRaw } : {}),
       },
     });
@@ -126,14 +153,19 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!session)
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const userId = Number((session.user as any)?.id);
-  if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const formData = await req.formData();
   const file = formData.get("file");
   if (!(file instanceof Blob)) {
-    return NextResponse.json({ error: "Не найден файл в поле file" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Не найден файл в поле file" },
+      { status: 400 }
+    );
   }
 
   const filename = (file as any).name ?? "plan.xlsx";
@@ -143,12 +175,16 @@ export async function POST(req: Request) {
   try {
     parsed = await parseExcel(buffer);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Не удалось прочитать файл";
+    const message =
+      err instanceof Error ? err.message : "Не удалось прочитать файл";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
   if (parsed.rows.length === 0) {
-    return NextResponse.json({ error: "Файл пуст или не содержит валидных строк" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Файл пуст или не содержит валидных строк" },
+      { status: 400 }
+    );
   }
 
   // Нумерация сессий внутри дня по порядку строк.
@@ -163,6 +199,7 @@ export async function POST(req: Request) {
       sessionOrder: next,
       taskText: row.taskText,
       commentText: row.commentText,
+      isWorkload: row.isWorkload,
       rawRow: row.rawRow,
     };
   });
@@ -170,6 +207,7 @@ export async function POST(req: Request) {
   // Уберём дубликаты: если запись с тем же пользователем, датой, порядком и текстом уже есть, не вставляем.
   let duplicates = 0;
   let deduped = entries;
+  let workloadUpdates: number[] = [];
   if (entries.length) {
     const dates = Array.from(sessionCounter.keys());
     const existing =
@@ -177,27 +215,41 @@ export async function POST(req: Request) {
         ? []
         : await db
             .select({
+              id: planEntries.id,
               date: planEntries.date,
               sessionOrder: planEntries.sessionOrder,
               taskText: planEntries.taskText,
               commentText: planEntries.commentText,
+              isWorkload: planEntries.isWorkload,
             })
             .from(planEntries)
-            .where(and(eq(planEntries.userId, userId), inArray(planEntries.date, dates)));
+            .where(
+              and(
+                eq(planEntries.userId, userId),
+                inArray(planEntries.date, dates)
+              )
+            );
 
-    const existingKeys = new Set(
-      existing.map(
-        (e) => `${e.date}#${e.sessionOrder}#${e.taskText}#${e.commentText ?? ""}`
-      )
+    const existingByKey = new Map<string, { id: number; isWorkload: boolean }>(
+      existing.map((e) => [
+        `${e.date}#${e.sessionOrder}#${e.taskText}#${e.commentText ?? ""}`,
+        { id: e.id, isWorkload: e.isWorkload },
+      ])
     );
 
     deduped = entries.filter((e) => {
-      const key = `${e.date}#${e.sessionOrder}#${e.taskText}#${e.commentText ?? ""}`;
-      if (existingKeys.has(key)) {
+      const key = `${e.date}#${e.sessionOrder}#${e.taskText}#${
+        e.commentText ?? ""
+      }`;
+      const matched = existingByKey.get(key);
+      if (matched) {
         duplicates += 1;
+        if (!matched.isWorkload && e.isWorkload) {
+          workloadUpdates.push(matched.id);
+        }
         return false;
       }
-      existingKeys.add(key);
+      existingByKey.set(key, { id: -1, isWorkload: e.isWorkload });
       return true;
     });
   }
@@ -220,6 +272,18 @@ export async function POST(req: Request) {
         importId: createdImport.id,
       }))
     );
+  }
+
+  if (workloadUpdates.length) {
+    await db
+      .update(planEntries)
+      .set({ isWorkload: true })
+      .where(
+        and(
+          eq(planEntries.userId, userId),
+          inArray(planEntries.id, workloadUpdates)
+        )
+      );
   }
 
   await db
