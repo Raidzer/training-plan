@@ -10,7 +10,12 @@ import {
   message,
   type UploadFile,
 } from "antd";
-import { InboxOutlined, CloudUploadOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  CloudUploadOutlined,
+  InboxOutlined,
+} from "@ant-design/icons";
+import Link from "next/link";
 import { useState } from "react";
 import styles from "./import.module.scss";
 
@@ -76,17 +81,24 @@ export default function PlanImportPage() {
           size="large"
           className={styles.spaceStyle}
         >
-          <div>
-            <Typography.Title level={3} className={styles.typographyTitle}>
-              Импорт плана из Excel
-            </Typography.Title>
-            <Typography.Paragraph
-              type="secondary"
-              className={styles.typographyParagraph}
-            >
-              Файл должен содержать колонки «Дата», «Задание», «Комментарий»
-              (первая строка — заголовки). Используется только первый лист.
-            </Typography.Paragraph>
+          <div className={styles.headerRow}>
+            <div className={styles.headerText}>
+              <Typography.Title level={3} className={styles.typographyTitle}>
+                Импорт плана из Excel
+              </Typography.Title>
+              <Typography.Paragraph
+                type="secondary"
+                className={styles.typographyParagraph}
+              >
+                Файл должен содержать колонки «Дата», «Задание», «Комментарий»
+                (первая строка — заголовки). Используется только первый лист.
+              </Typography.Paragraph>
+            </div>
+            <div className={styles.headerActions}>
+              <Link href="/plan" passHref>
+                <Button icon={<ArrowLeftOutlined />}>Обратно к плану</Button>
+              </Link>
+            </div>
           </div>
           <Dragger
             name="file"
