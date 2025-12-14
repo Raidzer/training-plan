@@ -3,7 +3,7 @@
 import { Button, Card, Space, Table, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./plan.module.scss";
 
 type PlanEntry = {
@@ -39,28 +39,29 @@ export default function PlanPage() {
     []
   );
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/plans");
-        const data = (await res.json().catch(() => null)) as
-          | { entries?: PlanEntry[]; error?: string }
-          | null;
-        if (!res.ok || !data?.entries) {
-          msgApi.error(data?.error ?? "Не удалось загрузить план");
-          return;
-        }
-        setEntries(data.entries);
-      } catch (err) {
-        console.error(err);
-        msgApi.error("Ошибка запроса");
-      } finally {
-        setLoading(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/plans");
+      const data = (await res.json().catch(() => null)) as
+        | { entries?: PlanEntry[]; error?: string }
+        | null;
+      if (!res.ok || !data?.entries) {
+        msgApi.error(data?.error ?? "Не удалось загрузить план");
+        return;
       }
-    };
-    load();
+      setEntries(data.entries);
+    } catch (err) {
+      console.error(err);
+      msgApi.error("Ошибка запроса");
+    } finally {
+      setLoading(false);
+    }
   }, [msgApi]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <main className={styles.mainContainer}>
@@ -88,6 +89,9 @@ export default function PlanPage() {
               Импортировать план из Excel
             </Button>
           </Link>
+          <Button onClick={load} loading={loading} block>
+            Обновить план
+          </Button>
           <Table
             size="small"
             columns={columns}
