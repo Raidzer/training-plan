@@ -1,7 +1,21 @@
 "use client";
 
-import { HomeOutlined, ReloadOutlined, FireOutlined } from "@ant-design/icons";
-import { Button, Card, Space, Table, Tag, Typography, message } from "antd";
+import {
+  DeleteOutlined,
+  FireOutlined,
+  HomeOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Card,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -20,6 +34,7 @@ type PlanEntry = {
 export default function PlanPage() {
   const [entries, setEntries] = useState<PlanEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [msgApi, contextHolder] = message.useMessage();
 
   const columns: ColumnsType<PlanEntry> = useMemo(
@@ -76,6 +91,31 @@ export default function PlanPage() {
     load();
   }, [load]);
 
+  const clearPlan = useCallback(async () => {
+    setClearing(true);
+    try {
+      const res = await fetch("/api/plans", { method: "DELETE" });
+      const data = (await res.json().catch(() => null)) as
+        | { deleted?: number; error?: string }
+        | null;
+      if (!res.ok) {
+        msgApi.error(data?.error ?? "Не удалось очистить план");
+        return;
+      }
+      setEntries([]);
+      msgApi.success(
+        data?.deleted
+          ? `План очищен, удалено записей: ${data.deleted}`
+          : "План очищен"
+      );
+    } catch (err) {
+      console.error(err);
+      msgApi.error("Произошла ошибка при очистке плана");
+    } finally {
+      setClearing(false);
+    }
+  }, [msgApi]);
+
   return (
     <main className={styles.mainContainer}>
       {contextHolder}
@@ -109,6 +149,18 @@ export default function PlanPage() {
               >
                 Обновить план
               </Button>
+              <Popconfirm
+                title="Очистить план?"
+                description="Все записи плана будут удалены."
+                okText="Очистить"
+                cancelText="Отмена"
+                onConfirm={clearPlan}
+                okButtonProps={{ danger: true, loading: clearing }}
+              >
+                <Button danger icon={<DeleteOutlined />} loading={clearing}>
+                  Очистить план
+                </Button>
+              </Popconfirm>
             </Space>
           </div>
           <Link href="/plan/import" passHref>
