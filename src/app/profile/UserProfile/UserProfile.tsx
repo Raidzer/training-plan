@@ -1,30 +1,51 @@
 'use client';
 import styles from './UserProfile.module.scss';
 import { BackButton } from '@/components/BackButton/BackButton';
-import { Form, Input, Typography } from 'antd';
+import { Form, Input, Typography, Spin, Flex, Button, Modal } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import Password from 'antd/es/input/Password';
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { ProfileForm } from './ProfileForm';
 
 export const UserProfile = () => {
-  const [email, setEmail] = React.useState('sadsadsa');
-  const [password, setPassword] = React.useState('fghfghfg');
+  const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState({
+    email: '',
+    password: '',
+    name: '',
+  });
 
-  return (
-    <>
-      <div className={styles.title}>
-        <Typography.Title>Профиль</Typography.Title>
-        <Link href='/dashboard'>
-          <BackButton />
-        </Link>
-      </div>
-      <Form size='large' className={styles.form} layout='vertical'>
-        <Form.Item initialValue={`${email}`} label='Email' name='Email'>
-          <Input />
-        </Form.Item>
-        <Form.Item initialValue={`${password}`} label='Пароль' name='password'>
-          <Input />
-        </Form.Item>
-      </Form>
-    </>
-  );
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const data = await fetch('/api/getUser', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        }).then((result) => {
+          return result.json();
+        });
+        setUserData({
+          email: data.user.email,
+          password: data.user.password,
+          name: data.user.name,
+        });
+      } catch (error) {
+        console.log(`Ошибка: ${error}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <Flex align='center' justify='center' style={{ height: '100vh' }}>
+        <Spin indicator={<LoadingOutlined spin />} size='large' />
+      </Flex>
+    );
+  }
+  return <ProfileForm userData={userData} />;
 };
+
