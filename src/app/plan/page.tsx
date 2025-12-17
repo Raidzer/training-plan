@@ -1,8 +1,186 @@
+"use client";
+
+import {
+  DeleteOutlined,
+  FireOutlined,
+  HomeOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Card,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from "antd";
+import type { ColumnsType } from "antd/es/table";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import styles from "./plan.module.scss";
+
+type PlanEntry = {
+  id: number;
+  date: string;
+  sessionOrder: number;
+  taskText: string;
+  commentText: string | null;
+  importId: number | null;
+  isWorkload: boolean;
+};
+
 export default function PlanPage() {
+  const [entries, setEntries] = useState<PlanEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [msgApi, contextHolder] = message.useMessage();
+
+  const columns: ColumnsType<PlanEntry> = useMemo(
+    () => [
+      {
+        title: "Нагрузка",
+        dataIndex: "isWorkload",
+        width: 120,
+        render: (value: boolean) =>
+          value ? (
+            <Tag icon={<FireOutlined />} color="volcano">
+              Рабочая
+            </Tag>
+          ) : null,
+      },
+      {
+        title: "Дата",
+        dataIndex: "date",
+        width: 120,
+      },
+      {
+        title: "Задание",
+        dataIndex: "taskText",
+      },
+      {
+        title: "Комментарий",
+        dataIndex: "commentText",
+      },
+    ],
+    []
+  );
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/plans");
+      const data = (await res.json().catch(() => null)) as
+        | { entries?: PlanEntry[]; error?: string }
+        | null;
+      if (!res.ok || !data?.entries) {
+        msgApi.error(data?.error ?? "Не удалось загрузить записи плана");
+        return;
+      }
+      setEntries(data.entries);
+    } catch (err) {
+      console.error(err);
+      msgApi.error("Произошла ошибка при загрузке плана");
+    } finally {
+      setLoading(false);
+    }
+  }, [msgApi]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const clearPlan = useCallback(async () => {
+    setClearing(true);
+    try {
+      const res = await fetch("/api/plans", { method: "DELETE" });
+      const data = (await res.json().catch(() => null)) as
+        | { deleted?: number; error?: string }
+        | null;
+      if (!res.ok) {
+        msgApi.error(data?.error ?? "Не удалось очистить план");
+        return;
+      }
+      setEntries([]);
+      msgApi.success(
+        data?.deleted
+          ? `План очищен, удалено записей: ${data.deleted}`
+          : "План очищен"
+      );
+    } catch (err) {
+      console.error(err);
+      msgApi.error("Произошла ошибка при очистке плана");
+    } finally {
+      setClearing(false);
+    }
+  }, [msgApi]);
+
   return (
-    <main>
-      <h1>План</h1>
-      <p>Импорт Excel добавим следующим шагом.</p>
+    <main className={styles.mainContainer}>
+      {contextHolder}
+      <Card className={styles.cardStyle}>
+        <Space
+          orientation="vertical"
+          size="large"
+          className={styles.spaceStyle}
+        >
+          <div className={styles.headerRow}>
+            <div className={styles.headerText}>
+              <Typography.Title level={3} className={styles.typographyTitle}>
+                План тренировок
+              </Typography.Title>
+              <Typography.Paragraph
+                type="secondary"
+                className={styles.typographyParagraph}
+              >
+                Ниже — записи плана из базы (сортировка по дате и порядку
+                сессии). Для загрузки нового файла воспользуйтесь кнопкой ниже.
+              </Typography.Paragraph>
+            </div>
+            <Space size="small" className={styles.headerActions}>
+              <Link href="/dashboard" passHref>
+                <Button icon={<HomeOutlined />}>Главная</Button>
+              </Link>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={load}
+                loading={loading}
+              >
+                Обновить план
+              </Button>
+              <Popconfirm
+                title="Очистить план?"
+                description="Все записи плана будут удалены."
+                okText="Очистить"
+                cancelText="Отмена"
+                onConfirm={clearPlan}
+                okButtonProps={{ danger: true, loading: clearing }}
+              >
+                <Button danger icon={<DeleteOutlined />} loading={clearing}>
+                  Очистить план
+                </Button>
+              </Popconfirm>
+            </Space>
+          </div>
+          <Link href="/plan/import" passHref>
+            <Button type="primary" block>
+              Импортировать план из Excel
+            </Button>
+          </Link>
+          <Table
+            size="small"
+            columns={columns}
+            dataSource={entries}
+            loading={loading}
+            rowKey="id"
+            rowClassName={(record) =>
+              record.isWorkload ? styles.workloadRow : ""
+            }
+            pagination={{ pageSize: 20 }}
+          />
+        </Space>
+      </Card>
     </main>
   );
 }
