@@ -62,3 +62,18 @@ export const planEntries = pgTable("plan_entries", {
   rawRow: jsonb("raw_row"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const workouts = pgTable("workouts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  date: date("date").notNull(),
+  type: varchar("type", { length: 64 }).notNull(),
+  distanceKm: numeric("distance_km", { precision: 6, scale: 2 }),
+  timeSec: integer("time_sec"),
+  avgHr: integer("avg_hr"),
+  rpe: integer("rpe"),
+  comment: text("comment"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
