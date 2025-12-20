@@ -1,14 +1,14 @@
 import NextAuth from "next-auth";
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "./db/client";
 import { users } from "./db/schema";
 
 const schema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().min(2).max(255),
   password: z.string().min(6),
 });
 
@@ -21,16 +21,17 @@ export const authOptions: NextAuthOptions = {
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email or login", type: "text" },
         password: { label: "Password", type: "password" },
       },
       authorize: async (creds) => {
         const parsed = schema.safeParse(creds);
         if (!parsed.success) return null;
+        const identifier = parsed.data.email;
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.email, parsed.data.email));
+          .where(or(eq(users.email, identifier), eq(users.login, identifier)));
         if (!user) return null;
         const ok = await bcrypt.compare(
           parsed.data.password,

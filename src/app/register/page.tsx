@@ -23,8 +23,10 @@ import styles from "./register.module.scss";
 
 type RegisterFields = {
   name: string;
+  login: string;
   email: string;
   password: string;
+  confirmPassword: string;
 };
 
 export default function RegisterPage() {
@@ -33,12 +35,13 @@ export default function RegisterPage() {
   const [messageApi, contextHolder] = message.useMessage();
 
   const onFinish: FormProps<RegisterFields>["onFinish"] = async (values) => {
+    const { confirmPassword, ...payload } = values;
     setLoading(true);
     try {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       const data = (await res.json().catch(() => null)) as {
@@ -99,14 +102,24 @@ export default function RegisterPage() {
             <Input prefix={<UserOutlined />} placeholder="Иван Иванов" />
           </Form.Item>
           <Form.Item
+            name="login"
+            label="Логин"
+            rules={[
+              { required: true, message: "Введите логин" },
+              { min: 3, message: "Логин должен содержать не менее 3 символов" },
+            ]}
+          >
+            <Input prefix={<UserOutlined />} placeholder="Ваш логин" />
+          </Form.Item>
+          <Form.Item
             name="email"
-            label="Email"
+            label="Почта"
             rules={[
               { required: true, message: "Введите email" },
               { type: "email", message: "Некорректный email" },
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="you@example.com" />
+            <Input prefix={<MailOutlined />} placeholder="Ваш email" />
           </Form.Item>
           <Form.Item
             name="password"
@@ -120,6 +133,24 @@ export default function RegisterPage() {
             ]}
           >
             <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="Подтвердите пароль"
+            dependencies={["password"]}
+            rules={[
+              { required: true, message: "Подтвердите пароль" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("password") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Пароли не совпадают"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password prefix={<LockOutlined />} placeholder="********" />
           </Form.Item>
           <Button
             type="primary"

@@ -14,6 +14,7 @@ import {
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
+  login: varchar("login", { length: 64 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: varchar("role", { length: 32 }).notNull().default("athlete"),
   name: varchar("name", { length: 255 }).notNull(),

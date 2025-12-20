@@ -9,6 +9,7 @@ const run = async () => {
     .insert(users)
     .values({
       email: "you@example.com",
+      login: "you",
       passwordHash: hash,
       role: "admin",
       name: "You",
