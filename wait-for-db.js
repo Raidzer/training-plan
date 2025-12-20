@@ -1,10 +1,31 @@
 import "dotenv/config";
 import { Client } from "pg";
 
-const connectionString = process.env.DATABASE_URL;
+const parseNumber = (value) => {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
 
-if (!connectionString) {
-  console.error("DATABASE_URL is not set in .env");
+const getClientConfig = () => {
+  const connectionString = process.env.DATABASE_URL;
+  if (connectionString) return { connectionString };
+
+  const host = process.env.PGHOST ?? process.env.POSTGRES_HOST;
+  const port = parseNumber(process.env.PGPORT ?? process.env.POSTGRES_PORT);
+  const user = process.env.PGUSER ?? process.env.POSTGRES_USER;
+  const password = process.env.PGPASSWORD ?? process.env.POSTGRES_PASSWORD;
+  const database = process.env.PGDATABASE ?? process.env.POSTGRES_DB;
+
+  if (!host || !user || !password || !database) return null;
+  return { host, port, user, password, database };
+};
+
+const clientConfig = getClientConfig();
+if (!clientConfig) {
+  console.error(
+    "Database config is not set (expected DATABASE_URL or PG*/POSTGRES_* variables)"
+  );
   process.exit(1);
 }
 
@@ -25,7 +46,7 @@ while (true) {
     process.exit(1);
   }
 
-  const client = new Client({ connectionString });
+  const client = new Client(clientConfig);
 
   try {
     await client.connect();
