@@ -5,3 +5,4 @@ node_modules/*
 tmp/*
 .codex
 .codex/*
+AGENTS.md
