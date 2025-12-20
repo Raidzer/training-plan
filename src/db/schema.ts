@@ -18,6 +18,19 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: varchar("role", { length: 32 }).notNull().default("athlete"),
   name: varchar("name", { length: 255 }).notNull(),
+  emailVerifiedAt: timestamp("email_verified_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const emailVerificationCodes = pgTable("email_verification_codes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  nextResendAt: timestamp("next_resend_at").notNull(),
+  consumedAt: timestamp("consumed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

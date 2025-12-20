@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { eq, or } from "drizzle-orm";
+import { issueEmailVerificationCode } from "@/lib/emailVerification";
 
 const schema = z.object({
   login: z
@@ -59,5 +60,31 @@ export async function POST(req: Request) {
     })
     .returning({ id: users.id, email: users.email, name: users.name });
 
-  return NextResponse.json({ user: created }, { status: 201 });
+  if (!created) {
+    return NextResponse.json(
+      { error: "Failed to create user" },
+      { status: 500 }
+    );
+  }
+
+  let emailSent = false;
+  let emailRetryAt: string | null = null;
+  try {
+    const result = await issueEmailVerificationCode({
+      userId: created.id,
+      email: created.email,
+      name: created.name,
+    });
+    emailSent = result.ok;
+    if (!result.ok) {
+      emailRetryAt = result.retryAt.toISOString();
+    }
+  } catch (error) {
+    console.error("Failed to send verification email", error);
+  }
+
+  return NextResponse.json(
+    { user: created, emailSent, emailRetryAt },
+    { status: 201 }
+  );
 }
