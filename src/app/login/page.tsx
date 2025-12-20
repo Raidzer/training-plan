@@ -44,26 +44,21 @@ export default function LoginPage() {
         </Typography.Title>
         <Typography.Paragraph type="secondary" className={styles.subtitle}>
           Используйте учетные данные, созданные при инициализации
-          (you@example.com / password123).
         </Typography.Paragraph>
         <Form<LoginFields>
           layout="vertical"
-          initialValues={{
-            email: "you@example.com",
-            password: "password123",
-          }}
           onFinish={onFinish}
           requiredMark={false}
         >
           <Form.Item
             name="email"
-            label="Email"
-            rules={[
-              { required: true, message: "Укажите email" },
-              { type: "email", message: "Некорректный email" },
-            ]}
+            label="Email или login"
+            rules={[{ required: true, message: "Укажите email или логин" }]}
           >
-            <Input prefix={<MailOutlined />} placeholder="you@example.com" />
+            <Input
+              prefix={<MailOutlined />}
+              placeholder="Введите email или логин"
+            />
           </Form.Item>
           <Form.Item
             name="password"
@@ -72,7 +67,7 @@ export default function LoginPage() {
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="password123"
+              placeholder="Введите пароль"
             />
           </Form.Item>
           <Button
