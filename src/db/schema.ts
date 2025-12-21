@@ -8,6 +8,7 @@ import {
   numeric,
   varchar,
   boolean,
+  bigint,
   jsonb,
 } from "drizzle-orm/pg-core";
 
@@ -90,4 +91,42 @@ export const workouts = pgTable("workouts", {
   rpe: integer("rpe"),
   comment: text("comment"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const telegramLinkCodes = pgTable("telegram_link_codes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  consumedAt: timestamp("consumed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const telegramAccounts = pgTable("telegram_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  chatId: bigint("chat_id", { mode: "number" }).notNull().unique(),
+  username: varchar("username", { length: 64 }),
+  firstName: varchar("first_name", { length: 128 }),
+  linkedAt: timestamp("linked_at").notNull().defaultNow(),
+});
+
+export const telegramSubscriptions = pgTable("telegram_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  chatId: bigint("chat_id", { mode: "number" }).notNull(),
+  timezone: varchar("timezone", { length: 64 }),
+  sendTime: varchar("send_time", { length: 5 }),
+  enabled: boolean("enabled").notNull().default(false),
+  lastSentOn: date("last_sent_on"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
