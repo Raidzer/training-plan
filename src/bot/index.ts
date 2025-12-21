@@ -88,6 +88,24 @@ const getLinkedAccount = async (chatId: number) => {
   return account ?? null;
 };
 
+const unlinkAccount = async (chatId: number) => {
+  return db.transaction(async (tx) => {
+    const accounts = await tx
+      .delete(telegramAccounts)
+      .where(eq(telegramAccounts.chatId, chatId))
+      .returning({ id: telegramAccounts.id });
+    const subscriptions = await tx
+      .delete(telegramSubscriptions)
+      .where(eq(telegramSubscriptions.chatId, chatId))
+      .returning({ id: telegramSubscriptions.id });
+
+    return {
+      accounts: accounts.length,
+      subscriptions: subscriptions.length,
+    };
+  });
+};
+
 const getSubscription = async (userId: number) => {
   const [subscription] = await db
     .select({
@@ -435,6 +453,18 @@ bot.command("unsubscribe", async (ctx: any) => {
   });
 
   return ctx.reply("Подписка выключена.");
+});
+
+bot.command("unlink", async (ctx: any) => {
+  if (!ctx.chat) return;
+  const chatId = ctx.chat.id;
+  const account = await getLinkedAccount(chatId);
+  if (!account) {
+    return ctx.reply("Этот чат не связан с аккаунтом.");
+  }
+
+  await unlinkAccount(chatId);
+  return ctx.reply("Связка удалена. Теперь можно привязать другой аккаунт.");
 });
 
 bot.command("time", async (ctx: any) => {

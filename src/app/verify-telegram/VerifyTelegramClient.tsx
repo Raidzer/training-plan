@@ -56,6 +56,7 @@ export function VerifyTelegramClient() {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [sending, setSending] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
   const [issuedExpiresAt, setIssuedExpiresAt] = useState<string | null>(null);
 
@@ -130,6 +131,28 @@ export function VerifyTelegramClient() {
     }
   };
 
+  const handleUnlink = async () => {
+    setUnlinking(true);
+    try {
+      const res = await fetch("/api/telegram/unlink", { method: "POST" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const apiError = getApiError(data);
+        messageApi.error(apiError?.error ?? "Не удалось отвязать Telegram");
+        return;
+      }
+      messageApi.success("Telegram отвязан");
+      setIssuedCode(null);
+      setIssuedExpiresAt(null);
+      await loadStatus(false);
+    } catch (error) {
+      messageApi.error("Не удалось отвязать Telegram");
+      console.error(error);
+    } finally {
+      setUnlinking(false);
+    }
+  };
+
   return (
     <main className={styles.page}>
       {contextHolder}
@@ -157,9 +180,19 @@ export function VerifyTelegramClient() {
             />
 
             {linked && (
-              <Typography.Paragraph type="secondary" className={styles.subtitle}>
-                {subscriptionInfo}
-              </Typography.Paragraph>
+              <>
+                <Typography.Paragraph type="secondary" className={styles.subtitle}>
+                  {subscriptionInfo}
+                </Typography.Paragraph>
+                <div className={styles.actions}>
+                  <Button danger onClick={handleUnlink} loading={unlinking}>
+                    Отвязать Telegram
+                  </Button>
+                  <Typography.Text type="secondary">
+                    При отвязке рассылка отключится. Можно будет связать другой аккаунт.
+                  </Typography.Text>
+                </div>
+              </>
             )}
 
             {!linked && (
