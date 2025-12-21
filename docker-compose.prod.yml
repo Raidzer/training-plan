@@ -27,6 +27,18 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  bot:
+    image: ${APP_IMAGE}
+    env_file:
+      - stack.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    command: ["sh", "-c", "node wait-for-db.js && npm run bot"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   cloudbeaver:
     image: dbeaver/cloudbeaver:latest
     ports:
