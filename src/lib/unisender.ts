@@ -30,26 +30,28 @@ export const sendUnisenderEmail = async (params: {
 }) => {
   const config = getUnisenderConfig();
 
-  const to: { email: string; name?: string } = { email: params.toEmail };
+  const recipient: { email: string; substitutions?: { to_name: string } } = {
+    email: params.toEmail,
+  };
   if (params.toName) {
-    to.name = params.toName;
+    recipient.substitutions = { to_name: params.toName };
   }
 
   const payload = {
-    email: {
+    message: {
+      recipients: [recipient],
       subject: params.subject,
       from_email: config.fromEmail,
       from_name: config.fromName,
-      to: [to],
       body: {
-        text: params.text,
+        plaintext: params.text,
         ...(params.html ? { html: params.html } : {}),
       },
     },
   };
-
+  
   const response = await fetch(
-    "https://go1.unisender.ru/ru/transactional/api/v1/email/send.json",
+    "https://go2.unisender.ru/ru/transactional/api/v1/email/send.json",
     {
       method: "POST",
       headers: {
