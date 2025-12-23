@@ -10,6 +10,7 @@ import {
   boolean,
   bigint,
   jsonb,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -63,20 +64,29 @@ export const planImports = pgTable("plan_imports", {
   error: text("error"),
 });
 
-export const planEntries = pgTable("plan_entries", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  importId: integer("import_id").references(() => planImports.id),
-  date: date("date").notNull(),
-  sessionOrder: integer("session_order").notNull().default(1),
-  taskText: text("task_text").notNull(),
-  commentText: text("comment_text"),
-  isWorkload: boolean("is_workload").notNull().default(false),
-  rawRow: jsonb("raw_row"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const planEntries = pgTable(
+  "plan_entries",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    importId: integer("import_id").references(() => planImports.id),
+    date: date("date").notNull(),
+    sessionOrder: integer("session_order").notNull().default(1),
+    taskText: text("task_text").notNull(),
+    commentText: text("comment_text"),
+    isWorkload: boolean("is_workload").notNull().default(false),
+    rawRow: jsonb("raw_row"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    planEntriesUserDateIdx: index("plan_entries_user_date_idx").on(
+      table.userId,
+      table.date
+    ),
+  })
+);
 
 export const workouts = pgTable("workouts", {
   id: serial("id").primaryKey(),
