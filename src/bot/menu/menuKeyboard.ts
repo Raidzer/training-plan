@@ -1,13 +1,13 @@
 export const LINK_BUTTON_TEXT = "Привязать аккаунт";
 export const CANCEL_LINK_BUTTON_TEXT = "Отменить привязку";
 export const TODAY_BUTTON_TEXT = "Сегодня";
-export const DATE_BUTTON_TEXT = "Дата";
-export const CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
+export const DATE_BUTTON_TEXT = "Другая дата";
+export const CUSTOM_DATE_BUTTON_TEXT = "Указать дату";
 export const DATE_BACK_BUTTON_TEXT = "Назад";
 export const SUBSCRIBE_ON_BUTTON_TEXT = "Подписка: ВКЛ";
 export const SUBSCRIBE_OFF_BUTTON_TEXT = "Подписка: ВЫКЛ";
 export const TIME_BUTTON_TEXT = "Время рассылки";
-export const TIMEZONE_BUTTON_TEXT = "Таймзона";
+export const TIMEZONE_BUTTON_TEXT = "Часовой пояс";
 export const UNLINK_BUTTON_TEXT = "Отвязать";
 export const HELP_BUTTON_TEXT = "Помощь";
 
