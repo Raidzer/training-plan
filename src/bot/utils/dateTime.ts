@@ -57,6 +57,80 @@ export const isValidTimeZone = (timeZone: string) => {
   }
 };
 
+const RU_WEEKDAYS_SHORT = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+
+const isValidDateParts = (year: number, month: number, day: number) => {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return false;
+  }
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+};
+
+export const formatDateForDisplay = (isoDate: string) => {
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) {
+    return isoDate;
+  }
+  if (year.length !== 4 || month.length !== 2 || day.length !== 2) {
+    return isoDate;
+  }
+  return `${day}-${month}-${year}`;
+};
+
+export const parseDisplayDate = (value: string) => {
+  const match = value.match(/\d{2}-\d{2}-\d{4}/);
+  if (!match) {
+    return null;
+  }
+  const [day, month, year] = match[0].split("-");
+  const yearNum = Number(year);
+  const monthNum = Number(month);
+  const dayNum = Number(day);
+  if (!isValidDateParts(yearNum, monthNum, dayNum)) {
+    return null;
+  }
+  return `${year}-${month}-${day}`;
+};
+
+export const addDaysToIsoDate = (isoDate: string, days: number) => {
+  const [year, month, day] = isoDate.split("-");
+  const yearNum = Number(year);
+  const monthNum = Number(month);
+  const dayNum = Number(day);
+  if (!isValidDateParts(yearNum, monthNum, dayNum)) {
+    return isoDate;
+  }
+  const date = new Date(Date.UTC(yearNum, monthNum - 1, dayNum));
+  date.setUTCDate(date.getUTCDate() + days);
+  const nextYear = date.getUTCFullYear();
+  const nextMonth = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const nextDay = String(date.getUTCDate()).padStart(2, "0");
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+};
+
+export const getNextIsoDates = (isoDate: string, daysCount: number) => {
+  return Array.from({ length: daysCount }, (_, index) =>
+    addDaysToIsoDate(isoDate, index + 1)
+  );
+};
+
+export const getWeekdayShortRu = (isoDate: string) => {
+  const [year, month, day] = isoDate.split("-");
+  const yearNum = Number(year);
+  const monthNum = Number(month);
+  const dayNum = Number(day);
+  if (!isValidDateParts(yearNum, monthNum, dayNum)) {
+    return "";
+  }
+  const weekdayIndex = new Date(Date.UTC(yearNum, monthNum - 1, dayNum)).getUTCDay();
+  return RU_WEEKDAYS_SHORT[weekdayIndex] ?? "";
+};
+
 export const normalizeDateValue = (value: string | Date | null) => {
   if (!value) {
     return null;

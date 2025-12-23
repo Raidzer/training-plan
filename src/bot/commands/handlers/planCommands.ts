@@ -1,8 +1,8 @@
 import type { Bot } from "grammy";
-import { DATE_REGEX } from "@/bot/utils/validators";
 import {
   formatDateInTimeZone,
   formatDateLocal,
+  parseDisplayDate,
 } from "@/bot/utils/dateTime";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
@@ -51,10 +51,11 @@ export const registerPlanCommands = (bot: Bot) => {
 
     const text = ctx.message?.text ?? "";
     const parts = text.trim().split(/\s+/);
-    const date = parts[1];
+    const rawDate = parts[1];
+    const date = rawDate ? parseDisplayDate(rawDate) : null;
 
-    if (!date || !DATE_REGEX.test(date)) {
-      return ctx.reply("Используй: /date 2025-12-21");
+    if (!date) {
+      return ctx.reply("Используй: /date 21-12-2025");
     }
 
     const entries = await getPlanEntriesByDate({ userId, date });

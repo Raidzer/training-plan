@@ -1,4 +1,4 @@
-export type PendingInput = "date" | "time" | "timezone" | "link";
+export type PendingInput = "date" | "dateMenu" | "time" | "timezone" | "link";
 
 const pendingInputs = new Map<number, PendingInput>();
 
