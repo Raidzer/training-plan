@@ -3,6 +3,8 @@ import {
   BookOutlined,
   CalendarOutlined,
   HeartOutlined,
+  MailOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { Card, Space, Typography } from "antd";
 import Link from "next/link";
@@ -61,6 +63,30 @@ export function DashboardClient({ session }: Props) {
             >
               <Typography.Text type="secondary">
                 Скоро: сводки, графики и метрики восстановления.
+              </Typography.Text>
+            </Card>
+          </Link>
+          <Link href="/verify-email" passHref>
+            <Card
+              hoverable
+              className={styles.card}
+              title={
+                <CardTitle icon={<MailOutlined />} title="Подтверждение почты" />
+              }
+            >
+              <Typography.Text type="secondary">
+                Проверить статус и подтвердить почту.
+              </Typography.Text>
+            </Card>
+          </Link>
+          <Link href="/verify-telegram" passHref>
+            <Card
+              hoverable
+              className={styles.card}
+              title={<CardTitle icon={<MessageOutlined />} title="Telegram" />}
+            >
+              <Typography.Text type="secondary">
+                Получить код и связать Telegram для получения плана и рассылки.
               </Typography.Text>
             </Card>
           </Link>

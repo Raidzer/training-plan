@@ -2,7 +2,9 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 const parseNumber = (value: string | undefined) => {
-  if (!value) return undefined;
+  if (!value) {
+    return undefined;
+  }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 };

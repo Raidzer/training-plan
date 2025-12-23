@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ${DB_VOLUMES}:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: ${APP_IMAGE}
+    env_file:
+      - stack.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    ports:
+      - "${APP_PORT}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  bot:
+    image: ${APP_IMAGE}
+    env_file:
+      - stack.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    command: ["sh", "-c", "node wait-for-db.js && npm run bot"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    ports:
+      - "${CLOUDBEAVER_PORT}:8978"
+    volumes:
+      - ${CLOUDBEAVER_VOLUMES}:/opt/cloudbeaver/workspace
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  cloudbeaver_data:
