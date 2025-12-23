@@ -26,18 +26,24 @@ export const authOptions: NextAuthOptions = {
       },
       authorize: async (creds) => {
         const parsed = schema.safeParse(creds);
-        if (!parsed.success) return null;
+        if (!parsed.success) {
+          return null;
+        }
         const identifier = parsed.data.email;
         const [user] = await db
           .select()
           .from(users)
           .where(or(eq(users.email, identifier), eq(users.login, identifier)));
-        if (!user) return null;
+        if (!user) {
+          return null;
+        }
         const ok = await bcrypt.compare(
           parsed.data.password,
           user.passwordHash
         );
-        if (!ok) return null;
+        if (!ok) {
+          return null;
+        }
         return {
           id: String(user.id),
           email: user.email,
@@ -57,7 +63,9 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async jwt({ token, user }) {
-      if (user) token.role = (user as any).role;
+      if (user) {
+        token.role = (user as any).role;
+      }
       return token;
     },
   },

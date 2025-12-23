@@ -11,17 +11,23 @@ const DISPATCH_INTERVAL_MS = 30_000;
 let dispatchRunning = false;
 
 const dispatchDueSubscriptions = async (bot: Bot) => {
-  if (dispatchRunning) return;
+  if (dispatchRunning) {
+    return;
+  }
   dispatchRunning = true;
 
   try {
     const subscriptions = await getEnabledSubscriptions();
-    if (!subscriptions.length) return;
+    if (!subscriptions.length) {
+      return;
+    }
 
     const now = new Date();
 
     for (const subscription of subscriptions) {
-      if (!subscription.timezone || !subscription.sendTime) continue;
+      if (!subscription.timezone || !subscription.sendTime) {
+        continue;
+      }
 
       let zoned;
       try {
@@ -31,10 +37,14 @@ const dispatchDueSubscriptions = async (bot: Bot) => {
         continue;
       }
 
-      if (zoned.time !== subscription.sendTime) continue;
+      if (zoned.time !== subscription.sendTime) {
+        continue;
+      }
 
       const lastSent = normalizeDateValue(subscription.lastSentOn);
-      if (lastSent === zoned.date) continue;
+      if (lastSent === zoned.date) {
+        continue;
+      }
 
       const entries = await getPlanEntriesByDate({
         userId: subscription.userId,

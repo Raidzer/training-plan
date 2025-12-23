@@ -38,7 +38,9 @@ export const getZonedDateTime = (date: Date, timeZone: string) => {
     throw new Error("Не удалось получить дату и время");
   }
 
-  if (hour === "24") hour = "00";
+  if (hour === "24") {
+    hour = "00";
+  }
 
   return {
     date: `${year}-${month}-${day}`,
@@ -56,7 +58,11 @@ export const isValidTimeZone = (timeZone: string) => {
 };
 
 export const normalizeDateValue = (value: string | Date | null) => {
-  if (!value) return null;
-  if (typeof value === "string") return value;
+  if (!value) {
+    return null;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
   return formatDateLocal(value);
 };
