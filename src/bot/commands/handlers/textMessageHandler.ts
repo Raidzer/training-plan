@@ -1,9 +1,13 @@
 import type { Bot } from "grammy";
-import { DATE_REGEX, TIME_REGEX } from "@/bot/utils/validators";
+import { TIME_REGEX } from "@/bot/utils/validators";
 import {
+  formatDateForDisplay,
   formatDateInTimeZone,
   formatDateLocal,
+  getNextIsoDates,
+  getWeekdayShortRu,
   isValidTimeZone,
+  parseDisplayDate,
 } from "@/bot/utils/dateTime";
 import { ensureLinked, unlinkAccount } from "@/bot/services/telegramAccounts";
 import {
@@ -15,9 +19,12 @@ import { getPlanEntriesByDate } from "@/lib/planEntries";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
 import {
   buildCancelLinkReplyKeyboard,
+  buildDateMenuReplyKeyboard,
   buildLinkReplyKeyboard,
   buildMainMenuReplyKeyboard,
   CANCEL_LINK_BUTTON_TEXT,
+  CUSTOM_DATE_BUTTON_TEXT,
+  DATE_BACK_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 import {
   clearPendingInput,
@@ -113,9 +120,22 @@ export const registerTextMessageHandler = (bot: Bot) => {
       }
 
       if (action === "date") {
-        setPendingInput(chatId, "date");
+        setPendingInput(chatId, "dateMenu");
+        const subscription = await getSubscription(userId);
+        const timeZone = subscription?.timezone ?? null;
+        const today = timeZone
+          ? formatDateInTimeZone(new Date(), timeZone)
+          : formatDateLocal(new Date());
+        const dateButtons = getNextIsoDates(today, 7).map((date) => {
+          const weekday = getWeekdayShortRu(date);
+          const label = formatDateForDisplay(date);
+          return weekday ? `${label} (${weekday})` : label;
+        });
         await ctx.reply(
-          "Введите дату в формате YYYY-MM-DD (например, 2025-12-21) или напишите 'отмена'."
+          "Выбери дату из списка или нажми \"Произвольная дата\".",
+          {
+            reply_markup: buildDateMenuReplyKeyboard({ dateButtons }),
+          }
         );
         return;
       }
@@ -285,16 +305,58 @@ export const registerTextMessageHandler = (bot: Bot) => {
       return;
     }
 
-    if (pending === "date") {
-      if (!DATE_REGEX.test(text)) {
+    if (pending === "dateMenu") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        clearPendingInput(chatId);
+        const subscription = await getSubscription(userId);
+        await ctx.reply("Меню управления ниже.", {
+          reply_markup: buildMainMenuReplyKeyboard({
+            subscribed: subscription?.enabled ?? false,
+          }),
+        });
+        return;
+      }
+
+      if (text === CUSTOM_DATE_BUTTON_TEXT) {
+        setPendingInput(chatId, "date");
         await ctx.reply(
-          "Введите дату в формате YYYY-MM-DD (например, 2025-12-21) или напишите 'отмена'."
+          "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
         );
         return;
       }
 
-      const entries = await getPlanEntriesByDate({ userId, date: text });
-      const message = formatPlanMessage({ date: text, entries });
+      const parsedDate = parseDisplayDate(text);
+      if (!parsedDate) {
+        await ctx.reply(
+          "Выбери дату из списка или нажми \"Произвольная дата\"."
+        );
+        return;
+      }
+
+      const entries = await getPlanEntriesByDate({ userId, date: parsedDate });
+      const message = formatPlanMessage({ date: parsedDate, entries });
+
+      clearPendingInput(chatId);
+      const subscription = await getSubscription(userId);
+      await ctx.reply(message, {
+        reply_markup: buildMainMenuReplyKeyboard({
+          subscribed: subscription?.enabled ?? false,
+        }),
+      });
+      return;
+    }
+
+    if (pending === "date") {
+      const parsedDate = parseDisplayDate(text);
+      if (!parsedDate) {
+        await ctx.reply(
+          "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
+        );
+        return;
+      }
+
+      const entries = await getPlanEntriesByDate({ userId, date: parsedDate });
+      const message = formatPlanMessage({ date: parsedDate, entries });
 
       clearPendingInput(chatId);
       const subscription = await getSubscription(userId);
