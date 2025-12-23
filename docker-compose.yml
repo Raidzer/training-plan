@@ -11,3 +11,26 @@ services:
     volumes:
       - ./tmp/pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+
+  app:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://runlog:runlog@db:5432/runlog
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  bot:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://runlog:runlog@db:5432/runlog
+    command: ["sh", "-c", "node wait-for-db.js && npm run db:push && npm run bot"]
+    depends_on:
+      - db
+    restart: unless-stopped

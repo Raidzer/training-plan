@@ -8,7 +8,9 @@ import {
   numeric,
   varchar,
   boolean,
+  bigint,
   jsonb,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -62,20 +64,29 @@ export const planImports = pgTable("plan_imports", {
   error: text("error"),
 });
 
-export const planEntries = pgTable("plan_entries", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  importId: integer("import_id").references(() => planImports.id),
-  date: date("date").notNull(),
-  sessionOrder: integer("session_order").notNull().default(1),
-  taskText: text("task_text").notNull(),
-  commentText: text("comment_text"),
-  isWorkload: boolean("is_workload").notNull().default(false),
-  rawRow: jsonb("raw_row"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const planEntries = pgTable(
+  "plan_entries",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    importId: integer("import_id").references(() => planImports.id),
+    date: date("date").notNull(),
+    sessionOrder: integer("session_order").notNull().default(1),
+    taskText: text("task_text").notNull(),
+    commentText: text("comment_text"),
+    isWorkload: boolean("is_workload").notNull().default(false),
+    rawRow: jsonb("raw_row"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    planEntriesUserDateIdx: index("plan_entries_user_date_idx").on(
+      table.userId,
+      table.date
+    ),
+  })
+);
 
 export const workouts = pgTable("workouts", {
   id: serial("id").primaryKey(),
@@ -90,4 +101,42 @@ export const workouts = pgTable("workouts", {
   rpe: integer("rpe"),
   comment: text("comment"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const telegramLinkCodes = pgTable("telegram_link_codes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  consumedAt: timestamp("consumed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const telegramAccounts = pgTable("telegram_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  chatId: bigint("chat_id", { mode: "number" }).notNull().unique(),
+  username: varchar("username", { length: 64 }),
+  firstName: varchar("first_name", { length: 128 }),
+  linkedAt: timestamp("linked_at").notNull().defaultNow(),
+});
+
+export const telegramSubscriptions = pgTable("telegram_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  chatId: bigint("chat_id", { mode: "number" }).notNull(),
+  timezone: varchar("timezone", { length: 64 }),
+  sendTime: varchar("send_time", { length: 5 }),
+  enabled: boolean("enabled").notNull().default(false),
+  lastSentOn: date("last_sent_on"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

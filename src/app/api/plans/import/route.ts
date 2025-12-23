@@ -204,100 +204,53 @@ export async function POST(req: Request) {
     };
   });
 
-  // Уберём дубликаты: если запись с тем же пользователем, датой, порядком и текстом уже есть, не вставляем.
-  let duplicates = 0;
-  let deduped = entries;
-  let workloadUpdates: number[] = [];
-  if (entries.length) {
-    const dates = Array.from(sessionCounter.keys());
-    const existing =
-      dates.length === 0
-        ? []
-        : await db
-            .select({
-              id: planEntries.id,
-              date: planEntries.date,
-              sessionOrder: planEntries.sessionOrder,
-              taskText: planEntries.taskText,
-              commentText: planEntries.commentText,
-              isWorkload: planEntries.isWorkload,
-            })
-            .from(planEntries)
-            .where(
-              and(
-                eq(planEntries.userId, userId),
-                inArray(planEntries.date, dates)
-              )
-            );
+  const dates = Array.from(sessionCounter.keys());
+  const now = new Date();
+  const createdImport = await db.transaction(async (tx) => {
+    const [importRow] = await tx
+      .insert(planImports)
+      .values({
+        userId,
+        filename,
+        rowCount: parsed.rows.length,
+        insertedCount: entries.length,
+        skippedCount: parsed.errors.length,
+      })
+      .returning({ id: planImports.id });
 
-    const existingByKey = new Map<string, { id: number; isWorkload: boolean }>(
-      existing.map((e) => [
-        `${e.date}#${e.sessionOrder}#${e.taskText}#${e.commentText ?? ""}`,
-        { id: e.id, isWorkload: e.isWorkload },
-      ])
-    );
+    if (dates.length) {
+      await tx
+        .delete(planEntries)
+        .where(
+          and(eq(planEntries.userId, userId), inArray(planEntries.date, dates))
+        );
+    }
 
-    deduped = entries.filter((e) => {
-      const key = `${e.date}#${e.sessionOrder}#${e.taskText}#${
-        e.commentText ?? ""
-      }`;
-      const matched = existingByKey.get(key);
-      if (matched) {
-        duplicates += 1;
-        if (!matched.isWorkload && e.isWorkload) {
-          workloadUpdates.push(matched.id);
-        }
-        return false;
-      }
-      existingByKey.set(key, { id: -1, isWorkload: e.isWorkload });
-      return true;
-    });
-  }
-
-  const [createdImport] = await db
-    .insert(planImports)
-    .values({
-      userId,
-      filename,
-      rowCount: parsed.rows.length,
-      insertedCount: deduped.length,
-      skippedCount: parsed.errors.length + duplicates,
-    })
-    .returning({ id: planImports.id });
-
-  if (deduped.length) {
-    await db.insert(planEntries).values(
-      deduped.map((e) => ({
-        ...e,
-        importId: createdImport.id,
-      }))
-    );
-  }
-
-  if (workloadUpdates.length) {
-    await db
-      .update(planEntries)
-      .set({ isWorkload: true })
-      .where(
-        and(
-          eq(planEntries.userId, userId),
-          inArray(planEntries.id, workloadUpdates)
-        )
+    if (entries.length) {
+      await tx.insert(planEntries).values(
+        entries.map((e) => ({
+          ...e,
+          importId: importRow.id,
+        }))
       );
-  }
+    }
 
-  await db
-    .update(planImports)
-    .set({
-      insertedCount: deduped.length,
-      completedAt: new Date(),
-    })
-    .where(eq(planImports.id, createdImport.id));
+    await tx
+      .update(planImports)
+      .set({
+        insertedCount: entries.length,
+        skippedCount: parsed.errors.length,
+        completedAt: now,
+      })
+      .where(eq(planImports.id, importRow.id));
+
+    return importRow;
+  });
 
   return NextResponse.json({
     importId: createdImport.id,
-    inserted: deduped.length,
-    skipped: parsed.errors.length + duplicates,
+    inserted: entries.length,
+    skipped: parsed.errors.length,
     errors: parsed.errors,
   });
 }
