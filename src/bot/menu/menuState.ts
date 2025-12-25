@@ -6,6 +6,7 @@ export type PendingInput =
   | "link"
   | "weightDateMenu"
   | "weightDate"
+  | "weightAction"
   | "weightPeriod"
   | "weightValue";
 

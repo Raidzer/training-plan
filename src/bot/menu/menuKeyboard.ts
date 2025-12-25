@@ -10,9 +10,11 @@ export const TIME_BUTTON_TEXT = "Время рассылки";
 export const TIMEZONE_BUTTON_TEXT = "Часовой пояс";
 export const UNLINK_BUTTON_TEXT = "Отвязать";
 export const HELP_BUTTON_TEXT = "Помощь";
-export const WEIGHT_BUTTON_TEXT = "Указать вес";
+export const WEIGHT_BUTTON_TEXT = "Заполнить отчет";
 export const WEIGHT_TODAY_BUTTON_TEXT = "Сегодня";
 export const WEIGHT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
+export const REPORT_WEIGHT_BUTTON_TEXT = "Указать вес";
+export const REPORT_MAIN_MENU_BUTTON_TEXT = "Главное меню";
 export const WEIGHT_MORNING_BUTTON_TEXT = "Указать утренний вес";
 export const WEIGHT_EVENING_BUTTON_TEXT = "Указать вечерний вес";
 
@@ -93,6 +95,20 @@ export const buildWeightPeriodReplyKeyboard = () => {
         { text: WEIGHT_EVENING_BUTTON_TEXT },
       ],
       [{ text: DATE_BACK_BUTTON_TEXT }],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+export const buildWeightActionReplyKeyboard = () => {
+  return {
+    keyboard: [
+      [{ text: REPORT_WEIGHT_BUTTON_TEXT }],
+      [
+        { text: REPORT_MAIN_MENU_BUTTON_TEXT },
+        { text: DATE_BACK_BUTTON_TEXT },
+      ],
     ],
     resize_keyboard: true,
     is_persistent: true,

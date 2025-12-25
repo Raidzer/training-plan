@@ -22,11 +22,14 @@ import {
   buildDateMenuReplyKeyboard,
   buildLinkReplyKeyboard,
   buildMainMenuReplyKeyboard,
+  buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   buildWeightPeriodReplyKeyboard,
   CANCEL_LINK_BUTTON_TEXT,
   CUSTOM_DATE_BUTTON_TEXT,
   DATE_BACK_BUTTON_TEXT,
+  REPORT_WEIGHT_BUTTON_TEXT,
+  REPORT_MAIN_MENU_BUTTON_TEXT,
   WEIGHT_CUSTOM_DATE_BUTTON_TEXT,
   WEIGHT_EVENING_BUTTON_TEXT,
   WEIGHT_MORNING_BUTTON_TEXT,
@@ -224,7 +227,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
           "Что умеет бот:",
           " Сегодня - показать план на сегодня.",
           " Дата - запрос плана на конкретную дату.",
-          " Указать вес - записать утренний или вечерний вес.",
+          " Заполнить отчет - записать утренний или вечерний вес.",
           " Подписка - включить/выключить рассылку.",
           " Время рассылки - установить время.",
           " Таймзона - установить часовой пояс.",
@@ -387,9 +390,9 @@ export const registerTextMessageHandler = (bot: Bot) => {
           ? formatDateInTimeZone(new Date(), timeZone)
           : formatDateLocal(new Date());
         setWeightDraft(chatId, { date: today, period: null });
-        setPendingInput(chatId, "weightPeriod");
-        await ctx.reply("Выбери период взвешивания.", {
-          reply_markup: buildWeightPeriodReplyKeyboard(),
+        setPendingInput(chatId, "weightAction");
+        await ctx.reply("Выбери действие.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
         });
         return;
       }
@@ -448,19 +451,64 @@ export const registerTextMessageHandler = (bot: Bot) => {
       }
 
       setWeightDraft(chatId, { date: parsedDate, period: null });
-      setPendingInput(chatId, "weightPeriod");
-      await ctx.reply("Выбери период взвешивания.", {
-        reply_markup: buildWeightPeriodReplyKeyboard(),
+      setPendingInput(chatId, "weightAction");
+      await ctx.reply("Выбери действие.", {
+        reply_markup: buildWeightActionReplyKeyboard(),
+      });
+      return;
+    }
+
+    if (pending === "weightAction") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        clearWeightDraft(chatId);
+        setPendingInput(chatId, "weightDateMenu");
+        await ctx.reply("Когда зафиксировать вес?", {
+          reply_markup: buildWeightDateReplyKeyboard(),
+        });
+        return;
+      }
+
+      const draft = getWeightDraft(chatId);
+      if (!draft.date) {
+        clearWeightDraft(chatId);
+        setPendingInput(chatId, "weightDateMenu");
+        await ctx.reply("Сначала выбери дату.", {
+          reply_markup: buildWeightDateReplyKeyboard(),
+        });
+        return;
+      }
+
+      if (text === REPORT_WEIGHT_BUTTON_TEXT) {
+        setPendingInput(chatId, "weightPeriod");
+        await ctx.reply("Выбери период взвешивания.", {
+          reply_markup: buildWeightPeriodReplyKeyboard(),
+        });
+        return;
+      }
+
+      if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
+        clearPendingInput(chatId);
+        clearWeightDraft(chatId);
+        const subscription = await getSubscription(userId);
+        await ctx.reply("Меню управления ниже.", {
+          reply_markup: buildMainMenuReplyKeyboard({
+            subscribed: subscription?.enabled ?? false,
+          }),
+        });
+        return;
+      }
+
+      await ctx.reply("Выбери действие.", {
+        reply_markup: buildWeightActionReplyKeyboard(),
       });
       return;
     }
 
     if (pending === "weightPeriod") {
       if (text === DATE_BACK_BUTTON_TEXT) {
-        clearWeightDraft(chatId);
-        setPendingInput(chatId, "weightDateMenu");
-        await ctx.reply("Когда зафиксировать вес?", {
-          reply_markup: buildWeightDateReplyKeyboard(),
+        setPendingInput(chatId, "weightAction");
+        await ctx.reply("Выбери действие.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
         });
         return;
       }
