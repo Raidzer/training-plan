@@ -10,12 +10,18 @@ export const TIME_BUTTON_TEXT = "Время рассылки";
 export const TIMEZONE_BUTTON_TEXT = "Часовой пояс";
 export const UNLINK_BUTTON_TEXT = "Отвязать";
 export const HELP_BUTTON_TEXT = "Помощь";
+export const WEIGHT_BUTTON_TEXT = "Указать вес";
+export const WEIGHT_TODAY_BUTTON_TEXT = "Сегодня";
+export const WEIGHT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
+export const WEIGHT_MORNING_BUTTON_TEXT = "Указать утренний вес";
+export const WEIGHT_EVENING_BUTTON_TEXT = "Указать вечерний вес";
 
 export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) => {
   const subscribed = params?.subscribed ?? false;
   return {
     keyboard: [
       [{ text: TODAY_BUTTON_TEXT }, { text: DATE_BUTTON_TEXT }],
+      [{ text: WEIGHT_BUTTON_TEXT }],
       [
         {
           text: subscribed ? SUBSCRIBE_ON_BUTTON_TEXT : SUBSCRIBE_OFF_BUTTON_TEXT,
@@ -60,6 +66,34 @@ export const buildDateMenuReplyKeyboard = (params: { dateButtons: string[] }) =>
   ]);
   return {
     keyboard: rows,
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+export const buildWeightDateReplyKeyboard = () => {
+  return {
+    keyboard: [
+      [
+        { text: WEIGHT_TODAY_BUTTON_TEXT },
+        { text: WEIGHT_CUSTOM_DATE_BUTTON_TEXT },
+      ],
+      [{ text: DATE_BACK_BUTTON_TEXT }],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+export const buildWeightPeriodReplyKeyboard = () => {
+  return {
+    keyboard: [
+      [
+        { text: WEIGHT_MORNING_BUTTON_TEXT },
+        { text: WEIGHT_EVENING_BUTTON_TEXT },
+      ],
+      [{ text: DATE_BACK_BUTTON_TEXT }],
+    ],
     resize_keyboard: true,
     is_persistent: true,
   };

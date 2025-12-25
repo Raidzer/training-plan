@@ -9,12 +9,14 @@ import {
   TIMEZONE_BUTTON_TEXT,
   TODAY_BUTTON_TEXT,
   UNLINK_BUTTON_TEXT,
+  WEIGHT_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
-import { clearPendingInput } from "@/bot/menu/menuState";
+import { clearPendingInput, clearWeightDraft } from "@/bot/menu/menuState";
 
 export const resetPendingInput = (ctx: { chat?: { id: number } }) => {
   if (ctx.chat) {
     clearPendingInput(ctx.chat.id);
+    clearWeightDraft(ctx.chat.id);
   }
 };
 
@@ -40,6 +42,8 @@ export const getMenuActionByText = (text: string) => {
       return "unlink";
     case HELP_BUTTON_TEXT:
       return "help";
+    case WEIGHT_BUTTON_TEXT:
+      return "weight";
     default:
       return null;
   }

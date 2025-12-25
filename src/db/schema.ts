@@ -11,6 +11,7 @@ import {
   bigint,
   jsonb,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -140,3 +141,23 @@ export const telegramSubscriptions = pgTable("telegram_subscriptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const weightEntries = pgTable(
+  "weight_entries",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    date: date("date").notNull(),
+    period: varchar("period", { length: 16 }).notNull(),
+    weightKg: numeric("weight_kg", { precision: 5, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    weightEntriesUserDatePeriodIdx: uniqueIndex(
+      "weight_entries_user_date_period_idx"
+    ).on(table.userId, table.date, table.period),
+  })
+);
