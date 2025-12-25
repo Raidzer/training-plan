@@ -14,7 +14,11 @@ export const WEIGHT_BUTTON_TEXT = "Заполнить отчет";
 export const WEIGHT_TODAY_BUTTON_TEXT = "Сегодня";
 export const WEIGHT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
 export const REPORT_WEIGHT_BUTTON_TEXT = "Указать вес";
+export const REPORT_WORKOUT_BUTTON_TEXT = "Отчет по тренировке";
 export const REPORT_MAIN_MENU_BUTTON_TEXT = "Главное меню";
+export const REPORT_EDIT_TIME_BUTTON_TEXT = "Редактировать время";
+export const REPORT_EDIT_RESULT_BUTTON_TEXT = "Редактировать результат";
+export const REPORT_EDIT_COMMENT_BUTTON_TEXT = "Редактировать комментарий";
 export const WEIGHT_MORNING_BUTTON_TEXT = "Указать утренний вес";
 export const WEIGHT_EVENING_BUTTON_TEXT = "Указать вечерний вес";
 
@@ -104,7 +108,41 @@ export const buildWeightPeriodReplyKeyboard = () => {
 export const buildWeightActionReplyKeyboard = () => {
   return {
     keyboard: [
-      [{ text: REPORT_WEIGHT_BUTTON_TEXT }],
+      [
+        { text: REPORT_WEIGHT_BUTTON_TEXT },
+        { text: REPORT_WORKOUT_BUTTON_TEXT },
+      ],
+      [
+        { text: REPORT_MAIN_MENU_BUTTON_TEXT },
+        { text: DATE_BACK_BUTTON_TEXT },
+      ],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+export const buildWorkoutSelectReplyKeyboard = (params: {
+  workoutButtons: string[];
+}) => {
+  const rows = params.workoutButtons.map((text) => [{ text }]);
+  rows.push([
+    { text: REPORT_MAIN_MENU_BUTTON_TEXT },
+    { text: DATE_BACK_BUTTON_TEXT },
+  ]);
+  return {
+    keyboard: rows,
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+export const buildWorkoutEditReplyKeyboard = () => {
+  return {
+    keyboard: [
+      [{ text: REPORT_EDIT_TIME_BUTTON_TEXT }],
+      [{ text: REPORT_EDIT_RESULT_BUTTON_TEXT }],
+      [{ text: REPORT_EDIT_COMMENT_BUTTON_TEXT }],
       [
         { text: REPORT_MAIN_MENU_BUTTON_TEXT },
         { text: DATE_BACK_BUTTON_TEXT },

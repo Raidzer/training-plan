@@ -161,3 +161,27 @@ export const weightEntries = pgTable(
     ).on(table.userId, table.date, table.period),
   })
 );
+
+export const workoutReports = pgTable(
+  "workout_reports",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    planEntryId: integer("plan_entry_id")
+      .notNull()
+      .references(() => planEntries.id),
+    date: date("date").notNull(),
+    startTime: varchar("start_time", { length: 5 }).notNull(),
+    resultText: text("result_text").notNull(),
+    commentText: text("comment_text"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    workoutReportsUserPlanIdx: uniqueIndex(
+      "workout_reports_user_plan_entry_idx"
+    ).on(table.userId, table.planEntryId),
+  })
+);

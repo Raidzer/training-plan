@@ -11,12 +11,17 @@ import {
   UNLINK_BUTTON_TEXT,
   WEIGHT_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
-import { clearPendingInput, clearWeightDraft } from "@/bot/menu/menuState";
+import {
+  clearPendingInput,
+  clearWeightDraft,
+  clearWorkoutDraft,
+} from "@/bot/menu/menuState";
 
 export const resetPendingInput = (ctx: { chat?: { id: number } }) => {
   if (ctx.chat) {
     clearPendingInput(ctx.chat.id);
     clearWeightDraft(ctx.chat.id);
+    clearWorkoutDraft(ctx.chat.id);
   }
 };
 

@@ -8,12 +8,29 @@ export type PendingInput =
   | "weightDate"
   | "weightAction"
   | "weightPeriod"
-  | "weightValue";
+  | "weightValue"
+  | "workoutSelect"
+  | "workoutStartTime"
+  | "workoutResult"
+  | "workoutComment"
+  | "workoutEditSelect"
+  | "workoutEditTime"
+  | "workoutEditResult"
+  | "workoutEditComment";
 
 const pendingInputs = new Map<number, PendingInput>();
 const weightDrafts = new Map<
   number,
   { date: string | null; period: "morning" | "evening" | null }
+>();
+const workoutDrafts = new Map<
+  number,
+  {
+    date: string | null;
+    planEntryId: number | null;
+    startTime: string | null;
+    resultText: string | null;
+  }
 >();
 
 export const setPendingInput = (chatId: number, input: PendingInput) => {
@@ -45,4 +62,42 @@ export const getWeightDraft = (chatId: number) => {
 
 export const clearWeightDraft = (chatId: number) => {
   weightDrafts.delete(chatId);
+};
+
+export const setWorkoutDraft = (
+  chatId: number,
+  draft: {
+    date?: string | null;
+    planEntryId?: number | null;
+    startTime?: string | null;
+    resultText?: string | null;
+  }
+) => {
+  const current = workoutDrafts.get(chatId) ?? {
+    date: null,
+    planEntryId: null,
+    startTime: null,
+    resultText: null,
+  };
+  workoutDrafts.set(chatId, {
+    date: draft.date ?? current.date,
+    planEntryId: draft.planEntryId ?? current.planEntryId,
+    startTime: draft.startTime ?? current.startTime,
+    resultText: draft.resultText ?? current.resultText,
+  });
+};
+
+export const getWorkoutDraft = (chatId: number) => {
+  return (
+    workoutDrafts.get(chatId) ?? {
+      date: null,
+      planEntryId: null,
+      startTime: null,
+      resultText: null,
+    }
+  );
+};
+
+export const clearWorkoutDraft = (chatId: number) => {
+  workoutDrafts.delete(chatId);
 };

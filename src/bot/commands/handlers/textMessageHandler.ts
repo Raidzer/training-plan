@@ -15,7 +15,6 @@ import {
   upsertSubscription,
 } from "@/bot/services/telegramSubscriptions";
 import { linkAccount } from "@/bot/services/telegramLinking";
-import { getPlanEntriesByDate } from "@/lib/planEntries";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
 import {
   buildCancelLinkReplyKeyboard,
@@ -25,10 +24,16 @@ import {
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   buildWeightPeriodReplyKeyboard,
+  buildWorkoutEditReplyKeyboard,
+  buildWorkoutSelectReplyKeyboard,
   CANCEL_LINK_BUTTON_TEXT,
   CUSTOM_DATE_BUTTON_TEXT,
   DATE_BACK_BUTTON_TEXT,
+  REPORT_EDIT_COMMENT_BUTTON_TEXT,
+  REPORT_EDIT_RESULT_BUTTON_TEXT,
+  REPORT_EDIT_TIME_BUTTON_TEXT,
   REPORT_WEIGHT_BUTTON_TEXT,
+  REPORT_WORKOUT_BUTTON_TEXT,
   REPORT_MAIN_MENU_BUTTON_TEXT,
   WEIGHT_CUSTOM_DATE_BUTTON_TEXT,
   WEIGHT_EVENING_BUTTON_TEXT,
@@ -38,13 +43,21 @@ import {
 import {
   clearPendingInput,
   clearWeightDraft,
+  clearWorkoutDraft,
   getPendingInput,
   getWeightDraft,
+  getWorkoutDraft,
   setPendingInput,
   setWeightDraft,
+  setWorkoutDraft,
 } from "@/bot/menu/menuState";
 import { getMenuActionByText } from "@/bot/commands/handlers/helpers";
 import { upsertWeightEntry } from "@/lib/weightEntries";
+import { getPlanEntriesByDate } from "@/lib/planEntries";
+import {
+  getWorkoutReportByPlanEntry,
+  upsertWorkoutReport,
+} from "@/lib/workoutReports";
 
 export const registerTextMessageHandler = (bot: Bot) => {
   bot.on("message:text", async (ctx: any) => {
@@ -155,6 +168,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
 
       if (action === "weight") {
         clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
         setPendingInput(chatId, "weightDateMenu");
         await ctx.reply("Когда зафиксировать вес?", {
           reply_markup: buildWeightDateReplyKeyboard(),
@@ -227,7 +241,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
           "Что умеет бот:",
           " Сегодня - показать план на сегодня.",
           " Дата - запрос плана на конкретную дату.",
-          " Заполнить отчет - записать утренний или вечерний вес.",
+          " Заполнить отчет - записать вес или отчет по тренировке.",
           " Подписка - включить/выключить рассылку.",
           " Время рассылки - установить время.",
           " Таймзона - установить часовой пояс.",
@@ -256,6 +270,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
     ) {
       clearPendingInput(chatId);
       clearWeightDraft(chatId);
+      clearWorkoutDraft(chatId);
       const userId = await ensureLinked(chatId);
       const subscription = userId ? await getSubscription(userId) : null;
       const replyMarkup =
@@ -374,6 +389,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
       if (text === DATE_BACK_BUTTON_TEXT) {
         clearPendingInput(chatId);
         clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
         const subscription = await getSubscription(userId);
         await ctx.reply("Меню управления ниже.", {
           reply_markup: buildMainMenuReplyKeyboard({
@@ -461,6 +477,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
     if (pending === "weightAction") {
       if (text === DATE_BACK_BUTTON_TEXT) {
         clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
         setPendingInput(chatId, "weightDateMenu");
         await ctx.reply("Когда зафиксировать вес?", {
           reply_markup: buildWeightDateReplyKeyboard(),
@@ -471,6 +488,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
       const draft = getWeightDraft(chatId);
       if (!draft.date) {
         clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
         setPendingInput(chatId, "weightDateMenu");
         await ctx.reply("Сначала выбери дату.", {
           reply_markup: buildWeightDateReplyKeyboard(),
@@ -486,9 +504,30 @@ export const registerTextMessageHandler = (bot: Bot) => {
         return;
       }
 
+      if (text === REPORT_WORKOUT_BUTTON_TEXT) {
+        const entries = await getPlanEntriesByDate({
+          userId,
+          date: draft.date,
+        });
+        if (!entries.length) {
+          await ctx.reply("На выбранную дату нет тренировок в плане.");
+          return;
+        }
+
+        const workoutButtons = entries.map(
+          (entry) => `${entry.sessionOrder}. ${entry.taskText}`
+        );
+        setPendingInput(chatId, "workoutSelect");
+        await ctx.reply("Выбери тренировку из плана.", {
+          reply_markup: buildWorkoutSelectReplyKeyboard({ workoutButtons }),
+        });
+        return;
+      }
+
       if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
         clearPendingInput(chatId);
         clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
         const subscription = await getSubscription(userId);
         await ctx.reply("Меню управления ниже.", {
           reply_markup: buildMainMenuReplyKeyboard({
@@ -597,6 +636,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
       const draft = getWeightDraft(chatId);
       if (!draft.date || !draft.period) {
         clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
         setPendingInput(chatId, "weightDateMenu");
         await ctx.reply("Сначала выбери дату и период.", {
           reply_markup: buildWeightDateReplyKeyboard(),
@@ -613,6 +653,7 @@ export const registerTextMessageHandler = (bot: Bot) => {
 
       clearPendingInput(chatId);
       clearWeightDraft(chatId);
+      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       const periodLabel = draft.period === "morning" ? "утро" : "вечер";
       const displayDate = formatDateForDisplay(draft.date);
@@ -627,6 +668,438 @@ export const registerTextMessageHandler = (bot: Bot) => {
       return;
     }
 
+    if (pending === "workoutSelect") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "weightAction");
+        await ctx.reply("Выбери действие.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
+        clearPendingInput(chatId);
+        clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
+        const subscription = await getSubscription(userId);
+        await ctx.reply("Меню управления ниже.", {
+          reply_markup: buildMainMenuReplyKeyboard({
+            subscribed: subscription?.enabled ?? false,
+          }),
+        });
+        return;
+      }
+
+      const draft = getWeightDraft(chatId);
+      if (!draft.date) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "weightDateMenu");
+        await ctx.reply("Сначала выбери дату.", {
+          reply_markup: buildWeightDateReplyKeyboard(),
+        });
+        return;
+      }
+
+      const entries = await getPlanEntriesByDate({
+        userId,
+        date: draft.date,
+      });
+      if (!entries.length) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "weightAction");
+        await ctx.reply("На выбранную дату нет тренировок в плане.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      const orderMatch = text.match(/^\s*(\d+)\s*(?:\.|$)/);
+      const selectedByOrder = orderMatch
+        ? entries.find((entry) => entry.sessionOrder === Number(orderMatch[1]))
+        : null;
+      const selected =
+        selectedByOrder ??
+        entries.find((entry) => {
+          const label = `${entry.sessionOrder}. ${entry.taskText}`;
+          return label === text;
+        });
+
+      if (!selected) {
+        const workoutButtons = entries.map(
+          (entry) => `${entry.sessionOrder}. ${entry.taskText}`
+        );
+        await ctx.reply("Выбери тренировку из списка.", {
+          reply_markup: buildWorkoutSelectReplyKeyboard({ workoutButtons }),
+        });
+        return;
+      }
+
+      setWorkoutDraft(chatId, {
+        date: draft.date,
+        planEntryId: selected.id,
+        startTime: null,
+        resultText: null,
+      });
+
+      const existingReport = await getWorkoutReportByPlanEntry({
+        userId,
+        planEntryId: selected.id,
+      });
+      if (existingReport) {
+        setPendingInput(chatId, "workoutEditSelect");
+        await ctx.reply(
+          `Найден отчет: ${existingReport.startTime}. ${
+            existingReport.resultText
+          }${
+            existingReport.commentText ? ` (${existingReport.commentText})` : ""
+          }.`,
+          {
+            reply_markup: buildWorkoutEditReplyKeyboard(),
+          }
+        );
+        return;
+      }
+
+      setPendingInput(chatId, "workoutStartTime");
+      await ctx.reply(
+        "Введите время начала тренировки в формате HH:MM (например, 07:30) или напишите 'отмена'."
+      );
+      return;
+    }
+
+    if (pending === "workoutStartTime") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        const dateDraft = getWeightDraft(chatId);
+        if (dateDraft.date) {
+          const entries = await getPlanEntriesByDate({
+            userId,
+            date: dateDraft.date,
+          });
+          const workoutButtons = entries.map(
+            (entry) => `${entry.sessionOrder}. ${entry.taskText}`
+          );
+          await ctx.reply("Выбери тренировку из плана.", {
+            reply_markup: buildWorkoutSelectReplyKeyboard({ workoutButtons }),
+          });
+          return;
+        }
+
+        await ctx.reply("Сначала выбери дату.", {
+          reply_markup: buildWeightDateReplyKeyboard(),
+        });
+        return;
+      }
+
+      if (!TIME_REGEX.test(text)) {
+        await ctx.reply(
+          "Введите время начала в формате HH:MM (например, 07:30) или напишите 'отмена'."
+        );
+        return;
+      }
+
+      const draft = getWorkoutDraft(chatId);
+      if (!draft.planEntryId) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        await ctx.reply("Сначала выбери тренировку.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      setWorkoutDraft(chatId, { startTime: text });
+      setPendingInput(chatId, "workoutResult");
+      await ctx.reply("Опиши результат тренировки.");
+      return;
+    }
+
+    if (pending === "workoutEditSelect") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        const dateDraft = getWeightDraft(chatId);
+        if (dateDraft.date) {
+          const entries = await getPlanEntriesByDate({
+            userId,
+            date: dateDraft.date,
+          });
+          const workoutButtons = entries.map(
+            (entry) => `${entry.sessionOrder}. ${entry.taskText}`
+          );
+          await ctx.reply("Выбери тренировку из плана.", {
+            reply_markup: buildWorkoutSelectReplyKeyboard({ workoutButtons }),
+          });
+          return;
+        }
+
+        await ctx.reply("Сначала выбери дату.", {
+          reply_markup: buildWeightDateReplyKeyboard(),
+        });
+        return;
+      }
+
+      if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
+        clearPendingInput(chatId);
+        clearWeightDraft(chatId);
+        clearWorkoutDraft(chatId);
+        const subscription = await getSubscription(userId);
+        await ctx.reply("Меню управления ниже.", {
+          reply_markup: buildMainMenuReplyKeyboard({
+            subscribed: subscription?.enabled ?? false,
+          }),
+        });
+        return;
+      }
+
+      if (text === REPORT_EDIT_TIME_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutEditTime");
+        await ctx.reply(
+          "Введите время начала тренировки в формате HH:MM (например, 07:30) или напишите 'отмена'."
+        );
+        return;
+      }
+
+      if (text === REPORT_EDIT_RESULT_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutEditResult");
+        await ctx.reply("Опиши результат тренировки.");
+        return;
+      }
+
+      if (text === REPORT_EDIT_COMMENT_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutEditComment");
+        await ctx.reply(
+          "Добавь комментарий или напиши 'нет', чтобы очистить."
+        );
+        return;
+      }
+
+      await ctx.reply("Выбери, что нужно отредактировать.", {
+        reply_markup: buildWorkoutEditReplyKeyboard(),
+      });
+      return;
+    }
+
+    if (pending === "workoutResult") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutStartTime");
+        await ctx.reply(
+          "Введите время начала тренировки в формате HH:MM (например, 07:30) или напишите 'отмена'."
+        );
+        return;
+      }
+
+      const draft = getWorkoutDraft(chatId);
+      if (!draft.planEntryId || !draft.startTime) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        await ctx.reply("Сначала выбери тренировку.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      setWorkoutDraft(chatId, { resultText: text });
+      setPendingInput(chatId, "workoutComment");
+      await ctx.reply(
+        "Добавь комментарий или напиши 'нет', чтобы пропустить."
+      );
+      return;
+    }
+
+    if (pending === "workoutComment") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutResult");
+        await ctx.reply("Опиши результат тренировки.");
+        return;
+      }
+
+      const draft = getWorkoutDraft(chatId);
+      if (!draft.planEntryId || !draft.startTime || !draft.resultText) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        await ctx.reply("Сначала выбери тренировку.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      const comment =
+        text.trim().toLowerCase() === "нет" ? null : text.trim();
+
+      await upsertWorkoutReport({
+        userId,
+        planEntryId: draft.planEntryId,
+        date: draft.date ?? formatDateLocal(new Date()),
+        startTime: draft.startTime,
+        resultText: draft.resultText,
+        commentText: comment,
+      });
+
+      clearPendingInput(chatId);
+      clearWeightDraft(chatId);
+      clearWorkoutDraft(chatId);
+      const subscription = await getSubscription(userId);
+      await ctx.reply("Отчет сохранен.", {
+        reply_markup: buildMainMenuReplyKeyboard({
+          subscribed: subscription?.enabled ?? false,
+        }),
+      });
+      return;
+    }
+
+    if (pending === "workoutEditTime") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutEditSelect");
+        await ctx.reply("Выбери, что нужно отредактировать.", {
+          reply_markup: buildWorkoutEditReplyKeyboard(),
+        });
+        return;
+      }
+
+      if (!TIME_REGEX.test(text)) {
+        await ctx.reply(
+          "Введите время начала в формате HH:MM (например, 07:30) или напишите 'отмена'."
+        );
+        return;
+      }
+
+      const draft = getWorkoutDraft(chatId);
+      if (!draft.planEntryId) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        await ctx.reply("Сначала выбери тренировку.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      const existingReport = await getWorkoutReportByPlanEntry({
+        userId,
+        planEntryId: draft.planEntryId,
+      });
+      if (!existingReport) {
+        setPendingInput(chatId, "workoutStartTime");
+        await ctx.reply(
+          "Отчет не найден, начнем заново. Введите время начала тренировки."
+        );
+        return;
+      }
+
+      await upsertWorkoutReport({
+        userId,
+        planEntryId: draft.planEntryId,
+        date: existingReport.date,
+        startTime: text,
+        resultText: existingReport.resultText,
+        commentText: existingReport.commentText,
+      });
+
+      setPendingInput(chatId, "workoutEditSelect");
+      await ctx.reply("Время обновлено. Что еще отредактировать?", {
+        reply_markup: buildWorkoutEditReplyKeyboard(),
+      });
+      return;
+    }
+
+    if (pending === "workoutEditResult") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutEditSelect");
+        await ctx.reply("Выбери, что нужно отредактировать.", {
+          reply_markup: buildWorkoutEditReplyKeyboard(),
+        });
+        return;
+      }
+
+      const draft = getWorkoutDraft(chatId);
+      if (!draft.planEntryId) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        await ctx.reply("Сначала выбери тренировку.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      const existingReport = await getWorkoutReportByPlanEntry({
+        userId,
+        planEntryId: draft.planEntryId,
+      });
+      if (!existingReport) {
+        setPendingInput(chatId, "workoutStartTime");
+        await ctx.reply(
+          "Отчет не найден, начнем заново. Введите время начала тренировки."
+        );
+        return;
+      }
+
+      await upsertWorkoutReport({
+        userId,
+        planEntryId: draft.planEntryId,
+        date: existingReport.date,
+        startTime: existingReport.startTime,
+        resultText: text,
+        commentText: existingReport.commentText,
+      });
+
+      setPendingInput(chatId, "workoutEditSelect");
+      await ctx.reply("Результат обновлен. Что еще отредактировать?", {
+        reply_markup: buildWorkoutEditReplyKeyboard(),
+      });
+      return;
+    }
+
+    if (pending === "workoutEditComment") {
+      if (text === DATE_BACK_BUTTON_TEXT) {
+        setPendingInput(chatId, "workoutEditSelect");
+        await ctx.reply("Выбери, что нужно отредактировать.", {
+          reply_markup: buildWorkoutEditReplyKeyboard(),
+        });
+        return;
+      }
+
+      const draft = getWorkoutDraft(chatId);
+      if (!draft.planEntryId) {
+        clearWorkoutDraft(chatId);
+        setPendingInput(chatId, "workoutSelect");
+        await ctx.reply("Сначала выбери тренировку.", {
+          reply_markup: buildWeightActionReplyKeyboard(),
+        });
+        return;
+      }
+
+      const existingReport = await getWorkoutReportByPlanEntry({
+        userId,
+        planEntryId: draft.planEntryId,
+      });
+      if (!existingReport) {
+        setPendingInput(chatId, "workoutStartTime");
+        await ctx.reply(
+          "Отчет не найден, начнем заново. Введите время начала тренировки."
+        );
+        return;
+      }
+
+      const comment =
+        text.trim().toLowerCase() === "нет" ? null : text.trim();
+
+      await upsertWorkoutReport({
+        userId,
+        planEntryId: draft.planEntryId,
+        date: existingReport.date,
+        startTime: existingReport.startTime,
+        resultText: existingReport.resultText,
+        commentText: comment,
+      });
+
+      setPendingInput(chatId, "workoutEditSelect");
+      await ctx.reply("Комментарий обновлен. Что еще отредактировать?", {
+        reply_markup: buildWorkoutEditReplyKeyboard(),
+      });
+      return;
+    }
     if (pending === "timezone") {
       if (!isValidTimeZone(text)) {
         await ctx.reply(
