@@ -40,7 +40,19 @@ export async function GET(req: Request) {
     { header: "Объём", key: "volume", width: 12 },
   ];
 
-  rows.forEach((row) => sheet.addRow(row));
+  rows.forEach((row) => {
+    const excelRow = sheet.addRow(row);
+    if (!row.hasWorkload) {
+      return;
+    }
+    excelRow.eachCell({ includeEmpty: true }, (cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFDCE6F1" },
+      };
+    });
+  });
   sheet.getRow(1).font = { bold: true };
   sheet.columns?.forEach((column) => {
     column.alignment = { vertical: "top", wrapText: true };

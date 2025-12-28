@@ -68,6 +68,7 @@ export type DiaryExportRow = {
   weight: string;
   recovery: string;
   volume: string;
+  hasWorkload: boolean;
 };
 
 type DayAggregation = {
@@ -451,6 +452,7 @@ export const getDiaryExportRows = async (params: {
       date: planEntries.date,
       sessionOrder: planEntries.sessionOrder,
       taskText: planEntries.taskText,
+      isWorkload: planEntries.isWorkload,
     })
     .from(planEntries)
     .where(
@@ -518,11 +520,15 @@ export const getDiaryExportRows = async (params: {
 
   const planByDate = new Map<
     string,
-    { id: number; taskText: string }[]
+    { id: number; taskText: string; isWorkload: boolean }[]
   >();
   for (const entry of planRows) {
     const existing = planByDate.get(entry.date) ?? [];
-    existing.push({ id: entry.id, taskText: entry.taskText });
+    existing.push({
+      id: entry.id,
+      taskText: entry.taskText,
+      isWorkload: entry.isWorkload,
+    });
     planByDate.set(entry.date, existing);
   }
 
@@ -621,6 +627,7 @@ export const getDiaryExportRows = async (params: {
     const sleepText = formatSleep(recovery);
     const weightText = formatWeight(weight);
     const recoveryText = formatRecovery(recovery);
+    const hasWorkload = dayEntries.some((entry) => entry.isWorkload);
 
     if (dayEntries.length === 0) {
       rows.push({
@@ -633,6 +640,7 @@ export const getDiaryExportRows = async (params: {
         weight: weightText,
         recovery: recoveryText,
         volume: "-",
+        hasWorkload: false,
       });
       continue;
     }
@@ -674,6 +682,7 @@ export const getDiaryExportRows = async (params: {
       weight: weightText,
       recovery: recoveryText,
       volume: volumeText,
+      hasWorkload,
     });
   }
 
