@@ -11,6 +11,7 @@ import {
   bigint,
   jsonb,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -140,3 +141,73 @@ export const telegramSubscriptions = pgTable("telegram_subscriptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const weightEntries = pgTable(
+  "weight_entries",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    date: date("date").notNull(),
+    period: varchar("period", { length: 16 }).notNull(),
+    weightKg: numeric("weight_kg", { precision: 5, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    weightEntriesUserDatePeriodIdx: uniqueIndex(
+      "weight_entries_user_date_period_idx"
+    ).on(table.userId, table.date, table.period),
+  })
+);
+
+export const recoveryEntries = pgTable(
+  "recovery_entries",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    date: date("date").notNull(),
+    hasBath: boolean("has_bath").notNull().default(false),
+    hasMfr: boolean("has_mfr").notNull().default(false),
+    hasMassage: boolean("has_massage").notNull().default(false),
+    overallScore: integer("overall_score"),
+    functionalScore: integer("functional_score"),
+    muscleScore: integer("muscle_score"),
+    sleepHours: numeric("sleep_hours", { precision: 4, scale: 2 }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    recoveryEntriesUserDateIdx: uniqueIndex(
+      "recovery_entries_user_date_idx"
+    ).on(table.userId, table.date),
+  })
+);
+
+export const workoutReports = pgTable(
+  "workout_reports",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    planEntryId: integer("plan_entry_id")
+      .notNull()
+      .references(() => planEntries.id),
+    date: date("date").notNull(),
+    startTime: varchar("start_time", { length: 5 }).notNull(),
+    resultText: text("result_text").notNull(),
+    commentText: text("comment_text"),
+    distanceKm: numeric("distance_km", { precision: 6, scale: 2 }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    workoutReportsUserPlanIdx: uniqueIndex(
+      "workout_reports_user_plan_entry_idx"
+    ).on(table.userId, table.planEntryId),
+  })
+);
