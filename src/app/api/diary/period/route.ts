@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
-  if (!isValidDateString(from) || !isValidDateString(to)) {
+  if (!from || !to || !isValidDateString(from) || !isValidDateString(to)) {
     return NextResponse.json({ error: "invalid_range" }, { status: 400 });
   }
   if (from > to) {

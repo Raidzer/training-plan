@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
-  if (!isValidDateString(date)) {
+  if (!date || !isValidDateString(date)) {
     return NextResponse.json({ error: "invalid_date" }, { status: 400 });
   }
 

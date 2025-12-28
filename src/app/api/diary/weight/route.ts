@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const period = body?.period ?? null;
   const weightKg = Number(body?.weightKg);
 
-  if (!isValidDateString(date)) {
+  if (!date || !isValidDateString(date)) {
     return NextResponse.json({ error: "invalid_date" }, { status: 400 });
   }
   if (period !== "morning" && period !== "evening") {

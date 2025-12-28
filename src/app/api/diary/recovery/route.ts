@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     | null;
 
   const date = body?.date ?? null;
-  if (!isValidDateString(date)) {
+  if (!date || !isValidDateString(date)) {
     return NextResponse.json({ error: "invalid_date" }, { status: 400 });
   }
 

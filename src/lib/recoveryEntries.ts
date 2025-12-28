@@ -22,7 +22,7 @@ export const upsertRecoveryEntry = async (params: {
     overallScore?: number | null;
     functionalScore?: number | null;
     muscleScore?: number | null;
-    sleepHours?: number | null;
+    sleepHours?: string | null;
   } = {
     hasBath: params.hasBath,
     hasMfr: params.hasMfr,
@@ -39,7 +39,8 @@ export const upsertRecoveryEntry = async (params: {
     updates.muscleScore = params.muscleScore;
   }
   if (params.sleepHours !== undefined) {
-    updates.sleepHours = params.sleepHours;
+    updates.sleepHours =
+      params.sleepHours === null ? null : String(params.sleepHours);
   }
 
   const insertValues: {
@@ -53,7 +54,7 @@ export const upsertRecoveryEntry = async (params: {
     overallScore?: number | null;
     functionalScore?: number | null;
     muscleScore?: number | null;
-    sleepHours?: number | null;
+    sleepHours?: string | null;
   } = {
     userId: params.userId,
     date: params.date,
@@ -73,7 +74,8 @@ export const upsertRecoveryEntry = async (params: {
     insertValues.muscleScore = params.muscleScore;
   }
   if (params.sleepHours !== undefined) {
-    insertValues.sleepHours = params.sleepHours;
+    insertValues.sleepHours =
+      params.sleepHours === null ? null : String(params.sleepHours);
   }
   const [existing] = await db
     .select({ id: recoveryEntries.id })

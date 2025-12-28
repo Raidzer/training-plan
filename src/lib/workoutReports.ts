@@ -75,7 +75,7 @@ export const upsertWorkoutReport = async (params: {
     resultText: string;
     commentText: string | null;
     updatedAt: Date;
-    distanceKm?: number | null;
+    distanceKm?: string | null;
   } = {
     date: params.date,
     startTime: params.startTime,
@@ -84,7 +84,8 @@ export const upsertWorkoutReport = async (params: {
     updatedAt: now,
   };
   if (params.distanceKm !== undefined) {
-    updateValues.distanceKm = params.distanceKm;
+    updateValues.distanceKm =
+      params.distanceKm === null ? null : String(params.distanceKm);
   }
   const insertValues: {
     userId: number;
@@ -95,7 +96,7 @@ export const upsertWorkoutReport = async (params: {
     commentText: string | null;
     createdAt: Date;
     updatedAt: Date;
-    distanceKm?: number | null;
+    distanceKm?: string | null;
   } = {
     userId: params.userId,
     planEntryId: params.planEntryId,
@@ -107,7 +108,8 @@ export const upsertWorkoutReport = async (params: {
     updatedAt: now,
   };
   if (params.distanceKm !== undefined) {
-    insertValues.distanceKm = params.distanceKm;
+    insertValues.distanceKm =
+      params.distanceKm === null ? null : String(params.distanceKm);
   }
   const [existing] = await db
     .select({ id: workoutReports.id })
