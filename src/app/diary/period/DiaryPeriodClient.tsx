@@ -62,14 +62,14 @@ export function DiaryPeriodClient() {
           | { days?: DayStatus[]; totals?: PeriodTotals; error?: string }
           | null;
         if (!res.ok || !data?.days || !data?.totals) {
-          messageApi.error(data?.error ?? "Failed to load period view.");
+          messageApi.error(data?.error ?? "Не удалось загрузить дневник за период.");
           return;
         }
         setDays(data.days);
         setTotals(data.totals);
       } catch (err) {
         console.error(err);
-        messageApi.error("Failed to load period view.");
+        messageApi.error("Не удалось загрузить дневник за период.");
       } finally {
         setLoading(false);
       }
@@ -84,21 +84,21 @@ export function DiaryPeriodClient() {
   const columns: ColumnsType<DayStatus> = useMemo(
     () => [
       {
-        title: "Date",
+        title: "Дата",
         dataIndex: "date",
         width: 130,
       },
       {
-        title: "Weight",
+        title: "Вес",
         render: (_, record) => (
           <span>
-            {record.hasWeightMorning ? "M" : "-"} /{" "}
-            {record.hasWeightEvening ? "E" : "-"}
+            {record.hasWeightMorning ? "У" : "-"} /{" "}
+            {record.hasWeightEvening ? "В" : "-"}
           </span>
         ),
       },
       {
-        title: "Workouts",
+        title: "Тренировки",
         render: (_, record) => (
           <span>
             {record.workoutsWithFullReport}/{record.workoutsTotal}
@@ -106,12 +106,12 @@ export function DiaryPeriodClient() {
         ),
       },
       {
-        title: "Status",
+        title: "Статус",
         render: (_, record) =>
           record.dayHasReport ? (
-            <Tag color="green">Complete</Tag>
+            <Tag color="green">Заполнено</Tag>
           ) : (
-            <Tag>Missing</Tag>
+            <Tag>Не заполнено</Tag>
           ),
       },
     ],
@@ -126,18 +126,18 @@ export function DiaryPeriodClient() {
           <div className={styles.headerRow}>
             <div className={styles.headerText}>
               <Typography.Title level={3} className={styles.typographyTitle}>
-                Diary period
+                Дневник за период
               </Typography.Title>
               <Typography.Paragraph
                 type="secondary"
                 className={styles.typographyParagraph}
               >
-                Review diary completion over a selected period.
+                Просмотр заполнения дневника за выбранный период.
               </Typography.Paragraph>
             </div>
             <Space size="small" className={styles.headerActions}>
               <Link href="/diary" passHref>
-                <Button>Back to day view</Button>
+                <Button>Назад к дневному виду</Button>
               </Link>
             </Space>
           </div>
@@ -152,35 +152,39 @@ export function DiaryPeriodClient() {
                 value={range}
                 onChange={(values) => {
                   if (!values || values.length !== 2) return;
-                  setRange([values[0], values[1]]);
+                  const [start, end] = values;
+                  if (!start || !end) return;
+                  setRange([start, end]);
                 }}
               />
               <Button onClick={() => setRange([dayjs().subtract(6, "day"), dayjs()])}>
-                Last 7 days
+                Последние 7 дней
               </Button>
               <Button onClick={() => setRange([dayjs().subtract(29, "day"), dayjs()])}>
-                Last 30 days
+                Последние 30 дней
               </Button>
             </Space>
           </Card>
 
           <div className={styles.summaryRow}>
             <Card className={styles.summaryCard}>
-              <Typography.Text type="secondary">Days complete</Typography.Text>
+              <Typography.Text type="secondary">Дней заполнено</Typography.Text>
               <Typography.Title level={4}>{totals.daysComplete}</Typography.Title>
             </Card>
             <Card className={styles.summaryCard}>
-              <Typography.Text type="secondary">Workouts total</Typography.Text>
+              <Typography.Text type="secondary">Тренировок всего</Typography.Text>
               <Typography.Title level={4}>{totals.workoutsTotal}</Typography.Title>
             </Card>
             <Card className={styles.summaryCard}>
-              <Typography.Text type="secondary">Workouts full</Typography.Text>
+              <Typography.Text type="secondary">
+                Тренировок с полным отчетом
+              </Typography.Text>
               <Typography.Title level={4}>
                 {totals.workoutsWithFullReport}
               </Typography.Title>
             </Card>
             <Card className={styles.summaryCard}>
-              <Typography.Text type="secondary">Weight entries</Typography.Text>
+              <Typography.Text type="secondary">Записей веса</Typography.Text>
               <Typography.Title level={4}>{totals.weightEntries}</Typography.Title>
             </Card>
           </div>

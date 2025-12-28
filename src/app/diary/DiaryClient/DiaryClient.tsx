@@ -127,7 +127,7 @@ export function DiaryClient() {
         | { days?: DayStatus[]; error?: string }
         | null;
       if (!res.ok || !data?.days) {
-        messageApi.error(data?.error ?? "Failed to load calendar marks.");
+        messageApi.error(data?.error ?? "Не удалось загрузить отметки календаря.");
         return;
       }
       const nextMarks: DiaryDayMap = {};
@@ -137,7 +137,7 @@ export function DiaryClient() {
       setMarks(nextMarks);
     } catch (err) {
       console.error(err);
-      messageApi.error("Failed to load calendar marks.");
+      messageApi.error("Не удалось загрузить отметки календаря.");
     } finally {
       setLoadingMarks(false);
     }
@@ -152,7 +152,7 @@ export function DiaryClient() {
         | (DayPayload & { error?: string })
         | null;
       if (!res.ok || !data?.status) {
-        messageApi.error(data?.error ?? "Failed to load diary day.");
+        messageApi.error(data?.error ?? "Не удалось загрузить дневник за день.");
         return;
       }
       setDayData(data);
@@ -181,7 +181,7 @@ export function DiaryClient() {
       setWorkoutForm(nextWorkoutForm);
     } catch (err) {
       console.error(err);
-      messageApi.error("Failed to load diary day.");
+      messageApi.error("Не удалось загрузить дневник за день.");
     } finally {
       setLoadingDay(false);
     }
@@ -212,7 +212,7 @@ export function DiaryClient() {
       const value = period === "morning" ? weightForm.morning : weightForm.evening;
       const weight = Number(String(value).replace(",", "."));
       if (!Number.isFinite(weight) || weight <= 0) {
-        messageApi.error("Enter a valid weight.");
+        messageApi.error("Введите корректный вес.");
         return;
       }
       setSavingWeight((prev) => ({ ...prev, [period]: true }));
@@ -230,15 +230,15 @@ export function DiaryClient() {
           const data = (await res.json().catch(() => null)) as
             | { error?: string }
             | null;
-          messageApi.error(data?.error ?? "Failed to save weight.");
+          messageApi.error(data?.error ?? "Не удалось сохранить вес.");
           return;
         }
-        messageApi.success("Weight saved.");
+        messageApi.success("Вес сохранен.");
         loadDay(selectedDate);
         loadMarks(panelDate);
       } catch (err) {
         console.error(err);
-        messageApi.error("Failed to save weight.");
+        messageApi.error("Не удалось сохранить вес.");
       } finally {
         setSavingWeight((prev) => ({ ...prev, [period]: false }));
       }
@@ -250,7 +250,7 @@ export function DiaryClient() {
     async (planEntryId: number) => {
       const form = workoutForm[planEntryId];
       if (!form?.startTime || !form?.resultText) {
-        messageApi.error("Start time and result are required.");
+        messageApi.error("Время начала и результат обязательны.");
         return;
       }
       setSavingWorkouts((prev) => ({ ...prev, [planEntryId]: true }));
@@ -270,15 +270,15 @@ export function DiaryClient() {
           const data = (await res.json().catch(() => null)) as
             | { error?: string }
             | null;
-          messageApi.error(data?.error ?? "Failed to save workout report.");
+          messageApi.error(data?.error ?? "Не удалось сохранить отчет о тренировке.");
           return;
         }
-        messageApi.success("Workout report saved.");
+        messageApi.success("Отчет о тренировке сохранен.");
         loadDay(selectedDate);
         loadMarks(panelDate);
       } catch (err) {
         console.error(err);
-        messageApi.error("Failed to save workout report.");
+        messageApi.error("Не удалось сохранить отчет о тренировке.");
       } finally {
         setSavingWorkouts((prev) => ({ ...prev, [planEntryId]: false }));
       }
@@ -288,13 +288,13 @@ export function DiaryClient() {
 
   const quickActions = useMemo(
     () => [
-      { label: "Prev day", action: () => shiftDate(-1, "day") },
-      { label: "Next day", action: () => shiftDate(1, "day") },
-      { label: "Prev week", action: () => shiftDate(-1, "week") },
-      { label: "Next week", action: () => shiftDate(1, "week") },
-      { label: "Prev month", action: () => shiftDate(-1, "month") },
-      { label: "Next month", action: () => shiftDate(1, "month") },
-      { label: "Today", action: () => updateSelectedDate(dayjs()) },
+      { label: "Предыдущий день", action: () => shiftDate(-1, "day") },
+      { label: "Следующий день", action: () => shiftDate(1, "day") },
+      { label: "Предыдущая неделя", action: () => shiftDate(-1, "week") },
+      { label: "Следующая неделя", action: () => shiftDate(1, "week") },
+      { label: "Предыдущий месяц", action: () => shiftDate(-1, "month") },
+      { label: "Следующий месяц", action: () => shiftDate(1, "month") },
+      { label: "Сегодня", action: () => updateSelectedDate(dayjs()) },
     ],
     [shiftDate, updateSelectedDate]
   );
@@ -313,28 +313,28 @@ export function DiaryClient() {
           <div className={styles.headerRow}>
             <div className={styles.headerText}>
               <Typography.Title level={3} className={styles.typographyTitle}>
-                Diary day
+                Дневник за день
               </Typography.Title>
               <Typography.Paragraph
                 type="secondary"
                 className={styles.typographyParagraph}
               >
-                Track weight and workout reports for the selected day.
+                Отмечайте вес и отчеты о тренировках за выбранный день.
               </Typography.Paragraph>
             </div>
             <Space size="small" className={styles.headerActions}>
               <Link href="/diary/period" passHref>
-                <Button>Period view</Button>
+                <Button>Просмотр периода</Button>
               </Link>
               <Link href="/dashboard" passHref>
-                <Button>Back to dashboard</Button>
+                <Button>Назад к панели</Button>
               </Link>
             </Space>
           </div>
           <div className={styles.grid}>
             <div className={styles.calendarBlock}>
               <Card
-                title="Calendar"
+                title="Календарь"
                 loading={loadingMarks}
                 className={styles.calendarCard}
               >
@@ -380,7 +380,7 @@ export function DiaryClient() {
             </div>
             <div className={styles.dayBlock}>
               <Card
-                title={`Selected day: ${formatDate(selectedDate)}`}
+                title={`Выбранный день: ${formatDate(selectedDate)}`}
                 loading={loadingDay}
                 className={styles.dayCard}
               >
@@ -391,9 +391,9 @@ export function DiaryClient() {
                 >
                   <div className={styles.statusRow}>
                     {status?.dayHasReport ? (
-                      <Tag color="green">Day complete</Tag>
+                      <Tag color="green">День заполнен</Tag>
                     ) : (
-                      <Tag>Day incomplete</Tag>
+                      <Tag>День не заполнен</Tag>
                     )}
                     <Tag
                       color={
@@ -402,24 +402,23 @@ export function DiaryClient() {
                           : "default"
                       }
                     >
-                      Weight:{" "}
-                      {status?.hasWeightMorning ? "M" : "-"} /{" "}
-                      {status?.hasWeightEvening ? "E" : "-"}
+                      Вес: {status?.hasWeightMorning ? "У" : "-"} /{" "}
+                      {status?.hasWeightEvening ? "В" : "-"}
                     </Tag>
                     <Tag
                       color={workoutsComplete ? "green" : "orange"}
                     >
-                      Workouts: {status?.workoutsWithFullReport ?? 0}/
+                      Тренировки: {status?.workoutsWithFullReport ?? 0}/
                       {status?.workoutsTotal ?? 0}
                     </Tag>
                   </div>
 
-                  <Card type="inner" title="Weight">
+                  <Card type="inner" title="Вес">
                     <div className={styles.weightGrid}>
                       <div className={styles.weightRow}>
                         <Input
                           value={weightForm.morning}
-                          placeholder="Morning weight"
+                          placeholder="Вес утром"
                           onChange={(event) =>
                             setWeightForm((prev) => ({
                               ...prev,
@@ -432,13 +431,13 @@ export function DiaryClient() {
                           loading={savingWeight.morning}
                           onClick={() => handleSaveWeight("morning")}
                         >
-                          Save
+                          Сохранить
                         </Button>
                       </div>
                       <div className={styles.weightRow}>
                         <Input
                           value={weightForm.evening}
-                          placeholder="Evening weight"
+                          placeholder="Вес вечером"
                           onChange={(event) =>
                             setWeightForm((prev) => ({
                               ...prev,
@@ -451,13 +450,13 @@ export function DiaryClient() {
                           loading={savingWeight.evening}
                           onClick={() => handleSaveWeight("evening")}
                         >
-                          Save
+                          Сохранить
                         </Button>
                       </div>
                     </div>
                   </Card>
 
-                  <Card type="inner" title="Workouts">
+                  <Card type="inner" title="Тренировки">
                     {dayData?.planEntries.length ? (
                       <Space direction="vertical" size="middle">
                         {dayData.planEntries.map((entry) => {
@@ -482,13 +481,13 @@ export function DiaryClient() {
                                   ) : null}
                                 </div>
                                 <Tag color={isComplete ? "green" : "default"}>
-                                  {isComplete ? "Complete" : "Missing"}
+                                  {isComplete ? "Заполнено" : "Не заполнено"}
                                 </Tag>
                               </div>
                               <div className={styles.workoutInputs}>
                                 <Input
                                   value={form?.startTime ?? ""}
-                                  placeholder="Start time (HH:MM)"
+                                  placeholder="Время начала (ЧЧ:ММ)"
                                   onChange={(event) =>
                                     setWorkoutForm((prev) => ({
                                       ...prev,
@@ -501,7 +500,7 @@ export function DiaryClient() {
                                 />
                                 <Input
                                   value={form?.resultText ?? ""}
-                                  placeholder="Result"
+                                  placeholder="Результат"
                                   onChange={(event) =>
                                     setWorkoutForm((prev) => ({
                                       ...prev,
@@ -514,7 +513,7 @@ export function DiaryClient() {
                                 />
                                 <Input
                                   value={form?.commentText ?? ""}
-                                  placeholder="Comment"
+                                  placeholder="Комментарий"
                                   onChange={(event) =>
                                     setWorkoutForm((prev) => ({
                                       ...prev,
@@ -532,7 +531,7 @@ export function DiaryClient() {
                                   loading={savingWorkouts[entry.id]}
                                   onClick={() => handleSaveWorkout(entry.id)}
                                 >
-                                  Save report
+                                  Сохранить отчет
                                 </Button>
                               </div>
                             </div>
@@ -541,7 +540,7 @@ export function DiaryClient() {
                       </Space>
                     ) : (
                       <Typography.Text type="secondary">
-                        No workouts planned for this date.
+                        На эту дату тренировки не запланированы.
                       </Typography.Text>
                     )}
                   </Card>
