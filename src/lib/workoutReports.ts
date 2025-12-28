@@ -9,6 +9,7 @@ export type WorkoutReportSummary = {
   startTime: string;
   resultText: string;
   commentText: string | null;
+  distanceKm: string | null;
 };
 
 export const getWorkoutReportByPlanEntry = async (params: {
@@ -23,6 +24,7 @@ export const getWorkoutReportByPlanEntry = async (params: {
       startTime: workoutReports.startTime,
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
+      distanceKm: workoutReports.distanceKm,
     })
     .from(workoutReports)
     .where(
@@ -46,6 +48,7 @@ export const getWorkoutReportsByDate = async (params: {
       startTime: workoutReports.startTime,
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
+      distanceKm: workoutReports.distanceKm,
     })
     .from(workoutReports)
     .where(
@@ -63,8 +66,49 @@ export const upsertWorkoutReport = async (params: {
   startTime: string;
   resultText: string;
   commentText?: string | null;
+  distanceKm?: number | null;
 }) => {
   const now = new Date();
+  const updateValues: {
+    date: string;
+    startTime: string;
+    resultText: string;
+    commentText: string | null;
+    updatedAt: Date;
+    distanceKm?: number | null;
+  } = {
+    date: params.date,
+    startTime: params.startTime,
+    resultText: params.resultText,
+    commentText: params.commentText ?? null,
+    updatedAt: now,
+  };
+  if (params.distanceKm !== undefined) {
+    updateValues.distanceKm = params.distanceKm;
+  }
+  const insertValues: {
+    userId: number;
+    planEntryId: number;
+    date: string;
+    startTime: string;
+    resultText: string;
+    commentText: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    distanceKm?: number | null;
+  } = {
+    userId: params.userId,
+    planEntryId: params.planEntryId,
+    date: params.date,
+    startTime: params.startTime,
+    resultText: params.resultText,
+    commentText: params.commentText ?? null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  if (params.distanceKm !== undefined) {
+    insertValues.distanceKm = params.distanceKm;
+  }
   const [existing] = await db
     .select({ id: workoutReports.id })
     .from(workoutReports)
@@ -78,25 +122,10 @@ export const upsertWorkoutReport = async (params: {
   if (existing) {
     await db
       .update(workoutReports)
-      .set({
-        date: params.date,
-        startTime: params.startTime,
-        resultText: params.resultText,
-        commentText: params.commentText ?? null,
-        updatedAt: now,
-      })
+      .set(updateValues)
       .where(eq(workoutReports.id, existing.id));
     return;
   }
 
-  await db.insert(workoutReports).values({
-    userId: params.userId,
-    planEntryId: params.planEntryId,
-    date: params.date,
-    startTime: params.startTime,
-    resultText: params.resultText,
-    commentText: params.commentText ?? null,
-    createdAt: now,
-    updatedAt: now,
-  });
+  await db.insert(workoutReports).values(insertValues);
 };

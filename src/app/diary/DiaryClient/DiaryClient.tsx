@@ -35,6 +35,7 @@ type WorkoutReport = {
   startTime: string;
   resultText: string;
   commentText: string | null;
+  distanceKm: string | null;
 };
 
 type WeightEntry = {
@@ -63,6 +64,7 @@ type DayStatus = {
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;
+  totalDistanceKm: number;
 };
 
 type DayPayload = {
@@ -99,6 +101,7 @@ const toDefaultWorkoutForm = (report?: WorkoutReport | null) => ({
   startTime: report?.startTime ?? "",
   resultText: report?.resultText ?? "",
   commentText: report?.commentText ?? "",
+  distanceKm: report?.distanceKm ?? "",
 });
 
 const parseOptionalNumber = (value: unknown) => {
@@ -143,7 +146,12 @@ export function DiaryClient() {
   const [workoutForm, setWorkoutForm] = useState<
     Record<
       number,
-      { startTime: string; resultText: string; commentText: string }
+      {
+        startTime: string;
+        resultText: string;
+        commentText: string;
+        distanceKm: string;
+      }
     >
   >({});
   const [savingWorkouts, setSavingWorkouts] = useState<Record<number, boolean>>(
@@ -239,7 +247,12 @@ export function DiaryClient() {
         );
         const nextWorkoutForm: Record<
           number,
-          { startTime: string; resultText: string; commentText: string }
+          {
+            startTime: string;
+            resultText: string;
+            commentText: string;
+            distanceKm: string;
+          }
         > = {};
         data.planEntries.forEach((entry) => {
           nextWorkoutForm[entry.id] = toDefaultWorkoutForm(
@@ -324,6 +337,20 @@ export function DiaryClient() {
         messageApi.error("Время начала и результат обязательны.");
         return;
       }
+      const distanceValue = form.distanceKm.trim();
+      const distanceKm =
+        distanceValue.length > 0
+          ? Number(distanceValue.replace(",", "."))
+          : null;
+
+      if (
+        distanceKm &&
+        distanceValue.length > 0 &&
+        (!Number.isFinite(distanceKm) || distanceKm < 0)
+      ) {
+        messageApi.error("Введите корректную дистанцию тренировки.");
+        return;
+      }
       setSavingWorkouts((prev) => ({ ...prev, [planEntryId]: true }));
       try {
         const res = await fetch("/api/diary/workout-report", {
@@ -335,6 +362,7 @@ export function DiaryClient() {
             startTime: form.startTime,
             resultText: form.resultText,
             commentText: form.commentText,
+            distanceKm,
           }),
         });
         if (!res.ok) {
@@ -418,7 +446,11 @@ export function DiaryClient() {
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space direction="vertical" size="large" className={styles.spaceStyle}>
+        <Space
+          orientation="vertical"
+          size="large"
+          className={styles.spaceStyle}
+        >
           <div className={styles.headerRow}>
             <div className={styles.headerText}>
               <Typography.Title level={3} className={styles.typographyTitle}>
@@ -606,9 +638,7 @@ export function DiaryClient() {
                         />
                       </div>
                       <div className={styles.recoveryField}>
-                        <Typography.Text>
-                          Функциональная оценка
-                        </Typography.Text>
+                        <Typography.Text>Функциональная оценка</Typography.Text>
                         <InputNumber
                           className={styles.recoveryInput}
                           min={1}
@@ -724,6 +754,19 @@ export function DiaryClient() {
                                       [entry.id]: {
                                         ...prev[entry.id],
                                         resultText: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                />
+                                <Input
+                                  value={form?.distanceKm ?? ""}
+                                  placeholder="Дистанция (км)"
+                                  onChange={(event) =>
+                                    setWorkoutForm((prev) => ({
+                                      ...prev,
+                                      [entry.id]: {
+                                        ...prev[entry.id],
+                                        distanceKm: event.target.value,
                                       },
                                     }))
                                   }

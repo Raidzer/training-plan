@@ -8,6 +8,17 @@ import { upsertWorkoutReport } from "@/lib/workoutReports";
 
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
+const parseOptionalDistance = (value: unknown) => {
+  if (value === undefined) return { value: undefined, valid: true };
+  if (value === null || value === "") return { value: null, valid: true };
+  const parsed =
+    typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return { value: null, valid: false };
+  }
+  return { value: parsed, valid: true };
+};
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) {
@@ -26,6 +37,7 @@ export async function POST(req: Request) {
         startTime?: string;
         resultText?: string;
         commentText?: string | null;
+        distanceKm?: number | string | null;
       }
     | null;
 
@@ -36,6 +48,7 @@ export async function POST(req: Request) {
     typeof body?.resultText === "string" ? body.resultText.trim() : "";
   const commentText =
     typeof body?.commentText === "string" ? body.commentText.trim() : null;
+  const distanceKm = parseOptionalDistance(body?.distanceKm);
 
   if (!Number.isFinite(planEntryId) || planEntryId <= 0) {
     return NextResponse.json({ error: "invalid_plan_entry" }, { status: 400 });
@@ -49,6 +62,9 @@ export async function POST(req: Request) {
   if (!resultText) {
     return NextResponse.json({ error: "invalid_result" }, { status: 400 });
   }
+  if (!distanceKm.valid) {
+    return NextResponse.json({ error: "invalid_distance" }, { status: 400 });
+  }
 
   const [entry] = await db
     .select({ id: planEntries.id, date: planEntries.date })
@@ -61,14 +77,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "date_mismatch" }, { status: 400 });
   }
 
-  await upsertWorkoutReport({
+  const upsertParams: Parameters<typeof upsertWorkoutReport>[0] = {
     userId,
     planEntryId,
     date: entry.date,
     startTime,
     resultText,
     commentText: commentText && commentText.length > 0 ? commentText : null,
-  });
+  };
+  if (distanceKm.value !== undefined) {
+    upsertParams.distanceKm = distanceKm.value;
+  }
+
+  await upsertWorkoutReport(upsertParams);
 
   return NextResponse.json({ ok: true });
 }

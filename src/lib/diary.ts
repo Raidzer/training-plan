@@ -23,6 +23,7 @@ export type DiaryWorkoutReport = {
   startTime: string;
   resultText: string;
   commentText: string | null;
+  distanceKm: string | null;
 };
 
 export type DiaryWeightEntry = {
@@ -54,6 +55,7 @@ export type DiaryDayStatus = {
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;
+  totalDistanceKm: number;
 };
 
 type DayAggregation = {
@@ -65,10 +67,17 @@ type DayAggregation = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  totalDistanceKm: number;
 };
 
 const isNonEmptyText = (value?: string | null) =>
   Boolean(value && value.trim().length > 0);
+
+const parseDistanceKm = (value?: string | number | null) => {
+  if (value === null || value === undefined || value === "") return 0;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 export const isValidDateString = (value: string | null) =>
   Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
@@ -93,6 +102,7 @@ const buildDayStatus = (params: {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  totalDistanceKm: number;
 }): DiaryDayStatus => {
   const workoutsTotal = params.planEntryIds.length;
   const workoutsWithFullReport = params.planEntryIds.filter((id) =>
@@ -109,6 +119,7 @@ const buildDayStatus = (params: {
     hasBath: params.hasBath,
     hasMfr: params.hasMfr,
     hasMassage: params.hasMassage,
+    totalDistanceKm: params.totalDistanceKm,
     workoutsTotal,
     workoutsWithFullReport,
     dayHasReport,
@@ -174,6 +185,7 @@ export const getDiaryDayData = async (params: {
           startTime: workoutReports.startTime,
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
+          distanceKm: workoutReports.distanceKm,
         })
         .from(workoutReports)
         .where(
@@ -194,7 +206,9 @@ export const getDiaryDayData = async (params: {
   const hasMfr = Boolean(recoveryEntry?.hasMfr);
   const hasMassage = Boolean(recoveryEntry?.hasMassage);
   const fullReportPlanEntryIds = new Set<number>();
+  let totalDistanceKm = 0;
   for (const report of workoutReportsRows) {
+    totalDistanceKm += parseDistanceKm(report.distanceKm);
     if (isNonEmptyText(report.resultText) && isNonEmptyText(report.commentText)) {
       fullReportPlanEntryIds.add(report.planEntryId);
     }
@@ -208,6 +222,7 @@ export const getDiaryDayData = async (params: {
     hasBath,
     hasMfr,
     hasMassage,
+    totalDistanceKm,
   });
 
   const fallbackRecoveryEntry: DiaryRecoveryEntry = {
@@ -287,6 +302,7 @@ export const getDiaryDaysInRange = async (params: {
           planEntryId: workoutReports.planEntryId,
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
+          distanceKm: workoutReports.distanceKm,
         })
         .from(workoutReports)
         .where(
@@ -315,6 +331,7 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: false,
         hasMfr: false,
         hasMassage: false,
+        totalDistanceKm: 0,
       });
     }
   }
@@ -332,6 +349,7 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: false,
         hasMfr: false,
         hasMassage: false,
+        totalDistanceKm: 0,
       } as DayAggregation);
     if (entry.period === "morning") target.hasWeightMorning = true;
     if (entry.period === "evening") target.hasWeightEvening = true;
@@ -353,6 +371,7 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: false,
         hasMfr: false,
         hasMassage: false,
+        totalDistanceKm: 0,
       } as DayAggregation);
     target.hasBath = entry.hasBath;
     target.hasMfr = entry.hasMfr;
@@ -363,13 +382,14 @@ export const getDiaryDaysInRange = async (params: {
   }
 
   for (const report of reportRows) {
-    if (!isNonEmptyText(report.resultText) || !isNonEmptyText(report.commentText)) {
-      continue;
-    }
     const entryDate = planEntryDateMap.get(report.planEntryId);
     if (!entryDate) continue;
     const day = dayMap.get(entryDate);
     if (!day) continue;
+    day.totalDistanceKm += parseDistanceKm(report.distanceKm);
+    if (!isNonEmptyText(report.resultText) || !isNonEmptyText(report.commentText)) {
+      continue;
+    }
     day.fullReportPlanEntryIds.add(report.planEntryId);
   }
 
@@ -385,6 +405,7 @@ export const getDiaryDaysInRange = async (params: {
           hasBath: false,
           hasMfr: false,
           hasMassage: false,
+          totalDistanceKm: 0,
         });
       }
     }
@@ -401,6 +422,7 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: day.hasBath,
         hasMfr: day.hasMfr,
         hasMassage: day.hasMassage,
+        totalDistanceKm: day.totalDistanceKm,
       })
     )
     .sort((a, b) => a.date.localeCompare(b.date));

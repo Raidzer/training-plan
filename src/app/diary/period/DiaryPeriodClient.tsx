@@ -26,6 +26,7 @@ type DayStatus = {
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;
+  totalDistanceKm: number;
 };
 
 type PeriodTotals = {
@@ -98,6 +99,12 @@ export function DiaryPeriodClient() {
             {record.hasWeightMorning ? "У" : "-"} /{" "}
             {record.hasWeightEvening ? "В" : "-"}
           </span>
+        ),
+      },
+      {
+        title: "Дистанция, км",
+        render: (_, record) => (
+          <span>{record.totalDistanceKm.toFixed(2)}</span>
         ),
       },
       {
