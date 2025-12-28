@@ -9,6 +9,7 @@ import {
   Checkbox,
   Divider,
   Input,
+  InputNumber,
   message,
   Space,
   Tag,
@@ -49,6 +50,10 @@ type RecoveryEntry = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  overallScore: number | null;
+  functionalScore: number | null;
+  muscleScore: number | null;
+  sleepHours: string | null;
 };
 
 type DayStatus = {
@@ -70,6 +75,16 @@ type DayPayload = {
 
 type DiaryDayMap = Record<string, DayStatus>;
 
+type RecoveryForm = {
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
+  overallScore: number | null;
+  functionalScore: number | null;
+  muscleScore: number | null;
+  sleepHours: number | null;
+};
+
 const formatDate = (value: Dayjs) => value.format("YYYY-MM-DD");
 const parseDate = (value: string) => dayjs(value, "YYYY-MM-DD", true);
 const isValidDateString = (value?: string | null) =>
@@ -85,6 +100,15 @@ const toDefaultWorkoutForm = (report?: WorkoutReport | null) => ({
   resultText: report?.resultText ?? "",
   commentText: report?.commentText ?? "",
 });
+
+const parseOptionalNumber = (value: unknown) => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const parsed =
+    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 export function DiaryClient() {
   const searchParams = useSearchParams();
@@ -102,10 +126,14 @@ export function DiaryClient() {
     morning: "",
     evening: "",
   });
-  const [recoveryForm, setRecoveryForm] = useState({
+  const [recoveryForm, setRecoveryForm] = useState<RecoveryForm>({
     hasBath: false,
     hasMfr: false,
     hasMassage: false,
+    overallScore: null,
+    functionalScore: null,
+    muscleScore: null,
+    sleepHours: null,
   });
   const [savingWeight, setSavingWeight] = useState({
     morning: false,
@@ -198,6 +226,12 @@ export function DiaryClient() {
           hasBath: Boolean(data.recoveryEntry?.hasBath),
           hasMfr: Boolean(data.recoveryEntry?.hasMfr),
           hasMassage: Boolean(data.recoveryEntry?.hasMassage),
+          overallScore: parseOptionalNumber(data.recoveryEntry?.overallScore),
+          functionalScore: parseOptionalNumber(
+            data.recoveryEntry?.functionalScore
+          ),
+          muscleScore: parseOptionalNumber(data.recoveryEntry?.muscleScore),
+          sleepHours: parseOptionalNumber(data.recoveryEntry?.sleepHours),
         };
         setRecoveryForm(nextRecovery);
         const reportMap = new Map(
@@ -336,6 +370,10 @@ export function DiaryClient() {
           hasBath: recoveryForm.hasBath,
           hasMfr: recoveryForm.hasMfr,
           hasMassage: recoveryForm.hasMassage,
+          overallScore: recoveryForm.overallScore,
+          functionalScore: recoveryForm.functionalScore,
+          muscleScore: recoveryForm.muscleScore,
+          sleepHours: recoveryForm.sleepHours,
         }),
       });
       if (!res.ok) {
@@ -547,6 +585,82 @@ export function DiaryClient() {
                       >
                         Массаж
                       </Checkbox>
+                    </div>
+                    <div className={styles.recoveryScores}>
+                      <div className={styles.recoveryField}>
+                        <Typography.Text>Общая оценка</Typography.Text>
+                        <InputNumber
+                          className={styles.recoveryInput}
+                          min={1}
+                          max={10}
+                          step={1}
+                          precision={0}
+                          placeholder="1-10"
+                          value={recoveryForm.overallScore}
+                          onChange={(value) =>
+                            setRecoveryForm((prev) => ({
+                              ...prev,
+                              overallScore: value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className={styles.recoveryField}>
+                        <Typography.Text>
+                          Функциональная оценка
+                        </Typography.Text>
+                        <InputNumber
+                          className={styles.recoveryInput}
+                          min={1}
+                          max={10}
+                          step={1}
+                          precision={0}
+                          placeholder="1-10"
+                          value={recoveryForm.functionalScore}
+                          onChange={(value) =>
+                            setRecoveryForm((prev) => ({
+                              ...prev,
+                              functionalScore: value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className={styles.recoveryField}>
+                        <Typography.Text>Мышечная оценка</Typography.Text>
+                        <InputNumber
+                          className={styles.recoveryInput}
+                          min={1}
+                          max={10}
+                          step={1}
+                          precision={0}
+                          placeholder="1-10"
+                          value={recoveryForm.muscleScore}
+                          onChange={(value) =>
+                            setRecoveryForm((prev) => ({
+                              ...prev,
+                              muscleScore: value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className={styles.recoveryField}>
+                        <Typography.Text>Сон, часы</Typography.Text>
+                        <InputNumber
+                          className={styles.recoveryInput}
+                          min={0}
+                          max={24}
+                          step={0.25}
+                          precision={2}
+                          placeholder="0-24"
+                          value={recoveryForm.sleepHours}
+                          onChange={(value) =>
+                            setRecoveryForm((prev) => ({
+                              ...prev,
+                              sleepHours: value,
+                            }))
+                          }
+                        />
+                      </div>
                     </div>
                     <div className={styles.recoveryActions}>
                       <Button

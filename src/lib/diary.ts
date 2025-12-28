@@ -38,6 +38,10 @@ export type DiaryRecoveryEntry = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  overallScore: number | null;
+  functionalScore: number | null;
+  muscleScore: number | null;
+  sleepHours: string | null;
 };
 
 export type DiaryDayStatus = {
@@ -147,6 +151,10 @@ export const getDiaryDayData = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      overallScore: recoveryEntries.overallScore,
+      functionalScore: recoveryEntries.functionalScore,
+      muscleScore: recoveryEntries.muscleScore,
+      sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
     .where(
@@ -207,6 +215,10 @@ export const getDiaryDayData = async (params: {
     hasBath: false,
     hasMfr: false,
     hasMassage: false,
+    overallScore: null,
+    functionalScore: null,
+    muscleScore: null,
+    sleepHours: null,
   };
 
   return {
