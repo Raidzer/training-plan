@@ -1,0 +1,145 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.cardStyle {
+  width: 100%;
+}
+
+.spaceStyle {
+  width: 100%;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 220px;
+}
+
+.headerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.typographyTitle {
+  margin-bottom: 8px;
+}
+
+.typographyParagraph {
+  margin-bottom: 0px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.calendarBlock {
+  min-width: 0;
+}
+
+.dayBlock {
+  min-width: 0;
+}
+
+.calendarCard {
+  height: 100%;
+}
+
+.dayCard {
+  height: 100%;
+}
+
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dividerTight {
+  margin: 12px 0;
+}
+
+.cellWithMark {
+  position: relative;
+}
+
+.markDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #52c41a;
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.weightGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weightRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.workoutItem {
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workoutHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workoutInputs {
+  display: grid;
+  gap: 8px;
+}
+
+.workoutActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.paragraphTight {
+  margin-bottom: 0px;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 360px 1fr;
+    align-items: start;
+  }
+}

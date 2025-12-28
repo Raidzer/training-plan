@@ -55,7 +55,7 @@ export function DashboardClient({ session }: Props) {
               </Typography.Text>
             </Card>
           </Link>
-          <Link href="/dashboard" passHref>
+          <Link href="/diary" passHref>
             <Card
               hoverable
               className={styles.card}

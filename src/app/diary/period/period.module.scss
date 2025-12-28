@@ -1,0 +1,62 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.cardStyle {
+  width: 100%;
+}
+
+.spaceStyle {
+  width: 100%;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 220px;
+}
+
+.headerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.typographyTitle {
+  margin-bottom: 8px;
+}
+
+.typographyParagraph {
+  margin-bottom: 0px;
+}
+
+.rangeRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.summaryCard :global(.ant-card-body) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
