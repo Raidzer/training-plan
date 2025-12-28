@@ -44,6 +44,9 @@ export type DiaryDayStatus = {
   date: string;
   hasWeightMorning: boolean;
   hasWeightEvening: boolean;
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;
@@ -55,6 +58,9 @@ type DayAggregation = {
   fullReportPlanEntryIds: Set<number>;
   hasWeightMorning: boolean;
   hasWeightEvening: boolean;
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
 };
 
 const isNonEmptyText = (value?: string | null) =>
@@ -80,6 +86,9 @@ const buildDayStatus = (params: {
   fullReportPlanEntryIds: Set<number>;
   hasWeightMorning: boolean;
   hasWeightEvening: boolean;
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
 }): DiaryDayStatus => {
   const workoutsTotal = params.planEntryIds.length;
   const workoutsWithFullReport = params.planEntryIds.filter((id) =>
@@ -93,6 +102,9 @@ const buildDayStatus = (params: {
     date: params.date,
     hasWeightMorning: params.hasWeightMorning,
     hasWeightEvening: params.hasWeightEvening,
+    hasBath: params.hasBath,
+    hasMfr: params.hasMfr,
+    hasMassage: params.hasMassage,
     workoutsTotal,
     workoutsWithFullReport,
     dayHasReport,
@@ -170,6 +182,9 @@ export const getDiaryDayData = async (params: {
   const hasWeightEvening = weightEntriesRows.some(
     (entry) => entry.period === "evening"
   );
+  const hasBath = Boolean(recoveryEntry?.hasBath);
+  const hasMfr = Boolean(recoveryEntry?.hasMfr);
+  const hasMassage = Boolean(recoveryEntry?.hasMassage);
   const fullReportPlanEntryIds = new Set<number>();
   for (const report of workoutReportsRows) {
     if (isNonEmptyText(report.resultText) && isNonEmptyText(report.commentText)) {
@@ -182,6 +197,9 @@ export const getDiaryDayData = async (params: {
     fullReportPlanEntryIds,
     hasWeightMorning,
     hasWeightEvening,
+    hasBath,
+    hasMfr,
+    hasMassage,
   });
 
   const fallbackRecoveryEntry: DiaryRecoveryEntry = {
@@ -234,6 +252,22 @@ export const getDiaryDaysInRange = async (params: {
       )
     );
 
+  const recoveryRows = await db
+    .select({
+      date: recoveryEntries.date,
+      hasBath: recoveryEntries.hasBath,
+      hasMfr: recoveryEntries.hasMfr,
+      hasMassage: recoveryEntries.hasMassage,
+    })
+    .from(recoveryEntries)
+    .where(
+      and(
+        eq(recoveryEntries.userId, params.userId),
+        gte(recoveryEntries.date, params.from),
+        lte(recoveryEntries.date, params.to)
+      )
+    );
+
   const planEntryIds = planRows.map((entry) => entry.id);
   const reportRows = planEntryIds.length
     ? await db
@@ -266,6 +300,9 @@ export const getDiaryDaysInRange = async (params: {
         fullReportPlanEntryIds: new Set<number>(),
         hasWeightMorning: false,
         hasWeightEvening: false,
+        hasBath: false,
+        hasMfr: false,
+        hasMassage: false,
       });
     }
   }
@@ -280,9 +317,34 @@ export const getDiaryDaysInRange = async (params: {
         fullReportPlanEntryIds: new Set<number>(),
         hasWeightMorning: false,
         hasWeightEvening: false,
+        hasBath: false,
+        hasMfr: false,
+        hasMassage: false,
       } as DayAggregation);
     if (entry.period === "morning") target.hasWeightMorning = true;
     if (entry.period === "evening") target.hasWeightEvening = true;
+    if (!existing) {
+      dayMap.set(entry.date, target);
+    }
+  }
+
+  for (const entry of recoveryRows) {
+    const existing = dayMap.get(entry.date);
+    const target =
+      existing ??
+      ({
+        date: entry.date,
+        planEntryIds: [],
+        fullReportPlanEntryIds: new Set<number>(),
+        hasWeightMorning: false,
+        hasWeightEvening: false,
+        hasBath: false,
+        hasMfr: false,
+        hasMassage: false,
+      } as DayAggregation);
+    target.hasBath = entry.hasBath;
+    target.hasMfr = entry.hasMfr;
+    target.hasMassage = entry.hasMassage;
     if (!existing) {
       dayMap.set(entry.date, target);
     }
@@ -308,6 +370,9 @@ export const getDiaryDaysInRange = async (params: {
           fullReportPlanEntryIds: new Set<number>(),
           hasWeightMorning: false,
           hasWeightEvening: false,
+          hasBath: false,
+          hasMfr: false,
+          hasMassage: false,
         });
       }
     }
@@ -321,6 +386,9 @@ export const getDiaryDaysInRange = async (params: {
         fullReportPlanEntryIds: day.fullReportPlanEntryIds,
         hasWeightMorning: day.hasWeightMorning,
         hasWeightEvening: day.hasWeightEvening,
+        hasBath: day.hasBath,
+        hasMfr: day.hasMfr,
+        hasMassage: day.hasMassage,
       })
     )
     .sort((a, b) => a.date.localeCompare(b.date));

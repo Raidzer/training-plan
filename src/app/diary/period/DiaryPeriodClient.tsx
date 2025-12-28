@@ -20,6 +20,9 @@ type DayStatus = {
   date: string;
   hasWeightMorning: boolean;
   hasWeightEvening: boolean;
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;
@@ -94,6 +97,15 @@ export function DiaryPeriodClient() {
           <span>
             {record.hasWeightMorning ? "У" : "-"} /{" "}
             {record.hasWeightEvening ? "В" : "-"}
+          </span>
+        ),
+      },
+      {
+        title: "Восстановление",
+        render: (_, record) => (
+          <span>
+            {record.hasBath ? "Б" : "-"} / {record.hasMfr ? "МФР" : "-"} /{" "}
+            {record.hasMassage ? "М" : "-"}
           </span>
         ),
       },
