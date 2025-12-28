@@ -1,6 +1,9 @@
 "use client";
 import { App, ConfigProvider, theme as antdTheme } from "antd";
+import ruRU from "antd/locale/ru_RU";
 import clsx from "clsx";
+import dayjs from "dayjs";
+import "dayjs/locale/ru";
 import {
   createContext,
   useContext,
@@ -21,6 +24,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 const STORAGE_KEY = "ui-theme";
+dayjs.locale("ru");
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<Mode>("light");
@@ -58,6 +62,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             borderRadius: 10,
           },
         }}
+        locale={ruRU}
       >
         <App>
           <div

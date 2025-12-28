@@ -97,7 +97,10 @@ export function DiaryClient() {
     evening: false,
   });
   const [workoutForm, setWorkoutForm] = useState<
-    Record<number, { startTime: string; resultText: string; commentText: string }>
+    Record<
+      number,
+      { startTime: string; resultText: string; commentText: string }
+    >
   >({});
   const [savingWorkouts, setSavingWorkouts] = useState<Record<number, boolean>>(
     {}
@@ -118,74 +121,85 @@ export function DiaryClient() {
     }
   }, [searchParams, selectedDate]);
 
-  const loadMarks = useCallback(async (value: Dayjs) => {
-    const { from, to } = getMonthRange(value);
-    setLoadingMarks(true);
-    try {
-      const res = await fetch(`/api/diary/marks?from=${from}&to=${to}`);
-      const data = (await res.json().catch(() => null)) as
-        | { days?: DayStatus[]; error?: string }
-        | null;
-      if (!res.ok || !data?.days) {
-        messageApi.error(data?.error ?? "Не удалось загрузить отметки календаря.");
-        return;
+  const loadMarks = useCallback(
+    async (value: Dayjs) => {
+      const { from, to } = getMonthRange(value);
+      setLoadingMarks(true);
+      try {
+        const res = await fetch(`/api/diary/marks?from=${from}&to=${to}`);
+        const data = (await res.json().catch(() => null)) as {
+          days?: DayStatus[];
+          error?: string;
+        } | null;
+        if (!res.ok || !data?.days) {
+          messageApi.error(
+            data?.error ?? "Не удалось загрузить отметки календаря."
+          );
+          return;
+        }
+        const nextMarks: DiaryDayMap = {};
+        data.days.forEach((day) => {
+          nextMarks[day.date] = day;
+        });
+        setMarks(nextMarks);
+      } catch (err) {
+        console.error(err);
+        messageApi.error("Не удалось загрузить отметки календаря.");
+      } finally {
+        setLoadingMarks(false);
       }
-      const nextMarks: DiaryDayMap = {};
-      data.days.forEach((day) => {
-        nextMarks[day.date] = day;
-      });
-      setMarks(nextMarks);
-    } catch (err) {
-      console.error(err);
-      messageApi.error("Не удалось загрузить отметки календаря.");
-    } finally {
-      setLoadingMarks(false);
-    }
-  }, [messageApi]);
+    },
+    [messageApi]
+  );
 
-  const loadDay = useCallback(async (value: Dayjs) => {
-    const date = formatDate(value);
-    setLoadingDay(true);
-    try {
-      const res = await fetch(`/api/diary/day?date=${date}`);
-      const data = (await res.json().catch(() => null)) as
-        | (DayPayload & { error?: string })
-        | null;
-      if (!res.ok || !data?.status) {
-        messageApi.error(data?.error ?? "Не удалось загрузить дневник за день.");
-        return;
-      }
-      setDayData(data);
-      const nextWeight = { morning: "", evening: "" };
-      data.weightEntries.forEach((entry) => {
-        if (entry.period === "morning") {
-          nextWeight.morning = entry.weightKg;
+  const loadDay = useCallback(
+    async (value: Dayjs) => {
+      const date = formatDate(value);
+      setLoadingDay(true);
+      try {
+        const res = await fetch(`/api/diary/day?date=${date}`);
+        const data = (await res.json().catch(() => null)) as
+          | (DayPayload & { error?: string })
+          | null;
+        if (!res.ok || !data?.status) {
+          messageApi.error(
+            data?.error ?? "Не удалось загрузить дневник за день."
+          );
+          return;
         }
-        if (entry.period === "evening") {
-          nextWeight.evening = entry.weightKg;
-        }
-      });
-      setWeightForm(nextWeight);
-      const reportMap = new Map(
-        data.workoutReports.map((report) => [report.planEntryId, report])
-      );
-      const nextWorkoutForm: Record<
-        number,
-        { startTime: string; resultText: string; commentText: string }
-      > = {};
-      data.planEntries.forEach((entry) => {
-        nextWorkoutForm[entry.id] = toDefaultWorkoutForm(
-          reportMap.get(entry.id)
+        setDayData(data);
+        const nextWeight = { morning: "", evening: "" };
+        data.weightEntries.forEach((entry) => {
+          if (entry.period === "morning") {
+            nextWeight.morning = entry.weightKg;
+          }
+          if (entry.period === "evening") {
+            nextWeight.evening = entry.weightKg;
+          }
+        });
+        setWeightForm(nextWeight);
+        const reportMap = new Map(
+          data.workoutReports.map((report) => [report.planEntryId, report])
         );
-      });
-      setWorkoutForm(nextWorkoutForm);
-    } catch (err) {
-      console.error(err);
-      messageApi.error("Не удалось загрузить дневник за день.");
-    } finally {
-      setLoadingDay(false);
-    }
-  }, [messageApi]);
+        const nextWorkoutForm: Record<
+          number,
+          { startTime: string; resultText: string; commentText: string }
+        > = {};
+        data.planEntries.forEach((entry) => {
+          nextWorkoutForm[entry.id] = toDefaultWorkoutForm(
+            reportMap.get(entry.id)
+          );
+        });
+        setWorkoutForm(nextWorkoutForm);
+      } catch (err) {
+        console.error(err);
+        messageApi.error("Не удалось загрузить дневник за день.");
+      } finally {
+        setLoadingDay(false);
+      }
+    },
+    [messageApi]
+  );
 
   useEffect(() => {
     loadMarks(panelDate);
@@ -209,7 +223,8 @@ export function DiaryClient() {
 
   const handleSaveWeight = useCallback(
     async (period: "morning" | "evening") => {
-      const value = period === "morning" ? weightForm.morning : weightForm.evening;
+      const value =
+        period === "morning" ? weightForm.morning : weightForm.evening;
       const weight = Number(String(value).replace(",", "."));
       if (!Number.isFinite(weight) || weight <= 0) {
         messageApi.error("Введите корректный вес.");
@@ -227,9 +242,9 @@ export function DiaryClient() {
           }),
         });
         if (!res.ok) {
-          const data = (await res.json().catch(() => null)) as
-            | { error?: string }
-            | null;
+          const data = (await res.json().catch(() => null)) as {
+            error?: string;
+          } | null;
           messageApi.error(data?.error ?? "Не удалось сохранить вес.");
           return;
         }
@@ -267,10 +282,12 @@ export function DiaryClient() {
           }),
         });
         if (!res.ok) {
-          const data = (await res.json().catch(() => null)) as
-            | { error?: string }
-            | null;
-          messageApi.error(data?.error ?? "Не удалось сохранить отчет о тренировке.");
+          const data = (await res.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          messageApi.error(
+            data?.error ?? "Не удалось сохранить отчет о тренировке."
+          );
           return;
         }
         messageApi.success("Отчет о тренировке сохранен.");
@@ -338,17 +355,9 @@ export function DiaryClient() {
                 loading={loadingMarks}
                 className={styles.calendarCard}
               >
-                <Space
-                  size="small"
-                  wrap
-                  className={styles.quickActions}
-                >
+                <Space size="small" wrap className={styles.quickActions}>
                   {quickActions.map((item) => (
-                    <Button
-                      key={item.label}
-                      size="small"
-                      onClick={item.action}
-                    >
+                    <Button key={item.label} size="small" onClick={item.action}>
                       {item.label}
                     </Button>
                   ))}
@@ -400,9 +409,7 @@ export function DiaryClient() {
                       Вес: {status?.hasWeightMorning ? "У" : "-"} /{" "}
                       {status?.hasWeightEvening ? "В" : "-"}
                     </Tag>
-                    <Tag
-                      color={workoutsComplete ? "green" : "orange"}
-                    >
+                    <Tag color={workoutsComplete ? "green" : "orange"}>
                       Тренировки: {status?.workoutsWithFullReport ?? 0}/
                       {status?.workoutsTotal ?? 0}
                     </Tag>
@@ -453,7 +460,7 @@ export function DiaryClient() {
 
                   <Card type="inner" title="Тренировки">
                     {dayData?.planEntries.length ? (
-                      <Space direction="vertical" size="middle">
+                      <Space orientation="vertical" size="middle">
                         {dayData.planEntries.map((entry) => {
                           const form = workoutForm[entry.id];
                           const isComplete =
