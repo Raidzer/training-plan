@@ -513,7 +513,7 @@ export function DiaryClient() {
                 className={styles.dayCard}
               >
                 <Space
-                  direction="vertical"
+                  orientation="vertical"
                   size="middle"
                   className={styles.spaceStyle}
                 >

@@ -58,6 +58,18 @@ export type DiaryDayStatus = {
   totalDistanceKm: number;
 };
 
+export type DiaryExportRow = {
+  dateTime: string;
+  task: string;
+  result: string;
+  comment: string;
+  score: string;
+  sleep: string;
+  weight: string;
+  recovery: string;
+  volume: string;
+};
+
 type DayAggregation = {
   date: string;
   planEntryIds: number[];
@@ -426,4 +438,244 @@ export const getDiaryDaysInRange = async (params: {
       })
     )
     .sort((a, b) => a.date.localeCompare(b.date));
+};
+
+export const getDiaryExportRows = async (params: {
+  userId: number;
+  from: string;
+  to: string;
+}): Promise<DiaryExportRow[]> => {
+  const planRows = await db
+    .select({
+      id: planEntries.id,
+      date: planEntries.date,
+      sessionOrder: planEntries.sessionOrder,
+      taskText: planEntries.taskText,
+    })
+    .from(planEntries)
+    .where(
+      and(
+        eq(planEntries.userId, params.userId),
+        gte(planEntries.date, params.from),
+        lte(planEntries.date, params.to)
+      )
+    )
+    .orderBy(asc(planEntries.date), asc(planEntries.sessionOrder));
+
+  const planEntryIds = planRows.map((entry) => entry.id);
+  const reportRows = planEntryIds.length
+    ? await db
+        .select({
+          planEntryId: workoutReports.planEntryId,
+          startTime: workoutReports.startTime,
+          resultText: workoutReports.resultText,
+          commentText: workoutReports.commentText,
+          distanceKm: workoutReports.distanceKm,
+        })
+        .from(workoutReports)
+        .where(
+          and(
+            eq(workoutReports.userId, params.userId),
+            inArray(workoutReports.planEntryId, planEntryIds)
+          )
+        )
+    : [];
+
+  const weightRows = await db
+    .select({
+      date: weightEntries.date,
+      period: weightEntries.period,
+      weightKg: weightEntries.weightKg,
+    })
+    .from(weightEntries)
+    .where(
+      and(
+        eq(weightEntries.userId, params.userId),
+        gte(weightEntries.date, params.from),
+        lte(weightEntries.date, params.to)
+      )
+    );
+
+  const recoveryRows = await db
+    .select({
+      date: recoveryEntries.date,
+      hasBath: recoveryEntries.hasBath,
+      hasMfr: recoveryEntries.hasMfr,
+      hasMassage: recoveryEntries.hasMassage,
+      overallScore: recoveryEntries.overallScore,
+      functionalScore: recoveryEntries.functionalScore,
+      muscleScore: recoveryEntries.muscleScore,
+      sleepHours: recoveryEntries.sleepHours,
+    })
+    .from(recoveryEntries)
+    .where(
+      and(
+        eq(recoveryEntries.userId, params.userId),
+        gte(recoveryEntries.date, params.from),
+        lte(recoveryEntries.date, params.to)
+      )
+    );
+
+  const planByDate = new Map<
+    string,
+    { id: number; taskText: string }[]
+  >();
+  for (const entry of planRows) {
+    const existing = planByDate.get(entry.date) ?? [];
+    existing.push({ id: entry.id, taskText: entry.taskText });
+    planByDate.set(entry.date, existing);
+  }
+
+  const reportByPlan = new Map<
+    number,
+    {
+      startTime: string;
+      resultText: string;
+      commentText: string | null;
+      distanceKm: string | null;
+    }
+  >();
+  for (const report of reportRows) {
+    reportByPlan.set(report.planEntryId, report);
+  }
+
+  const weightByDate = new Map<string, { morning?: string; evening?: string }>();
+  for (const entry of weightRows) {
+    const target = weightByDate.get(entry.date) ?? {};
+    if (entry.period === "morning") target.morning = String(entry.weightKg);
+    if (entry.period === "evening") target.evening = String(entry.weightKg);
+    weightByDate.set(entry.date, target);
+  }
+
+  const recoveryByDate = new Map<
+    string,
+    {
+      hasBath: boolean;
+      hasMfr: boolean;
+      hasMassage: boolean;
+      overallScore: number | null;
+      functionalScore: number | null;
+      muscleScore: number | null;
+      sleepHours: string | null;
+    }
+  >();
+  for (const entry of recoveryRows) {
+    recoveryByDate.set(entry.date, {
+      hasBath: entry.hasBath,
+      hasMfr: entry.hasMfr,
+      hasMassage: entry.hasMassage,
+      overallScore: entry.overallScore ?? null,
+      functionalScore: entry.functionalScore ?? null,
+      muscleScore: entry.muscleScore ?? null,
+      sleepHours: entry.sleepHours ? String(entry.sleepHours) : null,
+    });
+  }
+
+  const formatScore = (entry?: {
+    overallScore: number | null;
+    functionalScore: number | null;
+    muscleScore: number | null;
+  }) => {
+    if (!entry) return "-";
+    const parts = [
+      entry.overallScore ?? "-",
+      entry.functionalScore ?? "-",
+      entry.muscleScore ?? "-",
+    ];
+    if (parts.every((value) => value === "-")) return "-";
+    return parts.join("-");
+  };
+
+  const formatSleep = (entry?: { sleepHours: string | null }) => {
+    if (!entry?.sleepHours) return "-";
+    return entry.sleepHours;
+  };
+
+  const formatWeight = (entry?: { morning?: string; evening?: string }) => {
+    if (!entry?.morning && !entry?.evening) return "-";
+    const morning = entry.morning ?? "-";
+    const evening = entry.evening ?? "-";
+    return `${morning} / ${evening}`;
+  };
+
+    const formatRecovery = (entry?: {
+    hasBath: boolean;
+    hasMfr: boolean;
+    hasMassage: boolean;
+  }) => {
+    if (!entry) return "-";
+    const flags = [
+      entry.hasBath ? "Баня" : null,
+      entry.hasMfr ? "МФР" : null,
+      entry.hasMassage ? "Массаж" : null,
+    ].filter(Boolean);
+    return flags.length ? flags.join(", ") : "-";
+  };
+
+  const rows: DiaryExportRow[] = [];
+  for (const date of buildDateRange(params.from, params.to)) {
+    const dayEntries = planByDate.get(date) ?? [];
+    const recovery = recoveryByDate.get(date);
+    const weight = weightByDate.get(date);
+    const scoreText = formatScore(recovery);
+    const sleepText = formatSleep(recovery);
+    const weightText = formatWeight(weight);
+    const recoveryText = formatRecovery(recovery);
+
+    if (dayEntries.length === 0) {
+      rows.push({
+        dateTime: date,
+        task: "-",
+        result: "-",
+        comment: "-",
+        score: scoreText,
+        sleep: sleepText,
+        weight: weightText,
+        recovery: recoveryText,
+        volume: "-",
+      });
+      continue;
+    }
+
+    const tasks: string[] = [];
+    const results: string[] = [];
+    const comments: string[] = [];
+    const startTimes: string[] = [];
+    let totalDistanceKm = 0;
+
+    for (const entry of dayEntries) {
+      const report = reportByPlan.get(entry.id);
+      if (report?.startTime) startTimes.push(report.startTime);
+      const taskText = entry.taskText?.trim() ? entry.taskText : "-";
+      const resultText = report?.resultText?.trim()
+        ? report.resultText
+        : "-";
+      const commentText = report?.commentText?.trim()
+        ? report.commentText
+        : "-";
+      tasks.push(taskText);
+      results.push(resultText);
+      comments.push(commentText);
+      totalDistanceKm += parseDistanceKm(report?.distanceKm ?? null);
+    }
+
+    const dateTime = startTimes.length
+      ? `${date} ${startTimes.join(", ")}`
+      : date;
+    const volumeText = totalDistanceKm > 0 ? totalDistanceKm.toFixed(2) : "-";
+
+    rows.push({
+      dateTime,
+      task: tasks.join("\n"),
+      result: results.join("\n"),
+      comment: comments.join("\n"),
+      score: scoreText,
+      sleep: sleepText,
+      weight: weightText,
+      recovery: recoveryText,
+      volume: volumeText,
+    });
+  }
+
+  return rows;
 };

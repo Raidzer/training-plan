@@ -47,6 +47,7 @@ export function DiaryPeriodClient() {
     dayjs(),
   ]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [days, setDays] = useState<DayStatus[]>([]);
   const [totals, setTotals] = useState<PeriodTotals>({
     daysComplete: 0,
@@ -84,6 +85,41 @@ export function DiaryPeriodClient() {
   useEffect(() => {
     loadPeriod(range[0], range[1]);
   }, [range, loadPeriod]);
+
+  const handleExport = useCallback(async () => {
+    const from = formatDate(range[0]);
+    const to = formatDate(range[1]);
+    setExporting(true);
+    try {
+      const res = await fetch(
+        `/api/diary/period-export?from=${from}&to=${to}`
+      );
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        messageApi.error(data?.error ?? "Не удалось выгрузить отчет.");
+        return;
+      }
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get("content-disposition");
+      const filenameMatch = contentDisposition?.match(/filename="?([^";]+)"?/i);
+      const filename = filenameMatch?.[1] ?? `diary_${from}_${to}.xlsx`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      messageApi.error("Не удалось выгрузить отчет.");
+    } finally {
+      setExporting(false);
+    }
+  }, [messageApi, range]);
 
   const columns: ColumnsType<DayStatus> = useMemo(
     () => [
@@ -181,6 +217,9 @@ export function DiaryPeriodClient() {
               </Button>
               <Button onClick={() => setRange([dayjs().subtract(29, "day"), dayjs()])}>
                 Последние 30 дней
+              </Button>
+              <Button type="primary" loading={exporting} onClick={handleExport}>
+                Выгрузить Excel
               </Button>
             </Space>
           </Card>
