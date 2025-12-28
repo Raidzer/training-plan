@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   Calendar,
+  Checkbox,
   Divider,
   Input,
   message,
@@ -42,6 +43,14 @@ type WeightEntry = {
   weightKg: string;
 };
 
+type RecoveryEntry = {
+  id?: number;
+  date: string;
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
+};
+
 type DayStatus = {
   date: string;
   hasWeightMorning: boolean;
@@ -55,6 +64,7 @@ type DayPayload = {
   planEntries: PlanEntry[];
   workoutReports: WorkoutReport[];
   weightEntries: WeightEntry[];
+  recoveryEntry: RecoveryEntry;
   status: DayStatus;
 };
 
@@ -92,10 +102,16 @@ export function DiaryClient() {
     morning: "",
     evening: "",
   });
+  const [recoveryForm, setRecoveryForm] = useState({
+    hasBath: false,
+    hasMfr: false,
+    hasMassage: false,
+  });
   const [savingWeight, setSavingWeight] = useState({
     morning: false,
     evening: false,
   });
+  const [savingRecovery, setSavingRecovery] = useState(false);
   const [workoutForm, setWorkoutForm] = useState<
     Record<
       number,
@@ -178,6 +194,12 @@ export function DiaryClient() {
           }
         });
         setWeightForm(nextWeight);
+        const nextRecovery = {
+          hasBath: Boolean(data.recoveryEntry?.hasBath),
+          hasMfr: Boolean(data.recoveryEntry?.hasMfr),
+          hasMassage: Boolean(data.recoveryEntry?.hasMassage),
+        };
+        setRecoveryForm(nextRecovery);
         const reportMap = new Map(
           data.workoutReports.map((report) => [report.planEntryId, report])
         );
@@ -302,6 +324,38 @@ export function DiaryClient() {
     },
     [loadDay, loadMarks, messageApi, panelDate, selectedDate, workoutForm]
   );
+
+  const handleSaveRecovery = useCallback(async () => {
+    setSavingRecovery(true);
+    try {
+      const res = await fetch("/api/diary/recovery", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          date: formatDate(selectedDate),
+          hasBath: recoveryForm.hasBath,
+          hasMfr: recoveryForm.hasMfr,
+          hasMassage: recoveryForm.hasMassage,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        messageApi.error(
+          data?.error ?? "Не удалось сохранить отметки восстановления."
+        );
+        return;
+      }
+      messageApi.success("Отметки восстановления сохранены.");
+      loadDay(selectedDate);
+    } catch (err) {
+      console.error(err);
+      messageApi.error("Не удалось сохранить отметки восстановления.");
+    } finally {
+      setSavingRecovery(false);
+    }
+  }, [loadDay, messageApi, recoveryForm, selectedDate]);
 
   const quickActions = useMemo(
     () => [
@@ -455,6 +509,53 @@ export function DiaryClient() {
                           Сохранить
                         </Button>
                       </div>
+                    </div>
+                  </Card>
+
+                  <Card type="inner" title="Восстановление">
+                    <div className={styles.recoveryGrid}>
+                      <Checkbox
+                        checked={recoveryForm.hasBath}
+                        onChange={(event) =>
+                          setRecoveryForm((prev) => ({
+                            ...prev,
+                            hasBath: event.target.checked,
+                          }))
+                        }
+                      >
+                        Баня
+                      </Checkbox>
+                      <Checkbox
+                        checked={recoveryForm.hasMfr}
+                        onChange={(event) =>
+                          setRecoveryForm((prev) => ({
+                            ...prev,
+                            hasMfr: event.target.checked,
+                          }))
+                        }
+                      >
+                        МФР
+                      </Checkbox>
+                      <Checkbox
+                        checked={recoveryForm.hasMassage}
+                        onChange={(event) =>
+                          setRecoveryForm((prev) => ({
+                            ...prev,
+                            hasMassage: event.target.checked,
+                          }))
+                        }
+                      >
+                        Массаж
+                      </Checkbox>
+                    </div>
+                    <div className={styles.recoveryActions}>
+                      <Button
+                        type="primary"
+                        loading={savingRecovery}
+                        onClick={handleSaveRecovery}
+                      >
+                        Сохранить
+                      </Button>
                     </div>
                   </Card>
 

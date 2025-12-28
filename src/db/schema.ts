@@ -162,6 +162,27 @@ export const weightEntries = pgTable(
   })
 );
 
+export const recoveryEntries = pgTable(
+  "recovery_entries",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    date: date("date").notNull(),
+    hasBath: boolean("has_bath").notNull().default(false),
+    hasMfr: boolean("has_mfr").notNull().default(false),
+    hasMassage: boolean("has_massage").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    recoveryEntriesUserDateIdx: uniqueIndex(
+      "recovery_entries_user_date_idx"
+    ).on(table.userId, table.date),
+  })
+);
+
 export const workoutReports = pgTable(
   "workout_reports",
   {

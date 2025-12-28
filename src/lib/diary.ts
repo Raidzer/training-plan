@@ -1,6 +1,11 @@
 import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
 import { db } from "@/db/client";
-import { planEntries, weightEntries, workoutReports } from "@/db/schema";
+import {
+  planEntries,
+  recoveryEntries,
+  weightEntries,
+  workoutReports,
+} from "@/db/schema";
 
 export type DiaryPlanEntry = {
   id: number;
@@ -25,6 +30,14 @@ export type DiaryWeightEntry = {
   date: string;
   period: string;
   weightKg: string;
+};
+
+export type DiaryRecoveryEntry = {
+  id?: number;
+  date: string;
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
 };
 
 export type DiaryDayStatus = {
@@ -115,6 +128,22 @@ export const getDiaryDayData = async (params: {
       and(eq(weightEntries.userId, params.userId), eq(weightEntries.date, params.date))
     );
 
+  const [recoveryEntry] = await db
+    .select({
+      id: recoveryEntries.id,
+      date: recoveryEntries.date,
+      hasBath: recoveryEntries.hasBath,
+      hasMfr: recoveryEntries.hasMfr,
+      hasMassage: recoveryEntries.hasMassage,
+    })
+    .from(recoveryEntries)
+    .where(
+      and(
+        eq(recoveryEntries.userId, params.userId),
+        eq(recoveryEntries.date, params.date)
+      )
+    );
+
   const planEntryIds = planEntriesRows.map((entry) => entry.id);
   const workoutReportsRows = planEntryIds.length
     ? await db
@@ -155,10 +184,18 @@ export const getDiaryDayData = async (params: {
     hasWeightEvening,
   });
 
+  const fallbackRecoveryEntry: DiaryRecoveryEntry = {
+    date: params.date,
+    hasBath: false,
+    hasMfr: false,
+    hasMassage: false,
+  };
+
   return {
     planEntries: planEntriesRows as DiaryPlanEntry[],
     weightEntries: weightEntriesRows as DiaryWeightEntry[],
     workoutReports: workoutReportsRows as DiaryWorkoutReport[],
+    recoveryEntry: recoveryEntry ?? fallbackRecoveryEntry,
     status,
   };
 };

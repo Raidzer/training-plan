@@ -101,6 +101,17 @@
   gap: 8px;
 }
 
+.recoveryGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.recoveryActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 .workoutItem {
   border: 1px solid #f0f0f0;
   border-radius: 10px;
