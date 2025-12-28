@@ -366,14 +366,9 @@ export function DiaryClient() {
                     const key = formatDate(value);
                     const day = marks[key];
                     if (!day?.dayHasReport) {
-                      return info.originNode;
+                      return null;
                     }
-                    return (
-                      <div className={styles.cellWithMark}>
-                        {info.originNode}
-                        <span className={styles.markDot} />
-                      </div>
-                    );
+                    return <span className={styles.markDot} />;
                   }}
                 />
               </Card>
