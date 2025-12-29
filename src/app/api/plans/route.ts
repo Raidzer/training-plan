@@ -28,18 +28,3 @@ export async function GET() {
 
   return NextResponse.json({ entries });
 }
-
-export async function DELETE() {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  const userId = Number((session.user as any)?.id);
-  if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  const deleted = await db
-    .delete(planEntries)
-    .where(eq(planEntries.userId, userId))
-    .returning({ id: planEntries.id });
-
-  return NextResponse.json({ deleted: deleted.length });
-}
