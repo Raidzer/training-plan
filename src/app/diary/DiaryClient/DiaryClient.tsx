@@ -10,6 +10,7 @@ import {
   Divider,
   Input,
   InputNumber,
+  Modal,
   message,
   Space,
   Tag,
@@ -73,6 +74,7 @@ type DayPayload = {
   weightEntries: WeightEntry[];
   recoveryEntry: RecoveryEntry;
   status: DayStatus;
+  previousEveningWeightKg: string | null;
 };
 
 type DiaryDayMap = Record<string, DayStatus>;
@@ -111,6 +113,68 @@ const parseOptionalNumber = (value: unknown) => {
   const parsed =
     typeof value === "number" ? value : Number(String(value).replace(",", "."));
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeText = (value?: string | null) =>
+  value && value.trim().length > 0 ? value.trim() : "";
+
+const joinValues = (values: Array<string | null | undefined>) => {
+  if (!values.length) return "";
+  const normalized = values.map(normalizeText).filter((item) => item.length > 0);
+  if (!normalized.length) return "";
+  return normalized.join(" / ");
+};
+
+const formatScore = (entry?: RecoveryEntry | null) => {
+  if (!entry) return "";
+  const parts = [
+    entry.overallScore,
+    entry.functionalScore,
+    entry.muscleScore,
+  ].filter((value): value is number => value !== null && value !== undefined);
+  if (!parts.length) return "";
+  return parts.map(String).join("-");
+};
+
+const buildDailyReportText = (params: {
+  date: string;
+  day: DayPayload | null;
+}) => {
+  if (!params.day) return "";
+  const reportByPlan = new Map(
+    params.day.workoutReports.map((report) => [report.planEntryId, report])
+  );
+  const startTimes = params.day.planEntries.map(
+    (entry) => reportByPlan.get(entry.id)?.startTime
+  );
+  const tasks = params.day.planEntries.map((entry) => entry.taskText);
+  const results = params.day.planEntries.map(
+    (entry) => reportByPlan.get(entry.id)?.resultText
+  );
+  const comments = params.day.planEntries.map(
+    (entry) => reportByPlan.get(entry.id)?.commentText
+  );
+  const morningWeight = params.day.weightEntries.find(
+    (entry) => entry.period === "morning"
+  )?.weightKg;
+  const volumeKm =
+    params.day.status.totalDistanceKm > 0
+      ? params.day.status.totalDistanceKm.toFixed(2)
+      : "";
+
+  const lines = [
+    params.date,
+    joinValues(startTimes),
+    joinValues(tasks),
+    joinValues(results),
+    joinValues(comments),
+    formatScore(params.day.recoveryEntry),
+    params.day.recoveryEntry.sleepHours ?? "",
+    joinValues([params.day.previousEveningWeightKg, morningWeight]),
+    volumeKm ? `${volumeKm} км` : "",
+  ];
+
+  return lines.filter((line) => line.trim().length > 0).join("\n\n");
 };
 
 export function DiaryClient() {
@@ -157,6 +221,7 @@ export function DiaryClient() {
   const [savingWorkouts, setSavingWorkouts] = useState<Record<number, boolean>>(
     {}
   );
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   useEffect(() => {
     const queryDate = searchParams.get("date");
@@ -441,6 +506,14 @@ export function DiaryClient() {
     ? status.workoutsTotal === 0 ||
       status.workoutsWithFullReport === status.workoutsTotal
     : false;
+  const reportText = useMemo(
+    () =>
+      buildDailyReportText({
+        date: formatDate(selectedDate),
+        day: dayData,
+      }),
+    [dayData, selectedDate]
+  );
 
   return (
     <main className={styles.mainContainer}>
@@ -517,6 +590,15 @@ export function DiaryClient() {
                   size="middle"
                   className={styles.spaceStyle}
                 >
+                  <div className={styles.statusRow}>
+                    <Button
+                      type="primary"
+                      onClick={() => setIsReportOpen(true)}
+                      disabled={!dayData}
+                    >
+                      Ежедневный отчет
+                    </Button>
+                  </div>
                   <div className={styles.statusRow}>
                     {status?.dayHasReport ? (
                       <Tag color="green">День заполнен</Tag>
@@ -810,6 +892,20 @@ export function DiaryClient() {
           </div>
         </Space>
       </Card>
+      <Modal
+        open={isReportOpen}
+        title="Ежедневный отчет"
+        onCancel={() => setIsReportOpen(false)}
+        footer={[
+          <Button key="close" onClick={() => setIsReportOpen(false)}>
+            Закрыть
+          </Button>,
+        ]}
+      >
+        <Typography.Paragraph className={styles.reportText}>
+          {reportText}
+        </Typography.Paragraph>
+      </Modal>
     </main>
   );
 }

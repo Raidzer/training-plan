@@ -106,6 +106,13 @@ const buildDateRange = (from: string, to: string) => {
   return dates;
 };
 
+const shiftDate = (value: string, deltaDays: number) => {
+  const base = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) return null;
+  base.setUTCDate(base.getUTCDate() + deltaDays);
+  return base.toISOString().slice(0, 10);
+};
+
 const buildDayStatus = (params: {
   date: string;
   planEntryIds: number[];
@@ -143,6 +150,7 @@ export const getDiaryDayData = async (params: {
   userId: number;
   date: string;
 }) => {
+  const previousDate = shiftDate(params.date, -1);
   const planEntriesRows = await db
     .select({
       id: planEntries.id,
@@ -167,6 +175,19 @@ export const getDiaryDayData = async (params: {
     .where(
       and(eq(weightEntries.userId, params.userId), eq(weightEntries.date, params.date))
     );
+
+  const [previousEveningWeight] = previousDate
+    ? await db
+        .select({ weightKg: weightEntries.weightKg })
+        .from(weightEntries)
+        .where(
+          and(
+            eq(weightEntries.userId, params.userId),
+            eq(weightEntries.date, previousDate),
+            eq(weightEntries.period, "evening")
+          )
+        )
+    : [];
 
   const [recoveryEntry] = await db
     .select({
@@ -255,6 +276,9 @@ export const getDiaryDayData = async (params: {
     workoutReports: workoutReportsRows as DiaryWorkoutReport[],
     recoveryEntry: recoveryEntry ?? fallbackRecoveryEntry,
     status,
+    previousEveningWeightKg: previousEveningWeight
+      ? String(previousEveningWeight.weightKg)
+      : null,
   };
 };
 

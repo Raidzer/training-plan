@@ -158,6 +158,11 @@
   margin-bottom: 0px;
 }
 
+.reportText {
+  white-space: pre-wrap;
+  margin-bottom: 0;
+}
+
 @media (min-width: 1024px) {
   .grid {
     grid-template-columns: 360px 1fr;
