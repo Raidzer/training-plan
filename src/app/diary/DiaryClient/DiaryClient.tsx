@@ -173,6 +173,14 @@ const parseSleepTimeInput = (value: string) => {
   return { normalized, value: hours + minutes / 60, valid: true };
 };
 
+const formatWeightValue = (value?: string | number | null) => {
+  if (value === null || value === undefined || value === "") return "";
+  const parsed =
+    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  if (!Number.isFinite(parsed)) return "";
+  return (Math.round(parsed * 10) / 10).toFixed(1);
+};
+
 const joinValues = (values: Array<string | null | undefined>) => {
   if (!values.length) return "";
   const normalized = values
@@ -246,7 +254,10 @@ const buildDailyReportText = (params: {
     joinValues(comments),
     formatScore(params.day.recoveryEntry),
     formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
-    joinValues([params.day.previousEveningWeightKg, morningWeight]),
+    joinValues([
+      formatWeightValue(params.day.previousEveningWeightKg),
+      formatWeightValue(morningWeight),
+    ]),
     formatRecoveryFlags(params.day.recoveryEntry),
     volumeKm ? `${volumeKm} км` : "",
   ];
@@ -365,10 +376,10 @@ export function DiaryClient() {
         const nextWeight = { morning: "", evening: "" };
         data.weightEntries.forEach((entry) => {
           if (entry.period === "morning") {
-            nextWeight.morning = entry.weightKg;
+            nextWeight.morning = formatWeightValue(entry.weightKg);
           }
           if (entry.period === "evening") {
-            nextWeight.evening = entry.weightKg;
+            nextWeight.evening = formatWeightValue(entry.weightKg);
           }
         });
         setWeightForm(nextWeight);
@@ -436,11 +447,12 @@ export function DiaryClient() {
     async (period: "morning" | "evening") => {
       const value =
         period === "morning" ? weightForm.morning : weightForm.evening;
-      const weight = Number(String(value).replace(",", "."));
-      if (!Number.isFinite(weight) || weight <= 0) {
+      const weightInput = Number(String(value).replace(",", "."));
+      if (!Number.isFinite(weightInput) || weightInput <= 0) {
         messageApi.error("Введите корректный вес.");
         return;
       }
+      const weight = Math.round(weightInput * 10) / 10;
       setSavingWeight((prev) => ({ ...prev, [period]: true }));
       try {
         const res = await fetch("/api/diary/weight", {

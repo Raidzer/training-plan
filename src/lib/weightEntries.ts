@@ -11,6 +11,8 @@ export const upsertWeightEntry = async (params: {
   weightKg: number;
 }) => {
   const now = new Date();
+  const weightValue = Math.round(params.weightKg * 10) / 10;
+  const weightText = weightValue.toFixed(1);
   const [existing] = await db
     .select({ id: weightEntries.id })
     .from(weightEntries)
@@ -25,7 +27,7 @@ export const upsertWeightEntry = async (params: {
   if (existing) {
     await db
       .update(weightEntries)
-      .set({ weightKg: String(params.weightKg), updatedAt: now })
+      .set({ weightKg: weightText, updatedAt: now })
       .where(eq(weightEntries.id, existing.id));
     return;
   }
@@ -34,7 +36,7 @@ export const upsertWeightEntry = async (params: {
     userId: params.userId,
     date: params.date,
     period: params.period,
-    weightKg: String(params.weightKg),
+    weightKg: weightText,
     createdAt: now,
     updatedAt: now,
   });

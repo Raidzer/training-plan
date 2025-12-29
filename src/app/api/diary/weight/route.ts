@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
   const date = body?.date ?? null;
   const period = body?.period ?? null;
-  const weightKg = Number(body?.weightKg);
+  const weightInput = Number(body?.weightKg);
 
   if (!date || !isValidDateString(date)) {
     return NextResponse.json({ error: "invalid_date" }, { status: 400 });
@@ -28,9 +28,11 @@ export async function POST(req: Request) {
   if (period !== "morning" && period !== "evening") {
     return NextResponse.json({ error: "invalid_period" }, { status: 400 });
   }
-  if (!Number.isFinite(weightKg) || weightKg <= 0) {
+  if (!Number.isFinite(weightInput) || weightInput <= 0) {
     return NextResponse.json({ error: "invalid_weight" }, { status: 400 });
   }
+
+  const weightKg = Math.round(weightInput * 10) / 10;
 
   await upsertWeightEntry({
     userId,

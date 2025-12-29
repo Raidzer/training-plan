@@ -633,10 +633,17 @@ export const getDiaryExportRows = async (params: {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   };
 
+  const formatWeightValue = (value?: string) => {
+    if (!value) return "-";
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return value;
+    return (Math.round(parsed * 10) / 10).toFixed(1);
+  };
+
   const formatWeight = (entry?: { morning?: string; evening?: string }) => {
     if (!entry?.morning && !entry?.evening) return "-";
-    const morning = entry.morning ?? "-";
-    const evening = entry.evening ?? "-";
+    const morning = formatWeightValue(entry.morning);
+    const evening = formatWeightValue(entry.evening);
     return `${morning} / ${evening}`;
   };
 
