@@ -913,8 +913,9 @@ export function DiaryClient() {
                                     }))
                                   }
                                 />
-                                <Input
+                                <Input.TextArea
                                   value={form?.commentText ?? ""}
+                                  autoSize={{ minRows: 3, maxRows: 10 }}
                                   placeholder="Комментарий"
                                   onChange={(event) =>
                                     setWorkoutForm((prev) => ({
