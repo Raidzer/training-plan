@@ -118,6 +118,20 @@ const parseOptionalNumber = (value: unknown) => {
 const normalizeText = (value?: string | null) =>
   value && value.trim().length > 0 ? value.trim() : "";
 
+const normalizeStartTimeInput = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  if (digits.length === 3) {
+    const firstTwo = Number(digits.slice(0, 2));
+    const useSingleHour = Number.isFinite(firstTwo) && firstTwo > 23;
+    const splitIndex = useSingleHour ? 1 : 2;
+    const hours = digits.slice(0, splitIndex).padStart(2, "0");
+    const minutes = digits.slice(splitIndex);
+    return `${hours}:${minutes}`;
+  }
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+};
+
 const joinValues = (values: Array<string | null | undefined>) => {
   if (!values.length) return "";
   const normalized = values.map(normalizeText).filter((item) => item.length > 0);
@@ -816,13 +830,16 @@ export function DiaryClient() {
                               <div className={styles.workoutInputs}>
                                 <Input
                                   value={form?.startTime ?? ""}
+                                  maxLength={5}
                                   placeholder="Время начала (ЧЧ:ММ)"
                                   onChange={(event) =>
                                     setWorkoutForm((prev) => ({
                                       ...prev,
                                       [entry.id]: {
                                         ...prev[entry.id],
-                                        startTime: event.target.value,
+                                        startTime: normalizeStartTimeInput(
+                                          event.target.value
+                                        ),
                                       },
                                     }))
                                   }
