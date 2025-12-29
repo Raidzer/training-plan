@@ -44,8 +44,8 @@ export async function POST(req: Request) {
   const planEntryId = Number(body?.planEntryId);
   const date = body?.date ?? null;
   const startTime = typeof body?.startTime === "string" ? body.startTime.trim() : "";
-  const resultText =
-    typeof body?.resultText === "string" ? body.resultText.trim() : "";
+  const resultText = typeof body?.resultText === "string" ? body.resultText : "";
+  const trimmedResultText = resultText.trim();
   const commentText =
     typeof body?.commentText === "string" ? body.commentText.trim() : null;
   const distanceKm = parseOptionalDistance(body?.distanceKm);
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   if (!TIME_REGEX.test(startTime)) {
     return NextResponse.json({ error: "invalid_time" }, { status: 400 });
   }
-  if (!resultText) {
+  if (!trimmedResultText) {
     return NextResponse.json({ error: "invalid_result" }, { status: 400 });
   }
   if (!distanceKm.valid) {

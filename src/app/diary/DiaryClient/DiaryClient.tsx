@@ -398,7 +398,7 @@ export function DiaryClient() {
   const handleSaveWorkout = useCallback(
     async (planEntryId: number) => {
       const form = workoutForm[planEntryId];
-      if (!form?.startTime || !form?.resultText) {
+      if (!form?.startTime || !form?.resultText?.trim()) {
         messageApi.error("Время начала и результат обязательны.");
         return;
       }
@@ -827,8 +827,9 @@ export function DiaryClient() {
                                     }))
                                   }
                                 />
-                                <Input
+                                <Input.TextArea
                                   value={form?.resultText ?? ""}
+                                  autoSize={{ minRows: 4, maxRows: 12 }}
                                   placeholder="Результат"
                                   onChange={(event) =>
                                     setWorkoutForm((prev) => ({
