@@ -236,16 +236,18 @@ export const handleWeightPending = async ({
   }
 
   const normalized = text.replace(",", ".");
-  if (!/^\d{1,3}(?:\.\d{1,2})?$/.test(normalized)) {
+  if (!/^\d{1,3}(?:\.\d{1})?$/.test(normalized)) {
     await ctx.reply("Введите вес в кг (например, 72.4) или напишите 'отмена'.");
     return;
   }
 
-  const weightKg = Number(normalized);
-  if (!Number.isFinite(weightKg) || weightKg <= 0) {
+  const weightKgInput = Number(normalized);
+  if (!Number.isFinite(weightKgInput) || weightKgInput <= 0) {
     await ctx.reply("Введите вес в кг (например, 72.4) или напишите 'отмена'.");
     return;
   }
+  const weightKg = Math.round(weightKgInput * 10) / 10;
+  const weightText = weightKg.toFixed(1);
 
   const draft = getWeightDraft(chatId);
   if (!draft.date || !draft.period) {
@@ -272,7 +274,7 @@ export const handleWeightPending = async ({
   const periodLabel = draft.period === "morning" ? "утро" : "вечер";
   const displayDate = formatDateForDisplay(draft.date);
   await ctx.reply(
-    `Вес записан: ${weightKg} кг (${periodLabel}, ${displayDate}).`,
+    `Вес записан: ${weightText} кг (${periodLabel}, ${displayDate}).`,
     {
       reply_markup: buildMainMenuReplyKeyboard({
         subscribed: subscription?.enabled ?? false,
