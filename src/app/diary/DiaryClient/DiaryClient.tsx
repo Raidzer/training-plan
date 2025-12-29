@@ -149,7 +149,10 @@ const formatSleepTimeValue = (value?: string | number | null) => {
   if (hours === 24) {
     minutes = 0;
   }
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}`;
 };
 
 const parseSleepTimeInput = (value: string) => {
@@ -172,9 +175,11 @@ const parseSleepTimeInput = (value: string) => {
 
 const joinValues = (values: Array<string | null | undefined>) => {
   if (!values.length) return "";
-  const normalized = values.map(normalizeText).filter((item) => item.length > 0);
+  const normalized = values
+    .map(normalizeText)
+    .filter((item) => item.length > 0);
   if (!normalized.length) return "";
-  return normalized.join(" / ");
+  return normalized.join("; ");
 };
 
 const formatScore = (entry?: RecoveryEntry | null) => {
@@ -241,8 +246,8 @@ const buildDailyReportText = (params: {
     joinValues(comments),
     formatScore(params.day.recoveryEntry),
     formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
-    formatRecoveryFlags(params.day.recoveryEntry),
     joinValues([params.day.previousEveningWeightKg, morningWeight]),
+    formatRecoveryFlags(params.day.recoveryEntry),
     volumeKm ? `${volumeKm} км` : "",
   ];
 
