@@ -188,6 +188,25 @@ const formatScore = (entry?: RecoveryEntry | null) => {
   return parts.map(String).join("-");
 };
 
+const formatRecoveryFlags = (entry?: RecoveryEntry | null) => {
+  if (!entry) return "";
+  const flags = [
+    entry.hasBath ? "Баня" : null,
+    entry.hasMfr ? "МФР" : null,
+    entry.hasMassage ? "Массаж" : null,
+  ].filter(Boolean);
+  return flags.length ? flags.join(", ") : "";
+};
+
+const formatReportDate = (value: string) => {
+  const weekdays = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+  const parsed = dayjs(value, "YYYY-MM-DD", true);
+  if (!parsed.isValid()) return value;
+  const dayIndex = parsed.day();
+  const dayLabel = weekdays[dayIndex] ?? "";
+  return `${parsed.format("DD.MM.YYYY")}(${dayLabel})`;
+};
+
 const buildDailyReportText = (params: {
   date: string;
   day: DayPayload | null;
@@ -215,13 +234,14 @@ const buildDailyReportText = (params: {
       : "";
 
   const lines = [
-    params.date,
+    formatReportDate(params.date),
     joinValues(startTimes),
     joinValues(tasks),
     joinValues(results),
     joinValues(comments),
     formatScore(params.day.recoveryEntry),
     formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
+    formatRecoveryFlags(params.day.recoveryEntry),
     joinValues([params.day.previousEveningWeightKg, morningWeight]),
     volumeKm ? `${volumeKm} км` : "",
   ];
