@@ -86,7 +86,7 @@ type RecoveryForm = {
   overallScore: number | null;
   functionalScore: number | null;
   muscleScore: number | null;
-  sleepHours: number | null;
+  sleepHours: string;
 };
 
 const formatDate = (value: Dayjs) => value.format("YYYY-MM-DD");
@@ -130,6 +130,44 @@ const normalizeStartTimeInput = (value: string) => {
     return `${hours}:${minutes}`;
   }
   return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+};
+
+const TIME_INPUT_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+const formatSleepTimeValue = (value?: string | number | null) => {
+  if (value === null || value === undefined || value === "") return "";
+  const parsed =
+    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  if (!Number.isFinite(parsed)) return "";
+  const clamped = Math.min(Math.max(parsed, 0), 24);
+  let hours = Math.floor(clamped);
+  let minutes = Math.round((clamped - hours) * 60);
+  if (minutes === 60) {
+    hours = Math.min(hours + 1, 24);
+    minutes = 0;
+  }
+  if (hours === 24) {
+    minutes = 0;
+  }
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+};
+
+const parseSleepTimeInput = (value: string) => {
+  const normalized = normalizeStartTimeInput(value);
+  if (!normalized) {
+    return { normalized, value: null, valid: true };
+  }
+  if (!TIME_INPUT_REGEX.test(normalized) && normalized !== "24:00") {
+    return { normalized, value: null, valid: false };
+  }
+  const [hours, minutes] = normalized.split(":").map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+    return { normalized, value: null, valid: false };
+  }
+  if (hours === 24 && minutes !== 0) {
+    return { normalized, value: null, valid: false };
+  }
+  return { normalized, value: hours + minutes / 60, valid: true };
 };
 
 const joinValues = (values: Array<string | null | undefined>) => {
@@ -183,7 +221,7 @@ const buildDailyReportText = (params: {
     joinValues(results),
     joinValues(comments),
     formatScore(params.day.recoveryEntry),
-    params.day.recoveryEntry.sleepHours ?? "",
+    formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
     joinValues([params.day.previousEveningWeightKg, morningWeight]),
     volumeKm ? `${volumeKm} км` : "",
   ];
@@ -214,7 +252,7 @@ export function DiaryClient() {
     overallScore: null,
     functionalScore: null,
     muscleScore: null,
-    sleepHours: null,
+    sleepHours: "",
   });
   const [savingWeight, setSavingWeight] = useState({
     morning: false,
@@ -318,7 +356,7 @@ export function DiaryClient() {
             data.recoveryEntry?.functionalScore
           ),
           muscleScore: parseOptionalNumber(data.recoveryEntry?.muscleScore),
-          sleepHours: parseOptionalNumber(data.recoveryEntry?.sleepHours),
+          sleepHours: formatSleepTimeValue(data.recoveryEntry?.sleepHours),
         };
         setRecoveryForm(nextRecovery);
         const reportMap = new Map(
@@ -467,6 +505,11 @@ export function DiaryClient() {
   );
 
   const handleSaveRecovery = useCallback(async () => {
+    const sleepTime = parseSleepTimeInput(recoveryForm.sleepHours);
+    if (!sleepTime.valid) {
+      messageApi.error("Введите время сна в формате ЧЧ:ММ.");
+      return;
+    }
     setSavingRecovery(true);
     try {
       const res = await fetch("/api/diary/recovery", {
@@ -480,7 +523,7 @@ export function DiaryClient() {
           overallScore: recoveryForm.overallScore,
           functionalScore: recoveryForm.functionalScore,
           muscleScore: recoveryForm.muscleScore,
-          sleepHours: recoveryForm.sleepHours,
+          sleepHours: sleepTime.value,
         }),
       });
       if (!res.ok) {
@@ -771,18 +814,17 @@ export function DiaryClient() {
                       </div>
                       <div className={styles.recoveryField}>
                         <Typography.Text>Сон, часы</Typography.Text>
-                        <InputNumber
+                        <Input
                           className={styles.recoveryInput}
-                          min={0}
-                          max={24}
-                          step={0.25}
-                          precision={2}
-                          placeholder="0-24"
+                          maxLength={5}
+                          placeholder="ЧЧ:ММ"
                           value={recoveryForm.sleepHours}
-                          onChange={(value) =>
+                          onChange={(event) =>
                             setRecoveryForm((prev) => ({
                               ...prev,
-                              sleepHours: value,
+                              sleepHours: normalizeStartTimeInput(
+                                event.target.value
+                              ),
                             }))
                           }
                         />
