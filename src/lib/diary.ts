@@ -618,7 +618,19 @@ export const getDiaryExportRows = async (params: {
 
   const formatSleep = (entry?: { sleepHours: string | null }) => {
     if (!entry?.sleepHours) return "-";
-    return entry.sleepHours;
+    const parsed = Number(entry.sleepHours);
+    if (!Number.isFinite(parsed)) return "-";
+    const clamped = Math.min(Math.max(parsed, 0), 24);
+    let hours = Math.floor(clamped);
+    let minutes = Math.round((clamped - hours) * 60);
+    if (minutes === 60) {
+      hours = Math.min(hours + 1, 24);
+      minutes = 0;
+    }
+    if (hours === 24) {
+      minutes = 0;
+    }
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   };
 
   const formatWeight = (entry?: { morning?: string; evening?: string }) => {
