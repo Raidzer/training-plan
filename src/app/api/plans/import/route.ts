@@ -3,7 +3,7 @@ import ExcelJS from "exceljs";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { planEntries, planImports } from "@/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 export const runtime = "nodejs";
 
@@ -46,6 +46,32 @@ const isHeader = (value: string, candidates: string[]) =>
 const excelSerialToDate = (serial: number) => {
   const excelEpoch = Date.UTC(1899, 11, 30);
   return new Date(excelEpoch + serial * 24 * 60 * 60 * 1000);
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toUtcMs = (value: string): number | null => {
+  const [yy, mm, dd] = value.split("-").map((part) => Number(part));
+  if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) {
+    return null;
+  }
+  return Date.UTC(yy, mm - 1, dd);
+};
+
+const validateSequentialDates = (dates: string[]): string | null => {
+  const uniqueDates = Array.from(new Set(dates)).sort();
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prev = toUtcMs(uniqueDates[i - 1]);
+    const next = toUtcMs(uniqueDates[i]);
+    if (prev === null || next === null) {
+      return "Ошибка импорта: некорректный формат даты. Проверьте даты.";
+    }
+    const diffDays = (next - prev) / DAY_MS;
+    if (diffDays !== 1) {
+      return "Ошибка импорта: даты должны идти подряд без пропусков. Проверьте последовательность дат.";
+    }
+  }
+  return null;
 };
 
 const toDateString = (value: unknown): string | null => {
@@ -188,6 +214,13 @@ export async function POST(req: Request) {
   }
 
   // Нумерация сессий внутри дня по порядку строк.
+  const dateSequenceError = validateSequentialDates(
+    parsed.rows.map((row) => row.date)
+  );
+  if (dateSequenceError) {
+    return NextResponse.json({ error: dateSequenceError }, { status: 400 });
+  }
+
   const sessionCounter = new Map<string, number>();
   const entries = parsed.rows.map((row) => {
     const current = sessionCounter.get(row.date) ?? 0;
@@ -205,6 +238,46 @@ export async function POST(req: Request) {
   });
 
   const dates = Array.from(sessionCounter.keys());
+  const existingRows = dates.length
+    ? await db
+        .select({ date: planEntries.date })
+        .from(planEntries)
+        .where(and(eq(planEntries.userId, userId), inArray(planEntries.date, dates)))
+    : [];
+  const existingDates = new Set(existingRows.map((row) => row.date));
+  const newEntries = entries.filter((entry) => !existingDates.has(entry.date));
+
+  const uniqueNewDates = Array.from(
+    new Set(newEntries.map((entry) => entry.date))
+  ).sort();
+  if (uniqueNewDates.length > 0) {
+    const [lastRow] = await db
+      .select({ date: planEntries.date })
+      .from(planEntries)
+      .where(eq(planEntries.userId, userId))
+      .orderBy(desc(planEntries.date))
+      .limit(1);
+    if (lastRow?.date) {
+      const lastMs = toUtcMs(lastRow.date);
+      const firstMs = toUtcMs(uniqueNewDates[0]);
+      if (lastMs === null || firstMs === null) {
+        return NextResponse.json(
+          { error: "Ошибка импорта: некорректный формат даты. Проверьте даты." },
+          { status: 400 }
+        );
+      }
+      const diffDays = (firstMs - lastMs) / DAY_MS;
+      if (diffDays !== 1) {
+        return NextResponse.json(
+          {
+            error:
+              "Ошибка импорта: новые даты должны начинаться на следующий день после последней даты плана. Проверьте даты.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+  }
   const now = new Date();
   const createdImport = await db.transaction(async (tx) => {
     const [importRow] = await tx
@@ -218,39 +291,34 @@ export async function POST(req: Request) {
       })
       .returning({ id: planImports.id });
 
-    if (dates.length) {
-      await tx
-        .delete(planEntries)
-        .where(
-          and(eq(planEntries.userId, userId), inArray(planEntries.date, dates))
-        );
-    }
-
-    if (entries.length) {
+    if (newEntries.length) {
       await tx.insert(planEntries).values(
-        entries.map((e) => ({
+        newEntries.map((e) => ({
           ...e,
           importId: importRow.id,
         }))
       );
     }
 
+    const skippedCount =
+      parsed.errors.length + Math.max(0, entries.length - newEntries.length);
     await tx
       .update(planImports)
       .set({
-        insertedCount: entries.length,
-        skippedCount: parsed.errors.length,
+        insertedCount: newEntries.length,
+        skippedCount,
         completedAt: now,
       })
       .where(eq(planImports.id, importRow.id));
 
-    return importRow;
+    return { id: importRow.id, insertedCount: newEntries.length };
   });
 
+  const skippedDates = entries.length - createdImport.insertedCount;
   return NextResponse.json({
     importId: createdImport.id,
-    inserted: entries.length,
-    skipped: parsed.errors.length,
+    inserted: createdImport.insertedCount,
+    skipped: parsed.errors.length + Math.max(0, skippedDates),
     errors: parsed.errors,
   });
 }
