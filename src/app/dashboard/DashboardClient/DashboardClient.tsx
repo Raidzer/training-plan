@@ -2,7 +2,6 @@
 import {
   BookOutlined,
   CalendarOutlined,
-  HeartOutlined,
   MailOutlined,
   MessageOutlined,
 } from "@ant-design/icons";
@@ -44,22 +43,11 @@ export function DashboardClient({ session }: Props) {
               </Typography.Text>
             </Card>
           </Link>
-          <Link href="/workouts" passHref>
+                    <Link href="/diary" passHref>
             <Card
               hoverable
               className={styles.card}
-              title={<CardTitle icon={<HeartOutlined />} title="Тренировки" />}
-            >
-              <Typography.Text type="secondary">
-                Добавить новую тренировку или оценку нагрузки.
-              </Typography.Text>
-            </Card>
-          </Link>
-          <Link href="/diary" passHref>
-            <Card
-              hoverable
-              className={styles.card}
-              title={<CardTitle icon={<BookOutlined />} title="Отчеты" />}
+              title={<CardTitle icon={<BookOutlined />} title="Дневник" />}
             >
               <Typography.Text type="secondary">
                 Скоро: сводки, графики и метрики восстановления.
