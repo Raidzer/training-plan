@@ -643,7 +643,7 @@ export function DiaryClient() {
             <div className={styles.calendarBlock}>
               <Card
                 title="Календарь"
-                loading={loadingMarks}
+                loading={loadingMarks && Object.keys(marks).length === 0}
                 className={styles.calendarCard}
               >
                 <Space size="small" wrap className={styles.quickActions}>
@@ -676,7 +676,7 @@ export function DiaryClient() {
             <div className={styles.dayBlock}>
               <Card
                 title={`Выбранный день: ${formatDate(selectedDate)}`}
-                loading={loadingDay}
+                loading={loadingDay && !dayData}
                 className={styles.dayCard}
               >
                 <Space
