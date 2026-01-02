@@ -8,7 +8,7 @@ import {
   Space,
 } from "antd";
 import styles from "./diary.module.scss";
-import type { DayPayload, RecoveryEntry, WorkoutReport } from "./types/diaryTypes";
+import type { DayPayload, RecoveryEntry } from "./types/diaryTypes";
 import {
   formatDate,
   formatScore,
@@ -68,34 +68,15 @@ const getOptionLabel = (
   value?: string | null
 ) => options.find((option) => option.value === value)?.label ?? "";
 
-const formatWorkoutConditions = (report?: WorkoutReport | null) => {
-  if (!report) return "";
-  const parts: string[] = [];
-  const surfaceLabel = getOptionLabel(SURFACE_OPTIONS, report.surface);
-  if (surfaceLabel) {
-    parts.push(`Покрытие: ${surfaceLabel}`);
-  }
-  if (report.surface === "manezh") {
-    return parts.join(", ");
-  }
-  const weatherLabel = getOptionLabel(WEATHER_OPTIONS, report.weather);
-  if (weatherLabel) {
-    parts.push(`Погода: ${weatherLabel}`);
-  }
-  if (report.hasWind !== null && report.hasWind !== undefined) {
-    parts.push(`Ветер: ${report.hasWind ? "есть" : "нет"}`);
-  }
-  if (report.temperatureC !== null && report.temperatureC !== undefined) {
-    const trimmed = String(report.temperatureC).trim();
-    if (trimmed.length > 0) {
-      const parsed = Number(trimmed);
-      const temperatureText = Number.isFinite(parsed)
-        ? (Math.round(parsed * 10) / 10).toFixed(1)
-        : trimmed;
-      parts.push(`Температура: ${temperatureText}°C`);
-    }
-  }
-  return parts.join(", ");
+const formatTemperatureValue = (value?: string | null) => {
+  if (value === null || value === undefined) return "";
+  const trimmed = String(value).trim();
+  if (!trimmed) return "";
+  const parsed = Number(trimmed);
+  const temperatureText = Number.isFinite(parsed)
+    ? (Math.round(parsed * 10) / 10).toFixed(1)
+    : trimmed;
+  return `${temperatureText}°C`;
 };
 
 const buildDailyReportText = (params: {
@@ -116,9 +97,27 @@ const buildDailyReportText = (params: {
   const comments = params.day.planEntries.map(
     (entry) => reportByPlan.get(entry.id)?.commentText
   );
-  const conditions = params.day.planEntries.map((entry) =>
-    formatWorkoutConditions(reportByPlan.get(entry.id))
+  const temperatures = params.day.planEntries.map((entry) =>
+    formatTemperatureValue(reportByPlan.get(entry.id)?.temperatureC)
   );
+  const weathers = params.day.planEntries.map((entry) =>
+    getOptionLabel(WEATHER_OPTIONS, reportByPlan.get(entry.id)?.weather)
+  );
+  const winds = params.day.planEntries.map((entry) =>
+    reportByPlan.get(entry.id)?.hasWind ? "ветер" : ""
+  );
+  const surfaces = params.day.planEntries.map((entry) =>
+    getOptionLabel(SURFACE_OPTIONS, reportByPlan.get(entry.id)?.surface)
+  );
+  const commentBlock = [
+    joinValues(comments),
+    joinValues(temperatures),
+    joinValues(weathers),
+    joinValues(winds),
+    joinValues(surfaces),
+  ]
+    .filter((line) => line.trim().length > 0)
+    .join(". ");
   const morningWeight = params.day.weightEntries.find(
     (entry) => entry.period === "morning"
   )?.weightKg;
@@ -132,8 +131,7 @@ const buildDailyReportText = (params: {
     joinValues(startTimes),
     joinValues(tasks),
     joinValues(results),
-    joinValues(comments),
-    joinValues(conditions),
+    commentBlock,
     formatScore(params.day.recoveryEntry),
     formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
     joinValues([
