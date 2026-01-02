@@ -211,3 +211,24 @@ export const workoutReports = pgTable(
     ).on(table.userId, table.planEntryId),
   })
 );
+
+export const workoutReportConditions = pgTable(
+  "workout_report_conditions",
+  {
+    id: serial("id").primaryKey(),
+    workoutReportId: integer("workout_report_id")
+      .notNull()
+      .references(() => workoutReports.id),
+    weather: varchar("weather", { length: 16 }),
+    hasWind: boolean("has_wind"),
+    temperatureC: numeric("temperature_c", { precision: 5, scale: 1 }),
+    surface: varchar("surface", { length: 16 }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    workoutReportConditionsReportIdx: uniqueIndex(
+      "workout_report_conditions_report_idx"
+    ).on(table.workoutReportId),
+  })
+);

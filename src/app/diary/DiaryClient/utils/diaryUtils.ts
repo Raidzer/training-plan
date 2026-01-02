@@ -24,6 +24,15 @@ export const toDefaultWorkoutForm = (
   resultText: report?.resultText ?? "",
   commentText: report?.commentText ?? "",
   distanceKm: report?.distanceKm ?? "",
+  weather: report?.weather ?? "",
+  hasWind:
+    report?.hasWind === null || report?.hasWind === undefined
+      ? ""
+      : report.hasWind
+      ? "true"
+      : "false",
+  temperatureC: report?.temperatureC ?? "",
+  surface: report?.surface ?? "",
 });
 
 export const parseOptionalNumber = (value: unknown) => {

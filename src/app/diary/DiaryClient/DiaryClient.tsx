@@ -8,7 +8,7 @@ import {
   Space,
 } from "antd";
 import styles from "./diary.module.scss";
-import type { DayPayload, RecoveryEntry } from "./types/diaryTypes";
+import type { DayPayload, RecoveryEntry, WorkoutReport } from "./types/diaryTypes";
 import {
   formatDate,
   formatScore,
@@ -44,6 +44,60 @@ const formatReportDate = (value: string) => {
   return `${parsed.format("DD.MM.YYYY")}(${dayLabel})`;
 };
 
+const WEATHER_OPTIONS = [
+  { value: "cloudy", label: "Пасмурно" },
+  { value: "sunny", label: "Солнечно" },
+  { value: "rain", label: "Дождь" },
+  { value: "snow", label: "Снег" },
+] as const;
+
+const SURFACE_OPTIONS = [
+  { value: "ground", label: "Грунт" },
+  { value: "asphalt", label: "Асфальт" },
+  { value: "manezh", label: "Манеж" },
+  { value: "stadium", label: "Стадион" },
+] as const;
+
+const WIND_OPTIONS = [
+  { value: "true", label: "Есть" },
+  { value: "false", label: "Нет" },
+] as const;
+
+const getOptionLabel = (
+  options: readonly { value: string; label: string }[],
+  value?: string | null
+) => options.find((option) => option.value === value)?.label ?? "";
+
+const formatWorkoutConditions = (report?: WorkoutReport | null) => {
+  if (!report) return "";
+  const parts: string[] = [];
+  const surfaceLabel = getOptionLabel(SURFACE_OPTIONS, report.surface);
+  if (surfaceLabel) {
+    parts.push(`Покрытие: ${surfaceLabel}`);
+  }
+  if (report.surface === "manezh") {
+    return parts.join(", ");
+  }
+  const weatherLabel = getOptionLabel(WEATHER_OPTIONS, report.weather);
+  if (weatherLabel) {
+    parts.push(`Погода: ${weatherLabel}`);
+  }
+  if (report.hasWind !== null && report.hasWind !== undefined) {
+    parts.push(`Ветер: ${report.hasWind ? "есть" : "нет"}`);
+  }
+  if (report.temperatureC !== null && report.temperatureC !== undefined) {
+    const trimmed = String(report.temperatureC).trim();
+    if (trimmed.length > 0) {
+      const parsed = Number(trimmed);
+      const temperatureText = Number.isFinite(parsed)
+        ? (Math.round(parsed * 10) / 10).toFixed(1)
+        : trimmed;
+      parts.push(`Температура: ${temperatureText}°C`);
+    }
+  }
+  return parts.join(", ");
+};
+
 const buildDailyReportText = (params: {
   date: string;
   day: DayPayload | null;
@@ -62,6 +116,9 @@ const buildDailyReportText = (params: {
   const comments = params.day.planEntries.map(
     (entry) => reportByPlan.get(entry.id)?.commentText
   );
+  const conditions = params.day.planEntries.map((entry) =>
+    formatWorkoutConditions(reportByPlan.get(entry.id))
+  );
   const morningWeight = params.day.weightEntries.find(
     (entry) => entry.period === "morning"
   )?.weightKg;
@@ -76,6 +133,7 @@ const buildDailyReportText = (params: {
     joinValues(tasks),
     joinValues(results),
     joinValues(comments),
+    joinValues(conditions),
     formatScore(params.day.recoveryEntry),
     formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
     joinValues([
@@ -97,6 +155,7 @@ const diaryMessages = {
   weightSaved: "Вес сохранен.",
   workoutRequired: "Время начала и результат обязательны.",
   workoutDistanceInvalid: "Введите корректную дистанцию тренировки.",
+  workoutTemperatureInvalid: "Введите корректную температуру воздуха.",
   workoutSaveFailed: "Не удалось сохранить отчет о тренировке.",
   workoutSaved: "Отчет о тренировке сохранен.",
   recoveryInvalidSleep: "Введите время сна в формате ЧЧ:ММ.",
@@ -154,6 +213,10 @@ const workoutLabels = {
   startTimePlaceholder: "Время начала (ЧЧ:ММ)",
   resultPlaceholder: "Результат",
   distancePlaceholder: "Дистанция (км)",
+  surfacePlaceholder: "Покрытие",
+  weatherPlaceholder: "Погода",
+  windPlaceholder: "Ветер",
+  temperaturePlaceholder: "Температура, °C",
   commentPlaceholder: "Комментарий",
   saveReportLabel: "Сохранить отчет",
 };
@@ -216,16 +279,36 @@ export function DiaryClient() {
 
   const handleWorkoutChange = (
     entryId: number,
-    field: "startTime" | "resultText" | "distanceKm" | "commentText",
+    field:
+      | "startTime"
+      | "resultText"
+      | "distanceKm"
+      | "commentText"
+      | "weather"
+      | "hasWind"
+      | "temperatureC"
+      | "surface",
     value: string
   ) => {
-    setWorkoutForm((prev) => ({
-      ...prev,
-      [entryId]: {
-        ...prev[entryId],
-        [field]: value,
-      },
-    }));
+    setWorkoutForm((prev) => {
+      const current = prev[entryId] ?? {
+        startTime: "",
+        resultText: "",
+        commentText: "",
+        distanceKm: "",
+        weather: "",
+        hasWind: "",
+        temperatureC: "",
+        surface: "",
+      };
+      const next = { ...current, [field]: value };
+      if (field === "surface" && value === "manezh") {
+        next.weather = "";
+        next.hasWind = "";
+        next.temperatureC = "";
+      }
+      return { ...prev, [entryId]: next };
+    });
   };
 
   const quickActions = useMemo(
@@ -342,8 +425,15 @@ export function DiaryClient() {
                     startTimePlaceholder={workoutLabels.startTimePlaceholder}
                     resultPlaceholder={workoutLabels.resultPlaceholder}
                     distancePlaceholder={workoutLabels.distancePlaceholder}
+                    surfacePlaceholder={workoutLabels.surfacePlaceholder}
+                    weatherPlaceholder={workoutLabels.weatherPlaceholder}
+                    windPlaceholder={workoutLabels.windPlaceholder}
+                    temperaturePlaceholder={workoutLabels.temperaturePlaceholder}
                     commentPlaceholder={workoutLabels.commentPlaceholder}
                     saveReportLabel={workoutLabels.saveReportLabel}
+                    surfaceOptions={SURFACE_OPTIONS}
+                    weatherOptions={WEATHER_OPTIONS}
+                    windOptions={WIND_OPTIONS}
                     entries={dayData?.planEntries ?? []}
                     workoutForm={workoutForm}
                     savingWorkouts={savingWorkouts}

@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { workoutReports } from "@/db/schema";
+import { workoutReportConditions, workoutReports } from "@/db/schema";
 
 export type WorkoutReportSummary = {
   id: number;
@@ -10,6 +10,10 @@ export type WorkoutReportSummary = {
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
+  weather: string | null;
+  hasWind: boolean | null;
+  temperatureC: string | null;
+  surface: string | null;
 };
 
 export const getWorkoutReportByPlanEntry = async (params: {
@@ -25,8 +29,16 @@ export const getWorkoutReportByPlanEntry = async (params: {
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
       distanceKm: workoutReports.distanceKm,
+      weather: workoutReportConditions.weather,
+      hasWind: workoutReportConditions.hasWind,
+      temperatureC: workoutReportConditions.temperatureC,
+      surface: workoutReportConditions.surface,
     })
     .from(workoutReports)
+    .leftJoin(
+      workoutReportConditions,
+      eq(workoutReportConditions.workoutReportId, workoutReports.id)
+    )
     .where(
       and(
         eq(workoutReports.userId, params.userId),
@@ -49,8 +61,16 @@ export const getWorkoutReportsByDate = async (params: {
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
       distanceKm: workoutReports.distanceKm,
+      weather: workoutReportConditions.weather,
+      hasWind: workoutReportConditions.hasWind,
+      temperatureC: workoutReportConditions.temperatureC,
+      surface: workoutReportConditions.surface,
     })
     .from(workoutReports)
+    .leftJoin(
+      workoutReportConditions,
+      eq(workoutReportConditions.workoutReportId, workoutReports.id)
+    )
     .where(
       and(
         eq(workoutReports.userId, params.userId),
@@ -67,6 +87,10 @@ export const upsertWorkoutReport = async (params: {
   resultText: string;
   commentText?: string | null;
   distanceKm?: number | null;
+  weather?: string | null;
+  hasWind?: boolean | null;
+  temperatureC?: number | null;
+  surface?: string | null;
 }) => {
   const now = new Date();
   const updateValues: {
@@ -111,6 +135,68 @@ export const upsertWorkoutReport = async (params: {
     insertValues.distanceKm =
       params.distanceKm === null ? null : String(params.distanceKm);
   }
+
+  const shouldUpsertConditions = [
+    params.weather,
+    params.hasWind,
+    params.temperatureC,
+    params.surface,
+  ].some((value) => value !== undefined);
+
+  const upsertConditions = async (workoutReportId: number) => {
+    if (!shouldUpsertConditions) return;
+    const insertValues: {
+      workoutReportId: number;
+      weather: string | null;
+      hasWind: boolean | null;
+      temperatureC: string | null;
+      surface: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    } = {
+      workoutReportId,
+      weather: params.weather ?? null,
+      hasWind: params.hasWind ?? null,
+      temperatureC:
+        params.temperatureC === undefined
+          ? null
+          : params.temperatureC === null
+          ? null
+          : String(params.temperatureC),
+      surface: params.surface ?? null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const updateSet: {
+      weather?: string | null;
+      hasWind?: boolean | null;
+      temperatureC?: string | null;
+      surface?: string | null;
+      updatedAt: Date;
+    } = { updatedAt: now };
+    if (params.weather !== undefined) {
+      updateSet.weather = params.weather ?? null;
+    }
+    if (params.hasWind !== undefined) {
+      updateSet.hasWind = params.hasWind ?? null;
+    }
+    if (params.temperatureC !== undefined) {
+      updateSet.temperatureC =
+        params.temperatureC === null ? null : String(params.temperatureC);
+    }
+    if (params.surface !== undefined) {
+      updateSet.surface = params.surface ?? null;
+    }
+
+    await db
+      .insert(workoutReportConditions)
+      .values(insertValues)
+      .onConflictDoUpdate({
+        target: workoutReportConditions.workoutReportId,
+        set: updateSet,
+      });
+  };
+
   const [existing] = await db
     .select({ id: workoutReports.id })
     .from(workoutReports)
@@ -126,8 +212,15 @@ export const upsertWorkoutReport = async (params: {
       .update(workoutReports)
       .set(updateValues)
       .where(eq(workoutReports.id, existing.id));
+    await upsertConditions(existing.id);
     return;
   }
 
-  await db.insert(workoutReports).values(insertValues);
+  const [inserted] = await db
+    .insert(workoutReports)
+    .values(insertValues)
+    .returning({ id: workoutReports.id });
+  if (inserted) {
+    await upsertConditions(inserted.id);
+  }
 };

@@ -4,6 +4,7 @@ import {
   planEntries,
   recoveryEntries,
   weightEntries,
+  workoutReportConditions,
   workoutReports,
 } from "@/db/schema";
 
@@ -24,6 +25,10 @@ export type DiaryWorkoutReport = {
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
+  weather: string | null;
+  hasWind: boolean | null;
+  temperatureC: string | null;
+  surface: string | null;
 };
 
 export type DiaryWeightEntry = {
@@ -220,8 +225,16 @@ export const getDiaryDayData = async (params: {
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
           distanceKm: workoutReports.distanceKm,
+          weather: workoutReportConditions.weather,
+          hasWind: workoutReportConditions.hasWind,
+          temperatureC: workoutReportConditions.temperatureC,
+          surface: workoutReportConditions.surface,
         })
         .from(workoutReports)
+        .leftJoin(
+          workoutReportConditions,
+          eq(workoutReportConditions.workoutReportId, workoutReports.id)
+        )
         .where(
           and(
             eq(workoutReports.userId, params.userId),

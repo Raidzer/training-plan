@@ -15,6 +15,10 @@ export type WorkoutReport = {
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
+  weather: string | null;
+  hasWind: boolean | null;
+  temperatureC: string | null;
+  surface: string | null;
 };
 
 export type WeightEntry = {
@@ -72,6 +76,10 @@ export type WorkoutFormEntry = {
   resultText: string;
   commentText: string;
   distanceKm: string;
+  weather: string;
+  hasWind: string;
+  temperatureC: string;
+  surface: string;
 };
 
 export type WorkoutFormState = Record<number, WorkoutFormEntry>;

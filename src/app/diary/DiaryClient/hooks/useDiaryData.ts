@@ -36,6 +36,7 @@ export type DiaryMessages = {
   weightSaved: string;
   workoutRequired: string;
   workoutDistanceInvalid: string;
+  workoutTemperatureInvalid: string;
   workoutSaveFailed: string;
   workoutSaved: string;
   recoveryInvalidSleep: string;
@@ -269,6 +270,25 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         messageApi.error(messages.workoutDistanceInvalid);
         return;
       }
+
+      const surfaceValue = form.surface.trim();
+      const isManezh = surfaceValue === "manezh";
+      const weatherValue = isManezh ? "" : form.weather.trim();
+      const hasWindValue = isManezh ? "" : form.hasWind;
+      const temperatureValue = isManezh ? "" : form.temperatureC.trim();
+      const temperatureC =
+        temperatureValue.length > 0
+          ? Number(temperatureValue.replace(",", "."))
+          : null;
+
+      if (
+        !isManezh &&
+        temperatureValue.length > 0 &&
+        !Number.isFinite(temperatureC)
+      ) {
+        messageApi.error(messages.workoutTemperatureInvalid);
+        return;
+      }
       setSavingWorkouts((prev) => ({ ...prev, [planEntryId]: true }));
       try {
         const res = await fetch("/api/diary/workout-report", {
@@ -281,6 +301,15 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
             resultText: form.resultText,
             commentText: form.commentText,
             distanceKm,
+            surface: surfaceValue.length > 0 ? surfaceValue : null,
+            weather: weatherValue.length > 0 ? weatherValue : null,
+            hasWind:
+              hasWindValue === "true"
+                ? true
+                : hasWindValue === "false"
+                ? false
+                : null,
+            temperatureC,
           }),
         });
         if (!res.ok) {
