@@ -4,6 +4,7 @@ import {
   planEntries,
   recoveryEntries,
   weightEntries,
+  workoutReportConditions,
   workoutReports,
 } from "@/db/schema";
 
@@ -24,6 +25,10 @@ export type DiaryWorkoutReport = {
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
+  weather: string | null;
+  hasWind: boolean | null;
+  temperatureC: string | null;
+  surface: string | null;
 };
 
 export type DiaryWeightEntry = {
@@ -220,8 +225,16 @@ export const getDiaryDayData = async (params: {
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
           distanceKm: workoutReports.distanceKm,
+          weather: workoutReportConditions.weather,
+          hasWind: workoutReportConditions.hasWind,
+          temperatureC: workoutReportConditions.temperatureC,
+          surface: workoutReportConditions.surface,
         })
         .from(workoutReports)
+        .leftJoin(
+          workoutReportConditions,
+          eq(workoutReportConditions.workoutReportId, workoutReports.id)
+        )
         .where(
           and(
             eq(workoutReports.userId, params.userId),
@@ -497,8 +510,16 @@ export const getDiaryExportRows = async (params: {
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
           distanceKm: workoutReports.distanceKm,
+          weather: workoutReportConditions.weather,
+          hasWind: workoutReportConditions.hasWind,
+          temperatureC: workoutReportConditions.temperatureC,
+          surface: workoutReportConditions.surface,
         })
         .from(workoutReports)
+        .leftJoin(
+          workoutReportConditions,
+          eq(workoutReportConditions.workoutReportId, workoutReports.id)
+        )
         .where(
           and(
             eq(workoutReports.userId, params.userId),
@@ -563,6 +584,10 @@ export const getDiaryExportRows = async (params: {
       resultText: string;
       commentText: string | null;
       distanceKm: string | null;
+      weather: string | null;
+      hasWind: boolean | null;
+      temperatureC: string | null;
+      surface: string | null;
     }
   >();
   for (const report of reportRows) {
@@ -647,7 +672,7 @@ export const getDiaryExportRows = async (params: {
     return `${morning} / ${evening}`;
   };
 
-    const formatRecovery = (entry?: {
+  const formatRecovery = (entry?: {
     hasBath: boolean;
     hasMfr: boolean;
     hasMassage: boolean;
@@ -659,6 +684,31 @@ export const getDiaryExportRows = async (params: {
       entry.hasMassage ? "Массаж" : null,
     ].filter(Boolean);
     return flags.length ? flags.join(", ") : "-";
+  };
+
+  const weatherLabels: Record<string, string> = {
+    cloudy: "Пасмурно",
+    sunny: "Солнечно",
+    rain: "Дождь",
+    snow: "Снег",
+  };
+
+  const surfaceLabels: Record<string, string> = {
+    ground: "Грунт",
+    asphalt: "Асфальт",
+    manezh: "Манеж",
+    stadium: "Стадион",
+  };
+
+  const formatTemperatureValue = (value?: string | null) => {
+    if (value === null || value === undefined) return "";
+    const trimmed = String(value).trim();
+    if (!trimmed) return "";
+    const parsed = Number(trimmed);
+    const temperatureText = Number.isFinite(parsed)
+      ? (Math.round(parsed * 10) / 10).toFixed(1)
+      : trimmed;
+    return `${temperatureText}°C`;
   };
 
   const rows: DiaryExportRow[] = [];
@@ -701,9 +751,22 @@ export const getDiaryExportRows = async (params: {
       const resultText = report?.resultText?.trim()
         ? report.resultText
         : "-";
-      const commentText = report?.commentText?.trim()
-        ? report.commentText
-        : "-";
+      const commentParts: string[] = [];
+      if (report?.commentText?.trim()) {
+        commentParts.push(report.commentText.trim());
+      }
+      const temperatureText = formatTemperatureValue(report?.temperatureC);
+      if (temperatureText) commentParts.push(temperatureText);
+      const weatherText = report?.weather
+        ? weatherLabels[report.weather] ?? ""
+        : "";
+      if (weatherText) commentParts.push(weatherText);
+      if (report?.hasWind) commentParts.push("ветер");
+      const surfaceText = report?.surface
+        ? surfaceLabels[report.surface] ?? ""
+        : "";
+      if (surfaceText) commentParts.push(surfaceText);
+      const commentText = commentParts.length ? commentParts.join(". ") : "-";
       tasks.push(taskText);
       results.push(resultText);
       comments.push(commentText);
