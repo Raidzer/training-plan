@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
-import { planEntries } from "@/db/schema";
-import { asc, desc, eq } from "drizzle-orm";
+import { planEntries, workoutReports } from "@/db/schema";
+import { asc, desc, eq, sql } from "drizzle-orm";
 
 export async function GET() {
   const session = await auth();
@@ -20,8 +20,10 @@ export async function GET() {
       commentText: planEntries.commentText,
       importId: planEntries.importId,
       isWorkload: planEntries.isWorkload,
+      hasReport: sql<boolean>`(${workoutReports.id} is not null)`.as("hasReport"),
     })
     .from(planEntries)
+    .leftJoin(workoutReports, eq(workoutReports.planEntryId, planEntries.id))
     .where(eq(planEntries.userId, userId))
     .orderBy(desc(planEntries.date), asc(planEntries.sessionOrder))
     .limit(500);

@@ -1,13 +1,21 @@
 "use client";
 
-import { FireOutlined, HomeOutlined, ReloadOutlined } from "@ant-design/icons";
+import {
+  BookOutlined,
+  CheckCircleOutlined,
+  FireOutlined,
+  HomeOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Card,
   Space,
+  Switch,
   Table,
   Tag,
   Typography,
+  Tooltip,
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -24,6 +32,7 @@ type PlanEntry = {
   commentText: string | null;
   importId: number | null;
   isWorkload: boolean;
+  hasReport: boolean;
 };
 
 const PAGE_SIZE = 20;
@@ -32,13 +41,22 @@ export default function PlanPage() {
   const [entries, setEntries] = useState<PlanEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [onlyWithoutReports, setOnlyWithoutReports] = useState(false);
   const [msgApi, contextHolder] = message.useMessage();
   const scrolledToTodayRef = useRef(false);
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
 
+  const filteredEntries = useMemo(
+    () =>
+      onlyWithoutReports
+        ? entries.filter((entry) => !entry.hasReport)
+        : entries,
+    [entries, onlyWithoutReports]
+  );
+
   const todayEntryId = useMemo(
-    () => entries.find((entry) => entry.date === today)?.id ?? null,
-    [entries, today]
+    () => filteredEntries.find((entry) => entry.date === today)?.id ?? null,
+    [filteredEntries, today]
   );
 
   const columns: ColumnsType<PlanEntry> = useMemo(
@@ -67,17 +85,36 @@ export default function PlanPage() {
         title: "Комментарий",
         dataIndex: "commentText",
       },
+      {
+        title: "Отчет",
+        dataIndex: "hasReport",
+        width: 120,
+        render: (value: boolean) =>
+          value ? (
+            <Tag icon={<CheckCircleOutlined />} color="green">
+              Заполнен
+            </Tag>
+          ) : null,
+      },
+      {
+        title: "Дневник",
+        key: "diary",
+        width: 64,
+        render: (_, record) => (
+          <Tooltip title="Открыть дневник">
+            <Link href={`/diary?date=${record.date}`} passHref>
+              <Button
+                size="small"
+                type="text"
+                icon={<BookOutlined />}
+                aria-label={`Открыть дневник на ${record.date}`}
+              />
+            </Link>
+          </Tooltip>
+        ),
+      },
     ],
     []
-  );
-
-  const updateCurrentPageForToday = useCallback(
-    (items: PlanEntry[]) => {
-      const todayIndex = items.findIndex((entry) => entry.date === today);
-      if (todayIndex < 0) return;
-      setCurrentPage(Math.floor(todayIndex / PAGE_SIZE) + 1);
-    },
-    [today]
   );
 
   const load = useCallback(async () => {
@@ -85,26 +122,40 @@ export default function PlanPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/plans");
-      const data = (await res.json().catch(() => null)) as
-        | { entries?: PlanEntry[]; error?: string }
-        | null;
+      const data = (await res.json().catch(() => null)) as {
+        entries?: PlanEntry[];
+        error?: string;
+      } | null;
       if (!res.ok || !data?.entries) {
         msgApi.error(data?.error ?? "Не удалось загрузить записи плана");
         return;
       }
       setEntries(data.entries);
-      updateCurrentPageForToday(data.entries);
     } catch (err) {
       console.error(err);
       msgApi.error("Произошла ошибка при загрузке плана");
     } finally {
       setLoading(false);
     }
-  }, [msgApi, updateCurrentPageForToday]);
+  }, [msgApi]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    scrolledToTodayRef.current = false;
+    if (onlyWithoutReports) {
+      setCurrentPage((prev) => (prev === 1 ? prev : 1));
+      return;
+    }
+    const todayIndex = filteredEntries.findIndex(
+      (entry) => entry.date === today
+    );
+    const nextPage =
+      todayIndex < 0 ? 1 : Math.floor(todayIndex / PAGE_SIZE) + 1;
+    setCurrentPage((prev) => (prev === nextPage ? prev : nextPage));
+  }, [filteredEntries, onlyWithoutReports, today]);
 
   useEffect(() => {
     if (!todayEntryId || scrolledToTodayRef.current) return;
@@ -154,10 +205,17 @@ export default function PlanPage() {
               Импортировать план из Excel
             </Button>
           </Link>
+          <Space size="small" align="center">
+            <Switch
+              checked={onlyWithoutReports}
+              onChange={setOnlyWithoutReports}
+            />
+            <Typography.Text>Только без отчетов</Typography.Text>
+          </Space>
           <Table
             size="small"
             columns={columns}
-            dataSource={entries}
+            dataSource={filteredEntries}
             loading={loading}
             rowKey="id"
             rowClassName={(record) => {
