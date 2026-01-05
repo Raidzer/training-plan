@@ -309,19 +309,6 @@ export function DiaryClient() {
     });
   };
 
-  const quickActions = useMemo(
-    () => [
-      { label: "Предыдущий день", action: () => shiftDate(-1, "day") },
-      { label: "Следующий день", action: () => shiftDate(1, "day") },
-      { label: "Предыдущая неделя", action: () => shiftDate(-1, "week") },
-      { label: "Следующая неделя", action: () => shiftDate(1, "week") },
-      { label: "Предыдущий месяц", action: () => shiftDate(-1, "month") },
-      { label: "Следующий месяц", action: () => shiftDate(1, "month") },
-      { label: "Сегодня", action: () => updateSelectedDate(dayjs()) },
-    ],
-    [shiftDate, updateSelectedDate]
-  );
-
   const status = dayData?.status;
   const workoutsComplete = status
     ? status.workoutsTotal === 0 ||
@@ -360,7 +347,6 @@ export function DiaryClient() {
                 loading={loadingMarks && Object.keys(marks).length === 0}
                 selectedDate={selectedDate}
                 marks={marks}
-                quickActions={quickActions}
                 onSelectDate={updateSelectedDate}
                 onPanelChange={setPanelDate}
               />
