@@ -45,3 +45,16 @@
 .workloadRow :global(.ant-table-cell) {
   background-color: rgba(255, 140, 0, 0.08);
 }
+
+.todayRow :global(.ant-table-cell) {
+  background-image: linear-gradient(
+    90deg,
+    rgba(24, 144, 255, 0.18),
+    rgba(24, 144, 255, 0.04) 60%,
+    rgba(24, 144, 255, 0)
+  );
+}
+
+.todayRow :global(.ant-table-cell:first-child) {
+  border-left: 4px solid rgba(24, 144, 255, 0.7);
+}

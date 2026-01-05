@@ -11,8 +11,9 @@ import {
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./plan.module.scss";
 
 type PlanEntry = {
@@ -25,10 +26,20 @@ type PlanEntry = {
   isWorkload: boolean;
 };
 
+const PAGE_SIZE = 20;
+
 export default function PlanPage() {
   const [entries, setEntries] = useState<PlanEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [msgApi, contextHolder] = message.useMessage();
+  const scrolledToTodayRef = useRef(false);
+  const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
+
+  const todayEntryId = useMemo(
+    () => entries.find((entry) => entry.date === today)?.id ?? null,
+    [entries, today]
+  );
 
   const columns: ColumnsType<PlanEntry> = useMemo(
     () => [
@@ -60,7 +71,17 @@ export default function PlanPage() {
     []
   );
 
+  const updateCurrentPageForToday = useCallback(
+    (items: PlanEntry[]) => {
+      const todayIndex = items.findIndex((entry) => entry.date === today);
+      if (todayIndex < 0) return;
+      setCurrentPage(Math.floor(todayIndex / PAGE_SIZE) + 1);
+    },
+    [today]
+  );
+
   const load = useCallback(async () => {
+    scrolledToTodayRef.current = false;
     setLoading(true);
     try {
       const res = await fetch("/api/plans");
@@ -72,17 +93,26 @@ export default function PlanPage() {
         return;
       }
       setEntries(data.entries);
+      updateCurrentPageForToday(data.entries);
     } catch (err) {
       console.error(err);
       msgApi.error("Произошла ошибка при загрузке плана");
     } finally {
       setLoading(false);
     }
-  }, [msgApi]);
+  }, [msgApi, updateCurrentPageForToday]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!todayEntryId || scrolledToTodayRef.current) return;
+    const row = document.querySelector(`[data-row-key="${todayEntryId}"]`);
+    if (!row) return;
+    row.scrollIntoView({ block: "center", behavior: "smooth" });
+    scrolledToTodayRef.current = true;
+  }, [todayEntryId, currentPage]);
 
   return (
     <main className={styles.mainContainer}>
@@ -130,10 +160,17 @@ export default function PlanPage() {
             dataSource={entries}
             loading={loading}
             rowKey="id"
-            rowClassName={(record) =>
-              record.isWorkload ? styles.workloadRow : ""
-            }
-            pagination={{ pageSize: 20 }}
+            rowClassName={(record) => {
+              const rowClasses = [];
+              if (record.isWorkload) rowClasses.push(styles.workloadRow);
+              if (record.date === today) rowClasses.push(styles.todayRow);
+              return rowClasses.join(" ");
+            }}
+            pagination={{
+              pageSize: PAGE_SIZE,
+              current: currentPage,
+              onChange: (page) => setCurrentPage(page),
+            }}
           />
         </Space>
       </Card>
