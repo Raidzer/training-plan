@@ -11,7 +11,6 @@ import styles from "./diary.module.scss";
 import type { DayPayload, RecoveryEntry } from "./types/diaryTypes";
 import {
   formatDate,
-  formatScore,
   formatSleepTimeValue,
   formatWeightValue,
   joinValues,
@@ -79,6 +78,20 @@ const formatTemperatureValue = (value?: string | null) => {
   return `${temperatureText}°C`;
 };
 
+
+const formatWorkoutScore = (
+  report?: DayPayload["workoutReports"][number] | null
+) => {
+  if (!report) return "-";
+  const parts = [
+    report.overallScore ?? "-",
+    report.functionalScore ?? "-",
+    report.muscleScore ?? "-",
+  ];
+  if (parts.every((value) => value === "-")) return "-";
+  return parts.join("-");
+};
+
 const buildDailyReportText = (params: {
   date: string;
   day: DayPayload | null;
@@ -91,6 +104,9 @@ const buildDailyReportText = (params: {
     (entry) => reportByPlan.get(entry.id)?.startTime
   );
   const tasks = params.day.planEntries.map((entry) => entry.taskText);
+  const scores = params.day.planEntries.map((entry) =>
+    formatWorkoutScore(reportByPlan.get(entry.id))
+  );
   const results = params.day.planEntries.map(
     (entry) => reportByPlan.get(entry.id)?.resultText
   );
@@ -125,6 +141,9 @@ const buildDailyReportText = (params: {
     params.day.status.totalDistanceKm > 0
       ? params.day.status.totalDistanceKm.toFixed(2)
       : "";
+  const scoreLine = scores.every((score) => score.trim() === "-" || !score.trim())
+    ? ""
+    : joinValues(scores);
 
   const lines = [
     formatReportDate(params.date),
@@ -132,7 +151,7 @@ const buildDailyReportText = (params: {
     joinValues(tasks),
     joinValues(results),
     commentBlock,
-    formatScore(params.day.recoveryEntry),
+    scoreLine,
     formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
     joinValues([
       formatWeightValue(params.day.previousEveningWeightKg),
@@ -211,6 +230,10 @@ const workoutLabels = {
   startTimePlaceholder: "Время начала (ЧЧ:ММ)",
   resultPlaceholder: "Результат",
   distancePlaceholder: "Дистанция (км)",
+  overallScoreLabel: recoveryLabels.overallLabel,
+  functionalScoreLabel: recoveryLabels.functionalLabel,
+  muscleScoreLabel: recoveryLabels.muscleLabel,
+  scorePlaceholder: recoveryLabels.scorePlaceholder,
   surfacePlaceholder: "Покрытие",
   weatherPlaceholder: "Погода",
   windPlaceholder: "Ветер",
@@ -264,13 +287,6 @@ export function DiaryClient() {
     setRecoveryForm((prev) => ({ ...prev, [field]: checked }));
   };
 
-  const handleRecoveryScoreChange = (
-    field: "overallScore" | "functionalScore" | "muscleScore",
-    value: number | null
-  ) => {
-    setRecoveryForm((prev) => ({ ...prev, [field]: value }));
-  };
-
   const handleRecoverySleepChange = (value: string) => {
     setRecoveryForm((prev) => ({ ...prev, sleepHours: value }));
   };
@@ -282,11 +298,14 @@ export function DiaryClient() {
       | "resultText"
       | "distanceKm"
       | "commentText"
+      | "overallScore"
+      | "functionalScore"
+      | "muscleScore"
       | "weather"
       | "hasWind"
       | "temperatureC"
       | "surface",
-    value: string
+    value: string | number | null
   ) => {
     setWorkoutForm((prev) => {
       const current = prev[entryId] ?? {
@@ -294,6 +313,9 @@ export function DiaryClient() {
         resultText: "",
         commentText: "",
         distanceKm: "",
+        overallScore: null,
+        functionalScore: null,
+        muscleScore: null,
         weather: "",
         hasWind: "",
         temperatureC: "",
@@ -308,19 +330,6 @@ export function DiaryClient() {
       return { ...prev, [entryId]: next };
     });
   };
-
-  const quickActions = useMemo(
-    () => [
-      { label: "Предыдущий день", action: () => shiftDate(-1, "day") },
-      { label: "Следующий день", action: () => shiftDate(1, "day") },
-      { label: "Предыдущая неделя", action: () => shiftDate(-1, "week") },
-      { label: "Следующая неделя", action: () => shiftDate(1, "week") },
-      { label: "Предыдущий месяц", action: () => shiftDate(-1, "month") },
-      { label: "Следующий месяц", action: () => shiftDate(1, "month") },
-      { label: "Сегодня", action: () => updateSelectedDate(dayjs()) },
-    ],
-    [shiftDate, updateSelectedDate]
-  );
 
   const status = dayData?.status;
   const workoutsComplete = status
@@ -360,7 +369,6 @@ export function DiaryClient() {
                 loading={loadingMarks && Object.keys(marks).length === 0}
                 selectedDate={selectedDate}
                 marks={marks}
-                quickActions={quickActions}
                 onSelectDate={updateSelectedDate}
                 onPanelChange={setPanelDate}
               />
@@ -400,17 +408,12 @@ export function DiaryClient() {
                     bathLabel={recoveryLabels.bathLabel}
                     mfrLabel={recoveryLabels.mfrLabel}
                     massageLabel={recoveryLabels.massageLabel}
-                    overallLabel={recoveryLabels.overallLabel}
-                    functionalLabel={recoveryLabels.functionalLabel}
-                    muscleLabel={recoveryLabels.muscleLabel}
                     sleepLabel={recoveryLabels.sleepLabel}
                     sleepPlaceholder={recoveryLabels.sleepPlaceholder}
-                    scorePlaceholder={recoveryLabels.scorePlaceholder}
                     saveLabel={recoveryLabels.saveLabel}
                     recoveryForm={recoveryForm}
                     savingRecovery={savingRecovery}
                     onToggle={handleRecoveryToggle}
-                    onScoreChange={handleRecoveryScoreChange}
                     onSleepChange={handleRecoverySleepChange}
                     onSave={handleSaveRecovery}
                   />
@@ -423,6 +426,10 @@ export function DiaryClient() {
                     startTimePlaceholder={workoutLabels.startTimePlaceholder}
                     resultPlaceholder={workoutLabels.resultPlaceholder}
                     distancePlaceholder={workoutLabels.distancePlaceholder}
+                    overallScoreLabel={workoutLabels.overallScoreLabel}
+                    functionalScoreLabel={workoutLabels.functionalScoreLabel}
+                    muscleScoreLabel={workoutLabels.muscleScoreLabel}
+                    scorePlaceholder={workoutLabels.scorePlaceholder}
                     surfacePlaceholder={workoutLabels.surfacePlaceholder}
                     weatherPlaceholder={workoutLabels.weatherPlaceholder}
                     windPlaceholder={workoutLabels.windPlaceholder}

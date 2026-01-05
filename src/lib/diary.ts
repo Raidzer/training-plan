@@ -25,6 +25,9 @@ export type DiaryWorkoutReport = {
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
+  overallScore: number | null;
+  functionalScore: number | null;
+  muscleScore: number | null;
   weather: string | null;
   hasWind: boolean | null;
   temperatureC: string | null;
@@ -201,9 +204,6 @@ export const getDiaryDayData = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
-      overallScore: recoveryEntries.overallScore,
-      functionalScore: recoveryEntries.functionalScore,
-      muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
@@ -225,6 +225,9 @@ export const getDiaryDayData = async (params: {
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
           distanceKm: workoutReports.distanceKm,
+          overallScore: workoutReports.overallScore,
+          functionalScore: workoutReports.functionalScore,
+          muscleScore: workoutReports.muscleScore,
           weather: workoutReportConditions.weather,
           hasWind: workoutReportConditions.hasWind,
           temperatureC: workoutReportConditions.temperatureC,
@@ -510,6 +513,9 @@ export const getDiaryExportRows = async (params: {
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
           distanceKm: workoutReports.distanceKm,
+          overallScore: workoutReports.overallScore,
+          functionalScore: workoutReports.functionalScore,
+          muscleScore: workoutReports.muscleScore,
           weather: workoutReportConditions.weather,
           hasWind: workoutReportConditions.hasWind,
           temperatureC: workoutReportConditions.temperatureC,
@@ -549,9 +555,6 @@ export const getDiaryExportRows = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
-      overallScore: recoveryEntries.overallScore,
-      functionalScore: recoveryEntries.functionalScore,
-      muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
@@ -584,6 +587,9 @@ export const getDiaryExportRows = async (params: {
       resultText: string;
       commentText: string | null;
       distanceKm: string | null;
+      overallScore: number | null;
+      functionalScore: number | null;
+      muscleScore: number | null;
       weather: string | null;
       hasWind: boolean | null;
       temperatureC: string | null;
@@ -608,9 +614,6 @@ export const getDiaryExportRows = async (params: {
       hasBath: boolean;
       hasMfr: boolean;
       hasMassage: boolean;
-      overallScore: number | null;
-      functionalScore: number | null;
-      muscleScore: number | null;
       sleepHours: string | null;
     }
   >();
@@ -619,23 +622,20 @@ export const getDiaryExportRows = async (params: {
       hasBath: entry.hasBath,
       hasMfr: entry.hasMfr,
       hasMassage: entry.hasMassage,
-      overallScore: entry.overallScore ?? null,
-      functionalScore: entry.functionalScore ?? null,
-      muscleScore: entry.muscleScore ?? null,
       sleepHours: entry.sleepHours ? String(entry.sleepHours) : null,
     });
   }
 
-  const formatScore = (entry?: {
+  const formatWorkoutScore = (report?: {
     overallScore: number | null;
     functionalScore: number | null;
     muscleScore: number | null;
   }) => {
-    if (!entry) return "-";
+    if (!report) return "-";
     const parts = [
-      entry.overallScore ?? "-",
-      entry.functionalScore ?? "-",
-      entry.muscleScore ?? "-",
+      report.overallScore ?? "-",
+      report.functionalScore ?? "-",
+      report.muscleScore ?? "-",
     ];
     if (parts.every((value) => value === "-")) return "-";
     return parts.join("-");
@@ -716,7 +716,6 @@ export const getDiaryExportRows = async (params: {
     const dayEntries = planByDate.get(date) ?? [];
     const recovery = recoveryByDate.get(date);
     const weight = weightByDate.get(date);
-    const scoreText = formatScore(recovery);
     const sleepText = formatSleep(recovery);
     const weightText = formatWeight(weight);
     const recoveryText = formatRecovery(recovery);
@@ -728,7 +727,7 @@ export const getDiaryExportRows = async (params: {
         task: "-",
         result: "-",
         comment: "-",
-        score: scoreText,
+        score: "-",
         sleep: sleepText,
         weight: weightText,
         recovery: recoveryText,
@@ -741,6 +740,7 @@ export const getDiaryExportRows = async (params: {
     const tasks: string[] = [];
     const results: string[] = [];
     const comments: string[] = [];
+    const scores: string[] = [];
     const startTimes: string[] = [];
     let totalDistanceKm = 0;
 
@@ -770,9 +770,11 @@ export const getDiaryExportRows = async (params: {
       tasks.push(taskText);
       results.push(resultText);
       comments.push(commentText);
+      scores.push(formatWorkoutScore(report));
       totalDistanceKm += parseDistanceKm(report?.distanceKm ?? null);
     }
 
+    const scoreText = scores.join("\n");
     const dateTime = startTimes.length
       ? `${date} ${startTimes.join(", ")}`
       : date;
