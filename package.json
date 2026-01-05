@@ -12,7 +12,6 @@
     "db:wait": "node wait-for-db.js",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "migrate:workout-scores": "tsx src/scripts/migrate-workout-scores.ts",
     "seed": "tsx src/scripts/seed.ts",
     "dev:init": "node init.js && npm run db:up && npm run db:wait && npm run db:push && npm run seed"
   },
