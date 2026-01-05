@@ -60,6 +60,16 @@ const parseOptionalTemperature = (value: unknown) => {
   return { value: rounded, valid: true };
 };
 
+const parseOptionalScore = (value: unknown) => {
+  if (value === undefined) return { value: undefined, valid: true };
+  if (value === null || value === "") return { value: null, valid: true };
+  const parsed = typeof value === "number" ? value : Number(String(value).trim());
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 10) {
+    return { value: null, valid: false };
+  }
+  return { value: parsed, valid: true };
+};
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) {
@@ -79,6 +89,9 @@ export async function POST(req: Request) {
         resultText?: string;
         commentText?: string | null;
         distanceKm?: number | string | null;
+        overallScore?: number | string | null;
+        functionalScore?: number | string | null;
+        muscleScore?: number | string | null;
         weather?: string | null;
         hasWind?: boolean | string | null;
         temperatureC?: number | string | null;
@@ -94,6 +107,9 @@ export async function POST(req: Request) {
   const commentText =
     typeof body?.commentText === "string" ? body.commentText.trim() : null;
   const distanceKm = parseOptionalDistance(body?.distanceKm);
+  const overallScore = parseOptionalScore(body?.overallScore);
+  const functionalScore = parseOptionalScore(body?.functionalScore);
+  const muscleScore = parseOptionalScore(body?.muscleScore);
   const surface = parseOptionalEnum(body?.surface, SURFACE_OPTIONS);
   const isManezh = surface.value === "manezh";
   const weather = isManezh
@@ -133,6 +149,9 @@ export async function POST(req: Request) {
   if (!temperatureC.valid) {
     return NextResponse.json({ error: "invalid_temperature" }, { status: 400 });
   }
+  if (!overallScore.valid || !functionalScore.valid || !muscleScore.valid) {
+    return NextResponse.json({ error: "invalid_score" }, { status: 400 });
+  }
 
   const [entry] = await db
     .select({ id: planEntries.id, date: planEntries.date })
@@ -155,6 +174,15 @@ export async function POST(req: Request) {
   };
   if (distanceKm.value !== undefined) {
     upsertParams.distanceKm = distanceKm.value;
+  }
+  if (overallScore.value !== undefined) {
+    upsertParams.overallScore = overallScore.value;
+  }
+  if (functionalScore.value !== undefined) {
+    upsertParams.functionalScore = functionalScore.value;
+  }
+  if (muscleScore.value !== undefined) {
+    upsertParams.muscleScore = muscleScore.value;
   }
   if (surface.value !== undefined) {
     upsertParams.surface = surface.value;

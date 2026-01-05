@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Input, Select, Space, Tag, Typography } from "antd";
+import { Button, Card, Input, InputNumber, Select, Space, Tag, Typography } from "antd";
 import type {
   PlanEntry,
   SavingWorkoutsState,
@@ -14,6 +14,9 @@ type WorkoutField =
   | "resultText"
   | "distanceKm"
   | "commentText"
+  | "overallScore"
+  | "functionalScore"
+  | "muscleScore"
   | "weather"
   | "hasWind"
   | "temperatureC"
@@ -27,6 +30,10 @@ type WorkoutsCardProps = {
   startTimePlaceholder: string;
   resultPlaceholder: string;
   distancePlaceholder: string;
+  overallScoreLabel: string;
+  functionalScoreLabel: string;
+  muscleScoreLabel: string;
+  scorePlaceholder: string;
   surfacePlaceholder: string;
   weatherPlaceholder: string;
   windPlaceholder: string;
@@ -39,7 +46,7 @@ type WorkoutsCardProps = {
   entries: PlanEntry[];
   workoutForm: WorkoutFormState;
   savingWorkouts: SavingWorkoutsState;
-  onChange: (entryId: number, field: WorkoutField, value: string) => void;
+  onChange: (entryId: number, field: WorkoutField, value: string | number | null) => void;
   onSave: (entryId: number) => void;
 };
 
@@ -55,6 +62,10 @@ export function WorkoutsCard({
   startTimePlaceholder,
   resultPlaceholder,
   distancePlaceholder,
+  overallScoreLabel,
+  functionalScoreLabel,
+  muscleScoreLabel,
+  scorePlaceholder,
   surfacePlaceholder,
   weatherPlaceholder,
   windPlaceholder,
@@ -135,6 +146,53 @@ export function WorkoutsCard({
                       onChange(entry.id, "distanceKm", event.target.value)
                     }
                   />
+                  <div className={styles.workoutScores}>
+                    <div className={styles.workoutScoreField}>
+                      <Typography.Text>{overallScoreLabel}</Typography.Text>
+                      <InputNumber
+                        className={styles.workoutScoreInput}
+                        min={1}
+                        max={10}
+                        step={1}
+                        precision={0}
+                        placeholder={scorePlaceholder}
+                        value={form?.overallScore ?? null}
+                        onChange={(value) =>
+                          onChange(entry.id, "overallScore", value)
+                        }
+                      />
+                    </div>
+                    <div className={styles.workoutScoreField}>
+                      <Typography.Text>{functionalScoreLabel}</Typography.Text>
+                      <InputNumber
+                        className={styles.workoutScoreInput}
+                        min={1}
+                        max={10}
+                        step={1}
+                        precision={0}
+                        placeholder={scorePlaceholder}
+                        value={form?.functionalScore ?? null}
+                        onChange={(value) =>
+                          onChange(entry.id, "functionalScore", value)
+                        }
+                      />
+                    </div>
+                    <div className={styles.workoutScoreField}>
+                      <Typography.Text>{muscleScoreLabel}</Typography.Text>
+                      <InputNumber
+                        className={styles.workoutScoreInput}
+                        min={1}
+                        max={10}
+                        step={1}
+                        precision={0}
+                        placeholder={scorePlaceholder}
+                        value={form?.muscleScore ?? null}
+                        onChange={(value) =>
+                          onChange(entry.id, "muscleScore", value)
+                        }
+                      />
+                    </div>
+                  </div>
                   <div className={styles.workoutMetaGrid}>
                     <Select<string | null>
                       value={surfaceValue}

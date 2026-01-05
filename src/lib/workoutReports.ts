@@ -10,6 +10,9 @@ export type WorkoutReportSummary = {
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
+  overallScore: number | null;
+  functionalScore: number | null;
+  muscleScore: number | null;
   weather: string | null;
   hasWind: boolean | null;
   temperatureC: string | null;
@@ -29,6 +32,9 @@ export const getWorkoutReportByPlanEntry = async (params: {
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
       distanceKm: workoutReports.distanceKm,
+      overallScore: workoutReports.overallScore,
+      functionalScore: workoutReports.functionalScore,
+      muscleScore: workoutReports.muscleScore,
       weather: workoutReportConditions.weather,
       hasWind: workoutReportConditions.hasWind,
       temperatureC: workoutReportConditions.temperatureC,
@@ -61,6 +67,9 @@ export const getWorkoutReportsByDate = async (params: {
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
       distanceKm: workoutReports.distanceKm,
+      overallScore: workoutReports.overallScore,
+      functionalScore: workoutReports.functionalScore,
+      muscleScore: workoutReports.muscleScore,
       weather: workoutReportConditions.weather,
       hasWind: workoutReportConditions.hasWind,
       temperatureC: workoutReportConditions.temperatureC,
@@ -87,6 +96,9 @@ export const upsertWorkoutReport = async (params: {
   resultText: string;
   commentText?: string | null;
   distanceKm?: number | null;
+  overallScore?: number | null;
+  functionalScore?: number | null;
+  muscleScore?: number | null;
   weather?: string | null;
   hasWind?: boolean | null;
   temperatureC?: number | null;
@@ -100,6 +112,9 @@ export const upsertWorkoutReport = async (params: {
     commentText: string | null;
     updatedAt: Date;
     distanceKm?: string | null;
+    overallScore?: number | null;
+    functionalScore?: number | null;
+    muscleScore?: number | null;
   } = {
     date: params.date,
     startTime: params.startTime,
@@ -111,6 +126,15 @@ export const upsertWorkoutReport = async (params: {
     updateValues.distanceKm =
       params.distanceKm === null ? null : String(params.distanceKm);
   }
+  if (params.overallScore !== undefined) {
+    updateValues.overallScore = params.overallScore;
+  }
+  if (params.functionalScore !== undefined) {
+    updateValues.functionalScore = params.functionalScore;
+  }
+  if (params.muscleScore !== undefined) {
+    updateValues.muscleScore = params.muscleScore;
+  }
   const insertValues: {
     userId: number;
     planEntryId: number;
@@ -121,6 +145,9 @@ export const upsertWorkoutReport = async (params: {
     createdAt: Date;
     updatedAt: Date;
     distanceKm?: string | null;
+    overallScore?: number | null;
+    functionalScore?: number | null;
+    muscleScore?: number | null;
   } = {
     userId: params.userId,
     planEntryId: params.planEntryId,
@@ -134,6 +161,15 @@ export const upsertWorkoutReport = async (params: {
   if (params.distanceKm !== undefined) {
     insertValues.distanceKm =
       params.distanceKm === null ? null : String(params.distanceKm);
+  }
+  if (params.overallScore !== undefined) {
+    insertValues.overallScore = params.overallScore;
+  }
+  if (params.functionalScore !== undefined) {
+    insertValues.functionalScore = params.functionalScore;
+  }
+  if (params.muscleScore !== undefined) {
+    insertValues.muscleScore = params.muscleScore;
   }
 
   const shouldUpsertConditions = [

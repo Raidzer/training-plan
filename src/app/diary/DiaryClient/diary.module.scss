@@ -149,6 +149,22 @@
   gap: 8px;
 }
 
+.workoutScores {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.workoutScoreField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workoutScoreInput {
+  width: 100%;
+}
+
 .workoutMetaGrid {
   display: grid;
   gap: 8px;

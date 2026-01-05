@@ -15,6 +15,9 @@ export type WorkoutReport = {
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
+  overallScore: number | null;
+  functionalScore: number | null;
+  muscleScore: number | null;
   weather: string | null;
   hasWind: boolean | null;
   temperatureC: string | null;
@@ -65,9 +68,6 @@ export type RecoveryForm = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
-  overallScore: number | null;
-  functionalScore: number | null;
-  muscleScore: number | null;
   sleepHours: string;
 };
 
@@ -76,6 +76,9 @@ export type WorkoutFormEntry = {
   resultText: string;
   commentText: string;
   distanceKm: string;
+  overallScore: number | null;
+  functionalScore: number | null;
+  muscleScore: number | null;
   weather: string;
   hasWind: string;
   temperatureC: string;

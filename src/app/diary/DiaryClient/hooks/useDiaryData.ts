@@ -18,7 +18,6 @@ import {
   getMonthRange,
   isValidDateString,
   parseDate,
-  parseOptionalNumber,
   parseSleepTimeInput,
   toDefaultWorkoutForm,
 } from "../utils/diaryUtils";
@@ -67,9 +66,6 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     hasBath: false,
     hasMfr: false,
     hasMassage: false,
-    overallScore: null,
-    functionalScore: null,
-    muscleScore: null,
     sleepHours: "",
   });
   const [savingWeight, setSavingWeight] = useState<SavingWeightState>({
@@ -152,11 +148,6 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           hasBath: Boolean(data.recoveryEntry?.hasBath),
           hasMfr: Boolean(data.recoveryEntry?.hasMfr),
           hasMassage: Boolean(data.recoveryEntry?.hasMassage),
-          overallScore: parseOptionalNumber(data.recoveryEntry?.overallScore),
-          functionalScore: parseOptionalNumber(
-            data.recoveryEntry?.functionalScore
-          ),
-          muscleScore: parseOptionalNumber(data.recoveryEntry?.muscleScore),
           sleepHours: formatSleepTimeValue(data.recoveryEntry?.sleepHours),
         };
         setRecoveryForm(nextRecovery);
@@ -301,6 +292,9 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
             resultText: form.resultText,
             commentText: form.commentText,
             distanceKm,
+            overallScore: form.overallScore,
+            functionalScore: form.functionalScore,
+            muscleScore: form.muscleScore,
             surface: surfaceValue.length > 0 ? surfaceValue : null,
             weather: weatherValue.length > 0 ? weatherValue : null,
             hasWind:
@@ -356,9 +350,6 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           hasBath: recoveryForm.hasBath,
           hasMfr: recoveryForm.hasMfr,
           hasMassage: recoveryForm.hasMassage,
-          overallScore: recoveryForm.overallScore,
-          functionalScore: recoveryForm.functionalScore,
-          muscleScore: recoveryForm.muscleScore,
           sleepHours: sleepTime.value,
         }),
       });

@@ -24,6 +24,9 @@ export const toDefaultWorkoutForm = (
   resultText: report?.resultText ?? "",
   commentText: report?.commentText ?? "",
   distanceKm: report?.distanceKm ?? "",
+  overallScore: report?.overallScore ?? null,
+  functionalScore: report?.functionalScore ?? null,
+  muscleScore: report?.muscleScore ?? null,
   weather: report?.weather ?? "",
   hasWind:
     report?.hasWind === null || report?.hasWind === undefined
@@ -34,15 +37,6 @@ export const toDefaultWorkoutForm = (
   temperatureC: report?.temperatureC ?? "",
   surface: report?.surface ?? "",
 });
-
-export const parseOptionalNumber = (value: unknown) => {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
-};
 
 const normalizeText = (value?: string | null) =>
   value && value.trim().length > 0 ? value.trim() : "";
