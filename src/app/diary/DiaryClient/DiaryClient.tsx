@@ -126,7 +126,7 @@ const buildDailyReportText = (params: {
     const commentLines = commentParts.length ? commentParts : ["-"];
     const scoreText = formatWorkoutScore(report);
 
-    pushWithSpacer(`${index + 1}) ${taskText}`);
+    pushWithSpacer(`${taskText}`);
     if (report?.startTime?.trim()) pushWithSpacer(report.startTime);
     pushWithSpacer(resultText);
     for (const part of commentLines) {
