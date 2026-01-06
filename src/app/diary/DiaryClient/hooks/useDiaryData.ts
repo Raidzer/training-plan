@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import { useSearchParams } from "next/navigation";
 import type {
@@ -52,6 +52,9 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs());
   const [panelDate, setPanelDate] = useState<Dayjs>(() => dayjs());
+  const selectedDateRef = useRef<Dayjs>(selectedDate);
+  const marksRequestIdRef = useRef(0);
+  const dayRequestIdRef = useRef(0);
   const [marks, setMarks] = useState<DiaryDayMap>({});
   const [loadingMarks, setLoadingMarks] = useState(false);
 
@@ -77,6 +80,10 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const [savingWorkouts, setSavingWorkouts] = useState<SavingWorkoutsState>({});
 
   useEffect(() => {
+    selectedDateRef.current = selectedDate;
+  }, [selectedDate]);
+
+  useEffect(() => {
     const queryDate = searchParams.get("date");
     if (!isValidDateString(queryDate)) {
       return;
@@ -85,15 +92,16 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     if (!parsed.isValid()) {
       return;
     }
-    if (!parsed.isSame(selectedDate, "day")) {
+    if (!parsed.isSame(selectedDateRef.current, "day")) {
       setSelectedDate(parsed);
       setPanelDate(parsed);
     }
-  }, [searchParams, selectedDate]);
+  }, [searchParams]);
 
   const loadMarks = useCallback(
     async (value: Dayjs) => {
       const { from, to } = getMonthRange(value);
+      const requestId = ++marksRequestIdRef.current;
       setLoadingMarks(true);
       try {
         const res = await fetch(`/api/diary/marks?from=${from}&to=${to}`);
@@ -101,6 +109,9 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           days?: DayStatus[];
           error?: string;
         } | null;
+        if (marksRequestIdRef.current !== requestId) {
+          return;
+        }
         if (!res.ok || !data?.days) {
           messageApi.error(data?.error ?? messages.marksLoadFailed);
           return;
@@ -111,10 +122,15 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         });
         setMarks(nextMarks);
       } catch (err) {
+        if (marksRequestIdRef.current !== requestId) {
+          return;
+        }
         console.error(err);
         messageApi.error(messages.marksLoadFailed);
       } finally {
-        setLoadingMarks(false);
+        if (marksRequestIdRef.current === requestId) {
+          setLoadingMarks(false);
+        }
       }
     },
     [messageApi, messages]
@@ -123,12 +139,16 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const loadDay = useCallback(
     async (value: Dayjs) => {
       const date = formatDate(value);
+      const requestId = ++dayRequestIdRef.current;
       setLoadingDay(true);
       try {
         const res = await fetch(`/api/diary/day?date=${date}`);
         const data = (await res.json().catch(() => null)) as
           | (DayPayload & { error?: string })
           | null;
+        if (dayRequestIdRef.current !== requestId) {
+          return;
+        }
         if (!res.ok || !data?.status) {
           messageApi.error(data?.error ?? messages.dayLoadFailed);
           return;
@@ -162,10 +182,15 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         });
         setWorkoutForm(nextWorkoutForm);
       } catch (err) {
+        if (dayRequestIdRef.current !== requestId) {
+          return;
+        }
         console.error(err);
         messageApi.error(messages.dayLoadFailed);
       } finally {
-        setLoadingDay(false);
+        if (dayRequestIdRef.current === requestId) {
+          setLoadingDay(false);
+        }
       }
     },
     [messageApi, messages]

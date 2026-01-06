@@ -107,6 +107,43 @@ const hasFillColor = (cell: ExcelJS.Cell | undefined) => {
   return false;
 };
 
+const NUMBERED_LINE_REGEX = /^\s*\d+\)\s*(.*)$/;
+
+const countNumberedLines = (value: string) =>
+  value
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter((line) => NUMBERED_LINE_REGEX.test(line)).length;
+
+const splitNumberedText = (value: string) => {
+  const normalized = value.replace(/\r\n/g, "\n").trim();
+  if (!normalized) return [];
+  const lines = normalized.split("\n");
+  const parts: string[] = [];
+  let hasNumbered = false;
+  let prefix = "";
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const match = trimmed.match(NUMBERED_LINE_REGEX);
+    if (match) {
+      hasNumbered = true;
+      const body = match[1].trim();
+      const combined = prefix ? `${prefix} ${body}` : body;
+      parts.push(combined.trim());
+      prefix = "";
+      continue;
+    }
+    if (hasNumbered && parts.length) {
+      parts[parts.length - 1] = `${parts[parts.length - 1]} ${trimmed}`.trim();
+      continue;
+    }
+    prefix = prefix ? `${prefix} ${trimmed}` : trimmed;
+  }
+  if (!parts.length) return [normalized];
+  return parts;
+};
+
 async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
@@ -160,18 +197,45 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
       hasFillColor(dateCellObj) ||
       (commentCellObj ? hasFillColor(commentCellObj) : false);
 
-    rows.push({
-      date,
-      taskText,
-      commentText: commentTextRaw || null,
-      isWorkload,
-      rawRow: {
+    const taskLineCount = countNumberedLines(taskText);
+    const taskChunks =
+      taskLineCount > 1
+        ? splitNumberedText(taskText).filter((chunk) => chunk.length > 0)
+        : [];
+    const tasks = taskChunks.length ? taskChunks : [taskText];
+    const hasMultipleTasks = tasks.length > 1;
+    const hasNumberedComments =
+      hasMultipleTasks && commentTextRaw
+        ? countNumberedLines(commentTextRaw) > 0
+        : false;
+    const commentChunks = hasNumberedComments
+      ? splitNumberedText(commentTextRaw)
+      : [];
+
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      let comment = "";
+      if (commentTextRaw) {
+        if (hasMultipleTasks) {
+          comment = hasNumberedComments ? commentChunks[i] ?? "" : commentTextRaw;
+        } else {
+          comment = commentTextRaw;
+        }
+      }
+      const normalizedComment = comment.trim();
+      rows.push({
         date,
-        task: taskText,
+        taskText: task,
+        commentText: normalizedComment.length ? normalizedComment : null,
         isWorkload,
-        ...(commentTextRaw ? { comment: commentTextRaw } : {}),
-      },
-    });
+        rawRow: {
+          date,
+          task,
+          isWorkload,
+          ...(normalizedComment ? { comment: normalizedComment } : {}),
+        },
+      });
+    }
   }
 
   return { rows, errors };

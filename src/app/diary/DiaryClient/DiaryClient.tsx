@@ -2,11 +2,7 @@
 
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
-import {
-  Card,
-  message,
-  Space,
-} from "antd";
+import { Card, message, Space } from "antd";
 import styles from "./diary.module.scss";
 import type { DayPayload, RecoveryEntry } from "./types/diaryTypes";
 import {
@@ -78,7 +74,6 @@ const formatTemperatureValue = (value?: string | null) => {
   return `${temperatureText}°C`;
 };
 
-
 const formatWorkoutScore = (
   report?: DayPayload["workoutReports"][number] | null
 ) => {
@@ -100,68 +95,76 @@ const buildDailyReportText = (params: {
   const reportByPlan = new Map(
     params.day.workoutReports.map((report) => [report.planEntryId, report])
   );
-  const startTimes = params.day.planEntries.map(
-    (entry) => reportByPlan.get(entry.id)?.startTime
-  );
-  const tasks = params.day.planEntries.map((entry) => entry.taskText);
-  const scores = params.day.planEntries.map((entry) =>
-    formatWorkoutScore(reportByPlan.get(entry.id))
-  );
-  const results = params.day.planEntries.map(
-    (entry) => reportByPlan.get(entry.id)?.resultText
-  );
-  const comments = params.day.planEntries.map(
-    (entry) => reportByPlan.get(entry.id)?.commentText
-  );
-  const temperatures = params.day.planEntries.map((entry) =>
-    formatTemperatureValue(reportByPlan.get(entry.id)?.temperatureC)
-  );
-  const weathers = params.day.planEntries.map((entry) =>
-    getOptionLabel(WEATHER_OPTIONS, reportByPlan.get(entry.id)?.weather)
-  );
-  const winds = params.day.planEntries.map((entry) =>
-    reportByPlan.get(entry.id)?.hasWind ? "ветер" : ""
-  );
-  const surfaces = params.day.planEntries.map((entry) =>
-    getOptionLabel(SURFACE_OPTIONS, reportByPlan.get(entry.id)?.surface)
-  );
-  const commentBlock = [
-    joinValues(comments),
-    joinValues(temperatures),
-    joinValues(weathers),
-    joinValues(winds),
-    joinValues(surfaces),
-  ]
-    .filter((line) => line.trim().length > 0)
-    .join(". ");
+  const lines: string[] = [formatReportDate(params.date), ""];
+
+  const pushWithSpacer = (value: string) => {
+    lines.push(value);
+    lines.push("");
+  };
+
+  for (const [index, entry] of params.day.planEntries.entries()) {
+    const report = reportByPlan.get(entry.id);
+    const taskText = entry.taskText?.trim() ? entry.taskText : "-";
+    const resultText = report?.resultText?.trim() ? report.resultText : "-";
+    const commentParts: string[] = [];
+    if (report?.commentText?.trim()) {
+      commentParts.push(report.commentText.trim());
+    }
+    const temperatureText = formatTemperatureValue(report?.temperatureC);
+    if (temperatureText) commentParts.push(temperatureText);
+    const weatherText = getOptionLabel(WEATHER_OPTIONS, report?.weather);
+    if (weatherText) commentParts.push(weatherText);
+    const windText = report?.hasWind
+      ? getOptionLabel(WIND_OPTIONS, "true")
+      : "";
+    if (windText) commentParts.push(windText);
+    const surfaceText = getOptionLabel(SURFACE_OPTIONS, report?.surface);
+    if (surfaceText) commentParts.push(surfaceText);
+    const commentLines = commentParts.length ? commentParts : ["-"];
+    const scoreText = formatWorkoutScore(report);
+
+    pushWithSpacer(`${taskText}`);
+    if (report?.startTime?.trim()) pushWithSpacer(report.startTime);
+    pushWithSpacer(resultText);
+    for (const part of commentLines) {
+      pushWithSpacer(part);
+    }
+    pushWithSpacer(scoreText);
+  }
+
   const morningWeight = params.day.weightEntries.find(
     (entry) => entry.period === "morning"
   )?.weightKg;
+  const sleepText = formatSleepTimeValue(params.day.recoveryEntry.sleepHours);
+  const weightText = joinValues([
+    formatWeightValue(params.day.previousEveningWeightKg),
+    formatWeightValue(morningWeight),
+  ]);
+  const recoveryText = formatRecoveryFlags(params.day.recoveryEntry);
   const volumeKm =
     params.day.status.totalDistanceKm > 0
       ? params.day.status.totalDistanceKm.toFixed(2)
       : "";
-  const scoreLine = scores.every((score) => score.trim() === "-" || !score.trim())
-    ? ""
-    : joinValues(scores);
 
-  const lines = [
-    formatReportDate(params.date),
-    joinValues(startTimes),
-    joinValues(tasks),
-    joinValues(results),
-    commentBlock,
-    scoreLine,
-    formatSleepTimeValue(params.day.recoveryEntry.sleepHours),
-    joinValues([
-      formatWeightValue(params.day.previousEveningWeightKg),
-      formatWeightValue(morningWeight),
-    ]),
-    formatRecoveryFlags(params.day.recoveryEntry),
-    volumeKm ? `${volumeKm} км` : "",
+  const recoveryBlock = [
+    sleepText || "-",
+    weightText || "-",
+    recoveryText || "",
+    volumeKm ? `${volumeKm} \u043a\u043c` : "-",
   ];
 
-  return lines.filter((line) => line.trim().length > 0).join("\n\n");
+  for (const item of recoveryBlock) {
+    if (!item) {
+      continue;
+    }
+    pushWithSpacer(item);
+  }
+
+  while (lines.length > 0 && lines[lines.length - 1] === "") {
+    lines.pop();
+  }
+
+  return lines.join("\n");
 };
 
 const diaryMessages = {
@@ -273,10 +276,7 @@ export function DiaryClient() {
   } = useDiaryData({ messageApi, messages: diaryMessages });
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  const handleWeightChange = (
-    period: "morning" | "evening",
-    value: string
-  ) => {
+  const handleWeightChange = (period: "morning" | "evening", value: string) => {
     setWeightForm((prev) => ({ ...prev, [period]: value }));
   };
 
@@ -433,7 +433,9 @@ export function DiaryClient() {
                     surfacePlaceholder={workoutLabels.surfacePlaceholder}
                     weatherPlaceholder={workoutLabels.weatherPlaceholder}
                     windPlaceholder={workoutLabels.windPlaceholder}
-                    temperaturePlaceholder={workoutLabels.temperaturePlaceholder}
+                    temperaturePlaceholder={
+                      workoutLabels.temperaturePlaceholder
+                    }
                     commentPlaceholder={workoutLabels.commentPlaceholder}
                     saveReportLabel={workoutLabels.saveReportLabel}
                     surfaceOptions={SURFACE_OPTIONS}

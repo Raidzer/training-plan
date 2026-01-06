@@ -45,3 +45,65 @@
 .workloadRow :global(.ant-table-cell) {
   background-color: rgba(255, 140, 0, 0.08);
 }
+
+.todayRow :global(.ant-table-cell) {
+  background-image: linear-gradient(
+    90deg,
+    rgba(24, 144, 255, 0.18),
+    rgba(24, 144, 255, 0.04) 60%,
+    rgba(24, 144, 255, 0)
+  );
+}
+
+.todayRow :global(.ant-table-cell:first-child) {
+  border-left: 4px solid rgba(24, 144, 255, 0.7);
+}
+
+.multilineText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (min-width: 1200px) {
+  .planTable :global(.ant-table-container table) {
+    table-layout: fixed;
+  }
+
+  .textColumn {
+    width: calc((100% - 488px) / 2);
+  }
+}
+
+.editorForm {
+  width: 100%;
+}
+
+.editorTopRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.editorField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editorEntries {
+  width: 100%;
+}
+
+.editorEntryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editorEntryBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

@@ -113,6 +113,23 @@ export const joinValues = (values: Array<string | null | undefined>) => {
   return normalized.join("; ");
 };
 
+export const formatNumberedLines = (
+  values: Array<string | null | undefined>,
+  options?: { emptyValue?: string; includeIfAllEmpty?: boolean }
+) => {
+  const emptyValue = options?.emptyValue ?? "-";
+  if (!values.length) return options?.includeIfAllEmpty ? emptyValue : "";
+  const normalized = values.map((value) => {
+    if (value === null || value === undefined) return emptyValue;
+    const trimmed = String(value).trim();
+    return trimmed.length > 0 ? trimmed : emptyValue;
+  });
+  const hasNonEmpty = normalized.some((value) => value !== emptyValue);
+  if (!hasNonEmpty && !options?.includeIfAllEmpty) return "";
+  if (normalized.length === 1) return normalized[0];
+  return normalized.map((value, index) => `${index + 1}) ${value}`).join("\n");
+};
+
 export const formatScore = (entry?: RecoveryEntry | null) => {
   if (!entry) return "";
   const parts = [
