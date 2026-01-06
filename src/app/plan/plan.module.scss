@@ -63,3 +63,37 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.editorForm {
+  width: 100%;
+}
+
+.editorTopRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.editorField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editorEntries {
+  width: 100%;
+}
+
+.editorEntryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editorEntryBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
