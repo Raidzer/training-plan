@@ -35,7 +35,64 @@ type PlanEntry = {
   hasReport: boolean;
 };
 
+type PlanDayEntry = {
+  date: string;
+  taskText: string;
+  commentText: string | null;
+  isWorkload: boolean;
+  hasReport: boolean;
+};
+
 const PAGE_SIZE = 20;
+
+const formatNumberedLines = (
+  values: Array<string | null | undefined>,
+  options?: { emptyValue?: string; includeIfAllEmpty?: boolean }
+) => {
+  const emptyValue = options?.emptyValue ?? "-";
+  if (!values.length) return options?.includeIfAllEmpty ? emptyValue : "";
+  const normalized = values.map((value) => {
+    if (value === null || value === undefined) return emptyValue;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : emptyValue;
+  });
+  const hasNonEmpty = normalized.some((value) => value !== emptyValue);
+  if (!hasNonEmpty && !options?.includeIfAllEmpty) return "";
+  if (normalized.length === 1) return normalized[0];
+  return normalized.map((value, index) => `${index + 1}) ${value}`).join("\n");
+};
+
+const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
+  const grouped = new Map<string, PlanEntry[]>();
+  for (const entry of entries) {
+    const existing = grouped.get(entry.date);
+    if (existing) {
+      existing.push(entry);
+    } else {
+      grouped.set(entry.date, [entry]);
+    }
+  }
+
+  const rows: PlanDayEntry[] = [];
+  for (const [date, dayEntries] of grouped) {
+    const sorted = [...dayEntries].sort(
+      (a, b) => a.sessionOrder - b.sessionOrder
+    );
+    const tasks = sorted.map((entry) => entry.taskText);
+    const comments = sorted.map((entry) => entry.commentText ?? "");
+    const commentText = formatNumberedLines(comments, {
+      includeIfAllEmpty: false,
+    });
+    rows.push({
+      date,
+      taskText: formatNumberedLines(tasks, { includeIfAllEmpty: true }),
+      commentText: commentText.length ? commentText : null,
+      isWorkload: sorted.some((entry) => entry.isWorkload),
+      hasReport: sorted.every((entry) => entry.hasReport),
+    });
+  }
+  return rows;
+};
 
 export default function PlanPage() {
   const [entries, setEntries] = useState<PlanEntry[]>([]);
@@ -46,20 +103,21 @@ export default function PlanPage() {
   const scrolledToTodayRef = useRef(false);
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
 
+  const groupedEntries = useMemo(() => buildPlanDays(entries), [entries]);
   const filteredEntries = useMemo(
     () =>
       onlyWithoutReports
-        ? entries.filter((entry) => !entry.hasReport)
-        : entries,
-    [entries, onlyWithoutReports]
+        ? groupedEntries.filter((entry) => !entry.hasReport)
+        : groupedEntries,
+    [groupedEntries, onlyWithoutReports]
   );
 
   const todayEntryId = useMemo(
-    () => filteredEntries.find((entry) => entry.date === today)?.id ?? null,
+    () => filteredEntries.find((entry) => entry.date === today)?.date ?? null,
     [filteredEntries, today]
   );
 
-  const columns: ColumnsType<PlanEntry> = useMemo(
+  const columns: ColumnsType<PlanDayEntry> = useMemo(
     () => [
       {
         title: "Нагрузка",
@@ -80,10 +138,17 @@ export default function PlanPage() {
       {
         title: "Задание",
         dataIndex: "taskText",
+        render: (value: string) => (
+          <span className={styles.multilineText}>{value}</span>
+        ),
       },
       {
         title: "Комментарий",
         dataIndex: "commentText",
+        render: (value: string | null) =>
+          value ? (
+            <span className={styles.multilineText}>{value}</span>
+          ) : null,
       },
       {
         title: "Отчет",
@@ -217,7 +282,7 @@ export default function PlanPage() {
             columns={columns}
             dataSource={filteredEntries}
             loading={loading}
-            rowKey="id"
+            rowKey="date"
             rowClassName={(record) => {
               const rowClasses = [];
               if (record.isWorkload) rowClasses.push(styles.workloadRow);

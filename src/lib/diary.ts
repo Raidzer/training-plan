@@ -672,6 +672,22 @@ export const getDiaryExportRows = async (params: {
     return `${morning} / ${evening}`;
   };
 
+  const formatNumberedLines = (
+    values: Array<string | null | undefined>,
+    emptyValue = "-"
+  ) => {
+    if (!values.length) return emptyValue;
+    const normalized = values.map((value) => {
+      if (value === null || value === undefined) return emptyValue;
+      const trimmed = String(value).trim();
+      return trimmed.length > 0 ? trimmed : emptyValue;
+    });
+    if (normalized.length === 1) return normalized[0];
+    return normalized
+      .map((value, index) => `${index + 1}) ${value}`)
+      .join("\n");
+  };
+
   const formatRecovery = (entry?: {
     hasBath: boolean;
     hasMfr: boolean;
@@ -774,7 +790,10 @@ export const getDiaryExportRows = async (params: {
       totalDistanceKm += parseDistanceKm(report?.distanceKm ?? null);
     }
 
-    const scoreText = scores.join("\n");
+    const taskText = formatNumberedLines(tasks);
+    const resultText = formatNumberedLines(results);
+    const commentText = formatNumberedLines(comments);
+    const scoreText = formatNumberedLines(scores);
     const dateTime = startTimes.length
       ? `${date} ${startTimes.join(", ")}`
       : date;
@@ -782,9 +801,9 @@ export const getDiaryExportRows = async (params: {
 
     rows.push({
       dateTime,
-      task: tasks.join("\n"),
-      result: results.join("\n"),
-      comment: comments.join("\n"),
+      task: taskText,
+      result: resultText,
+      comment: commentText,
       score: scoreText,
       sleep: sleepText,
       weight: weightText,

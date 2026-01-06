@@ -58,3 +58,8 @@
 .todayRow :global(.ant-table-cell:first-child) {
   border-left: 4px solid rgba(24, 144, 255, 0.7);
 }
+
+.multilineText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
