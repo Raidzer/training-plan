@@ -4,6 +4,7 @@ import ruRU from "antd/locale/ru_RU";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -28,6 +29,8 @@ dayjs.locale("ru");
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<Mode>("light");
+  const pathname = usePathname();
+  const isPlanRoute = pathname.startsWith("/plan");
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -72,7 +75,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             )}
           >
             <Header mode={mode} onToggle={(next) => setMode(next)} />
-            <main className={styles.main}>{children}</main>
+            <main
+              className={clsx(styles.main, isPlanRoute && styles.mainWide)}
+            >
+              {children}
+            </main>
           </div>
         </App>
       </ConfigProvider>

@@ -64,6 +64,16 @@
   word-break: break-word;
 }
 
+@media (min-width: 1200px) {
+  .planTable :global(.ant-table-container table) {
+    table-layout: fixed;
+  }
+
+  .textColumn {
+    width: calc((100% - 488px) / 2);
+  }
+}
+
 .editorForm {
   width: 100%;
 }
