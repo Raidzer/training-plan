@@ -124,8 +124,12 @@ export function PlanEntriesTable({
       rowKey="date"
       rowClassName={(record) => {
         const rowClasses = [];
-        if (record.isWorkload) rowClasses.push(styles.workloadRow);
-        if (record.date === today) rowClasses.push(styles.todayRow);
+        if (record.isWorkload) {
+          rowClasses.push(styles.workloadRow);
+        }
+        if (record.date === today) {
+          rowClasses.push(styles.todayRow);
+        }
         return rowClasses.join(" ");
       }}
       pagination={{

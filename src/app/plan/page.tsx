@@ -94,9 +94,13 @@ function PlanPageContent() {
   }, [filteredEntries, onlyWithoutReports, today]);
 
   useEffect(() => {
-    if (!todayEntryId || scrolledToTodayRef.current) return;
+    if (!todayEntryId || scrolledToTodayRef.current) {
+      return;
+    }
     const row = document.querySelector(`[data-row-key="${todayEntryId}"]`);
-    if (!row) return;
+    if (!row) {
+      return;
+    }
     row.scrollIntoView({ block: "center", behavior: "smooth" });
     scrolledToTodayRef.current = true;
   }, [todayEntryId, currentPage]);

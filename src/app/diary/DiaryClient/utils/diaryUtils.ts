@@ -43,7 +43,9 @@ const normalizeText = (value?: string | null) =>
 
 export const normalizeStartTimeInput = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 4);
-  if (digits.length <= 2) return digits;
+  if (digits.length <= 2) {
+    return digits;
+  }
   if (digits.length === 3) {
     const firstTwo = Number(digits.slice(0, 2));
     const useSingleHour = Number.isFinite(firstTwo) && firstTwo > 23;
@@ -58,10 +60,14 @@ export const normalizeStartTimeInput = (value: string) => {
 const TIME_INPUT_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 export const formatSleepTimeValue = (value?: string | number | null) => {
-  if (value === null || value === undefined || value === "") return "";
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
   const parsed =
     typeof value === "number" ? value : Number(String(value).replace(",", "."));
-  if (!Number.isFinite(parsed)) return "";
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
   const clamped = Math.min(Math.max(parsed, 0), 24);
   let hours = Math.floor(clamped);
   let minutes = Math.round((clamped - hours) * 60);
@@ -97,19 +103,27 @@ export const parseSleepTimeInput = (value: string) => {
 };
 
 export const formatWeightValue = (value?: string | number | null) => {
-  if (value === null || value === undefined || value === "") return "";
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
   const parsed =
     typeof value === "number" ? value : Number(String(value).replace(",", "."));
-  if (!Number.isFinite(parsed)) return "";
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
   return (Math.round(parsed * 10) / 10).toFixed(1);
 };
 
 export const joinValues = (values: Array<string | null | undefined>) => {
-  if (!values.length) return "";
+  if (!values.length) {
+    return "";
+  }
   const normalized = values
     .map(normalizeText)
     .filter((item) => item.length > 0);
-  if (!normalized.length) return "";
+  if (!normalized.length) {
+    return "";
+  }
   return normalized.join("; ");
 };
 
@@ -118,25 +132,37 @@ export const formatNumberedLines = (
   options?: { emptyValue?: string; includeIfAllEmpty?: boolean }
 ) => {
   const emptyValue = options?.emptyValue ?? "-";
-  if (!values.length) return options?.includeIfAllEmpty ? emptyValue : "";
+  if (!values.length) {
+    return options?.includeIfAllEmpty ? emptyValue : "";
+  }
   const normalized = values.map((value) => {
-    if (value === null || value === undefined) return emptyValue;
+    if (value === null || value === undefined) {
+      return emptyValue;
+    }
     const trimmed = String(value).trim();
     return trimmed.length > 0 ? trimmed : emptyValue;
   });
   const hasNonEmpty = normalized.some((value) => value !== emptyValue);
-  if (!hasNonEmpty && !options?.includeIfAllEmpty) return "";
-  if (normalized.length === 1) return normalized[0];
+  if (!hasNonEmpty && !options?.includeIfAllEmpty) {
+    return "";
+  }
+  if (normalized.length === 1) {
+    return normalized[0];
+  }
   return normalized.map((value, index) => `${index + 1}) ${value}`).join("\n");
 };
 
 export const formatScore = (entry?: RecoveryEntry | null) => {
-  if (!entry) return "";
+  if (!entry) {
+    return "";
+  }
   const parts = [
     entry.overallScore,
     entry.functionalScore,
     entry.muscleScore,
   ].filter((value): value is number => value !== null && value !== undefined);
-  if (!parts.length) return "";
+  if (!parts.length) {
+    return "";
+  }
   return parts.map(String).join("-");
 };

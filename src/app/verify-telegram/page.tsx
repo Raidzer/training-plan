@@ -4,7 +4,9 @@ import { VerifyTelegramClient } from "./VerifyTelegramClient";
 
 export default async function VerifyTelegramPage() {
   const session = await auth();
-  if (!session) redirect("/login");
+  if (!session) {
+    redirect("/login");
+  }
 
   return <VerifyTelegramClient />;
 }

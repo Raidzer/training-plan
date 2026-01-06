@@ -26,16 +26,29 @@ const normalizeHeader = (value: unknown) =>
     .toLowerCase();
 
 const cellToString = (value: unknown): string => {
-  if (value === null || value === undefined) return "";
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === "number") return String(value);
-  if (typeof value === "string") return value;
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === "number") {
+    return String(value);
+  }
+  if (typeof value === "string") {
+    return value;
+  }
   if (typeof value === "object") {
     const v = value as any;
-    if (typeof v.text === "string") return v.text;
-    if (Array.isArray(v.richText))
+    if (typeof v.text === "string") {
+      return v.text;
+    }
+    if (Array.isArray(v.richText)) {
       return v.richText.map((r: any) => r?.text ?? "").join("");
-    if (v.result !== undefined) return cellToString(v.result);
+    }
+    if (v.result !== undefined) {
+      return cellToString(v.result);
+    }
   }
   return String(value ?? "");
 };
@@ -75,12 +88,17 @@ const validateSequentialDates = (dates: string[]): string | null => {
 };
 
 const toDateString = (value: unknown): string | null => {
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === "number")
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === "number") {
     return excelSerialToDate(value).toISOString().slice(0, 10);
+  }
   if (typeof value === "string") {
     const trimmed = value.trim();
-    if (!trimmed) return null;
+    if (!trimmed) {
+      return null;
+    }
     const match = trimmed.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
     if (match) {
       const [_, dd, mm, yy] = match;
@@ -88,22 +106,32 @@ const toDateString = (value: unknown): string | null => {
       const month = Number(mm) - 1;
       const day = Number(dd);
       const parsed = new Date(Date.UTC(year, month, day));
-      if (!Number.isNaN(parsed.getTime()))
+      if (!Number.isNaN(parsed.getTime())) {
         return parsed.toISOString().slice(0, 10);
+      }
     }
     const parsed = new Date(trimmed);
-    if (!Number.isNaN(parsed.getTime()))
+    if (!Number.isNaN(parsed.getTime())) {
       return parsed.toISOString().slice(0, 10);
+    }
   }
   return null;
 };
 
 const hasFillColor = (cell: ExcelJS.Cell | undefined) => {
-  if (!cell) return false;
+  if (!cell) {
+    return false;
+  }
   const fill: any = (cell as any).fill;
-  if (!fill) return false;
-  if (fill.fgColor || fill.bgColor) return true;
-  if (Array.isArray(fill.stops)) return fill.stops.some((s: any) => s?.color);
+  if (!fill) {
+    return false;
+  }
+  if (fill.fgColor || fill.bgColor) {
+    return true;
+  }
+  if (Array.isArray(fill.stops)) {
+    return fill.stops.some((s: any) => s?.color);
+  }
   return false;
 };
 
@@ -117,14 +145,18 @@ const countNumberedLines = (value: string) =>
 
 const splitNumberedText = (value: string) => {
   const normalized = value.replace(/\r\n/g, "\n").trim();
-  if (!normalized) return [];
+  if (!normalized) {
+    return [];
+  }
   const lines = normalized.split("\n");
   const parts: string[] = [];
   let hasNumbered = false;
   let prefix = "";
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {
+      continue;
+    }
     const match = trimmed.match(NUMBERED_LINE_REGEX);
     if (match) {
       hasNumbered = true;
@@ -140,7 +172,9 @@ const splitNumberedText = (value: string) => {
     }
     prefix = prefix ? `${prefix} ${trimmed}` : trimmed;
   }
-  if (!parts.length) return [normalized];
+  if (!parts.length) {
+    return [normalized];
+  }
   return parts;
 };
 
@@ -148,7 +182,9 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
   const sheet = workbook.worksheets[0];
-  if (!sheet) throw new Error("Файл не содержит листов");
+  if (!sheet) {
+    throw new Error("Файл не содержит листов");
+  }
 
   const headerRow = sheet.getRow(1);
   let dateCol = 0;
@@ -156,15 +192,20 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   let commentCol = 0;
   headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
     const header = normalizeHeader(cell.text || cell.value);
-    if (!dateCol && isHeader(header, ["дата", "date"])) dateCol = colNumber;
-    if (!taskCol && isHeader(header, ["задан", "task", "workout"]))
+    if (!dateCol && isHeader(header, ["дата", "date"])) {
+      dateCol = colNumber;
+    }
+    if (!taskCol && isHeader(header, ["задан", "task", "workout"])) {
       taskCol = colNumber;
-    if (!commentCol && isHeader(header, ["коммент", "comment"]))
+    }
+    if (!commentCol && isHeader(header, ["коммент", "comment"])) {
       commentCol = colNumber;
+    }
   });
 
-  if (!dateCol || !taskCol)
+  if (!dateCol || !taskCol) {
     throw new Error("Не найдены колонки Дата/Задание в первой строке");
+  }
 
   const rows: ParsedRow[] = [];
   const errors: ParseResult["errors"] = [];
@@ -182,7 +223,9 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
     const taskText = cellToString(taskCell).trim();
     const commentTextRaw = cellToString(commentCell).trim();
 
-    if (!date && !taskText && !commentTextRaw) continue;
+    if (!date && !taskText && !commentTextRaw) {
+      continue;
+    }
     if (!date) {
       errors.push({ row: rowNumber, message: "Некорректная дата" });
       continue;
@@ -243,11 +286,13 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session)
+  if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const userId = Number((session.user as any)?.id);
-  if (!userId)
+  if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const formData = await req.formData();
   const file = formData.get("file");

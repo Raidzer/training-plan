@@ -95,7 +95,9 @@ const isNonEmptyText = (value?: string | null) =>
   Boolean(value && value.trim().length > 0);
 
 const parseDistanceKm = (value?: string | number | null) => {
-  if (value === null || value === undefined || value === "") return 0;
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
@@ -116,7 +118,9 @@ const buildDateRange = (from: string, to: string) => {
 
 const shiftDate = (value: string, deltaDays: number) => {
   const base = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(base.getTime())) return null;
+  if (Number.isNaN(base.getTime())) {
+    return null;
+  }
   base.setUTCDate(base.getUTCDate() + deltaDays);
   return base.toISOString().slice(0, 10);
 };
@@ -404,8 +408,12 @@ export const getDiaryDaysInRange = async (params: {
         hasMassage: false,
         totalDistanceKm: 0,
       } as DayAggregation);
-    if (entry.period === "morning") target.hasWeightMorning = true;
-    if (entry.period === "evening") target.hasWeightEvening = true;
+    if (entry.period === "morning") {
+      target.hasWeightMorning = true;
+    }
+    if (entry.period === "evening") {
+      target.hasWeightEvening = true;
+    }
     if (!existing) {
       dayMap.set(entry.date, target);
     }
@@ -436,9 +444,13 @@ export const getDiaryDaysInRange = async (params: {
 
   for (const report of reportRows) {
     const entryDate = planEntryDateMap.get(report.planEntryId);
-    if (!entryDate) continue;
+    if (!entryDate) {
+      continue;
+    }
     const day = dayMap.get(entryDate);
-    if (!day) continue;
+    if (!day) {
+      continue;
+    }
     day.totalDistanceKm += parseDistanceKm(report.distanceKm);
     if (!isNonEmptyText(report.resultText) || !isNonEmptyText(report.commentText)) {
       continue;
@@ -603,8 +615,12 @@ export const getDiaryExportRows = async (params: {
   const weightByDate = new Map<string, { morning?: string; evening?: string }>();
   for (const entry of weightRows) {
     const target = weightByDate.get(entry.date) ?? {};
-    if (entry.period === "morning") target.morning = String(entry.weightKg);
-    if (entry.period === "evening") target.evening = String(entry.weightKg);
+    if (entry.period === "morning") {
+      target.morning = String(entry.weightKg);
+    }
+    if (entry.period === "evening") {
+      target.evening = String(entry.weightKg);
+    }
     weightByDate.set(entry.date, target);
   }
 
@@ -631,20 +647,28 @@ export const getDiaryExportRows = async (params: {
     functionalScore: number | null;
     muscleScore: number | null;
   }) => {
-    if (!report) return "-";
+    if (!report) {
+      return "-";
+    }
     const parts = [
       report.overallScore ?? "-",
       report.functionalScore ?? "-",
       report.muscleScore ?? "-",
     ];
-    if (parts.every((value) => value === "-")) return "-";
+    if (parts.every((value) => value === "-")) {
+      return "-";
+    }
     return parts.join("-");
   };
 
   const formatSleep = (entry?: { sleepHours: string | null }) => {
-    if (!entry?.sleepHours) return "-";
+    if (!entry?.sleepHours) {
+      return "-";
+    }
     const parsed = Number(entry.sleepHours);
-    if (!Number.isFinite(parsed)) return "-";
+    if (!Number.isFinite(parsed)) {
+      return "-";
+    }
     const clamped = Math.min(Math.max(parsed, 0), 24);
     let hours = Math.floor(clamped);
     let minutes = Math.round((clamped - hours) * 60);
@@ -659,14 +683,20 @@ export const getDiaryExportRows = async (params: {
   };
 
   const formatWeightValue = (value?: string) => {
-    if (!value) return "-";
+    if (!value) {
+      return "-";
+    }
     const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return value;
+    if (!Number.isFinite(parsed)) {
+      return value;
+    }
     return (Math.round(parsed * 10) / 10).toFixed(1);
   };
 
   const formatWeight = (entry?: { morning?: string; evening?: string }) => {
-    if (!entry?.morning && !entry?.evening) return "-";
+    if (!entry?.morning && !entry?.evening) {
+      return "-";
+    }
     const morning = formatWeightValue(entry.morning);
     const evening = formatWeightValue(entry.evening);
     return `${morning} / ${evening}`;
@@ -676,13 +706,19 @@ export const getDiaryExportRows = async (params: {
     values: Array<string | null | undefined>,
     emptyValue = "-"
   ) => {
-    if (!values.length) return emptyValue;
+    if (!values.length) {
+      return emptyValue;
+    }
     const normalized = values.map((value) => {
-      if (value === null || value === undefined) return emptyValue;
+      if (value === null || value === undefined) {
+        return emptyValue;
+      }
       const trimmed = String(value).trim();
       return trimmed.length > 0 ? trimmed : emptyValue;
     });
-    if (normalized.length === 1) return normalized[0];
+    if (normalized.length === 1) {
+      return normalized[0];
+    }
     return normalized
       .map((value, index) => `${index + 1}) ${value}`)
       .join("\n");
@@ -693,7 +729,9 @@ export const getDiaryExportRows = async (params: {
     hasMfr: boolean;
     hasMassage: boolean;
   }) => {
-    if (!entry) return "-";
+    if (!entry) {
+      return "-";
+    }
     const flags = [
       entry.hasBath ? "Баня" : null,
       entry.hasMfr ? "МФР" : null,
@@ -717,9 +755,13 @@ export const getDiaryExportRows = async (params: {
   };
 
   const formatTemperatureValue = (value?: string | null) => {
-    if (value === null || value === undefined) return "";
+    if (value === null || value === undefined) {
+      return "";
+    }
     const trimmed = String(value).trim();
-    if (!trimmed) return "";
+    if (!trimmed) {
+      return "";
+    }
     const parsed = Number(trimmed);
     const temperatureText = Number.isFinite(parsed)
       ? (Math.round(parsed * 10) / 10).toFixed(1)
@@ -762,7 +804,9 @@ export const getDiaryExportRows = async (params: {
 
     for (const entry of dayEntries) {
       const report = reportByPlan.get(entry.id);
-      if (report?.startTime) startTimes.push(report.startTime);
+      if (report?.startTime) {
+        startTimes.push(report.startTime);
+      }
       const taskText = entry.taskText?.trim() ? entry.taskText : "-";
       const resultText = report?.resultText?.trim()
         ? report.resultText
@@ -772,16 +816,24 @@ export const getDiaryExportRows = async (params: {
         commentParts.push(report.commentText.trim());
       }
       const temperatureText = formatTemperatureValue(report?.temperatureC);
-      if (temperatureText) commentParts.push(temperatureText);
+      if (temperatureText) {
+        commentParts.push(temperatureText);
+      }
       const weatherText = report?.weather
         ? weatherLabels[report.weather] ?? ""
         : "";
-      if (weatherText) commentParts.push(weatherText);
-      if (report?.hasWind) commentParts.push("ветер");
+      if (weatherText) {
+        commentParts.push(weatherText);
+      }
+      if (report?.hasWind) {
+        commentParts.push("ветер");
+      }
       const surfaceText = report?.surface
         ? surfaceLabels[report.surface] ?? ""
         : "";
-      if (surfaceText) commentParts.push(surfaceText);
+      if (surfaceText) {
+        commentParts.push(surfaceText);
+      }
       const commentText = commentParts.length ? commentParts.join(". ") : "-";
       tasks.push(taskText);
       results.push(resultText);

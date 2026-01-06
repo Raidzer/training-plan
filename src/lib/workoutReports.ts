@@ -180,7 +180,9 @@ export const upsertWorkoutReport = async (params: {
   ].some((value) => value !== undefined);
 
   const upsertConditions = async (workoutReportId: number) => {
-    if (!shouldUpsertConditions) return;
+    if (!shouldUpsertConditions) {
+      return;
+    }
     const insertValues: {
       workoutReportId: number;
       weather: string | null;

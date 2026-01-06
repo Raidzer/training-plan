@@ -16,7 +16,9 @@ type ConfirmValues = {
 };
 
 const getApiError = (value: unknown) => {
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object") {
+    return null;
+  }
   const error = "error" in value ? (value as { error?: unknown }).error : null;
   const retryAt =
     "retryAt" in value ? (value as { retryAt?: unknown }).retryAt : null;
@@ -27,7 +29,9 @@ const getApiError = (value: unknown) => {
 };
 
 const parseDate = (value: string | null | undefined) => {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
@@ -39,9 +43,13 @@ const formatDate = (value: string | null) => {
 
 const getResendInfo = (value: string | null) => {
   const parsed = parseDate(value);
-  if (!parsed) return { canResend: true, message: "" };
+  if (!parsed) {
+    return { canResend: true, message: "" };
+  }
   const diffMs = parsed.getTime() - Date.now();
-  if (diffMs <= 0) return { canResend: true, message: "" };
+  if (diffMs <= 0) {
+    return { canResend: true, message: "" };
+  }
   const minutes = Math.ceil(diffMs / 60000);
   return {
     canResend: false,
@@ -72,7 +80,9 @@ export function VerifyEmailClient() {
       }
       setStatus(data as StatusResponse);
     } catch (error) {
-      if (showError) messageApi.error("Не удалось загрузить статус");
+      if (showError) {
+        messageApi.error("Не удалось загрузить статус");
+      }
       console.error(error);
     } finally {
       setLoadingStatus(false);

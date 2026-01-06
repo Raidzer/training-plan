@@ -206,9 +206,13 @@ export function DiaryPeriodClient() {
               <RangePicker
                 value={range}
                 onChange={(values) => {
-                  if (!values || values.length !== 2) return;
+                  if (!values || values.length !== 2) {
+                    return;
+                  }
                   const [start, end] = values;
-                  if (!start || !end) return;
+                  if (!start || !end) {
+                    return;
+                  }
                   setRange([start, end]);
                 }}
               />

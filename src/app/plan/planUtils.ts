@@ -42,15 +42,23 @@ export const formatNumberedLines = (
   options?: { emptyValue?: string; includeIfAllEmpty?: boolean }
 ) => {
   const emptyValue = options?.emptyValue ?? "-";
-  if (!values.length) return options?.includeIfAllEmpty ? emptyValue : "";
+  if (!values.length) {
+    return options?.includeIfAllEmpty ? emptyValue : "";
+  }
   const normalized = values.map((value) => {
-    if (value === null || value === undefined) return emptyValue;
+    if (value === null || value === undefined) {
+      return emptyValue;
+    }
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : emptyValue;
   });
   const hasNonEmpty = normalized.some((value) => value !== emptyValue);
-  if (!hasNonEmpty && !options?.includeIfAllEmpty) return "";
-  if (normalized.length === 1) return normalized[0];
+  if (!hasNonEmpty && !options?.includeIfAllEmpty) {
+    return "";
+  }
+  if (normalized.length === 1) {
+    return normalized[0];
+  }
   return normalized.map((value, index) => `${index + 1}) ${value}`).join("\n");
 };
 
@@ -88,6 +96,8 @@ export const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
 
 export const sortPlanEntries = (items: PlanEntry[]) =>
   [...items].sort((a, b) => {
-    if (a.date === b.date) return a.sessionOrder - b.sessionOrder;
+    if (a.date === b.date) {
+      return a.sessionOrder - b.sessionOrder;
+    }
     return b.date.localeCompare(a.date);
   });

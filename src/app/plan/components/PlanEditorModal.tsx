@@ -46,7 +46,9 @@ export function PlanEditorModal({
   onRemoveEntry,
   onDeleteDay,
 }: PlanEditorModalProps) {
-  if (!draft) return null;
+  if (!draft) {
+    return null;
+  }
   const isEditing = Boolean(draft.originalDate);
 
   return (

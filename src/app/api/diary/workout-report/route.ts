@@ -12,11 +12,19 @@ const WEATHER_OPTIONS = new Set(["cloudy", "sunny", "rain", "snow"]);
 const SURFACE_OPTIONS = new Set(["ground", "asphalt", "manezh", "stadium"]);
 
 const parseOptionalEnum = (value: unknown, options: Set<string>) => {
-  if (value === undefined) return { value: undefined, valid: true };
-  if (value === null || value === "") return { value: null, valid: true };
-  if (typeof value !== "string") return { value: null, valid: false };
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null || value === "") {
+    return { value: null, valid: true };
+  }
+  if (typeof value !== "string") {
+    return { value: null, valid: false };
+  }
   const trimmed = value.trim();
-  if (!trimmed) return { value: null, valid: true };
+  if (!trimmed) {
+    return { value: null, valid: true };
+  }
   if (!options.has(trimmed)) {
     return { value: null, valid: false };
   }
@@ -24,19 +32,33 @@ const parseOptionalEnum = (value: unknown, options: Set<string>) => {
 };
 
 const parseOptionalBoolean = (value: unknown) => {
-  if (value === undefined) return { value: undefined, valid: true };
-  if (value === null || value === "") return { value: null, valid: true };
-  if (typeof value === "boolean") return { value, valid: true };
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null || value === "") {
+    return { value: null, valid: true };
+  }
+  if (typeof value === "boolean") {
+    return { value, valid: true };
+  }
   if (typeof value === "string") {
-    if (value === "true") return { value: true, valid: true };
-    if (value === "false") return { value: false, valid: true };
+    if (value === "true") {
+      return { value: true, valid: true };
+    }
+    if (value === "false") {
+      return { value: false, valid: true };
+    }
   }
   return { value: null, valid: false };
 };
 
 const parseOptionalDistance = (value: unknown) => {
-  if (value === undefined) return { value: undefined, valid: true };
-  if (value === null || value === "") return { value: null, valid: true };
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null || value === "") {
+    return { value: null, valid: true };
+  }
   const parsed =
     typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
   if (!Number.isFinite(parsed) || parsed < 0) {
@@ -46,8 +68,12 @@ const parseOptionalDistance = (value: unknown) => {
 };
 
 const parseOptionalTemperature = (value: unknown) => {
-  if (value === undefined) return { value: undefined, valid: true };
-  if (value === null || value === "") return { value: null, valid: true };
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null || value === "") {
+    return { value: null, valid: true };
+  }
   const parsed =
     typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
   if (!Number.isFinite(parsed)) {
@@ -61,8 +87,12 @@ const parseOptionalTemperature = (value: unknown) => {
 };
 
 const parseOptionalScore = (value: unknown) => {
-  if (value === undefined) return { value: undefined, valid: true };
-  if (value === null || value === "") return { value: null, valid: true };
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null || value === "") {
+    return { value: null, valid: true };
+  }
   const parsed = typeof value === "number" ? value : Number(String(value).trim());
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 10) {
     return { value: null, valid: false };

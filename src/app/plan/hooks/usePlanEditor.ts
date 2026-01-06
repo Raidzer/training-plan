@@ -66,7 +66,9 @@ export const usePlanEditor = ({
       const dayEntries = entries
         .filter((entry) => entry.date === date)
         .sort((a, b) => a.sessionOrder - b.sessionOrder);
-      if (!dayEntries.length) return;
+      if (!dayEntries.length) {
+        return;
+      }
       setDraft({
         date,
         originalDate: date,
@@ -84,7 +86,9 @@ export const usePlanEditor = ({
   );
 
   const handleCancelEditor = useCallback(() => {
-    if (saving) return;
+    if (saving) {
+      return;
+    }
     closeEditor();
   }, [closeEditor, saving]);
 
@@ -94,7 +98,9 @@ export const usePlanEditor = ({
 
   const handleDateChange = useCallback(
     (value: Dayjs | null) => {
-      if (!value) return;
+      if (!value) {
+        return;
+      }
       updateDraft((prev) => ({
         ...prev,
         date: value.format(PLAN_DATE_FORMAT),
@@ -135,7 +141,9 @@ export const usePlanEditor = ({
     (index: number) => {
       updateDraft((prev) => {
         const nextEntries = prev.entries.filter((_, i) => i !== index);
-        if (nextEntries.length === 0) nextEntries.push(createEmptyDraftEntry());
+        if (nextEntries.length === 0) {
+          nextEntries.push(createEmptyDraftEntry());
+        }
         return { ...prev, entries: nextEntries };
       });
     },
@@ -144,7 +152,9 @@ export const usePlanEditor = ({
 
   const confirmRemoveEntry = useCallback(
     (index: number) => {
-      if (!draft) return;
+      if (!draft) {
+        return;
+      }
       const entry = draft.entries[index];
       modalApi.confirm({
         title: PLAN_TEXT.confirm.deleteWorkoutTitle,
@@ -161,13 +171,17 @@ export const usePlanEditor = ({
   );
 
   const draftDateValue = useMemo(() => {
-    if (!draft) return null;
+    if (!draft) {
+      return null;
+    }
     const parsed = dayjs(draft.date, PLAN_DATE_FORMAT, true);
     return parsed.isValid() ? parsed : null;
   }, [draft]);
 
   const handleSaveDraft = useCallback(async () => {
-    if (!draft) return;
+    if (!draft) {
+      return;
+    }
     const normalizedDate = draft.date.trim();
     if (!normalizedDate) {
       msgApi.error(PLAN_TEXT.messages.dateRequired);
@@ -271,7 +285,9 @@ export const usePlanEditor = ({
   }, [closeEditor, draft, entries, msgApi, setEntries]);
 
   const handleDeleteDay = useCallback(() => {
-    if (!draft?.originalDate || saving) return;
+    if (!draft?.originalDate || saving) {
+      return;
+    }
     const targetDate = draft.originalDate;
     const hasReports = draft.entries.some((entry) => entry.hasReport);
     modalApi.confirm({

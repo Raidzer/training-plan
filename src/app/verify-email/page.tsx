@@ -4,7 +4,9 @@ import { VerifyEmailClient } from "./VerifyEmailClient";
 
 export default async function VerifyEmailPage() {
   const session = await auth();
-  if (!session) redirect("/login");
+  if (!session) {
+    redirect("/login");
+  }
 
   return <VerifyEmailClient />;
 }

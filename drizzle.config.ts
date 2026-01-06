@@ -1,14 +1,18 @@
 import "dotenv/config";
 
 const parseNumber = (value: string | undefined) => {
-  if (!value) return undefined;
+  if (!value) {
+    return undefined;
+  }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 const getDbCredentials = () => {
   const url = process.env.DATABASE_URL;
-  if (url) return { url } as const;
+  if (url) {
+    return { url } as const;
+  }
 
   const host = process.env.PGHOST ?? process.env.POSTGRES_HOST ?? "localhost";
   const port = parseNumber(process.env.PGPORT ?? process.env.POSTGRES_PORT);
