@@ -2,11 +2,7 @@
 
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
-import {
-  Card,
-  message,
-  Space,
-} from "antd";
+import { Card, message, Space } from "antd";
 import styles from "./diary.module.scss";
 import type { DayPayload, RecoveryEntry } from "./types/diaryTypes";
 import {
@@ -78,7 +74,6 @@ const formatTemperatureValue = (value?: string | null) => {
   return `${temperatureText}°C`;
 };
 
-
 const formatWorkoutScore = (
   report?: DayPayload["workoutReports"][number] | null
 ) => {
@@ -119,7 +114,9 @@ const buildDailyReportText = (params: {
     if (temperatureText) commentParts.push(temperatureText);
     const weatherText = getOptionLabel(WEATHER_OPTIONS, report?.weather);
     if (weatherText) commentParts.push(weatherText);
-    const windText = report?.hasWind ? getOptionLabel(WIND_OPTIONS, "true") : "";
+    const windText = report?.hasWind
+      ? getOptionLabel(WIND_OPTIONS, "true")
+      : "";
     if (windText) commentParts.push(windText);
     const surfaceText = getOptionLabel(SURFACE_OPTIONS, report?.surface);
     if (surfaceText) commentParts.push(surfaceText);
@@ -152,11 +149,14 @@ const buildDailyReportText = (params: {
   const recoveryBlock = [
     sleepText || "-",
     weightText || "-",
-    recoveryText || "-",
+    recoveryText || "",
     volumeKm ? `${volumeKm} \u043a\u043c` : "-",
   ];
 
   for (const item of recoveryBlock) {
+    if (!item) {
+      continue;
+    }
     pushWithSpacer(item);
   }
 
@@ -276,10 +276,7 @@ export function DiaryClient() {
   } = useDiaryData({ messageApi, messages: diaryMessages });
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  const handleWeightChange = (
-    period: "morning" | "evening",
-    value: string
-  ) => {
+  const handleWeightChange = (period: "morning" | "evening", value: string) => {
     setWeightForm((prev) => ({ ...prev, [period]: value }));
   };
 
@@ -436,7 +433,9 @@ export function DiaryClient() {
                     surfacePlaceholder={workoutLabels.surfacePlaceholder}
                     weatherPlaceholder={workoutLabels.weatherPlaceholder}
                     windPlaceholder={workoutLabels.windPlaceholder}
-                    temperaturePlaceholder={workoutLabels.temperaturePlaceholder}
+                    temperaturePlaceholder={
+                      workoutLabels.temperaturePlaceholder
+                    }
                     commentPlaceholder={workoutLabels.commentPlaceholder}
                     saveReportLabel={workoutLabels.saveReportLabel}
                     surfaceOptions={SURFACE_OPTIONS}
