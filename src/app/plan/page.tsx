@@ -11,6 +11,7 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import {
+  App,
   Button,
   Card,
   DatePicker,
@@ -22,7 +23,6 @@ import {
   Tag,
   Typography,
   Tooltip,
-  message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
@@ -130,12 +130,12 @@ const sortPlanEntries = (items: PlanEntry[]) =>
     return b.date.localeCompare(a.date);
   });
 
-export default function PlanPage() {
+function PlanPageContent() {
+  const { message: msgApi, modal: modalApi } = App.useApp();
   const [entries, setEntries] = useState<PlanEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [onlyWithoutReports, setOnlyWithoutReports] = useState(false);
-  const [msgApi, contextHolder] = message.useMessage();
   const [saving, setSaving] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<PlanDraft | null>(null);
@@ -191,6 +191,11 @@ export default function PlanPage() {
     setEditorOpen(false);
     setDraft(null);
   }, []);
+
+  const handleCancelEditor = useCallback(() => {
+    if (saving) return;
+    closeEditor();
+  }, [closeEditor, saving]);
 
   const updateDraft = useCallback((updater: (prev: PlanDraft) => PlanDraft) => {
     setDraft((prev) => (prev ? updater(prev) : prev));
@@ -250,7 +255,7 @@ export default function PlanPage() {
     (index: number) => {
       if (!draft) return;
       const entry = draft.entries[index];
-      Modal.confirm({
+      modalApi.confirm({
         title: "Удалить тренировку?",
         content:
           entry?.hasReport
@@ -262,7 +267,7 @@ export default function PlanPage() {
         onOk: () => removeEntry(index),
       });
     },
-    [draft, removeEntry]
+    [draft, modalApi, removeEntry]
   );
 
   const draftDateValue = useMemo(() => {
@@ -374,6 +379,52 @@ export default function PlanPage() {
       setSaving(false);
     }
   }, [closeEditor, draft, entries, msgApi]);
+
+  const handleDeleteDay = useCallback(() => {
+    if (!draft?.originalDate || saving) return;
+    const targetDate = draft.originalDate;
+    const hasReports = draft.entries.some((entry) => entry.hasReport);
+    modalApi.confirm({
+      title: "Удалить день?",
+      content: hasReports
+        ? "Удалятся все тренировки дня и связанные отчеты."
+        : "Удалятся все тренировки дня.",
+      okText: "Удалить",
+      okType: "danger",
+      cancelText: "Отмена",
+      onOk: async () => {
+        setSaving(true);
+        try {
+          const res = await fetch(
+            `/api/plans?date=${encodeURIComponent(targetDate)}`,
+            {
+              method: "DELETE",
+            }
+          );
+          const data = (await res.json().catch(() => null)) as
+            | { deleted?: boolean; error?: string }
+            | null;
+          if (!res.ok || !data?.deleted) {
+            const errorCode = data?.error;
+            if (res.status === 404 || errorCode === "not_found") {
+              msgApi.error("День не найден");
+            } else {
+              msgApi.error("Не удалось удалить день");
+            }
+            return;
+          }
+          setEntries((prev) => prev.filter((entry) => entry.date !== targetDate));
+          msgApi.success("День удален");
+          closeEditor();
+        } catch (err) {
+          console.error(err);
+          msgApi.error("Ошибка при удалении дня");
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
+  }, [closeEditor, draft, modalApi, msgApi, saving]);
 
   const columns: ColumnsType<PlanDayEntry> = useMemo(
     () => [
@@ -506,7 +557,6 @@ export default function PlanPage() {
 
   return (
     <main className={styles.mainContainer}>
-      {contextHolder}
       <Card className={styles.cardStyle}>
         <Space
           orientation="vertical"
@@ -557,16 +607,24 @@ export default function PlanPage() {
           <Modal
             open={editorOpen}
             title={draft?.originalDate ? "Редактировать день" : "Добавить день"}
-            onCancel={closeEditor}
+            onCancel={handleCancelEditor}
             onOk={handleSaveDraft}
             okText="Сохранить"
             cancelText="Отмена"
             confirmLoading={saving}
-            destroyOnClose
+            maskClosable={!saving}
+            closable={!saving}
+            destroyOnHidden
+            okButtonProps={{
+              disabled: saving,
+            }}
+            cancelButtonProps={{
+              disabled: saving,
+            }}
           >
             {draft ? (
               <Space
-                direction="vertical"
+                orientation="vertical"
                 size="middle"
                 className={styles.editorForm}
               >
@@ -594,14 +652,14 @@ export default function PlanPage() {
                   </Space>
                 </Space>
                 <Space
-                  direction="vertical"
+                  orientation="vertical"
                   size="middle"
                   className={styles.editorEntries}
                 >
                   {draft.entries.map((entry, index) => (
                     <Card key={entry.id ?? `new-${index}`} size="small">
                       <Space
-                        direction="vertical"
+                        orientation="vertical"
                         size="small"
                         className={styles.editorEntryBody}
                       >
@@ -650,9 +708,16 @@ export default function PlanPage() {
                     </Card>
                   ))}
                 </Space>
-                <Button icon={<PlusOutlined />} onClick={addEntry}>
-                  Добавить тренировку
-                </Button>
+                <Space size="middle" wrap>
+                  <Button icon={<PlusOutlined />} onClick={addEntry}>
+                    Добавить тренировку
+                  </Button>
+                  {draft.originalDate ? (
+                    <Button danger onClick={handleDeleteDay}>
+                      Удалить день
+                    </Button>
+                  ) : null}
+                </Space>
               </Space>
             ) : null}
           </Modal>
@@ -677,5 +742,13 @@ export default function PlanPage() {
         </Space>
       </Card>
     </main>
+  );
+}
+
+export default function PlanPage() {
+  return (
+    <App>
+      <PlanPageContent />
+    </App>
   );
 }

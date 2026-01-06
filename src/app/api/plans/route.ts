@@ -262,3 +262,60 @@ export async function POST(req: Request) {
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(req: Request) {
+  const session = await auth();
+  if (!session)
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const userId = Number((session.user as any)?.id);
+  if (!userId)
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const date = (searchParams.get("date") ?? "").trim();
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "invalid_date" }, { status: 400 });
+  }
+
+  const deleted = await db.transaction(async (tx) => {
+    const dayEntries = await tx
+      .select({ id: planEntries.id })
+      .from(planEntries)
+      .where(and(eq(planEntries.userId, userId), eq(planEntries.date, date)));
+
+    if (dayEntries.length === 0) {
+      return { error: "not_found" as const };
+    }
+
+    const entryIds = dayEntries.map((entry) => entry.id);
+    const reportIds = await tx
+      .select({ id: workoutReports.id })
+      .from(workoutReports)
+      .where(
+        and(eq(workoutReports.userId, userId), inArray(workoutReports.planEntryId, entryIds))
+      );
+
+    const reportIdList = reportIds.map((row) => row.id);
+    if (reportIdList.length > 0) {
+      await tx
+        .delete(workoutReportConditions)
+        .where(inArray(workoutReportConditions.workoutReportId, reportIdList));
+      await tx
+        .delete(workoutReports)
+        .where(inArray(workoutReports.id, reportIdList));
+    }
+
+    await tx
+      .delete(planEntries)
+      .where(and(eq(planEntries.userId, userId), eq(planEntries.date, date)));
+
+    return { deleted: true };
+  });
+
+  if ("error" in deleted) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  return NextResponse.json(deleted);
+}
