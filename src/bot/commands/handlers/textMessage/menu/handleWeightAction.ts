@@ -2,7 +2,6 @@ import { buildWeightDateReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import {
   clearRecoveryDraft,
   clearWeightDraft,
-  clearWorkoutDraft,
   setPendingInput,
 } from "@/bot/menu/menuState";
 
@@ -17,7 +16,6 @@ export const handleWeightMenuAction = async ({
 }: WeightMenuActionArgs) => {
   clearRecoveryDraft(chatId);
   clearWeightDraft(chatId);
-  clearWorkoutDraft(chatId);
   setPendingInput(chatId, "weightDateMenu");
   await ctx.reply("Когда зафиксировать вес?", {
     reply_markup: buildWeightDateReplyKeyboard(),

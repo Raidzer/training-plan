@@ -11,12 +11,10 @@ import {
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   buildWeightPeriodReplyKeyboard,
-  buildWorkoutSelectReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
   REPORT_MAIN_MENU_BUTTON_TEXT,
   REPORT_RECOVERY_BUTTON_TEXT,
   REPORT_WEIGHT_BUTTON_TEXT,
-  REPORT_WORKOUT_BUTTON_TEXT,
   WEIGHT_CUSTOM_DATE_BUTTON_TEXT,
   WEIGHT_EVENING_BUTTON_TEXT,
   WEIGHT_MORNING_BUTTON_TEXT,
@@ -26,14 +24,12 @@ import {
   clearPendingInput,
   clearRecoveryDraft,
   clearWeightDraft,
-  clearWorkoutDraft,
   getWeightDraft,
   setPendingInput,
   setRecoveryDraft,
   setWeightDraft,
 } from "@/bot/menu/menuState";
 import { upsertWeightEntry } from "@/lib/weightEntries";
-import { getPlanEntriesByDate } from "@/lib/planEntries";
 import { getRecoveryEntryByDate } from "@/lib/recoveryEntries";
 import { formatSleepTimeValue } from "@/bot/utils/sleepTime";
 
@@ -62,7 +58,6 @@ export const handleWeightPending = async ({
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
         reply_markup: buildMainMenuReplyKeyboard({
@@ -129,7 +124,6 @@ export const handleWeightPending = async ({
     if (text === DATE_BACK_BUTTON_TEXT) {
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Когда зафиксировать вес?", {
         reply_markup: buildWeightDateReplyKeyboard(),
@@ -141,7 +135,6 @@ export const handleWeightPending = async ({
     if (!draft.date) {
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Сначала выбери дату.", {
         reply_markup: buildWeightDateReplyKeyboard(),
@@ -153,26 +146,6 @@ export const handleWeightPending = async ({
       setPendingInput(chatId, "weightPeriod");
       await ctx.reply("Выбери период взвешивания.", {
         reply_markup: buildWeightPeriodReplyKeyboard(),
-      });
-      return;
-    }
-
-    if (text === REPORT_WORKOUT_BUTTON_TEXT) {
-      const entries = await getPlanEntriesByDate({
-        userId,
-        date: draft.date,
-      });
-      if (!entries.length) {
-        await ctx.reply("На выбранную дату нет тренировок в плане.");
-        return;
-      }
-
-      const workoutButtons = entries.map(
-        (entry) => `${entry.sessionOrder}. ${entry.taskText}`
-      );
-      setPendingInput(chatId, "workoutSelect");
-      await ctx.reply("Выбери тренировку из плана.", {
-        reply_markup: buildWorkoutSelectReplyKeyboard({ workoutButtons }),
       });
       return;
     }
@@ -209,7 +182,6 @@ export const handleWeightPending = async ({
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
         reply_markup: buildMainMenuReplyKeyboard({
@@ -292,7 +264,6 @@ export const handleWeightPending = async ({
   if (!draft.date || !draft.period) {
     clearRecoveryDraft(chatId);
     clearWeightDraft(chatId);
-    clearWorkoutDraft(chatId);
     setPendingInput(chatId, "weightDateMenu");
     await ctx.reply("Сначала выбери дату и период.", {
       reply_markup: buildWeightDateReplyKeyboard(),
@@ -310,7 +281,6 @@ export const handleWeightPending = async ({
   clearPendingInput(chatId);
   clearRecoveryDraft(chatId);
   clearWeightDraft(chatId);
-  clearWorkoutDraft(chatId);
   const subscription = await getSubscription(userId);
   const periodLabel = draft.period === "morning" ? "утро" : "вечер";
   const displayDate = formatDateForDisplay(draft.date);

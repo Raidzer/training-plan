@@ -10,7 +10,6 @@ import {
   clearPendingInput,
   clearRecoveryDraft,
   clearWeightDraft,
-  clearWorkoutDraft,
 } from "@/bot/menu/menuState";
 
 type CancelHandlerArgs = {
@@ -36,7 +35,6 @@ export const handleCancelIfRequested = async ({
     clearPendingInput(chatId);
     clearRecoveryDraft(chatId);
     clearWeightDraft(chatId);
-    clearWorkoutDraft(chatId);
     const userId = await ensureLinked(chatId);
     const subscription = userId ? await getSubscription(userId) : null;
     const replyMarkup =

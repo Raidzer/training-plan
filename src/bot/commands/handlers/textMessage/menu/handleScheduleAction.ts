@@ -1,15 +1,18 @@
+import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { setPendingInput } from "@/bot/menu/menuState";
 
 type ScheduleMenuActionArgs = {
   ctx: any;
   chatId: number;
   action: "time" | "timezone";
+  userId: number;
 };
 
 export const handleScheduleMenuAction = async ({
   ctx,
   chatId,
   action,
+  userId,
 }: ScheduleMenuActionArgs) => {
   setPendingInput(chatId, action);
   if (action === "time") {
@@ -19,7 +22,9 @@ export const handleScheduleMenuAction = async ({
     return;
   }
 
+  const subscription = await getSubscription(userId);
+  const timeZone = subscription?.timezone ?? "не задана";
   await ctx.reply(
-    "Введите таймзону IANA (например, Europe/Moscow) или напишите 'отмена'."
+    `Текущая таймзона: ${timeZone}. Введите IANA (например, Europe/Moscow) или напишите 'отмена'.`
   );
 };

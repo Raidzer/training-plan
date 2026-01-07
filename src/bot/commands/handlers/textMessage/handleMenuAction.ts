@@ -42,7 +42,7 @@ export const handleMenuAction = async ({
       return;
     case "time":
     case "timezone":
-      await handleScheduleMenuAction({ ctx, chatId, action });
+      await handleScheduleMenuAction({ ctx, chatId, action, userId });
       return;
     case "subscribe":
     case "unsubscribe":

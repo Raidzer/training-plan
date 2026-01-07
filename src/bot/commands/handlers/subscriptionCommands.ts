@@ -111,7 +111,11 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     const timeZone = parts[1];
 
     if (!timeZone) {
-      return ctx.reply("Используй: /timezone Europe/Moscow");
+      const subscription = await getSubscription(userId);
+      const currentTimeZone = subscription?.timezone ?? "не задана";
+      return ctx.reply(
+        `Текущая таймзона: ${currentTimeZone}. Используй: /timezone Europe/Moscow`
+      );
     }
 
     if (!isValidTimeZone(timeZone)) {

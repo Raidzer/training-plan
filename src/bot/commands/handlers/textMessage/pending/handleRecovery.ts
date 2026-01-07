@@ -16,7 +16,6 @@ import {
   clearPendingInput,
   clearRecoveryDraft,
   clearWeightDraft,
-  clearWorkoutDraft,
   getRecoveryDraft,
   setPendingInput,
   setRecoveryDraft,
@@ -86,7 +85,6 @@ export const handleRecoveryPending = async ({
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
         reply_markup: buildMainMenuReplyKeyboard({
@@ -99,7 +97,6 @@ export const handleRecoveryPending = async ({
     if (!draft.date) {
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Сначала выбери дату.", {
         reply_markup: buildWeightDateReplyKeyboard(),
@@ -128,7 +125,6 @@ export const handleRecoveryPending = async ({
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Отметки восстановления сохранены.", {
         reply_markup: buildMainMenuReplyKeyboard({
@@ -200,7 +196,6 @@ export const handleRecoveryPending = async ({
     if (!draft.date) {
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Сначала выбери дату.", {
         reply_markup: buildWeightDateReplyKeyboard(),
@@ -222,7 +217,6 @@ export const handleRecoveryPending = async ({
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
         reply_markup: buildMainMenuReplyKeyboard({
