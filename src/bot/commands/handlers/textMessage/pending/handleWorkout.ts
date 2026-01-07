@@ -15,6 +15,7 @@ import {
 } from "@/bot/menu/menuKeyboard";
 import {
   clearPendingInput,
+  clearRecoveryDraft,
   clearWeightDraft,
   clearWorkoutDraft,
   getWeightDraft,
@@ -63,6 +64,7 @@ export const handleWorkoutPending = async ({
 
     if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
       clearPendingInput(chatId);
+      clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
       clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
@@ -226,6 +228,7 @@ export const handleWorkoutPending = async ({
 
     if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
       clearPendingInput(chatId);
+      clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
       clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
@@ -321,6 +324,7 @@ export const handleWorkoutPending = async ({
     });
 
     clearPendingInput(chatId);
+    clearRecoveryDraft(chatId);
     clearWeightDraft(chatId);
     clearWorkoutDraft(chatId);
     const subscription = await getSubscription(userId);

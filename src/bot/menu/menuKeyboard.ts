@@ -10,17 +10,23 @@ export const TIME_BUTTON_TEXT = "Время рассылки";
 export const TIMEZONE_BUTTON_TEXT = "Часовой пояс";
 export const UNLINK_BUTTON_TEXT = "Отвязать";
 export const HELP_BUTTON_TEXT = "Помощь";
-export const WEIGHT_BUTTON_TEXT = "Заполнить отчет";
+export const WEIGHT_BUTTON_TEXT = "Заполнить дневник";
 export const WEIGHT_TODAY_BUTTON_TEXT = "Сегодня";
 export const WEIGHT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
 export const REPORT_WEIGHT_BUTTON_TEXT = "Указать вес";
 export const REPORT_WORKOUT_BUTTON_TEXT = "Отчет по тренировке";
+export const REPORT_RECOVERY_BUTTON_TEXT = "Сон и восстановление";
 export const REPORT_MAIN_MENU_BUTTON_TEXT = "Главное меню";
 export const REPORT_EDIT_TIME_BUTTON_TEXT = "Редактировать время";
 export const REPORT_EDIT_RESULT_BUTTON_TEXT = "Редактировать результат";
 export const REPORT_EDIT_COMMENT_BUTTON_TEXT = "Редактировать комментарий";
 export const WEIGHT_MORNING_BUTTON_TEXT = "Указать утренний вес";
 export const WEIGHT_EVENING_BUTTON_TEXT = "Указать вечерний вес";
+export const RECOVERY_SLEEP_LABEL = "Сон";
+export const RECOVERY_MFR_LABEL = "МФР";
+export const RECOVERY_MASSAGE_LABEL = "Массаж";
+export const RECOVERY_BATH_LABEL = "Баня";
+export const RECOVERY_SAVE_BUTTON_TEXT = "Сохранить";
 
 export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) => {
   const subscribed = params?.subscribed ?? false;
@@ -112,6 +118,52 @@ export const buildWeightActionReplyKeyboard = () => {
         { text: REPORT_WEIGHT_BUTTON_TEXT },
         { text: REPORT_WORKOUT_BUTTON_TEXT },
       ],
+      [{ text: REPORT_RECOVERY_BUTTON_TEXT }],
+      [
+        { text: REPORT_MAIN_MENU_BUTTON_TEXT },
+        { text: DATE_BACK_BUTTON_TEXT },
+      ],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+const formatRecoveryToggleLabel = (label: string, enabled: boolean) => {
+  return `${label}: ${enabled ? "да" : "нет"}`;
+};
+
+const formatRecoverySleepLabel = (sleepText: string) => {
+  const displayValue = sleepText.trim().length > 0 ? sleepText : "-";
+  return `${RECOVERY_SLEEP_LABEL}: ${displayValue}`;
+};
+
+export const buildRecoveryReplyKeyboard = (params: {
+  sleepText: string;
+  hasBath: boolean;
+  hasMfr: boolean;
+  hasMassage: boolean;
+}) => {
+  return {
+    keyboard: [
+      [{ text: formatRecoverySleepLabel(params.sleepText) }],
+      [
+        {
+          text: formatRecoveryToggleLabel(RECOVERY_MFR_LABEL, params.hasMfr),
+        },
+        {
+          text: formatRecoveryToggleLabel(
+            RECOVERY_MASSAGE_LABEL,
+            params.hasMassage
+          ),
+        },
+      ],
+      [
+        {
+          text: formatRecoveryToggleLabel(RECOVERY_BATH_LABEL, params.hasBath),
+        },
+      ],
+      [{ text: RECOVERY_SAVE_BUTTON_TEXT }],
       [
         { text: REPORT_MAIN_MENU_BUTTON_TEXT },
         { text: DATE_BACK_BUTTON_TEXT },

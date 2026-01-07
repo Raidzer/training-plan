@@ -8,6 +8,7 @@ import {
 } from "@/bot/menu/menuKeyboard";
 import {
   clearPendingInput,
+  clearRecoveryDraft,
   clearWeightDraft,
   clearWorkoutDraft,
 } from "@/bot/menu/menuState";
@@ -33,6 +34,7 @@ export const handleCancelIfRequested = async ({
     text === CANCEL_LINK_BUTTON_TEXT
   ) {
     clearPendingInput(chatId);
+    clearRecoveryDraft(chatId);
     clearWeightDraft(chatId);
     clearWorkoutDraft(chatId);
     const userId = await ensureLinked(chatId);

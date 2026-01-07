@@ -97,3 +97,29 @@ export const upsertRecoveryEntry = async (params: {
 
   await db.insert(recoveryEntries).values(insertValues);
 };
+
+export const getRecoveryEntryByDate = async (params: {
+  userId: number;
+  date: string;
+}) => {
+  const [entry] = await db
+    .select({
+      id: recoveryEntries.id,
+      date: recoveryEntries.date,
+      hasBath: recoveryEntries.hasBath,
+      hasMfr: recoveryEntries.hasMfr,
+      hasMassage: recoveryEntries.hasMassage,
+      sleepHours: recoveryEntries.sleepHours,
+    })
+    .from(recoveryEntries)
+    .where(
+      and(
+        eq(recoveryEntries.userId, params.userId),
+        eq(recoveryEntries.date, params.date)
+      )
+    );
+  if (!entry) {
+    return null;
+  }
+  return entry;
+};

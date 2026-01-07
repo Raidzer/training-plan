@@ -1,5 +1,6 @@
 import { buildWeightDateReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import {
+  clearRecoveryDraft,
   clearWeightDraft,
   clearWorkoutDraft,
   setPendingInput,
@@ -14,6 +15,7 @@ export const handleWeightMenuAction = async ({
   ctx,
   chatId,
 }: WeightMenuActionArgs) => {
+  clearRecoveryDraft(chatId);
   clearWeightDraft(chatId);
   clearWorkoutDraft(chatId);
   setPendingInput(chatId, "weightDateMenu");
