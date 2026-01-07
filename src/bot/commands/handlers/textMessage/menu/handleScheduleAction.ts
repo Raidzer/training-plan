@@ -25,6 +25,6 @@ export const handleScheduleMenuAction = async ({
   const subscription = await getSubscription(userId);
   const timeZone = subscription?.timezone ?? "не задана";
   await ctx.reply(
-    `Текущая таймзона: ${timeZone}. Введите IANA (например, Europe/Moscow) или напишите 'отмена'.`
+    `Текущая таймзона: ${timeZone}. Введите IANA (например, Europe/Moscow) или смещение (например, +3), либо напишите 'отмена'.`
   );
 };

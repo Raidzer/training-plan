@@ -1,6 +1,6 @@
 import type { Bot } from "grammy";
 import { TIME_REGEX } from "@/bot/utils/validators";
-import { isValidTimeZone } from "@/bot/utils/dateTime";
+import { resolveTimeZoneInput } from "@/bot/utils/dateTime";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import {
   getSubscription,
@@ -114,20 +114,25 @@ export const registerSubscriptionCommands = (bot: Bot) => {
       const subscription = await getSubscription(userId);
       const currentTimeZone = subscription?.timezone ?? "не задана";
       return ctx.reply(
-        `Текущая таймзона: ${currentTimeZone}. Используй: /timezone Europe/Moscow`
+        `Текущая таймзона: ${currentTimeZone}. Используй: /timezone Europe/Moscow или /timezone +3`
       );
     }
 
-    if (!isValidTimeZone(timeZone)) {
-      return ctx.reply("Неверная таймзона. Используй формат IANA.");
+    const resolved = resolveTimeZoneInput(timeZone);
+    if (!resolved) {
+      return ctx.reply("Неверная таймзона. Используй формат IANA или смещение (+3).");
     }
 
     await upsertSubscription({
       userId,
       chatId: ctx.chat.id,
-      patch: { timezone: timeZone },
+      patch: { timezone: resolved.timeZone },
     });
 
-    return ctx.reply(`Таймзона обновлена: ${timeZone}.`);
+    const displayTimeZone =
+      resolved.type === "offset"
+        ? `${resolved.timeZone} (смещение ${resolved.offset >= 0 ? "+" : ""}${resolved.offset})`
+        : resolved.timeZone;
+    return ctx.reply(`Таймзона обновлена: ${displayTimeZone}.`);
   });
 };

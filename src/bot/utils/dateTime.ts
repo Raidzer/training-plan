@@ -57,6 +57,61 @@ export const isValidTimeZone = (timeZone: string) => {
   }
 };
 
+const TIMEZONE_OFFSET_REGEX = /^(?:UTC|GMT)?([+-]\d{1,2})$/i;
+
+export const parseTimeZoneOffset = (value: string) => {
+  const normalized = value.trim().replace(/\s+/g, "");
+  const match = normalized.match(TIMEZONE_OFFSET_REGEX);
+  if (!match) {
+    return null;
+  }
+  const offset = Number(match[1]);
+  if (!Number.isInteger(offset)) {
+    return null;
+  }
+  if (offset < -12 || offset > 14) {
+    return null;
+  }
+  return offset;
+};
+
+export const offsetToIanaTimeZone = (offset: number) => {
+  if (!Number.isInteger(offset)) {
+    return null;
+  }
+  if (offset < -12 || offset > 14) {
+    return null;
+  }
+  if (offset === 0) {
+    return "Etc/UTC";
+  }
+  const sign = offset > 0 ? "-" : "+";
+  const hours = Math.abs(offset);
+  return `Etc/GMT${sign}${hours}`;
+};
+
+export const resolveTimeZoneInput = (value: string) => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  if (isValidTimeZone(trimmed)) {
+    return { timeZone: trimmed, type: "iana" as const };
+  }
+  const offset = parseTimeZoneOffset(trimmed);
+  if (offset === null) {
+    return null;
+  }
+  const timeZone = offsetToIanaTimeZone(offset);
+  if (!timeZone) {
+    return null;
+  }
+  if (!isValidTimeZone(timeZone)) {
+    return null;
+  }
+  return { timeZone, type: "offset" as const, offset };
+};
+
 const RU_WEEKDAYS_SHORT = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
 const isValidDateParts = (year: number, month: number, day: number) => {

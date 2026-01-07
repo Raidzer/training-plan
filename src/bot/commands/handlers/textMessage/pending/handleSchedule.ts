@@ -1,5 +1,5 @@
 import { TIME_REGEX } from "@/bot/utils/validators";
-import { isValidTimeZone } from "@/bot/utils/dateTime";
+import { resolveTimeZoneInput } from "@/bot/utils/dateTime";
 import {
   getSubscription,
   upsertSubscription,
@@ -46,9 +46,10 @@ export const handleSchedulePending = async ({
     return;
   }
 
-  if (!isValidTimeZone(text)) {
+  const resolved = resolveTimeZoneInput(text);
+  if (!resolved) {
     await ctx.reply(
-      "Неверная таймзона. Пример: Europe/Moscow. Или напишите 'отмена'."
+      "Неверная таймзона. Пример: Europe/Moscow или +3. Или напишите 'отмена'."
     );
     return;
   }
@@ -56,12 +57,16 @@ export const handleSchedulePending = async ({
   await upsertSubscription({
     userId,
     chatId,
-    patch: { timezone: text },
+    patch: { timezone: resolved.timeZone },
   });
 
   clearPendingInput(chatId);
   const subscription = await getSubscription(userId);
-  await ctx.reply(`Таймзона обновлена: ${text}.`, {
+  const displayTimeZone =
+    resolved.type === "offset"
+      ? `${resolved.timeZone} (смещение ${resolved.offset >= 0 ? "+" : ""}${resolved.offset})`
+      : resolved.timeZone;
+  await ctx.reply(`Таймзона обновлена: ${displayTimeZone}.`, {
     reply_markup: buildMainMenuReplyKeyboard({
       subscribed: subscription?.enabled ?? false,
     }),
