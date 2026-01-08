@@ -125,19 +125,21 @@ const buildDailyReportText = (params: {
       commentParts.push(report.commentText.trim());
     }
     const temperatureText = formatTemperatureValue(report?.temperatureC);
+
     if (temperatureText) {
       commentParts.push(temperatureText);
     }
     const weatherText = getOptionLabel(WEATHER_OPTIONS, report?.weather);
+
     if (weatherText) {
       commentParts.push(weatherText);
     }
-    const windText = report?.hasWind
-      ? getOptionLabel(WIND_OPTIONS, "true")
-      : "";
+    const windText = report?.hasWind ? "Ветер" : "";
+
     if (windText) {
       commentParts.push(windText);
     }
+
     const surfaceText = getOptionLabel(SURFACE_OPTIONS, report?.surface);
     if (surfaceText) {
       commentParts.push(surfaceText);
@@ -150,9 +152,7 @@ const buildDailyReportText = (params: {
       pushWithSpacer(report.startTime);
     }
     pushWithSpacer(resultText);
-    for (const part of commentLines) {
-      pushWithSpacer(part);
-    }
+    pushWithSpacer(commentLines.join(". "));
     pushWithSpacer(scoreText);
   }
 
