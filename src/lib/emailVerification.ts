@@ -63,12 +63,41 @@ export const issueEmailVerificationCode = async (params: {
     createdAt: now,
   });
 
+  let greeting = "Здравствуйте!";
+  if (params.name) {
+    greeting = `Здравствуйте, ${params.name}!`;
+  }
+
+  const subject = "Подтверждение почты в Training Plan";
+  const text = `${greeting}
+
+Ваш код подтверждения: ${code}
+Код действует 24 часа.
+Никому не сообщайте этот код.
+
+Если вы не запрашивали подтверждение почты, просто проигнорируйте это письмо.
+
+С уважением,
+Training Plan`;
+  const html = `<div style="font-family: 'Segoe UI', Arial, sans-serif; color: #111827; line-height: 1.6;">
+  <h2 style="margin: 0 0 12px; font-size: 20px;">Подтверждение почты</h2>
+  <p style="margin: 0 0 12px;">${greeting}</p>
+  <p style="margin: 0 0 12px;">Введите код подтверждения:</p>
+  <div style="display: inline-block; padding: 10px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 24px; letter-spacing: 4px; font-weight: 700; background: #f9fafb;">
+    ${code}
+  </div>
+  <p style="margin: 12px 0 12px;">Код действует 24 часа. Никому не сообщайте этот код.</p>
+  <p style="margin: 0 0 12px; color: #6b7280;">Если вы не запрашивали подтверждение почты, просто проигнорируйте это письмо.</p>
+  <p style="margin: 16px 0 0;">С уважением,<br/>Training Plan</p>
+</div>`;
+
   try {
     await sendUnisenderEmail({
       toEmail: params.email,
       toName: params.name ?? null,
-      subject: "Email verification",
-      text: `Your verification code: ${code}. It is valid for 24 hours.`,
+      subject,
+      text,
+      html,
     });
   } catch (error) {
     await db

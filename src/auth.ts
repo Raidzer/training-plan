@@ -37,6 +37,9 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           return null;
         }
+        if (!user.isActive) {
+          return null;
+        }
         const ok = await bcrypt.compare(
           parsed.data.password,
           user.passwordHash
@@ -71,7 +74,28 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export const auth = () => getServerSession(authOptions);
+export const auth = async () => {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return null;
+  }
+
+  const userId = Number((session.user as { id?: string } | undefined)?.id);
+  if (!Number.isFinite(userId)) {
+    return null;
+  }
+
+  const [user] = await db
+    .select({ id: users.id, isActive: users.isActive })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  if (!user || !user.isActive) {
+    return null;
+  }
+
+  return session;
+};
 
 const handler = NextAuth(authOptions);
 export { handler };
