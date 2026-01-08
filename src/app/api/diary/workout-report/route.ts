@@ -9,7 +9,13 @@ import { upsertWorkoutReport } from "@/lib/workoutReports";
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 const WEATHER_OPTIONS = new Set(["cloudy", "sunny", "rain", "snow"]);
-const SURFACE_OPTIONS = new Set(["ground", "asphalt", "manezh", "stadium"]);
+const SURFACE_OPTIONS = new Set([
+  "ground",
+  "asphalt",
+  "manezh",
+  "treadmill",
+  "stadium",
+]);
 
 const parseOptionalEnum = (value: unknown, options: Set<string>) => {
   if (value === undefined) {
@@ -141,14 +147,15 @@ export async function POST(req: Request) {
   const functionalScore = parseOptionalScore(body?.functionalScore);
   const muscleScore = parseOptionalScore(body?.muscleScore);
   const surface = parseOptionalEnum(body?.surface, SURFACE_OPTIONS);
-  const isManezh = surface.value === "manezh";
-  const weather = isManezh
+  const isIndoorSurface =
+    surface.value === "manezh" || surface.value === "treadmill";
+  const weather = isIndoorSurface
     ? { value: null, valid: true }
     : parseOptionalEnum(body?.weather, WEATHER_OPTIONS);
-  const hasWind = isManezh
+  const hasWind = isIndoorSurface
     ? { value: null, valid: true }
     : parseOptionalBoolean(body?.hasWind);
-  const temperatureC = isManezh
+  const temperatureC = isIndoorSurface
     ? { value: null, valid: true }
     : parseOptionalTemperature(body?.temperatureC);
 

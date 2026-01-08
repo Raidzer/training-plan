@@ -288,17 +288,18 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       }
 
       const surfaceValue = form.surface.trim();
-      const isManezh = surfaceValue === "manezh";
-      const weatherValue = isManezh ? "" : form.weather.trim();
-      const hasWindValue = isManezh ? "" : form.hasWind;
-      const temperatureValue = isManezh ? "" : form.temperatureC.trim();
+      const isIndoorSurface =
+        surfaceValue === "manezh" || surfaceValue === "treadmill";
+      const weatherValue = isIndoorSurface ? "" : form.weather.trim();
+      const hasWindValue = isIndoorSurface ? "" : form.hasWind;
+      const temperatureValue = isIndoorSurface ? "" : form.temperatureC.trim();
       const temperatureC =
         temperatureValue.length > 0
           ? Number(temperatureValue.replace(",", "."))
           : null;
 
       if (
-        !isManezh &&
+        !isIndoorSurface &&
         temperatureValue.length > 0 &&
         !Number.isFinite(temperatureC)
       ) {

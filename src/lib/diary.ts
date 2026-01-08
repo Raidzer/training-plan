@@ -751,6 +751,7 @@ export const getDiaryExportRows = async (params: {
     ground: "Грунт",
     asphalt: "Асфальт",
     manezh: "Манеж",
+    treadmill: "Беговая дорожка",
     stadium: "Стадион",
   };
 

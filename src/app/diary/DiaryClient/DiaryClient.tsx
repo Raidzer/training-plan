@@ -54,6 +54,7 @@ const SURFACE_OPTIONS = [
   { value: "ground", label: "Грунт" },
   { value: "asphalt", label: "Асфальт" },
   { value: "manezh", label: "Манеж" },
+  { value: "treadmill", label: "Беговая дорожка" },
   { value: "stadium", label: "Стадион" },
 ] as const;
 
@@ -346,10 +347,13 @@ export function DiaryClient() {
         surface: "",
       };
       const next = { ...current, [field]: value };
-      if (field === "surface" && value === "manezh") {
-        next.weather = "";
-        next.hasWind = "";
-        next.temperatureC = "";
+      if (field === "surface") {
+        const isIndoorSurface = value === "manezh" || value === "treadmill";
+        if (isIndoorSurface) {
+          next.weather = "";
+          next.hasWind = "";
+          next.temperatureC = "";
+        }
       }
       return { ...prev, [entryId]: next };
     });
