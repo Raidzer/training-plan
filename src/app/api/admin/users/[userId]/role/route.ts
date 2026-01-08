@@ -15,8 +15,9 @@ type Params = {
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Params }
+  { params }: { params: Promise<Params> }
 ) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -27,7 +28,7 @@ export async function PATCH(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const userId = Number(params.userId);
+  const userId = Number(resolvedParams.userId);
   if (!Number.isFinite(userId)) {
     return NextResponse.json({ error: "invalid_user_id" }, { status: 400 });
   }

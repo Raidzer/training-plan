@@ -56,12 +56,17 @@ type Meta = {
   color?: string;
 };
 
+type StatusMeta = {
+  label: string;
+  color: string;
+};
+
 const ROLE_META: Record<string, Meta> = {
   athlete: { label: "Атлет", color: "green" },
   coach: { label: "Тренер", color: "purple" },
 };
 
-const STATUS_META: Record<InviteStatus, Meta> = {
+const STATUS_META: Record<InviteStatus, StatusMeta> = {
   active: { label: "Активна", color: "green" },
   used: { label: "Использована", color: "blue" },
   expired: { label: "Истекла", color: "red" },
