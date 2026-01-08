@@ -2,8 +2,8 @@
 import {
   BookOutlined,
   CalendarOutlined,
-  MailOutlined,
   MessageOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 import { Card, Space, Typography } from "antd";
 import Link from "next/link";
@@ -14,6 +14,22 @@ import { SignOutButton } from "@/components/SingOutButton/SignOutButton";
 type Props = { session: Session };
 
 export function DashboardClient({ session }: Props) {
+  const isAdmin = session.user?.role === "admin";
+  console.log(isAdmin);
+  const adminCard = isAdmin ? (
+    <Link href="/admin/users" passHref>
+      <Card
+        hoverable
+        className={styles.card}
+        title={<CardTitle icon={<TeamOutlined />} title="Администрирование" />}
+      >
+        <Typography.Text type="secondary">
+          Управление пользователями: роли, доступ и пароли.
+        </Typography.Text>
+      </Card>
+    </Link>
+  ) : null;
+
   return (
     <Space size="middle" className={styles.wrapper}>
       <Card>
@@ -32,6 +48,7 @@ export function DashboardClient({ session }: Props) {
           <SignOutButton />
         </div>
         <div className={styles.cards}>
+          {adminCard}
           <Link href="/plan" passHref>
             <Card
               hoverable
@@ -43,7 +60,7 @@ export function DashboardClient({ session }: Props) {
               </Typography.Text>
             </Card>
           </Link>
-                    <Link href="/diary" passHref>
+          <Link href="/diary" passHref>
             <Card
               hoverable
               className={styles.card}
@@ -51,19 +68,6 @@ export function DashboardClient({ session }: Props) {
             >
               <Typography.Text type="secondary">
                 Скоро: сводки, графики и метрики восстановления.
-              </Typography.Text>
-            </Card>
-          </Link>
-          <Link href="/verify-email" passHref>
-            <Card
-              hoverable
-              className={styles.card}
-              title={
-                <CardTitle icon={<MailOutlined />} title="Подтверждение почты" />
-              }
-            >
-              <Typography.Text type="secondary">
-                Проверить статус и подтвердить почту.
               </Typography.Text>
             </Card>
           </Link>

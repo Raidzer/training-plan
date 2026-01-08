@@ -21,7 +21,9 @@ import { WorkoutsCard } from "./components/WorkoutsCard";
 import { DailyReportModal } from "./components/DailyReportModal";
 
 const formatRecoveryFlags = (entry?: RecoveryEntry | null) => {
-  if (!entry) return "";
+  if (!entry) {
+    return "";
+  }
   const flags = [
     entry.hasBath ? "Баня" : null,
     entry.hasMfr ? "МФР" : null,
@@ -33,7 +35,9 @@ const formatRecoveryFlags = (entry?: RecoveryEntry | null) => {
 const formatReportDate = (value: string) => {
   const weekdays = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
   const parsed = dayjs(value, "YYYY-MM-DD", true);
-  if (!parsed.isValid()) return value;
+  if (!parsed.isValid()) {
+    return value;
+  }
   const dayIndex = parsed.day();
   const dayLabel = weekdays[dayIndex] ?? "";
   return `${parsed.format("DD.MM.YYYY")}(${dayLabel})`;
@@ -64,9 +68,13 @@ const getOptionLabel = (
 ) => options.find((option) => option.value === value)?.label ?? "";
 
 const formatTemperatureValue = (value?: string | null) => {
-  if (value === null || value === undefined) return "";
+  if (value === null || value === undefined) {
+    return "";
+  }
   const trimmed = String(value).trim();
-  if (!trimmed) return "";
+  if (!trimmed) {
+    return "";
+  }
   const parsed = Number(trimmed);
   const temperatureText = Number.isFinite(parsed)
     ? (Math.round(parsed * 10) / 10).toFixed(1)
@@ -77,13 +85,17 @@ const formatTemperatureValue = (value?: string | null) => {
 const formatWorkoutScore = (
   report?: DayPayload["workoutReports"][number] | null
 ) => {
-  if (!report) return "-";
+  if (!report) {
+    return "-";
+  }
   const parts = [
     report.overallScore ?? "-",
     report.functionalScore ?? "-",
     report.muscleScore ?? "-",
   ];
-  if (parts.every((value) => value === "-")) return "-";
+  if (parts.every((value) => value === "-")) {
+    return "-";
+  }
   return parts.join("-");
 };
 
@@ -91,7 +103,9 @@ const buildDailyReportText = (params: {
   date: string;
   day: DayPayload | null;
 }) => {
-  if (!params.day) return "";
+  if (!params.day) {
+    return "";
+  }
   const reportByPlan = new Map(
     params.day.workoutReports.map((report) => [report.planEntryId, report])
   );
@@ -111,24 +125,34 @@ const buildDailyReportText = (params: {
       commentParts.push(report.commentText.trim());
     }
     const temperatureText = formatTemperatureValue(report?.temperatureC);
-    if (temperatureText) commentParts.push(temperatureText);
+
+    if (temperatureText) {
+      commentParts.push(temperatureText);
+    }
     const weatherText = getOptionLabel(WEATHER_OPTIONS, report?.weather);
-    if (weatherText) commentParts.push(weatherText);
-    const windText = report?.hasWind
-      ? getOptionLabel(WIND_OPTIONS, "true")
-      : "";
-    if (windText) commentParts.push(windText);
+
+    if (weatherText) {
+      commentParts.push(weatherText);
+    }
+    const windText = report?.hasWind ? "Ветер" : "";
+
+    if (windText) {
+      commentParts.push(windText);
+    }
+
     const surfaceText = getOptionLabel(SURFACE_OPTIONS, report?.surface);
-    if (surfaceText) commentParts.push(surfaceText);
+    if (surfaceText) {
+      commentParts.push(surfaceText);
+    }
     const commentLines = commentParts.length ? commentParts : ["-"];
     const scoreText = formatWorkoutScore(report);
 
     pushWithSpacer(`${taskText}`);
-    if (report?.startTime?.trim()) pushWithSpacer(report.startTime);
-    pushWithSpacer(resultText);
-    for (const part of commentLines) {
-      pushWithSpacer(part);
+    if (report?.startTime?.trim()) {
+      pushWithSpacer(report.startTime);
     }
+    pushWithSpacer(resultText);
+    pushWithSpacer(commentLines.join(". "));
     pushWithSpacer(scoreText);
   }
 

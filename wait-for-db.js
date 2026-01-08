@@ -2,14 +2,18 @@ import "dotenv/config";
 import { Client } from "pg";
 
 const parseNumber = (value) => {
-  if (!value) return undefined;
+  if (!value) {
+    return undefined;
+  }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 const getClientConfig = () => {
   const connectionString = process.env.DATABASE_URL;
-  if (connectionString) return { connectionString };
+  if (connectionString) {
+    return { connectionString };
+  }
 
   const host = process.env.PGHOST ?? process.env.POSTGRES_HOST;
   const port = parseNumber(process.env.PGPORT ?? process.env.POSTGRES_PORT);
@@ -17,7 +21,9 @@ const getClientConfig = () => {
   const password = process.env.PGPASSWORD ?? process.env.POSTGRES_PASSWORD;
   const database = process.env.PGDATABASE ?? process.env.POSTGRES_DB;
 
-  if (!host || !user || !password || !database) return null;
+  if (!host || !user || !password || !database) {
+    return null;
+  }
   return { host, port, user, password, database };
 };
 

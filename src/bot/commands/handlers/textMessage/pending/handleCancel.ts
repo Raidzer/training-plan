@@ -8,8 +8,8 @@ import {
 } from "@/bot/menu/menuKeyboard";
 import {
   clearPendingInput,
+  clearRecoveryDraft,
   clearWeightDraft,
-  clearWorkoutDraft,
 } from "@/bot/menu/menuState";
 
 type CancelHandlerArgs = {
@@ -33,8 +33,8 @@ export const handleCancelIfRequested = async ({
     text === CANCEL_LINK_BUTTON_TEXT
   ) {
     clearPendingInput(chatId);
+    clearRecoveryDraft(chatId);
     clearWeightDraft(chatId);
-    clearWorkoutDraft(chatId);
     const userId = await ensureLinked(chatId);
     const subscription = userId ? await getSubscription(userId) : null;
     const replyMarkup =

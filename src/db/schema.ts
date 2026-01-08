@@ -20,22 +20,34 @@ export const users = pgTable("users", {
   login: varchar("login", { length: 64 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: varchar("role", { length: 32 }).notNull().default("athlete"),
+  isActive: boolean("is_active").notNull().default(true),
   name: varchar("name", { length: 255 }).notNull(),
-  emailVerifiedAt: timestamp("email_verified_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const emailVerificationCodes = pgTable("email_verification_codes", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  codeHash: text("code_hash").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  nextResendAt: timestamp("next_resend_at").notNull(),
-  consumedAt: timestamp("consumed_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const registrationInvites = pgTable(
+  "registration_invites",
+  {
+    id: serial("id").primaryKey(),
+    tokenHash: text("token_hash").notNull(),
+    role: varchar("role", { length: 32 }).notNull(),
+    createdByUserId: integer("created_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    usedByUserId: integer("used_by_user_id").references(() => users.id),
+    usedAt: timestamp("used_at"),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    registrationInvitesTokenHashIdx: uniqueIndex(
+      "registration_invites_token_hash_idx"
+    ).on(table.tokenHash),
+    registrationInvitesExpiresAtIdx: index(
+      "registration_invites_expires_at_idx"
+    ).on(table.expiresAt),
+  })
+);
 
 export const plans = pgTable("plans", {
   id: serial("id").primaryKey(),

@@ -50,7 +50,11 @@ const dispatchDueSubscriptions = async (bot: Bot) => {
         userId: subscription.userId,
         date: zoned.date,
       });
-      const message = formatPlanMessage({ date: zoned.date, entries });
+      const message = formatPlanMessage({
+        date: zoned.date,
+        entries,
+        sendTime: subscription.sendTime,
+      });
 
       try {
         await bot.api.sendMessage(subscription.chatId, message);

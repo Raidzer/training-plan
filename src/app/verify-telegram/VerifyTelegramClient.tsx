@@ -26,7 +26,9 @@ type LinkCodeResponse = {
 };
 
 const getApiError = (value: unknown) => {
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object") {
+    return null;
+  }
   const error = "error" in value ? (value as { error?: unknown }).error : null;
   return {
     error: typeof error === "string" ? error : undefined,
@@ -34,7 +36,9 @@ const getApiError = (value: unknown) => {
 };
 
 const parseDate = (value: string | null | undefined) => {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
@@ -45,9 +49,15 @@ const formatDate = (value: string | null | undefined) => {
 };
 
 const getTelegramLabel = (status: StatusResponse | null) => {
-  if (!status?.telegram) return "Аккаунт не связан";
-  if (status.telegram.username) return `@${status.telegram.username}`;
-  if (status.telegram.firstName) return status.telegram.firstName;
+  if (!status?.telegram) {
+    return "Аккаунт не связан";
+  }
+  if (status.telegram.username) {
+    return `@${status.telegram.username}`;
+  }
+  if (status.telegram.firstName) {
+    return status.telegram.firstName;
+  }
   return "Связан";
 };
 
@@ -75,7 +85,9 @@ export function VerifyTelegramClient() {
       }
       setStatus(data as StatusResponse);
     } catch (error) {
-      if (showError) messageApi.error("Не удалось загрузить статус");
+      if (showError) {
+        messageApi.error("Не удалось загрузить статус");
+      }
       console.error(error);
     } finally {
       setLoadingStatus(false);
@@ -90,7 +102,9 @@ export function VerifyTelegramClient() {
   const telegramLabel = getTelegramLabel(status);
 
   const subscriptionInfo = useMemo(() => {
-    if (!status?.subscription) return "Рассылка не настроена";
+    if (!status?.subscription) {
+      return "Рассылка не настроена";
+    }
     const enabled = status.subscription.enabled ? "включена" : "выключена";
     const time = status.subscription.sendTime ?? "не задано";
     const zone = status.subscription.timezone ?? "не задана";
@@ -98,9 +112,13 @@ export function VerifyTelegramClient() {
   }, [status?.subscription]);
 
   const activeCodeInfo = useMemo(() => {
-    if (!status?.codeExpiresAt || status.codeConsumedAt) return "";
+    if (!status?.codeExpiresAt || status.codeConsumedAt) {
+      return "";
+    }
     const parsed = parseDate(status.codeExpiresAt);
-    if (!parsed || parsed.getTime() <= Date.now()) return "";
+    if (!parsed || parsed.getTime() <= Date.now()) {
+      return "";
+    }
     return `Последний код действует до ${formatDate(status.codeExpiresAt)}.`;
   }, [status?.codeExpiresAt, status?.codeConsumedAt]);
 

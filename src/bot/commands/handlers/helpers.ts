@@ -13,15 +13,15 @@ import {
 } from "@/bot/menu/menuKeyboard";
 import {
   clearPendingInput,
+  clearRecoveryDraft,
   clearWeightDraft,
-  clearWorkoutDraft,
 } from "@/bot/menu/menuState";
 
 export const resetPendingInput = (ctx: { chat?: { id: number } }) => {
   if (ctx.chat) {
     clearPendingInput(ctx.chat.id);
+    clearRecoveryDraft(ctx.chat.id);
     clearWeightDraft(ctx.chat.id);
-    clearWorkoutDraft(ctx.chat.id);
   }
 };
 

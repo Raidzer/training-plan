@@ -6,10 +6,14 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 export async function GET() {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const userId = Number((session.user as any)?.id);
-  if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const entries = await db
     .select({
@@ -33,12 +37,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session)
+  if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const userId = Number((session.user as any)?.id);
-  if (!userId)
+  if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const body = (await req.json().catch(() => null)) as
     | {
@@ -156,7 +162,9 @@ export async function POST(req: Request) {
     const keepIds = new Set<number>();
     if (isEdit) {
       for (const entry of normalized) {
-        if (entry.id) keepIds.add(entry.id);
+        if (entry.id) {
+          keepIds.add(entry.id);
+        }
       }
     }
 
@@ -265,12 +273,14 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   const session = await auth();
-  if (!session)
+  if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const userId = Number((session.user as any)?.id);
-  if (!userId)
+  if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const { searchParams } = new URL(req.url);
   const date = (searchParams.get("date") ?? "").trim();

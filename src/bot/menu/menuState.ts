@@ -9,27 +9,22 @@ export type PendingInput =
   | "weightAction"
   | "weightPeriod"
   | "weightValue"
-  | "workoutSelect"
-  | "workoutStartTime"
-  | "workoutResult"
-  | "workoutComment"
-  | "workoutEditSelect"
-  | "workoutEditTime"
-  | "workoutEditResult"
-  | "workoutEditComment";
+  | "recoverySelect"
+  | "recoverySleep";
 
 const pendingInputs = new Map<number, PendingInput>();
 const weightDrafts = new Map<
   number,
   { date: string | null; period: "morning" | "evening" | null }
 >();
-const workoutDrafts = new Map<
+const recoveryDrafts = new Map<
   number,
   {
     date: string | null;
-    planEntryId: number | null;
-    startTime: string | null;
-    resultText: string | null;
+    hasBath: boolean;
+    hasMfr: boolean;
+    hasMassage: boolean;
+    sleepHours: string;
   }
 >();
 
@@ -64,40 +59,44 @@ export const clearWeightDraft = (chatId: number) => {
   weightDrafts.delete(chatId);
 };
 
-export const setWorkoutDraft = (
+export const setRecoveryDraft = (
   chatId: number,
   draft: {
     date?: string | null;
-    planEntryId?: number | null;
-    startTime?: string | null;
-    resultText?: string | null;
+    hasBath?: boolean;
+    hasMfr?: boolean;
+    hasMassage?: boolean;
+    sleepHours?: string;
   }
 ) => {
-  const current = workoutDrafts.get(chatId) ?? {
+  const current = recoveryDrafts.get(chatId) ?? {
     date: null,
-    planEntryId: null,
-    startTime: null,
-    resultText: null,
+    hasBath: false,
+    hasMfr: false,
+    hasMassage: false,
+    sleepHours: "",
   };
-  workoutDrafts.set(chatId, {
+  recoveryDrafts.set(chatId, {
     date: draft.date ?? current.date,
-    planEntryId: draft.planEntryId ?? current.planEntryId,
-    startTime: draft.startTime ?? current.startTime,
-    resultText: draft.resultText ?? current.resultText,
+    hasBath: draft.hasBath ?? current.hasBath,
+    hasMfr: draft.hasMfr ?? current.hasMfr,
+    hasMassage: draft.hasMassage ?? current.hasMassage,
+    sleepHours: draft.sleepHours ?? current.sleepHours,
   });
 };
 
-export const getWorkoutDraft = (chatId: number) => {
+export const getRecoveryDraft = (chatId: number) => {
   return (
-    workoutDrafts.get(chatId) ?? {
+    recoveryDrafts.get(chatId) ?? {
       date: null,
-      planEntryId: null,
-      startTime: null,
-      resultText: null,
+      hasBath: false,
+      hasMfr: false,
+      hasMassage: false,
+      sleepHours: "",
     }
   );
 };
 
-export const clearWorkoutDraft = (chatId: number) => {
-  workoutDrafts.delete(chatId);
+export const clearRecoveryDraft = (chatId: number) => {
+  recoveryDrafts.delete(chatId);
 };

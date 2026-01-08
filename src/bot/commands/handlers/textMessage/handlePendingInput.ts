@@ -4,9 +4,9 @@ import { clearPendingInput } from "@/bot/menu/menuState";
 import { handleCancelIfRequested } from "@/bot/commands/handlers/textMessage/pending/handleCancel";
 import { handleDatePending } from "@/bot/commands/handlers/textMessage/pending/handleDate";
 import { handleLinkPending } from "@/bot/commands/handlers/textMessage/pending/handleLink";
+import { handleRecoveryPending } from "@/bot/commands/handlers/textMessage/pending/handleRecovery";
 import { handleSchedulePending } from "@/bot/commands/handlers/textMessage/pending/handleSchedule";
 import { handleWeightPending } from "@/bot/commands/handlers/textMessage/pending/handleWeight";
-import { handleWorkoutPending } from "@/bot/commands/handlers/textMessage/pending/handleWorkout";
 
 type PendingInputHandlerArgs = {
   ctx: any;
@@ -55,15 +55,9 @@ export const handlePendingInput = async ({
     case "weightValue":
       await handleWeightPending({ ctx, chatId, text, pending, userId });
       return;
-    case "workoutSelect":
-    case "workoutStartTime":
-    case "workoutResult":
-    case "workoutComment":
-    case "workoutEditSelect":
-    case "workoutEditTime":
-    case "workoutEditResult":
-    case "workoutEditComment":
-      await handleWorkoutPending({ ctx, chatId, text, pending, userId });
+    case "recoverySelect":
+    case "recoverySleep":
+      await handleRecoveryPending({ ctx, chatId, text, pending, userId });
       return;
     case "time":
     case "timezone":

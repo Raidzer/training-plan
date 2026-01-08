@@ -7,14 +7,14 @@ import {
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
   buildMainMenuReplyKeyboard,
+  buildRecoveryReplyKeyboard,
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   buildWeightPeriodReplyKeyboard,
-  buildWorkoutSelectReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
   REPORT_MAIN_MENU_BUTTON_TEXT,
+  REPORT_RECOVERY_BUTTON_TEXT,
   REPORT_WEIGHT_BUTTON_TEXT,
-  REPORT_WORKOUT_BUTTON_TEXT,
   WEIGHT_CUSTOM_DATE_BUTTON_TEXT,
   WEIGHT_EVENING_BUTTON_TEXT,
   WEIGHT_MORNING_BUTTON_TEXT,
@@ -22,14 +22,16 @@ import {
 } from "@/bot/menu/menuKeyboard";
 import {
   clearPendingInput,
+  clearRecoveryDraft,
   clearWeightDraft,
-  clearWorkoutDraft,
   getWeightDraft,
   setPendingInput,
+  setRecoveryDraft,
   setWeightDraft,
 } from "@/bot/menu/menuState";
 import { upsertWeightEntry } from "@/lib/weightEntries";
-import { getPlanEntriesByDate } from "@/lib/planEntries";
+import { getRecoveryEntryByDate } from "@/lib/recoveryEntries";
+import { formatSleepTimeValue } from "@/bot/utils/sleepTime";
 
 type WeightHandlerArgs = {
   ctx: any;
@@ -54,8 +56,8 @@ export const handleWeightPending = async ({
   if (pending === "weightDateMenu") {
     if (text === DATE_BACK_BUTTON_TEXT) {
       clearPendingInput(chatId);
+      clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
         reply_markup: buildMainMenuReplyKeyboard({
@@ -120,8 +122,8 @@ export const handleWeightPending = async ({
 
   if (pending === "weightAction") {
     if (text === DATE_BACK_BUTTON_TEXT) {
+      clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Когда зафиксировать вес?", {
         reply_markup: buildWeightDateReplyKeyboard(),
@@ -131,8 +133,8 @@ export const handleWeightPending = async ({
 
     const draft = getWeightDraft(chatId);
     if (!draft.date) {
+      clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Сначала выбери дату.", {
         reply_markup: buildWeightDateReplyKeyboard(),
@@ -148,30 +150,38 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (text === REPORT_WORKOUT_BUTTON_TEXT) {
-      const entries = await getPlanEntriesByDate({
+    if (text === REPORT_RECOVERY_BUTTON_TEXT) {
+      const recoveryEntry = await getRecoveryEntryByDate({
         userId,
         date: draft.date,
       });
-      if (!entries.length) {
-        await ctx.reply("На выбранную дату нет тренировок в плане.");
-        return;
-      }
-
-      const workoutButtons = entries.map(
-        (entry) => `${entry.sessionOrder}. ${entry.taskText}`
-      );
-      setPendingInput(chatId, "workoutSelect");
-      await ctx.reply("Выбери тренировку из плана.", {
-        reply_markup: buildWorkoutSelectReplyKeyboard({ workoutButtons }),
+      const sleepText = formatSleepTimeValue(recoveryEntry?.sleepHours ?? null);
+      const hasBath = Boolean(recoveryEntry?.hasBath);
+      const hasMfr = Boolean(recoveryEntry?.hasMfr);
+      const hasMassage = Boolean(recoveryEntry?.hasMassage);
+      setRecoveryDraft(chatId, {
+        date: draft.date,
+        hasBath,
+        hasMfr,
+        hasMassage,
+        sleepHours: sleepText,
+      });
+      setPendingInput(chatId, "recoverySelect");
+      await ctx.reply("Отметь сон и восстановление, затем сохрани.", {
+        reply_markup: buildRecoveryReplyKeyboard({
+          sleepText,
+          hasBath,
+          hasMfr,
+          hasMassage,
+        }),
       });
       return;
     }
 
     if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
       clearPendingInput(chatId);
+      clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
-      clearWorkoutDraft(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
         reply_markup: buildMainMenuReplyKeyboard({
@@ -198,6 +208,7 @@ export const handleWeightPending = async ({
 
     const draft = getWeightDraft(chatId);
     if (!draft.date) {
+      clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Сначала выбери дату.", {
@@ -251,8 +262,8 @@ export const handleWeightPending = async ({
 
   const draft = getWeightDraft(chatId);
   if (!draft.date || !draft.period) {
+    clearRecoveryDraft(chatId);
     clearWeightDraft(chatId);
-    clearWorkoutDraft(chatId);
     setPendingInput(chatId, "weightDateMenu");
     await ctx.reply("Сначала выбери дату и период.", {
       reply_markup: buildWeightDateReplyKeyboard(),
@@ -268,8 +279,8 @@ export const handleWeightPending = async ({
   });
 
   clearPendingInput(chatId);
+  clearRecoveryDraft(chatId);
   clearWeightDraft(chatId);
-  clearWorkoutDraft(chatId);
   const subscription = await getSubscription(userId);
   const periodLabel = draft.period === "morning" ? "утро" : "вечер";
   const displayDate = formatDateForDisplay(draft.date);

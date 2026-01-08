@@ -1,0 +1,72 @@
+.page {
+  width: 100%;
+}
+
+.card {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 220px;
+  max-width: 720px;
+}
+
+.headerActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.title {
+  margin: 0;
+}
+
+.subtitle {
+  margin: 0;
+}
+
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.formRow :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.linkColumn {
+  white-space: nowrap;
+}
+
+.createdInvite {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.linkInput {
+  min-width: 260px;
+  flex: 1;
+}

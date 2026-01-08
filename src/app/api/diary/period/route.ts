@@ -32,11 +32,17 @@ export async function GET(req: Request) {
 
   const totals = days.reduce(
     (acc, day) => {
-      if (day.dayHasReport) acc.daysComplete += 1;
+      if (day.dayHasReport) {
+        acc.daysComplete += 1;
+      }
       acc.workoutsTotal += day.workoutsTotal;
       acc.workoutsWithFullReport += day.workoutsWithFullReport;
-      if (day.hasWeightMorning) acc.weightEntries += 1;
-      if (day.hasWeightEvening) acc.weightEntries += 1;
+      if (day.hasWeightMorning) {
+        acc.weightEntries += 1;
+      }
+      if (day.hasWeightEvening) {
+        acc.weightEntries += 1;
+      }
       return acc;
     },
     {

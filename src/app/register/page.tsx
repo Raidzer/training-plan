@@ -9,8 +9,8 @@ import {
   message,
   type FormProps,
 } from "antd";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import {
@@ -29,27 +29,50 @@ type RegisterFields = {
   confirmPassword: string;
 };
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
+  const searchParams = useSearchParams();
+  const inviteToken = (searchParams.get("invite") ?? "").trim();
+  const hasInvite = inviteToken.length >= 10;
+
   const onFinish: FormProps<RegisterFields>["onFinish"] = async (values) => {
+    if (!hasInvite) {
+      messageApi.error("Регистрация доступна только по приглашению.");
+      return;
+    }
     const { confirmPassword, ...payload } = values;
     setLoading(true);
     try {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, inviteToken }),
       });
 
       const data = (await res.json().catch(() => null)) as {
         error?: string;
       } | null;
-
       if (!res.ok) {
-        messageApi.error(data?.error ?? "Не удалось создать аккаунт");
+        const apiError = data?.error;
+        if (apiError === "invite_invalid") {
+          messageApi.error("Приглашение не найдено.");
+          return;
+        }
+        if (apiError === "invite_used") {
+          messageApi.error("Приглашение уже использовано.");
+          return;
+        }
+        if (apiError === "invite_expired") {
+          messageApi.error("Срок действия приглашения истек.");
+          return;
+        }
+        messageApi.error(
+          data?.error ??
+            "Не удалось завершить регистрацию, попробуйте ещё раз."
+        );
         return;
       }
 
@@ -89,6 +112,7 @@ export default function RegisterPage() {
         <Typography.Paragraph type="secondary" className={styles.subtitle}>
           Создайте новый аккаунт, чтобы получить доступ к панели и планам.
         </Typography.Paragraph>
+        {hasInvite ? (
         <Form<RegisterFields>
           layout="vertical"
           onFinish={onFinish}
@@ -168,7 +192,26 @@ export default function RegisterPage() {
             </Link>
           </Typography.Paragraph>
         </Form>
+        ) : (
+          <div className={styles.notice}>
+            <Typography.Paragraph type="secondary">
+              Регистрация доступна только по пригласительной ссылке.
+            </Typography.Paragraph>
+            <Link href="/login" passHref>
+              <Button block>Вернуться ко входу</Button>
+            </Link>
+          </div>
+        )}
+
       </Card>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
   );
 }
