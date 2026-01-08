@@ -6,6 +6,13 @@
 .light {
   background: #f5f6fb;
   --brand-color: #0f172a;
+  --text-muted: rgba(15, 23, 42, 0.72);
+  --surface-bg: #ffffff;
+  --surface-border: rgba(15, 23, 42, 0.12);
+  --surface-soft: rgba(15, 23, 42, 0.06);
+  --surface-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  --accent-color: #3056d3;
+  --accent-glow: rgba(48, 86, 211, 0.2);
   --nav-border: rgba(15, 23, 42, 0.18);
   --nav-bg: rgba(15, 23, 42, 0.05);
   --nav-bg-hover: rgba(15, 23, 42, 0.1);
@@ -16,6 +23,13 @@
 .dark {
   background: #0f172a;
   --brand-color: #f0f4ff;
+  --text-muted: rgba(240, 244, 255, 0.72);
+  --surface-bg: #111c33;
+  --surface-border: rgba(240, 244, 255, 0.14);
+  --surface-soft: rgba(240, 244, 255, 0.08);
+  --surface-shadow: 0 12px 30px rgba(2, 6, 23, 0.5);
+  --accent-color: #6ea8ff;
+  --accent-glow: rgba(110, 168, 255, 0.25);
   --nav-border: rgba(240, 244, 255, 0.25);
   --nav-bg: rgba(240, 244, 255, 0.08);
   --nav-bg-hover: rgba(240, 244, 255, 0.14);
