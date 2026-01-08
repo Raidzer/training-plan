@@ -91,7 +91,8 @@ export function WorkoutsCard({
         <Space orientation="vertical" size="middle">
           {entries.map((entry) => {
             const form = workoutForm[entry.id];
-            const isManezh = form?.surface === "manezh";
+            const isIndoorSurface =
+              form?.surface === "manezh" || form?.surface === "treadmill";
             const surfaceValue = form?.surface ? form.surface : null;
             const weatherValue = form?.weather ? form.weather : null;
             const windValue = form?.hasWind ? form.hasWind : null;
@@ -203,7 +204,7 @@ export function WorkoutsCard({
                         onChange(entry.id, "surface", value ?? "")
                       }
                     />
-                    {isManezh ? null : (
+                    {isIndoorSurface ? null : (
                       <>
                         <Select<string | null>
                           value={weatherValue}
