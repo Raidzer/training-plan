@@ -2,7 +2,6 @@
 import {
   BookOutlined,
   CalendarOutlined,
-  MailOutlined,
   MessageOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
@@ -69,22 +68,6 @@ export function DashboardClient({ session }: Props) {
             >
               <Typography.Text type="secondary">
                 Скоро: сводки, графики и метрики восстановления.
-              </Typography.Text>
-            </Card>
-          </Link>
-          <Link href="/verify-email" passHref>
-            <Card
-              hoverable
-              className={styles.card}
-              title={
-                <CardTitle
-                  icon={<MailOutlined />}
-                  title="Подтверждение почты"
-                />
-              }
-            >
-              <Typography.Text type="secondary">
-                Проверить статус и подтвердить почту.
               </Typography.Text>
             </Card>
           </Link>
