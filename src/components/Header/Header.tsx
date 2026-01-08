@@ -17,7 +17,7 @@ const usefulItems = [
     key: "speed-to-pace",
     label: (
       <Link href="/tools/speed-to-pace" className={styles.dropdownLink}>
-        Калькулятор перевода скорости (км/ч, м/с) в темп (мин/км, мин/миля)
+        Калькулятор перевода скорости в темп
       </Link>
     ),
   },
