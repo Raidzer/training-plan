@@ -9,7 +9,7 @@ import {
   message,
   type FormProps,
 } from "antd";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -29,7 +29,7 @@ type RegisterFields = {
   confirmPassword: string;
 };
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
@@ -205,5 +205,13 @@ export default function RegisterPage() {
 
       </Card>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
   );
 }
