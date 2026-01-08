@@ -16,7 +16,17 @@
 }
 
 .headerText {
+  flex: 1;
+  min-width: 220px;
   max-width: 720px;
+}
+
+.headerActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .title {
@@ -33,6 +43,14 @@
   align-items: flex-end;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.formRow :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.linkColumn {
+  white-space: nowrap;
 }
 
 .createdInvite {

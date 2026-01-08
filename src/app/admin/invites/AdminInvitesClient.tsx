@@ -217,6 +217,8 @@ export function AdminInvitesClient({ invites }: Props) {
     {
       title: "Ссылка",
       key: "link",
+      className: styles.linkColumn,
+      width: 160,
       render: (_, record) => {
         const token = tokenById[record.id];
         if (!token) {
@@ -305,7 +307,7 @@ export function AdminInvitesClient({ invites }: Props) {
               сразу после создания.
             </Typography.Paragraph>
           </div>
-          <Space size="small">
+          <Space size="small" className={styles.headerActions}>
             <Link href="/admin/users" passHref>
               <Button icon={<TeamOutlined />}>Пользователи</Button>
             </Link>
