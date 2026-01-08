@@ -1,11 +1,5 @@
+import { SpeedToPaceClient } from "./SpeedToPaceClient";
+
 export default function SpeedToPacePage() {
-  return (
-    <section>
-      <h1>Калькулятор перевода скорости в темп</h1>
-      <p>
-        Страница в разработке. Здесь будет калькулятор перевода скорости (км/ч,
-        м/с) в темп (мин/км, мин/миля).
-      </p>
-    </section>
-  );
+  return <SpeedToPaceClient />;
 }
