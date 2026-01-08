@@ -3,6 +3,7 @@
 import {
   CheckCircleOutlined,
   HomeOutlined,
+  LinkOutlined,
   LockOutlined,
   StopOutlined,
   UserSwitchOutlined,
@@ -390,6 +391,9 @@ export function AdminUsersClient({ users }: Props) {
             </Typography.Paragraph>
           </div>
           <Space size="small">
+            <Link href="/admin/invites" passHref>
+              <Button icon={<LinkOutlined />}>Приглашения</Button>
+            </Link>
             <Link href="/dashboard" passHref>
               <Button icon={<HomeOutlined />}>В кабинет</Button>
             </Link>
