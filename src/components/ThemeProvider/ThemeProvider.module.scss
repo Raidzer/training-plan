@@ -6,11 +6,21 @@
 .light {
   background: #f5f6fb;
   --brand-color: #0f172a;
+  --nav-border: rgba(15, 23, 42, 0.18);
+  --nav-bg: rgba(15, 23, 42, 0.05);
+  --nav-bg-hover: rgba(15, 23, 42, 0.1);
+  --nav-primary-bg: #3056d3;
+  --nav-primary-text: #f8fafc;
 }
 
 .dark {
   background: #0f172a;
   --brand-color: #f0f4ff;
+  --nav-border: rgba(240, 244, 255, 0.25);
+  --nav-bg: rgba(240, 244, 255, 0.08);
+  --nav-bg-hover: rgba(240, 244, 255, 0.14);
+  --nav-primary-bg: #6ea8ff;
+  --nav-primary-text: #0b1220;
 }
 
 .main {
