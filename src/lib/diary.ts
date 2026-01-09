@@ -551,6 +551,7 @@ export const getDiaryExportRows = async (params: {
   const reportRows = planEntryIds.length
     ? await db
         .select({
+          id: workoutReports.id,
           planEntryId: workoutReports.planEntryId,
           startTime: workoutReports.startTime,
           resultText: workoutReports.resultText,
@@ -576,6 +577,30 @@ export const getDiaryExportRows = async (params: {
           )
         )
     : [];
+
+  const reportIds = reportRows.map((report) => report.id);
+  const reportShoesRows =
+    reportIds.length > 0
+      ? await db
+          .select({
+            reportId: workoutReportShoes.workoutReportId,
+            shoeId: workoutReportShoes.shoeId,
+            shoeName: shoes.name,
+          })
+          .from(workoutReportShoes)
+          .innerJoin(shoes, eq(shoes.id, workoutReportShoes.shoeId))
+          .where(inArray(workoutReportShoes.workoutReportId, reportIds))
+      : [];
+  const reportShoesMap = new Map<number, { id: number; name: string }[]>();
+  for (const row of reportShoesRows) {
+    const existing = reportShoesMap.get(row.reportId);
+    const item = { id: row.shoeId, name: row.shoeName };
+    if (!existing) {
+      reportShoesMap.set(row.reportId, [item]);
+    } else {
+      existing.push(item);
+    }
+  }
 
   const weightRows = await db
     .select({
@@ -626,6 +651,7 @@ export const getDiaryExportRows = async (params: {
   const reportByPlan = new Map<
     number,
     {
+      id: number;
       startTime: string;
       resultText: string;
       commentText: string | null;
@@ -637,10 +663,14 @@ export const getDiaryExportRows = async (params: {
       hasWind: boolean | null;
       temperatureC: string | null;
       surface: string | null;
+      shoes: { id: number; name: string }[];
     }
   >();
   for (const report of reportRows) {
-    reportByPlan.set(report.planEntryId, report);
+    reportByPlan.set(report.planEntryId, {
+      ...report,
+      shoes: reportShoesMap.get(report.id) ?? [],
+    });
   }
 
   const weightByDate = new Map<string, { morning?: string; evening?: string }>();
@@ -865,6 +895,13 @@ export const getDiaryExportRows = async (params: {
         : "";
       if (surfaceText) {
         commentParts.push(surfaceText);
+      }
+      const shoeText =
+        report?.shoes && report.shoes.length > 0
+          ? report.shoes.map((shoe) => shoe.name).join(", ")
+          : "";
+      if (shoeText) {
+        commentParts.push(shoeText);
       }
       const commentText = commentParts.length ? commentParts.join(". ") : "-";
       tasks.push(taskText);
