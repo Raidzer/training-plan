@@ -116,6 +116,22 @@ export const workouts = pgTable("workouts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const shoes = pgTable(
+  "shoes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    name: varchar("name", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    shoesUserIdIdx: index("shoes_user_id_idx").on(table.userId),
+  })
+);
+
 export const telegramLinkCodes = pgTable("telegram_link_codes", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
