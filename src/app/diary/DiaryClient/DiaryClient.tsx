@@ -145,6 +145,13 @@ const buildDailyReportText = (params: {
     if (surfaceText) {
       commentParts.push(surfaceText);
     }
+    const shoeText =
+      report?.shoes && report.shoes.length > 0
+        ? report.shoes.map((shoe) => shoe.name).join(", ")
+        : "";
+    if (shoeText) {
+      commentParts.push(shoeText);
+    }
     const commentLines = commentParts.length ? commentParts : ["-"];
     const scoreText = formatWorkoutScore(report);
 
@@ -206,6 +213,7 @@ const diaryMessages = {
   recoveryInvalidSleep: "Введите время сна в формате ЧЧ:ММ.",
   recoverySaveFailed: "Не удалось сохранить отметки восстановления.",
   recoverySaved: "Отметки восстановления сохранены.",
+  shoesLoadFailed: "Не удалось загрузить список обуви.",
 } as const;
 
 const headerLabels = {
@@ -263,6 +271,7 @@ const workoutLabels = {
   muscleScoreLabel: recoveryLabels.muscleLabel,
   scorePlaceholder: recoveryLabels.scorePlaceholder,
   surfacePlaceholder: "Покрытие",
+  shoePlaceholder: "Обувь",
   weatherPlaceholder: "Погода",
   windPlaceholder: "Ветер",
   temperaturePlaceholder: "Температура, °C",
@@ -293,6 +302,8 @@ export function DiaryClient() {
     workoutForm,
     setWorkoutForm,
     savingWorkouts,
+    shoes,
+    loadingShoes,
     updateSelectedDate,
     shiftDate,
     handleSaveWeight,
@@ -300,6 +311,11 @@ export function DiaryClient() {
     handleSaveRecovery,
   } = useDiaryData({ messageApi, messages: diaryMessages });
   const [isReportOpen, setIsReportOpen] = useState(false);
+
+  const shoeOptions = useMemo(
+    () => shoes.map((shoe) => ({ value: shoe.id, label: shoe.name })),
+    [shoes]
+  );
 
   const handleWeightChange = (period: "morning" | "evening", value: string) => {
     setWeightForm((prev) => ({ ...prev, [period]: value }));
@@ -329,8 +345,9 @@ export function DiaryClient() {
       | "weather"
       | "hasWind"
       | "temperatureC"
-      | "surface",
-    value: string | number | null
+      | "surface"
+      | "shoeIds",
+    value: string | number | number[] | null
   ) => {
     setWorkoutForm((prev) => {
       const current = prev[entryId] ?? {
@@ -345,14 +362,23 @@ export function DiaryClient() {
         hasWind: "",
         temperatureC: "",
         surface: "",
+        shoeIds: [],
       };
-      const next = { ...current, [field]: value };
-      if (field === "surface") {
-        const isIndoorSurface = value === "manezh" || value === "treadmill";
-        if (isIndoorSurface) {
-          next.weather = "";
-          next.hasWind = "";
-          next.temperatureC = "";
+      let next = current;
+      if (field === "shoeIds") {
+        const nextIds = Array.isArray(value) ? value : [];
+        next = { ...current, shoeIds: nextIds };
+      } else {
+        next = { ...current, [field]: value as string | number | null };
+        if (field === "surface") {
+          const surfaceValue = typeof value === "string" ? value : "";
+          const isIndoorSurface =
+            surfaceValue === "manezh" || surfaceValue === "treadmill";
+          if (isIndoorSurface) {
+            next.weather = "";
+            next.hasWind = "";
+            next.temperatureC = "";
+          }
         }
       }
       return { ...prev, [entryId]: next };
@@ -459,6 +485,7 @@ export function DiaryClient() {
                     muscleScoreLabel={workoutLabels.muscleScoreLabel}
                     scorePlaceholder={workoutLabels.scorePlaceholder}
                     surfacePlaceholder={workoutLabels.surfacePlaceholder}
+                    shoePlaceholder={workoutLabels.shoePlaceholder}
                     weatherPlaceholder={workoutLabels.weatherPlaceholder}
                     windPlaceholder={workoutLabels.windPlaceholder}
                     temperaturePlaceholder={
@@ -467,8 +494,10 @@ export function DiaryClient() {
                     commentPlaceholder={workoutLabels.commentPlaceholder}
                     saveReportLabel={workoutLabels.saveReportLabel}
                     surfaceOptions={SURFACE_OPTIONS}
+                    shoeOptions={shoeOptions}
                     weatherOptions={WEATHER_OPTIONS}
                     windOptions={WIND_OPTIONS}
+                    shoeLoading={loadingShoes}
                     entries={dayData?.planEntries ?? []}
                     workoutForm={workoutForm}
                     savingWorkouts={savingWorkouts}

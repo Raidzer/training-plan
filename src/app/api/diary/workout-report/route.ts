@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
-import { planEntries } from "@/db/schema";
+import { planEntries, shoes } from "@/db/schema";
 import { isValidDateString } from "@/lib/diary";
 import { upsertWorkoutReport } from "@/lib/workoutReports";
 
@@ -106,6 +106,32 @@ const parseOptionalScore = (value: unknown) => {
   return { value: parsed, valid: true };
 };
 
+const parseOptionalIdList = (value: unknown) => {
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null || value === "") {
+    return { value: [], valid: true };
+  }
+  if (!Array.isArray(value)) {
+    return { value: [], valid: false };
+  }
+  const ids: number[] = [];
+  const seen = new Set<number>();
+  for (const item of value) {
+    const parsed =
+      typeof item === "number" ? item : Number(String(item).trim());
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      return { value: [], valid: false };
+    }
+    if (!seen.has(parsed)) {
+      seen.add(parsed);
+      ids.push(parsed);
+    }
+  }
+  return { value: ids, valid: true };
+};
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) {
@@ -132,6 +158,7 @@ export async function POST(req: Request) {
         hasWind?: boolean | string | null;
         temperatureC?: number | string | null;
         surface?: string | null;
+        shoeIds?: number[] | string[] | null;
       }
     | null;
 
@@ -147,6 +174,7 @@ export async function POST(req: Request) {
   const functionalScore = parseOptionalScore(body?.functionalScore);
   const muscleScore = parseOptionalScore(body?.muscleScore);
   const surface = parseOptionalEnum(body?.surface, SURFACE_OPTIONS);
+  const shoeIds = parseOptionalIdList(body?.shoeIds);
   const isIndoorSurface =
     surface.value === "manezh" || surface.value === "treadmill";
   const weather = isIndoorSurface
@@ -177,6 +205,9 @@ export async function POST(req: Request) {
   if (!surface.valid) {
     return NextResponse.json({ error: "invalid_surface" }, { status: 400 });
   }
+  if (!shoeIds.valid) {
+    return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
+  }
   if (!weather.valid) {
     return NextResponse.json({ error: "invalid_weather" }, { status: 400 });
   }
@@ -199,6 +230,16 @@ export async function POST(req: Request) {
   }
   if (entry.date !== date) {
     return NextResponse.json({ error: "date_mismatch" }, { status: 400 });
+  }
+
+  if (shoeIds.value !== undefined && shoeIds.value.length > 0) {
+    const allowed = await db
+      .select({ id: shoes.id })
+      .from(shoes)
+      .where(and(eq(shoes.userId, userId), inArray(shoes.id, shoeIds.value)));
+    if (allowed.length !== shoeIds.value.length) {
+      return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
+    }
   }
 
   const upsertParams: Parameters<typeof upsertWorkoutReport>[0] = {
@@ -232,6 +273,9 @@ export async function POST(req: Request) {
   }
   if (temperatureC.value !== undefined) {
     upsertParams.temperatureC = temperatureC.value;
+  }
+  if (shoeIds.value !== undefined) {
+    upsertParams.shoeIds = shoeIds.value;
   }
 
   await upsertWorkoutReport(upsertParams);

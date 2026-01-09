@@ -41,11 +41,28 @@ export type DiaryMessages = {
   recoveryInvalidSleep: string;
   recoverySaveFailed: string;
   recoverySaved: string;
+  shoesLoadFailed: string;
 };
 
 type DiaryDataParams = {
   messageApi: MessageApi;
   messages: DiaryMessages;
+};
+
+type ShoeItem = {
+  id: number;
+  name: string;
+};
+
+const parseShoesResponse = (value: unknown): ShoeItem[] => {
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+  const shoesValue = (value as { shoes?: unknown }).shoes;
+  if (!Array.isArray(shoesValue)) {
+    return [];
+  }
+  return shoesValue as ShoeItem[];
 };
 
 export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
@@ -60,6 +77,8 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
 
   const [loadingDay, setLoadingDay] = useState(false);
   const [dayData, setDayData] = useState<DayPayload | null>(null);
+  const [shoes, setShoes] = useState<ShoeItem[]>([]);
+  const [loadingShoes, setLoadingShoes] = useState(false);
 
   const [weightForm, setWeightForm] = useState<WeightFormState>({
     morning: "",
@@ -82,6 +101,35 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   useEffect(() => {
     selectedDateRef.current = selectedDate;
   }, [selectedDate]);
+
+  const loadShoes = useCallback(async () => {
+    setLoadingShoes(true);
+    try {
+      const res = await fetch("/api/shoes", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        messageApi.error(messages.shoesLoadFailed);
+        setShoes([]);
+        return;
+      }
+      const parsed = parseShoesResponse(data);
+      if (parsed.length === 0) {
+        setShoes([]);
+        return;
+      }
+      setShoes(parsed);
+    } catch (err) {
+      console.error(err);
+      messageApi.error(messages.shoesLoadFailed);
+      setShoes([]);
+    } finally {
+      setLoadingShoes(false);
+    }
+  }, [messageApi, messages.shoesLoadFailed]);
+
+  useEffect(() => {
+    loadShoes();
+  }, [loadShoes]);
 
   useEffect(() => {
     const queryDate = searchParams.get("date");
@@ -297,6 +345,12 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         temperatureValue.length > 0
           ? Number(temperatureValue.replace(",", "."))
           : null;
+      const rawShoeIds = Array.isArray(form.shoeIds) ? form.shoeIds : [];
+      const shoeIds = Array.from(
+        new Set(
+          rawShoeIds.filter((shoeId) => Number.isInteger(shoeId) && shoeId > 0)
+        )
+      );
 
       if (
         !isIndoorSurface &&
@@ -330,6 +384,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
                 ? false
                 : null,
             temperatureC,
+            shoeIds,
           }),
         });
         if (!res.ok) {
@@ -413,6 +468,8 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     workoutForm,
     setWorkoutForm,
     savingWorkouts,
+    shoes,
+    loadingShoes,
     updateSelectedDate,
     shiftDate,
     handleSaveWeight,

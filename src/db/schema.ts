@@ -263,3 +263,28 @@ export const workoutReportConditions = pgTable(
     ).on(table.workoutReportId),
   })
 );
+
+export const workoutReportShoes = pgTable(
+  "workout_report_shoes",
+  {
+    id: serial("id").primaryKey(),
+    workoutReportId: integer("workout_report_id")
+      .notNull()
+      .references(() => workoutReports.id),
+    shoeId: integer("shoe_id")
+      .notNull()
+      .references(() => shoes.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    workoutReportShoesReportIdx: index("workout_report_shoes_report_idx").on(
+      table.workoutReportId
+    ),
+    workoutReportShoesShoeIdx: index("workout_report_shoes_shoe_idx").on(
+      table.shoeId
+    ),
+    workoutReportShoesUniqueIdx: uniqueIndex(
+      "workout_report_shoes_unique_idx"
+    ).on(table.workoutReportId, table.shoeId),
+  })
+);

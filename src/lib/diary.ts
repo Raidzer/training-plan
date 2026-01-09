@@ -3,8 +3,10 @@ import { db } from "@/db/client";
 import {
   planEntries,
   recoveryEntries,
+  shoes,
   weightEntries,
   workoutReportConditions,
+  workoutReportShoes,
   workoutReports,
 } from "@/db/schema";
 
@@ -32,6 +34,7 @@ export type DiaryWorkoutReport = {
   hasWind: boolean | null;
   temperatureC: string | null;
   surface: string | null;
+  shoes: { id: number; name: string }[];
 };
 
 export type DiaryWeightEntry = {
@@ -250,6 +253,34 @@ export const getDiaryDayData = async (params: {
         )
     : [];
 
+  const reportIds = workoutReportsRows.map((report) => report.id);
+  const reportShoesRows =
+    reportIds.length > 0
+      ? await db
+          .select({
+            reportId: workoutReportShoes.workoutReportId,
+            shoeId: workoutReportShoes.shoeId,
+            shoeName: shoes.name,
+          })
+          .from(workoutReportShoes)
+          .innerJoin(shoes, eq(shoes.id, workoutReportShoes.shoeId))
+          .where(inArray(workoutReportShoes.workoutReportId, reportIds))
+      : [];
+  const reportShoesMap = new Map<number, { id: number; name: string }[]>();
+  for (const row of reportShoesRows) {
+    const existing = reportShoesMap.get(row.reportId);
+    const item = { id: row.shoeId, name: row.shoeName };
+    if (!existing) {
+      reportShoesMap.set(row.reportId, [item]);
+    } else {
+      existing.push(item);
+    }
+  }
+  const workoutReportsWithShoes = workoutReportsRows.map((report) => ({
+    ...report,
+    shoes: reportShoesMap.get(report.id) ?? [],
+  }));
+
   const hasWeightMorning = weightEntriesRows.some(
     (entry) => entry.period === "morning"
   );
@@ -293,7 +324,7 @@ export const getDiaryDayData = async (params: {
   return {
     planEntries: planEntriesRows as DiaryPlanEntry[],
     weightEntries: weightEntriesRows as DiaryWeightEntry[],
-    workoutReports: workoutReportsRows as DiaryWorkoutReport[],
+    workoutReports: workoutReportsWithShoes as DiaryWorkoutReport[],
     recoveryEntry: recoveryEntry ?? fallbackRecoveryEntry,
     status,
     previousEveningWeightKg: previousEveningWeight
