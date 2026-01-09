@@ -86,7 +86,7 @@ export const auth = async () => {
   }
 
   const [user] = await db
-    .select({ id: users.id, isActive: users.isActive })
+    .select({ id: users.id, isActive: users.isActive, role: users.role })
     .from(users)
     .where(eq(users.id, userId));
 
@@ -94,7 +94,14 @@ export const auth = async () => {
     return null;
   }
 
-  return session;
+  return {
+    ...session,
+    user: {
+      ...(session.user ?? {}),
+      id: String(user.id),
+      role: user.role,
+    },
+  } as typeof session;
 };
 
 const handler = NextAuth(authOptions);
