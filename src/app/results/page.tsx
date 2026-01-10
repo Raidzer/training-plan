@@ -1,8 +1,9 @@
-export default function ResultsPage() {
-  return (
-    <section>
-      <h1>Результаты клуба</h1>
-      <p>Страница в разработке. Скоро здесь появятся результаты и отчеты.</p>
-    </section>
-  );
+﻿import { getClubRecords } from "@/lib/personalRecords";
+import { ResultsClient } from "./ResultsClient/ResultsClient";
+import { mapClubRecordsToResults } from "./results.utils";
+
+export default async function ResultsPage() {
+  const records = await getClubRecords();
+  const results = mapClubRecordsToResults(records);
+  return <ResultsClient results={results} />;
 }

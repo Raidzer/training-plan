@@ -13,6 +13,10 @@ const schema = z.object({
     .min(3, "Login must be at least 3 characters")
     .max(64, "Login must be at most 64 characters"),
   name: z.string().min(2, "Имя слишком короткое"),
+  lastName: z.string().trim().max(255, "Фамилия слишком длинная").optional(),
+  gender: z.enum(["male", "female"], {
+    required_error: "Выберите пол",
+  }),
   email: z.string().email("Некорректный email"),
   password: z.string().min(6, "Минимум 6 символов"),
   inviteToken: z.string().trim().min(10, "invite-required"),
@@ -48,7 +52,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const { name, email, login, password, inviteToken } = parsed.data;
+  const { name, lastName, gender, email, login, password, inviteToken } =
+    parsed.data;
+  const normalizedLastName = lastName?.trim() ?? "";
+  const lastNameValue = normalizedLastName.length > 0 ? normalizedLastName : null;
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -103,6 +110,8 @@ export async function POST(req: Request) {
           login,
           passwordHash,
           name,
+          lastName: lastNameValue,
+          gender,
           role: invite.role,
         })
         .returning({ id: users.id, email: users.email, name: users.name });

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Button,
@@ -8,6 +8,7 @@ import {
   Typography,
   message,
   type FormProps,
+  Radio,
 } from "antd";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,11 +24,18 @@ import styles from "./register.module.scss";
 
 type RegisterFields = {
   name: string;
+  lastName?: string;
+  gender: "male" | "female";
   login: string;
   email: string;
   password: string;
   confirmPassword: string;
 };
+
+const GENDER_OPTIONS = [
+  { value: "male", label: "Мужской" },
+  { value: "female", label: "Женский" },
+] as const;
 
 function RegisterContent() {
   const router = useRouter();
@@ -117,13 +125,28 @@ function RegisterContent() {
           layout="vertical"
           onFinish={onFinish}
           requiredMark={false}
+          initialValues={{ gender: "male" }}
         >
           <Form.Item
             name="name"
             label="Имя"
             rules={[{ required: true, message: "Введите имя" }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Иван Иванов" />
+            <Input prefix={<UserOutlined />} placeholder="Иван" />
+          </Form.Item>
+          <Form.Item
+            name="lastName"
+            label="Фамилия"
+            rules={[{ max: 255, message: "Фамилия слишком длинная" }]}
+          >
+            <Input prefix={<UserOutlined />} placeholder="Иванов" />
+          </Form.Item>
+          <Form.Item
+            name="gender"
+            label="Пол"
+            rules={[{ required: true, message: "Выберите пол" }]}
+          >
+            <Radio.Group options={GENDER_OPTIONS} />
           </Form.Item>
           <Form.Item
             name="login"
@@ -156,7 +179,7 @@ function RegisterContent() {
               },
             ]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+            <Input.Password prefix={<LockOutlined />} placeholder="********" />
           </Form.Item>
           <Form.Item
             name="confirmPassword"

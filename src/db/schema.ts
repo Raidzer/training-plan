@@ -22,6 +22,8 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 32 }).notNull().default("athlete"),
   isActive: boolean("is_active").notNull().default(true),
   name: varchar("name", { length: 255 }).notNull(),
+  lastName: varchar("last_name", { length: 255 }),
+  gender: varchar("gender", { length: 16 }).notNull().default("male"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -115,6 +117,46 @@ export const workouts = pgTable("workouts", {
   comment: text("comment"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const personalRecords = pgTable(
+  "personal_records",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    distanceKey: varchar("distance_key", { length: 16 }).notNull(),
+    timeText: varchar("time_text", { length: 16 }).notNull(),
+    recordDate: date("record_date").notNull(),
+    raceName: varchar("race_name", { length: 255 }),
+    raceCity: varchar("race_city", { length: 255 }),
+    protocolUrl: text("protocol_url"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    personalRecordsUserDistanceIdx: uniqueIndex(
+      "personal_records_user_distance_idx"
+    ).on(table.userId, table.distanceKey),
+    personalRecordsUserIdx: index("personal_records_user_idx").on(table.userId),
+  })
+);
+
+export const shoes = pgTable(
+  "shoes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    name: varchar("name", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    shoesUserIdIdx: index("shoes_user_id_idx").on(table.userId),
+  })
+);
 
 export const telegramLinkCodes = pgTable("telegram_link_codes", {
   id: serial("id").primaryKey(),
@@ -245,5 +287,30 @@ export const workoutReportConditions = pgTable(
     workoutReportConditionsReportIdx: uniqueIndex(
       "workout_report_conditions_report_idx"
     ).on(table.workoutReportId),
+  })
+);
+
+export const workoutReportShoes = pgTable(
+  "workout_report_shoes",
+  {
+    id: serial("id").primaryKey(),
+    workoutReportId: integer("workout_report_id")
+      .notNull()
+      .references(() => workoutReports.id),
+    shoeId: integer("shoe_id")
+      .notNull()
+      .references(() => shoes.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    workoutReportShoesReportIdx: index("workout_report_shoes_report_idx").on(
+      table.workoutReportId
+    ),
+    workoutReportShoesShoeIdx: index("workout_report_shoes_shoe_idx").on(
+      table.shoeId
+    ),
+    workoutReportShoesUniqueIdx: uniqueIndex(
+      "workout_report_shoes_unique_idx"
+    ).on(table.workoutReportId, table.shoeId),
   })
 );

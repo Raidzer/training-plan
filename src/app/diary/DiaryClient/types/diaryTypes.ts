@@ -22,6 +22,7 @@ export type WorkoutReport = {
   hasWind: boolean | null;
   temperatureC: string | null;
   surface: string | null;
+  shoes: { id: number; name: string }[];
 };
 
 export type WeightEntry = {
@@ -83,6 +84,7 @@ export type WorkoutFormEntry = {
   hasWind: string;
   temperatureC: string;
   surface: string;
+  shoeIds: number[];
 };
 
 export type WorkoutFormState = Record<number, WorkoutFormEntry>;

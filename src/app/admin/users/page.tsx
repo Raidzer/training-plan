@@ -20,6 +20,8 @@ export default async function AdminUsersPage() {
     .select({
       id: users.id,
       name: users.name,
+      lastName: users.lastName,
+      gender: users.gender,
       email: users.email,
       login: users.login,
       role: users.role,
@@ -32,6 +34,8 @@ export default async function AdminUsersPage() {
   const data: AdminUserRow[] = rows.map((row) => ({
     id: row.id,
     name: row.name,
+    lastName: row.lastName ?? "",
+    gender: row.gender,
     email: row.email,
     login: row.login,
     role: row.role,

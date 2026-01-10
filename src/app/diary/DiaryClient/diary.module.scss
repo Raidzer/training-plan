@@ -54,14 +54,15 @@
 
 .dayBlock {
   min-width: 0;
+  width: 100%;
 }
 
 .calendarCard {
-  height: 100%;
+  width: 100%;
 }
 
 .dayCard {
-  height: 100%;
+  width: 100%;
 }
 
 .quickActions {
@@ -135,6 +136,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 
 .workoutHeader {
@@ -176,6 +178,15 @@
   justify-content: flex-end;
 }
 
+.workoutList {
+  width: 100%;
+  align-items: stretch;
+}
+
+.workoutList :global(.ant-space-item) {
+  width: 100%;
+}
+
 .paragraphTight {
   margin-bottom: 0px;
 }
@@ -185,9 +196,30 @@
   margin-bottom: 0;
 }
 
+.dayLayout {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.weightRecoveryBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 0 0 260px;
+  max-width: 260px;
+  min-width: 220px;
+}
+
+.workoutsBlock {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 @media (min-width: 1024px) {
   .grid {
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 320px minmax(0, 1fr);
     align-items: start;
   }
 }
@@ -195,5 +227,17 @@
 @media (min-width: 640px) {
   .recoveryScores {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dayLayout {
+    flex-direction: column;
+  }
+
+  .weightRecoveryBlock {
+    flex: 1 1 auto;
+    max-width: none;
+    min-width: 0;
   }
 }

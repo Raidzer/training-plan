@@ -1,6 +1,16 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { workoutReportConditions, workoutReports } from "@/db/schema";
+import {
+  shoes,
+  workoutReportConditions,
+  workoutReportShoes,
+  workoutReports,
+} from "@/db/schema";
+
+export type WorkoutReportShoe = {
+  id: number;
+  name: string;
+};
 
 export type WorkoutReportSummary = {
   id: number;
@@ -17,6 +27,33 @@ export type WorkoutReportSummary = {
   hasWind: boolean | null;
   temperatureC: string | null;
   surface: string | null;
+  shoes: WorkoutReportShoe[];
+};
+
+const loadReportShoes = async (reportIds: number[]) => {
+  const map = new Map<number, WorkoutReportShoe[]>();
+  if (reportIds.length === 0) {
+    return map;
+  }
+  const rows = await db
+    .select({
+      reportId: workoutReportShoes.workoutReportId,
+      shoeId: workoutReportShoes.shoeId,
+      shoeName: shoes.name,
+    })
+    .from(workoutReportShoes)
+    .innerJoin(shoes, eq(shoes.id, workoutReportShoes.shoeId))
+    .where(inArray(workoutReportShoes.workoutReportId, reportIds));
+  for (const row of rows) {
+    const existing = map.get(row.reportId);
+    const item = { id: row.shoeId, name: row.shoeName };
+    if (!existing) {
+      map.set(row.reportId, [item]);
+    } else {
+      existing.push(item);
+    }
+  }
+  return map;
 };
 
 export const getWorkoutReportByPlanEntry = async (params: {
@@ -51,14 +88,21 @@ export const getWorkoutReportByPlanEntry = async (params: {
         eq(workoutReports.planEntryId, params.planEntryId)
       )
     );
-  return report ?? null;
+  if (!report) {
+    return null;
+  }
+  const shoesMap = await loadReportShoes([report.id]);
+  return {
+    ...report,
+    shoes: shoesMap.get(report.id) ?? [],
+  };
 };
 
 export const getWorkoutReportsByDate = async (params: {
   userId: number;
   date: string;
 }): Promise<WorkoutReportSummary[]> => {
-  return db
+  const reports = await db
     .select({
       id: workoutReports.id,
       planEntryId: workoutReports.planEntryId,
@@ -86,6 +130,12 @@ export const getWorkoutReportsByDate = async (params: {
         eq(workoutReports.date, params.date)
       )
     );
+  const reportIds = reports.map((report) => report.id);
+  const shoesMap = await loadReportShoes(reportIds);
+  return reports.map((report) => ({
+    ...report,
+    shoes: shoesMap.get(report.id) ?? [],
+  }));
 };
 
 export const upsertWorkoutReport = async (params: {
@@ -103,6 +153,7 @@ export const upsertWorkoutReport = async (params: {
   hasWind?: boolean | null;
   temperatureC?: number | null;
   surface?: string | null;
+  shoeIds?: number[] | null;
 }) => {
   const now = new Date();
   const updateValues: {
@@ -178,6 +229,7 @@ export const upsertWorkoutReport = async (params: {
     params.temperatureC,
     params.surface,
   ].some((value) => value !== undefined);
+  const shouldUpsertShoes = params.shoeIds !== undefined;
 
   const upsertConditions = async (workoutReportId: number) => {
     if (!shouldUpsertConditions) {
@@ -235,6 +287,25 @@ export const upsertWorkoutReport = async (params: {
       });
   };
 
+  const upsertShoes = async (workoutReportId: number) => {
+    if (!shouldUpsertShoes) {
+      return;
+    }
+    await db
+      .delete(workoutReportShoes)
+      .where(eq(workoutReportShoes.workoutReportId, workoutReportId));
+    const shoeIds = params.shoeIds ?? [];
+    if (shoeIds.length === 0) {
+      return;
+    }
+    const values = shoeIds.map((shoeId) => ({
+      workoutReportId,
+      shoeId,
+      createdAt: now,
+    }));
+    await db.insert(workoutReportShoes).values(values);
+  };
+
   const [existing] = await db
     .select({ id: workoutReports.id })
     .from(workoutReports)
@@ -251,6 +322,7 @@ export const upsertWorkoutReport = async (params: {
       .set(updateValues)
       .where(eq(workoutReports.id, existing.id));
     await upsertConditions(existing.id);
+    await upsertShoes(existing.id);
     return;
   }
 
@@ -260,5 +332,6 @@ export const upsertWorkoutReport = async (params: {
     .returning({ id: workoutReports.id });
   if (inserted) {
     await upsertConditions(inserted.id);
+    await upsertShoes(inserted.id);
   }
 };

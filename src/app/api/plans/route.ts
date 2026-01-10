@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
-import { planEntries, workoutReportConditions, workoutReports } from "@/db/schema";
+import {
+  planEntries,
+  workoutReportConditions,
+  workoutReportShoes,
+  workoutReports,
+} from "@/db/schema";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 export async function GET() {
@@ -189,6 +194,9 @@ export async function POST(req: Request) {
           .delete(workoutReportConditions)
           .where(inArray(workoutReportConditions.workoutReportId, reportIds));
         await tx
+          .delete(workoutReportShoes)
+          .where(inArray(workoutReportShoes.workoutReportId, reportIds));
+        await tx
           .delete(workoutReports)
           .where(inArray(workoutReports.id, reportIds));
       }
@@ -311,6 +319,9 @@ export async function DELETE(req: Request) {
       await tx
         .delete(workoutReportConditions)
         .where(inArray(workoutReportConditions.workoutReportId, reportIdList));
+      await tx
+        .delete(workoutReportShoes)
+        .where(inArray(workoutReportShoes.workoutReportId, reportIdList));
       await tx
         .delete(workoutReports)
         .where(inArray(workoutReports.id, reportIdList));

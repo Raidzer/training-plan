@@ -20,7 +20,8 @@ type WorkoutField =
   | "weather"
   | "hasWind"
   | "temperatureC"
-  | "surface";
+  | "surface"
+  | "shoeIds";
 
 type WorkoutsCardProps = {
   title: string;
@@ -35,23 +36,30 @@ type WorkoutsCardProps = {
   muscleScoreLabel: string;
   scorePlaceholder: string;
   surfacePlaceholder: string;
+  shoePlaceholder: string;
   weatherPlaceholder: string;
   windPlaceholder: string;
   temperaturePlaceholder: string;
   commentPlaceholder: string;
   saveReportLabel: string;
   surfaceOptions: readonly { value: string; label: string }[];
+  shoeOptions: readonly { value: number; label: string }[];
   weatherOptions: readonly { value: string; label: string }[];
   windOptions: readonly { value: string; label: string }[];
+  shoeLoading: boolean;
   entries: PlanEntry[];
   workoutForm: WorkoutFormState;
   savingWorkouts: SavingWorkoutsState;
-  onChange: (entryId: number, field: WorkoutField, value: string | number | null) => void;
+  onChange: (
+    entryId: number,
+    field: WorkoutField,
+    value: string | number | number[] | null
+  ) => void;
   onSave: (entryId: number) => void;
 };
 
 const normalizeOptions = (
-  options: readonly { value: string; label: string }[]
+  options: readonly { value: string | number; label: string }[]
 ) => options.map((option) => ({ value: option.value, label: option.label }));
 
 export function WorkoutsCard({
@@ -67,14 +75,17 @@ export function WorkoutsCard({
   muscleScoreLabel,
   scorePlaceholder,
   surfacePlaceholder,
+  shoePlaceholder,
   weatherPlaceholder,
   windPlaceholder,
   temperaturePlaceholder,
   commentPlaceholder,
   saveReportLabel,
   surfaceOptions,
+  shoeOptions,
   weatherOptions,
   windOptions,
+  shoeLoading,
   entries,
   workoutForm,
   savingWorkouts,
@@ -82,18 +93,24 @@ export function WorkoutsCard({
   onSave,
 }: WorkoutsCardProps) {
   const normalizedSurfaceOptions = normalizeOptions(surfaceOptions);
+  const normalizedShoeOptions = normalizeOptions(shoeOptions);
   const normalizedWeatherOptions = normalizeOptions(weatherOptions);
   const normalizedWindOptions = normalizeOptions(windOptions);
 
   return (
     <Card type="inner" title={title}>
       {entries.length ? (
-        <Space orientation="vertical" size="middle">
+        <Space
+          orientation="vertical"
+          size="middle"
+          className={styles.workoutList}
+        >
           {entries.map((entry) => {
             const form = workoutForm[entry.id];
             const isIndoorSurface =
               form?.surface === "manezh" || form?.surface === "treadmill";
             const surfaceValue = form?.surface ? form.surface : null;
+            const shoeValue = Array.isArray(form?.shoeIds) ? form.shoeIds : [];
             const weatherValue = form?.weather ? form.weather : null;
             const windValue = form?.hasWind ? form.hasWind : null;
             const isComplete =
@@ -202,6 +219,17 @@ export function WorkoutsCard({
                       allowClear
                       onChange={(value) =>
                         onChange(entry.id, "surface", value ?? "")
+                      }
+                    />
+                    <Select
+                      mode="multiple"
+                      value={shoeValue}
+                      placeholder={shoePlaceholder}
+                      options={normalizedShoeOptions}
+                      allowClear
+                      loading={shoeLoading}
+                      onChange={(value) =>
+                        onChange(entry.id, "shoeIds", value ?? [])
                       }
                     />
                     {isIndoorSurface ? null : (

@@ -105,9 +105,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .editorEntries {
+  width: 100%;
+}
+
+.editorEntries :global(.ant-space-item) {
   width: 100%;
 }
 
@@ -122,4 +127,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+}
+
+.editorEntryBody :global(.ant-space-item) {
+  width: 100%;
 }
