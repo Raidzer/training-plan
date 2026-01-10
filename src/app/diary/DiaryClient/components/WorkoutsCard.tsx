@@ -100,7 +100,11 @@ export function WorkoutsCard({
   return (
     <Card type="inner" title={title}>
       {entries.length ? (
-        <Space orientation="vertical" size="middle">
+        <Space
+          orientation="vertical"
+          size="middle"
+          className={styles.workoutList}
+        >
           {entries.map((entry) => {
             const form = workoutForm[entry.id];
             const isIndoorSurface =
