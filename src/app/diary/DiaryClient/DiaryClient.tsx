@@ -445,7 +445,7 @@ export function DiaryClient() {
                     labels={statusLabels}
                     onOpenReport={() => setIsReportOpen(true)}
                   />
-                  <div className={styles.dayBlock}>
+                  <div className={styles.dayLayout}>
                     <div className={styles.weightRecoveryBlock}>
                       <WeightCard
                         title={weightLabels.title}
