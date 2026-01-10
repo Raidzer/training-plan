@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { isValidDateString } from "@/lib/diary";
 import {
   MAX_PROTOCOL_URL_LENGTH,
+  MAX_RACE_CITY_LENGTH,
+  MAX_RACE_NAME_LENGTH,
   PERSONAL_RECORD_DISTANCES,
   PERSONAL_RECORD_TIME_REGEX,
   type PersonalRecordDistanceKey,
@@ -18,6 +20,8 @@ type PersonalRecordPayload = {
   timeText?: string | null;
   recordDate?: string | null;
   protocolUrl?: string | null;
+  raceName?: string | null;
+  raceCity?: string | null;
 };
 
 const distanceKeySet = new Set(
@@ -95,6 +99,10 @@ export async function POST(req: Request) {
       typeof entry?.recordDate === "string" ? entry.recordDate.trim() : "";
     const protocolUrl =
       typeof entry?.protocolUrl === "string" ? entry.protocolUrl.trim() : "";
+    const raceName =
+      typeof entry?.raceName === "string" ? entry.raceName.trim() : "";
+    const raceCity =
+      typeof entry?.raceCity === "string" ? entry.raceCity.trim() : "";
 
     if (!timeText) {
       normalized.push({
@@ -102,6 +110,8 @@ export async function POST(req: Request) {
         timeText: "",
         recordDate: null,
         protocolUrl: null,
+        raceName: null,
+        raceCity: null,
       });
       continue;
     }
@@ -118,12 +128,26 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    if (raceName && raceName.length > MAX_RACE_NAME_LENGTH) {
+      return NextResponse.json(
+        { error: "invalid_race_name" },
+        { status: 400 }
+      );
+    }
+    if (raceCity && raceCity.length > MAX_RACE_CITY_LENGTH) {
+      return NextResponse.json(
+        { error: "invalid_race_city" },
+        { status: 400 }
+      );
+    }
 
     normalized.push({
       distanceKey: distanceKey as PersonalRecordDistanceKey,
       timeText,
       recordDate,
       protocolUrl: protocolUrl || null,
+      raceName: raceName || null,
+      raceCity: raceCity || null,
     });
   }
 

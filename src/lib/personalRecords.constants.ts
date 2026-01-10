@@ -19,3 +19,5 @@ export const PERSONAL_RECORD_TIME_REGEX =
   /^\d{2}:[0-5]\d:[0-5]\d(?:\.\d{1,2})?$/;
 
 export const MAX_PROTOCOL_URL_LENGTH = 2048;
+export const MAX_RACE_NAME_LENGTH = 255;
+export const MAX_RACE_CITY_LENGTH = 255;

@@ -5,6 +5,8 @@ import { Alert, App, Button, Card, Input, Typography } from "antd";
 import styles from "./records.module.scss";
 import {
   MAX_PROTOCOL_URL_LENGTH,
+  MAX_RACE_CITY_LENGTH,
+  MAX_RACE_NAME_LENGTH,
   PERSONAL_RECORD_DISTANCES,
   PERSONAL_RECORD_TIME_REGEX,
   type PersonalRecordDistanceKey,
@@ -15,6 +17,8 @@ type ApiRecord = {
   timeText: string;
   recordDate: string;
   protocolUrl: string | null;
+  raceName: string | null;
+  raceCity: string | null;
 };
 
 type RecordRow = {
@@ -23,12 +27,16 @@ type RecordRow = {
   timeText: string;
   recordDate: string;
   protocolUrl: string;
+  raceName: string;
+  raceCity: string;
 };
 
 type RecordFieldErrors = {
   time?: boolean;
   date?: boolean;
   url?: boolean;
+  raceName?: boolean;
+  raceCity?: boolean;
 };
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -43,9 +51,13 @@ const labels = {
   distanceLabel: "Дистанция",
   timeLabel: "Время",
   dateLabel: "Дата",
+  raceNameLabel: "Название забега",
+  raceCityLabel: "Город",
   protocolLabel: "Ссылка на протокол",
   timePlaceholder: "00:00:00.00",
   datePlaceholder: "ГГГГ-ММ-ДД",
+  raceNamePlaceholder: "Название забега",
+  raceCityPlaceholder: "Город",
   protocolPlaceholder: "https://",
   saveButton: "Сохранить",
   loadingText: "Загрузка...",
@@ -55,6 +67,8 @@ const labels = {
   invalidTime: "Проверьте формат времени.",
   invalidDate: "Укажите корректную дату для заполненных записей.",
   invalidUrl: "Ссылка на протокол слишком длинная.",
+  invalidRaceName: "Название забега не должно превышать 255 символов.",
+  invalidRaceCity: "Город не должен превышать 255 символов.",
 } as const;
 
 const buildDefaultRows = (): RecordRow[] =>
@@ -64,6 +78,8 @@ const buildDefaultRows = (): RecordRow[] =>
     timeText: "",
     recordDate: "",
     protocolUrl: "",
+    raceName: "",
+    raceCity: "",
   }));
 
 const normalizeTimeText = (value: string) => value.trim().replace(",", ".");
@@ -98,6 +114,8 @@ const mapRecordsToRows = (records: ApiRecord[]): RecordRow[] => {
       timeText: record?.timeText ? String(record.timeText) : "",
       recordDate: record?.recordDate ? String(record.recordDate) : "",
       protocolUrl: record?.protocolUrl ? String(record.protocolUrl) : "",
+      raceName: record?.raceName ? String(record.raceName) : "",
+      raceCity: record?.raceCity ? String(record.raceCity) : "",
     };
   });
 };
@@ -107,11 +125,15 @@ const validateRows = (rows: RecordRow[]) => {
   let hasTimeError = false;
   let hasDateError = false;
   let hasUrlError = false;
+  let hasRaceNameError = false;
+  let hasRaceCityError = false;
 
   for (const row of rows) {
     const normalizedTime = normalizeTimeText(row.timeText);
     const recordDate = row.recordDate.trim();
     const protocolUrl = row.protocolUrl.trim();
+    const raceName = row.raceName.trim();
+    const raceCity = row.raceCity.trim();
     const rowErrors: RecordFieldErrors = {};
 
     if (normalizedTime) {
@@ -129,13 +151,34 @@ const validateRows = (rows: RecordRow[]) => {
       rowErrors.url = true;
       hasUrlError = true;
     }
+    if (raceName && raceName.length > MAX_RACE_NAME_LENGTH) {
+      rowErrors.raceName = true;
+      hasRaceNameError = true;
+    }
+    if (raceCity && raceCity.length > MAX_RACE_CITY_LENGTH) {
+      rowErrors.raceCity = true;
+      hasRaceCityError = true;
+    }
 
-    if (rowErrors.time || rowErrors.date || rowErrors.url) {
+    if (
+      rowErrors.time ||
+      rowErrors.date ||
+      rowErrors.url ||
+      rowErrors.raceName ||
+      rowErrors.raceCity
+    ) {
       errors[row.distanceKey] = rowErrors;
     }
   }
 
-  return { errors, hasTimeError, hasDateError, hasUrlError };
+  return {
+    errors,
+    hasTimeError,
+    hasDateError,
+    hasUrlError,
+    hasRaceNameError,
+    hasRaceCityError,
+  };
 };
 
 export function RecordsClient() {
@@ -194,7 +237,9 @@ export function RecordsClient() {
     if (
       validation.hasTimeError ||
       validation.hasDateError ||
-      validation.hasUrlError
+      validation.hasUrlError ||
+      validation.hasRaceNameError ||
+      validation.hasRaceCityError
     ) {
       setErrors(validation.errors);
       if (validation.hasTimeError) {
@@ -203,6 +248,10 @@ export function RecordsClient() {
         messageApi.error(labels.invalidDate);
       } else if (validation.hasUrlError) {
         messageApi.error(labels.invalidUrl);
+      } else if (validation.hasRaceNameError) {
+        messageApi.error(labels.invalidRaceName);
+      } else if (validation.hasRaceCityError) {
+        messageApi.error(labels.invalidRaceCity);
       }
       return;
     }
@@ -211,11 +260,15 @@ export function RecordsClient() {
       const normalizedTime = normalizeTimeText(row.timeText);
       const recordDate = row.recordDate.trim();
       const protocolUrl = row.protocolUrl.trim();
+      const raceName = row.raceName.trim();
+      const raceCity = row.raceCity.trim();
       return {
         distanceKey: row.distanceKey,
         timeText: normalizedTime,
         recordDate: normalizedTime ? recordDate : null,
         protocolUrl: normalizedTime ? protocolUrl || null : null,
+        raceName: normalizedTime ? raceName || null : null,
+        raceCity: normalizedTime ? raceCity || null : null,
       };
     });
 
@@ -275,6 +328,12 @@ export function RecordsClient() {
               {labels.dateLabel}
             </Typography.Text>
             <Typography.Text type="secondary" className={styles.gridLabel}>
+              {labels.raceNameLabel}
+            </Typography.Text>
+            <Typography.Text type="secondary" className={styles.gridLabel}>
+              {labels.raceCityLabel}
+            </Typography.Text>
+            <Typography.Text type="secondary" className={styles.gridLabel}>
               {labels.protocolLabel}
             </Typography.Text>
           </div>
@@ -290,6 +349,8 @@ export function RecordsClient() {
                 const timeStatus = rowErrors?.time ? "error" : "";
                 const dateStatus = rowErrors?.date ? "error" : "";
                 const urlStatus = rowErrors?.url ? "error" : "";
+                const raceNameStatus = rowErrors?.raceName ? "error" : "";
+                const raceCityStatus = rowErrors?.raceCity ? "error" : "";
                 return (
                   <div className={styles.row} key={row.distanceKey}>
                     <div className={styles.distance}>
@@ -328,6 +389,40 @@ export function RecordsClient() {
                         status={dateStatus}
                         disabled={saving}
                         type="date"
+                      />
+                    </div>
+                    <div className={styles.field}>
+                      <Typography.Text className={styles.fieldLabel}>
+                        {labels.raceNameLabel}
+                      </Typography.Text>
+                      <Input
+                        value={row.raceName}
+                        onChange={(event) => {
+                          handleFieldChange(row.distanceKey, {
+                            raceName: event.target.value,
+                          });
+                        }}
+                        placeholder={labels.raceNamePlaceholder}
+                        status={raceNameStatus}
+                        disabled={saving}
+                        maxLength={MAX_RACE_NAME_LENGTH}
+                      />
+                    </div>
+                    <div className={styles.field}>
+                      <Typography.Text className={styles.fieldLabel}>
+                        {labels.raceCityLabel}
+                      </Typography.Text>
+                      <Input
+                        value={row.raceCity}
+                        onChange={(event) => {
+                          handleFieldChange(row.distanceKey, {
+                            raceCity: event.target.value,
+                          });
+                        }}
+                        placeholder={labels.raceCityPlaceholder}
+                        status={raceCityStatus}
+                        disabled={saving}
+                        maxLength={MAX_RACE_CITY_LENGTH}
                       />
                     </div>
                     <div className={styles.field}>

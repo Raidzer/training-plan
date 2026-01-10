@@ -34,7 +34,9 @@
 
 .gridHeader {
   display: grid;
-  grid-template-columns: 140px minmax(160px, 1fr) 160px minmax(200px, 1fr);
+  grid-template-columns:
+    120px minmax(120px, 1fr) 140px minmax(160px, 1fr) minmax(130px, 1fr)
+    minmax(180px, 1fr);
   gap: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
@@ -53,7 +55,9 @@
 
 .row {
   display: grid;
-  grid-template-columns: 140px minmax(160px, 1fr) 160px minmax(200px, 1fr);
+  grid-template-columns:
+    120px minmax(120px, 1fr) 140px minmax(160px, 1fr) minmax(130px, 1fr)
+    minmax(180px, 1fr);
   gap: 12px;
   align-items: center;
   padding-bottom: 12px;

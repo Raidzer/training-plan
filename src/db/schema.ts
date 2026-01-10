@@ -126,6 +126,8 @@ export const personalRecords = pgTable(
     distanceKey: varchar("distance_key", { length: 16 }).notNull(),
     timeText: varchar("time_text", { length: 16 }).notNull(),
     recordDate: date("record_date").notNull(),
+    raceName: varchar("race_name", { length: 255 }),
+    raceCity: varchar("race_city", { length: 255 }),
     protocolUrl: text("protocol_url"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

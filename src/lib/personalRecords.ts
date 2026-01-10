@@ -8,6 +8,8 @@ export type PersonalRecord = {
   timeText: string;
   recordDate: string;
   protocolUrl: string | null;
+  raceName: string | null;
+  raceCity: string | null;
 };
 
 export type PersonalRecordInput = {
@@ -15,6 +17,8 @@ export type PersonalRecordInput = {
   timeText?: string | null;
   recordDate?: string | null;
   protocolUrl?: string | null;
+  raceName?: string | null;
+  raceCity?: string | null;
 };
 
 const normalizeRecordDate = (value: string | Date) => {
@@ -33,6 +37,8 @@ export const getPersonalRecords = async (params: {
       timeText: personalRecords.timeText,
       recordDate: personalRecords.recordDate,
       protocolUrl: personalRecords.protocolUrl,
+      raceName: personalRecords.raceName,
+      raceCity: personalRecords.raceCity,
     })
     .from(personalRecords)
     .where(eq(personalRecords.userId, params.userId));
@@ -42,6 +48,8 @@ export const getPersonalRecords = async (params: {
     timeText: row.timeText,
     recordDate: normalizeRecordDate(row.recordDate),
     protocolUrl: row.protocolUrl ?? null,
+    raceName: row.raceName ?? null,
+    raceCity: row.raceCity ?? null,
   }));
 };
 
@@ -78,6 +86,8 @@ export const upsertPersonalRecords = async (params: {
           timeText,
           recordDate,
           protocolUrl: record.protocolUrl ?? null,
+          raceName: record.raceName ?? null,
+          raceCity: record.raceCity ?? null,
           createdAt: now,
           updatedAt: now,
         })
@@ -87,6 +97,8 @@ export const upsertPersonalRecords = async (params: {
             timeText,
             recordDate,
             protocolUrl: record.protocolUrl ?? null,
+            raceName: record.raceName ?? null,
+            raceCity: record.raceCity ?? null,
             updatedAt: now,
           },
         });
