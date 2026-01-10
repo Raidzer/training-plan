@@ -5,6 +5,7 @@ import {
   MessageOutlined,
   ShoppingOutlined,
   TeamOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import { Card, Space, Typography } from "antd";
 import Link from "next/link";
@@ -80,6 +81,18 @@ export function DashboardClient({ session }: Props) {
             >
               <Typography.Text type="secondary">
                 Добавьте и редактируйте список обуви для тренировок.
+              </Typography.Text>
+            </Card>
+          </Link>
+          <Link href="/profile/records" passHref>
+            <Card
+              hoverable
+              className={styles.card}
+              title={<CardTitle icon={<TrophyOutlined />} title="Рекорды" />}
+            >
+              <Typography.Text type="secondary">
+                Заполните личные рекорды по дистанциям и добавьте ссылку на
+                протокол.
               </Typography.Text>
             </Card>
           </Link>
