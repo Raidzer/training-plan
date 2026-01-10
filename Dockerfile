@@ -13,7 +13,7 @@ ARG ALLOWED_ORIGINS
 ENV ALLOWED_ORIGINS=$ALLOWED_ORIGINS
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN mkdir -p public && npm run build
+RUN npm run build
 
 FROM base AS runner
 ENV NODE_ENV=production
