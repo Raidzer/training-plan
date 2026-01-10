@@ -6,14 +6,11 @@ import { telegramLinkCodes } from "@/db/schema";
 const LINK_CODE_TTL_MINUTES = 15;
 const MAX_ATTEMPTS = 5;
 
-const addMinutes = (date: Date, minutes: number) =>
-  new Date(date.getTime() + minutes * 60 * 1000);
+const addMinutes = (date: Date, minutes: number) => new Date(date.getTime() + minutes * 60 * 1000);
 
-const getLinkSecret = () =>
-  process.env.TELEGRAM_LINK_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
+const getLinkSecret = () => process.env.TELEGRAM_LINK_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
 
-export const generateTelegramLinkCode = () =>
-  String(randomInt(0, 1_000_000)).padStart(6, "0");
+export const generateTelegramLinkCode = () => String(randomInt(0, 1_000_000)).padStart(6, "0");
 
 export const hashTelegramLinkCode = (code: string) =>
   createHash("sha256").update(`${code}:${getLinkSecret()}`).digest("hex");
@@ -28,9 +25,7 @@ export const issueTelegramLinkCode = async (params: {
 }): Promise<TelegramLinkIssueResult> => {
   const now = new Date();
 
-  await db
-    .delete(telegramLinkCodes)
-    .where(eq(telegramLinkCodes.userId, params.userId));
+  await db.delete(telegramLinkCodes).where(eq(telegramLinkCodes.userId, params.userId));
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     const code = generateTelegramLinkCode();

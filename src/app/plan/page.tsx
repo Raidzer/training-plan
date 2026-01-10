@@ -42,9 +42,7 @@ function PlanPageContent() {
   const groupedEntries = useMemo(() => buildPlanDays(entries), [entries]);
   const filteredEntries = useMemo(
     () =>
-      onlyWithoutReports
-        ? groupedEntries.filter((entry) => !entry.hasReport)
-        : groupedEntries,
+      onlyWithoutReports ? groupedEntries.filter((entry) => !entry.hasReport) : groupedEntries,
     [groupedEntries, onlyWithoutReports]
   );
 
@@ -85,11 +83,8 @@ function PlanPageContent() {
       setCurrentPage((prev) => (prev === 1 ? prev : 1));
       return;
     }
-    const todayIndex = filteredEntries.findIndex(
-      (entry) => entry.date === today
-    );
-    const nextPage =
-      todayIndex < 0 ? 1 : Math.floor(todayIndex / PLAN_PAGE_SIZE) + 1;
+    const todayIndex = filteredEntries.findIndex((entry) => entry.date === today);
+    const nextPage = todayIndex < 0 ? 1 : Math.floor(todayIndex / PLAN_PAGE_SIZE) + 1;
     setCurrentPage((prev) => (prev === nextPage ? prev : nextPage));
   }, [filteredEntries, onlyWithoutReports, today]);
 
@@ -108,20 +103,13 @@ function PlanPageContent() {
   return (
     <main className={styles.mainContainer}>
       <Card className={styles.cardStyle}>
-        <Space
-          orientation="vertical"
-          size="large"
-          className={styles.spaceStyle}
-        >
+        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
           <div className={styles.headerRow}>
             <div className={styles.headerText}>
               <Typography.Title level={3} className={styles.typographyTitle}>
                 {PLAN_TEXT.header.title}
               </Typography.Title>
-              <Typography.Paragraph
-                type="secondary"
-                className={styles.typographyParagraph}
-              >
+              <Typography.Paragraph type="secondary" className={styles.typographyParagraph}>
                 {PLAN_TEXT.header.description}
               </Typography.Paragraph>
             </div>
@@ -132,11 +120,7 @@ function PlanPageContent() {
               <Button icon={<PlusOutlined />} onClick={openCreateModal}>
                 {PLAN_TEXT.actions.addDay}
               </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={load}
-                loading={loading}
-              >
+              <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
                 {PLAN_TEXT.actions.reload}
               </Button>
             </Space>
@@ -147,10 +131,7 @@ function PlanPageContent() {
             </Button>
           </Link>
           <Space size="small" align="center">
-            <Switch
-              checked={onlyWithoutReports}
-              onChange={setOnlyWithoutReports}
-            />
+            <Switch checked={onlyWithoutReports} onChange={setOnlyWithoutReports} />
             <Typography.Text>{PLAN_TEXT.filter.onlyWithoutReports}</Typography.Text>
           </Space>
           <PlanEditorModal

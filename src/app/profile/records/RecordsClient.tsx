@@ -43,8 +43,7 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 const labels = {
   title: "Мои рекорды",
-  subtitle:
-    "Заполните дистанции, по которым у вас есть рекорды. Остальные можно оставить пустыми.",
+  subtitle: "Заполните дистанции, по которым у вас есть рекорды. Остальные можно оставить пустыми.",
   alertTitle: "Как заполнять",
   alertText:
     "Формат времени: ЧЧ:ММ:СС или ЧЧ:ММ:СС.СС. Если время указано, дата обязательна. Пустое время удаляет запись при сохранении.",
@@ -217,10 +216,7 @@ export function RecordsClient() {
     void loadRecords(false);
   }, []);
 
-  const handleFieldChange = (
-    distanceKey: PersonalRecordDistanceKey,
-    patch: Partial<RecordRow>
-  ) => {
+  const handleFieldChange = (distanceKey: PersonalRecordDistanceKey, patch: Partial<RecordRow>) => {
     setRows((prev) =>
       prev.map((row) => {
         if (row.distanceKey === distanceKey) {
@@ -339,9 +335,7 @@ export function RecordsClient() {
           </div>
 
           {loading ? (
-            <Typography.Text type="secondary">
-              {labels.loadingText}
-            </Typography.Text>
+            <Typography.Text type="secondary">{labels.loadingText}</Typography.Text>
           ) : (
             <div className={styles.rows}>
               {rows.map((row) => {
@@ -451,12 +445,7 @@ export function RecordsClient() {
         </div>
 
         <div className={styles.actions}>
-          <Button
-            type="primary"
-            onClick={handleSave}
-            loading={saving}
-            disabled={loading || saving}
-          >
+          <Button type="primary" onClick={handleSave} loading={saving} disabled={loading || saving}>
             {labels.saveButton}
           </Button>
         </div>

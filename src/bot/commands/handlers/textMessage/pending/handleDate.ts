@@ -46,9 +46,7 @@ export const handleDatePending = async ({
 
     const parsedDate = parseDisplayDate(text);
     if (!parsedDate) {
-      await ctx.reply(
-        "Выбери дату из списка или нажми \"Произвольная дата\"."
-      );
+      await ctx.reply('Выбери дату из списка или нажми "Произвольная дата".');
       return;
     }
 

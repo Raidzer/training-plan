@@ -1,25 +1,11 @@
 ﻿"use client";
 
-import {
-  Button,
-  Card,
-  Form,
-  Input,
-  Typography,
-  message,
-  type FormProps,
-  Radio,
-} from "antd";
+import { Button, Card, Form, Input, Typography, message, type FormProps, Radio } from "antd";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import {
-  LockOutlined,
-  MailOutlined,
-  UserOutlined,
-  UserAddOutlined,
-} from "@ant-design/icons";
+import { LockOutlined, MailOutlined, UserOutlined, UserAddOutlined } from "@ant-design/icons";
 import styles from "./register.module.scss";
 
 type RegisterFields = {
@@ -35,7 +21,7 @@ type RegisterFields = {
 const GENDER_OPTIONS = [
   { value: "male", label: "Мужской" },
   { value: "female", label: "Женский" },
-] as const;
+];
 
 function RegisterContent() {
   const router = useRouter();
@@ -77,10 +63,7 @@ function RegisterContent() {
           messageApi.error("Срок действия приглашения истек.");
           return;
         }
-        messageApi.error(
-          data?.error ??
-            "Не удалось завершить регистрацию, попробуйте ещё раз."
-        );
+        messageApi.error(data?.error ?? "Не удалось завершить регистрацию, попробуйте ещё раз.");
         return;
       }
 
@@ -94,9 +77,7 @@ function RegisterContent() {
       });
 
       if (loginRes?.error) {
-        messageApi.warning(
-          "Регистрация успешна, но не удалось войти. Попробуйте войти вручную."
-        );
+        messageApi.warning("Регистрация успешна, но не удалось войти. Попробуйте войти вручную.");
         router.push("/login");
         return;
       }
@@ -121,100 +102,96 @@ function RegisterContent() {
           Создайте новый аккаунт, чтобы получить доступ к панели и планам.
         </Typography.Paragraph>
         {hasInvite ? (
-        <Form<RegisterFields>
-          layout="vertical"
-          onFinish={onFinish}
-          requiredMark={false}
-          initialValues={{ gender: "male" }}
-        >
-          <Form.Item
-            name="name"
-            label="Имя"
-            rules={[{ required: true, message: "Введите имя" }]}
+          <Form<RegisterFields>
+            layout="vertical"
+            onFinish={onFinish}
+            requiredMark={false}
+            initialValues={{ gender: "male" }}
           >
-            <Input prefix={<UserOutlined />} placeholder="Иван" />
-          </Form.Item>
-          <Form.Item
-            name="lastName"
-            label="Фамилия"
-            rules={[{ max: 255, message: "Фамилия слишком длинная" }]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="Иванов" />
-          </Form.Item>
-          <Form.Item
-            name="gender"
-            label="Пол"
-            rules={[{ required: true, message: "Выберите пол" }]}
-          >
-            <Radio.Group options={GENDER_OPTIONS} />
-          </Form.Item>
-          <Form.Item
-            name="login"
-            label="Логин"
-            rules={[
-              { required: true, message: "Введите логин" },
-              { min: 3, message: "Логин должен содержать не менее 3 символов" },
-            ]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="Ваш логин" />
-          </Form.Item>
-          <Form.Item
-            name="email"
-            label="Почта"
-            rules={[
-              { required: true, message: "Введите email" },
-              { type: "email", message: "Некорректный email" },
-            ]}
-          >
-            <Input prefix={<MailOutlined />} placeholder="Ваш email" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label="Пароль"
-            rules={[
-              { required: true, message: "Введите пароль" },
-              {
-                min: 6,
-                message: "Минимум 6 символов",
-              },
-            ]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="********" />
-          </Form.Item>
-          <Form.Item
-            name="confirmPassword"
-            label="Подтвердите пароль"
-            dependencies={["password"]}
-            rules={[
-              { required: true, message: "Подтвердите пароль" },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue("password") === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error("Пароли не совпадают"));
+            <Form.Item name="name" label="Имя" rules={[{ required: true, message: "Введите имя" }]}>
+              <Input prefix={<UserOutlined />} placeholder="Иван" />
+            </Form.Item>
+            <Form.Item
+              name="lastName"
+              label="Фамилия"
+              rules={[{ max: 255, message: "Фамилия слишком длинная" }]}
+            >
+              <Input prefix={<UserOutlined />} placeholder="Иванов" />
+            </Form.Item>
+            <Form.Item
+              name="gender"
+              label="Пол"
+              rules={[{ required: true, message: "Выберите пол" }]}
+            >
+              <Radio.Group options={GENDER_OPTIONS} />
+            </Form.Item>
+            <Form.Item
+              name="login"
+              label="Логин"
+              rules={[
+                { required: true, message: "Введите логин" },
+                { min: 3, message: "Логин должен содержать не менее 3 символов" },
+              ]}
+            >
+              <Input prefix={<UserOutlined />} placeholder="Ваш логин" />
+            </Form.Item>
+            <Form.Item
+              name="email"
+              label="Почта"
+              rules={[
+                { required: true, message: "Введите email" },
+                { type: "email", message: "Некорректный email" },
+              ]}
+            >
+              <Input prefix={<MailOutlined />} placeholder="Ваш email" />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              label="Пароль"
+              rules={[
+                { required: true, message: "Введите пароль" },
+                {
+                  min: 6,
+                  message: "Минимум 6 символов",
                 },
-              }),
-            ]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="********" />
-          </Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            icon={<UserAddOutlined />}
-            block
-            loading={loading}
-          >
-            Зарегистрироваться
-          </Button>
-          <Typography.Paragraph type="secondary" className={styles.subtitle}>
-            Уже есть аккаунт?{" "}
-            <Link href="/login" passHref>
-              Войти
-            </Link>
-          </Typography.Paragraph>
-        </Form>
+              ]}
+            >
+              <Input.Password prefix={<LockOutlined />} placeholder="********" />
+            </Form.Item>
+            <Form.Item
+              name="confirmPassword"
+              label="Подтвердите пароль"
+              dependencies={["password"]}
+              rules={[
+                { required: true, message: "Подтвердите пароль" },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue("password") === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error("Пароли не совпадают"));
+                  },
+                }),
+              ]}
+            >
+              <Input.Password prefix={<LockOutlined />} placeholder="********" />
+            </Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              icon={<UserAddOutlined />}
+              block
+              loading={loading}
+            >
+              Зарегистрироваться
+            </Button>
+            <Typography.Paragraph type="secondary" className={styles.subtitle}>
+              Уже есть аккаунт?{" "}
+              <Link href="/login" passHref>
+                Войти
+              </Link>
+            </Typography.Paragraph>
+          </Form>
         ) : (
           <div className={styles.notice}>
             <Typography.Paragraph type="secondary">
@@ -225,7 +202,6 @@ function RegisterContent() {
             </Link>
           </div>
         )}
-
       </Card>
     </main>
   );

@@ -44,12 +44,10 @@ export const PLAN_TEXT = {
   },
   confirm: {
     deleteWorkoutTitle: "Удалить тренировку?",
-    deleteWorkoutWithReport:
-      "При удалении тренировки будет удален связанный отчет.",
+    deleteWorkoutWithReport: "При удалении тренировки будет удален связанный отчет.",
     deleteWorkoutSimple: "Удалить тренировку?",
     deleteDayTitle: "Удалить день?",
-    deleteDayWithReports:
-      "Удалятся все тренировки дня и связанные отчеты.",
+    deleteDayWithReports: "Удалятся все тренировки дня и связанные отчеты.",
     deleteDaySimple: "Удалятся все тренировки дня.",
     okDelete: "Удалить",
     cancel: "Отмена",

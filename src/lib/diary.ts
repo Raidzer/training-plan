@@ -94,8 +94,7 @@ type DayAggregation = {
   totalDistanceKm: number;
 };
 
-const isNonEmptyText = (value?: string | null) =>
-  Boolean(value && value.trim().length > 0);
+const isNonEmptyText = (value?: string | null) => Boolean(value && value.trim().length > 0);
 
 const parseDistanceKm = (value?: string | number | null) => {
   if (value === null || value === undefined || value === "") {
@@ -161,10 +160,7 @@ const buildDayStatus = (params: {
   };
 };
 
-export const getDiaryDayData = async (params: {
-  userId: number;
-  date: string;
-}) => {
+export const getDiaryDayData = async (params: { userId: number; date: string }) => {
   const previousDate = shiftDate(params.date, -1);
   const planEntriesRows = await db
     .select({
@@ -187,9 +183,7 @@ export const getDiaryDayData = async (params: {
       weightKg: weightEntries.weightKg,
     })
     .from(weightEntries)
-    .where(
-      and(eq(weightEntries.userId, params.userId), eq(weightEntries.date, params.date))
-    );
+    .where(and(eq(weightEntries.userId, params.userId), eq(weightEntries.date, params.date)));
 
   const [previousEveningWeight] = previousDate
     ? await db
@@ -214,12 +208,7 @@ export const getDiaryDayData = async (params: {
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
-    .where(
-      and(
-        eq(recoveryEntries.userId, params.userId),
-        eq(recoveryEntries.date, params.date)
-      )
-    );
+    .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));
 
   const planEntryIds = planEntriesRows.map((entry) => entry.id);
   const workoutReportsRows = planEntryIds.length
@@ -281,12 +270,8 @@ export const getDiaryDayData = async (params: {
     shoes: reportShoesMap.get(report.id) ?? [],
   }));
 
-  const hasWeightMorning = weightEntriesRows.some(
-    (entry) => entry.period === "morning"
-  );
-  const hasWeightEvening = weightEntriesRows.some(
-    (entry) => entry.period === "evening"
-  );
+  const hasWeightMorning = weightEntriesRows.some((entry) => entry.period === "morning");
+  const hasWeightEvening = weightEntriesRows.some((entry) => entry.period === "evening");
   const hasBath = Boolean(recoveryEntry?.hasBath);
   const hasMfr = Boolean(recoveryEntry?.hasMfr);
   const hasMassage = Boolean(recoveryEntry?.hasMassage);
@@ -327,9 +312,7 @@ export const getDiaryDayData = async (params: {
     workoutReports: workoutReportsWithShoes as DiaryWorkoutReport[],
     recoveryEntry: recoveryEntry ?? fallbackRecoveryEntry,
     status,
-    previousEveningWeightKg: previousEveningWeight
-      ? String(previousEveningWeight.weightKg)
-      : null,
+    previousEveningWeightKg: previousEveningWeight ? String(previousEveningWeight.weightKg) : null,
   };
 };
 
@@ -634,10 +617,7 @@ export const getDiaryExportRows = async (params: {
       )
     );
 
-  const planByDate = new Map<
-    string,
-    { id: number; taskText: string; isWorkload: boolean }[]
-  >();
+  const planByDate = new Map<string, { id: number; taskText: string; isWorkload: boolean }[]>();
   for (const entry of planRows) {
     const existing = planByDate.get(entry.date) ?? [];
     existing.push({
@@ -763,10 +743,7 @@ export const getDiaryExportRows = async (params: {
     return `${morning} / ${evening}`;
   };
 
-  const formatNumberedLines = (
-    values: Array<string | null | undefined>,
-    emptyValue = "-"
-  ) => {
+  const formatNumberedLines = (values: Array<string | null | undefined>, emptyValue = "-") => {
     if (!values.length) {
       return emptyValue;
     }
@@ -780,16 +757,10 @@ export const getDiaryExportRows = async (params: {
     if (normalized.length === 1) {
       return normalized[0];
     }
-    return normalized
-      .map((value, index) => `${index + 1}) ${value}`)
-      .join("\n");
+    return normalized.map((value, index) => `${index + 1}) ${value}`).join("\n");
   };
 
-  const formatRecovery = (entry?: {
-    hasBath: boolean;
-    hasMfr: boolean;
-    hasMassage: boolean;
-  }) => {
+  const formatRecovery = (entry?: { hasBath: boolean; hasMfr: boolean; hasMassage: boolean }) => {
     if (!entry) {
       return "-";
     }
@@ -870,9 +841,7 @@ export const getDiaryExportRows = async (params: {
         startTimes.push(report.startTime);
       }
       const taskText = entry.taskText?.trim() ? entry.taskText : "-";
-      const resultText = report?.resultText?.trim()
-        ? report.resultText
-        : "-";
+      const resultText = report?.resultText?.trim() ? report.resultText : "-";
       const commentParts: string[] = [];
       if (report?.commentText?.trim()) {
         commentParts.push(report.commentText.trim());
@@ -881,18 +850,14 @@ export const getDiaryExportRows = async (params: {
       if (temperatureText) {
         commentParts.push(temperatureText);
       }
-      const weatherText = report?.weather
-        ? weatherLabels[report.weather] ?? ""
-        : "";
+      const weatherText = report?.weather ? (weatherLabels[report.weather] ?? "") : "";
       if (weatherText) {
         commentParts.push(weatherText);
       }
       if (report?.hasWind) {
         commentParts.push("ветер");
       }
-      const surfaceText = report?.surface
-        ? surfaceLabels[report.surface] ?? ""
-        : "";
+      const surfaceText = report?.surface ? (surfaceLabels[report.surface] ?? "") : "";
       if (surfaceText) {
         commentParts.push(surfaceText);
       }
@@ -915,9 +880,7 @@ export const getDiaryExportRows = async (params: {
     const resultText = formatNumberedLines(results);
     const commentText = formatNumberedLines(comments);
     const scoreText = formatNumberedLines(scores);
-    const dateTime = startTimes.length
-      ? `${date} ${startTimes.join(", ")}`
-      : date;
+    const dateTime = startTimes.length ? `${date} ${startTimes.join(", ")}` : date;
     const volumeText = totalDistanceKm > 0 ? totalDistanceKm.toFixed(2) : "-";
 
     rows.push({

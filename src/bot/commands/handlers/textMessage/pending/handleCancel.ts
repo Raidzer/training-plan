@@ -6,11 +6,7 @@ import {
   buildMainMenuReplyKeyboard,
   CANCEL_LINK_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
-import {
-  clearPendingInput,
-  clearRecoveryDraft,
-  clearWeightDraft,
-} from "@/bot/menu/menuState";
+import { clearPendingInput, clearRecoveryDraft, clearWeightDraft } from "@/bot/menu/menuState";
 
 type CancelHandlerArgs = {
   ctx: any;

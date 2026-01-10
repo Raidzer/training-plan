@@ -10,13 +10,10 @@ export function SplitsPanel({ splits, splitGroups }: SplitsPanelProps) {
   return (
     <div className={styles.panel}>
       <div className={styles.sectionHeaderRow}>
-        <h2 className={styles.sectionTitle}>
-          Раскладка на дистанции (километры)
-        </h2>
+        <h2 className={styles.sectionTitle}>Раскладка на дистанции (километры)</h2>
       </div>
       <p className={styles.sectionHint}>
-        Мы посчитали, через сколько вы будете пробегать каждый километр, если
-        бежать с таким темпом:
+        Мы посчитали, через сколько вы будете пробегать каждый километр, если бежать с таким темпом:
       </p>
       {splits.length > 0 ? (
         <div className={styles.splitColumns}>
@@ -32,9 +29,7 @@ export function SplitsPanel({ splits, splitGroups }: SplitsPanelProps) {
           ))}
         </div>
       ) : (
-        <p className={styles.emptyState}>
-          Введите дистанцию и темп, чтобы увидеть раскладку.
-        </p>
+        <p className={styles.emptyState}>Введите дистанцию и темп, чтобы увидеть раскладку.</p>
       )}
     </div>
   );

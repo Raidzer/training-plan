@@ -58,8 +58,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(savedResults));
   }, [savedResults]);
 
-  const resultTotalSeconds =
-    resultHours * 3600 + resultMinutes * 60 + resultSeconds;
+  const resultTotalSeconds = resultHours * 3600 + resultMinutes * 60 + resultSeconds;
   const paceTotalSeconds = paceMinutes * 60 + paceSeconds;
   const lapTotalSeconds = lapMinutes * 60 + lapSeconds;
 
@@ -176,8 +175,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     const nextValue = toNonNegativeInt(event.target.value);
     setResultHours(nextValue);
     setLastEdited("result");
-    const nextTotalSeconds =
-      nextValue * 3600 + resultMinutes * 60 + resultSeconds;
+    const nextTotalSeconds = nextValue * 3600 + resultMinutes * 60 + resultSeconds;
     syncFromResult(nextTotalSeconds, distance);
   };
 
@@ -185,8 +183,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     const nextValue = toNonNegativeInt(event.target.value);
     setResultMinutes(nextValue);
     setLastEdited("result");
-    const nextTotalSeconds =
-      resultHours * 3600 + nextValue * 60 + resultSeconds;
+    const nextTotalSeconds = resultHours * 3600 + nextValue * 60 + resultSeconds;
     syncFromResult(nextTotalSeconds, distance);
   };
 
@@ -194,8 +191,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     const nextValue = toNonNegativeInt(event.target.value);
     setResultSeconds(nextValue);
     setLastEdited("result");
-    const nextTotalSeconds =
-      resultHours * 3600 + resultMinutes * 60 + nextValue;
+    const nextTotalSeconds = resultHours * 3600 + resultMinutes * 60 + nextValue;
     syncFromResult(nextTotalSeconds, distance);
   };
 

@@ -41,12 +41,7 @@ export function ResultSection({
     <div className={styles.section}>
       <div className={styles.sectionHeaderRow}>
         <h2 className={styles.sectionTitle}>Результат:</h2>
-        <button
-          type="button"
-          className={styles.saveButton}
-          disabled={!canSave}
-          onClick={onSave}
-        >
+        <button type="button" className={styles.saveButton} disabled={!canSave} onClick={onSave}>
           Сохранить результат
         </button>
       </div>
@@ -155,8 +150,7 @@ export function ResultSection({
       </div>
 
       <p className={styles.helperNote}>
-        Если менять одно значение, то остальные значения пересчитываются
-        автоматически
+        Если менять одно значение, то остальные значения пересчитываются автоматически
       </p>
     </div>
   );

@@ -51,18 +51,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | {
-        originalDate?: string;
-        date?: string;
-        isWorkload?: boolean;
-        entries?: {
-          id?: number;
-          taskText?: string;
-          commentText?: string | null;
-        }[];
-      }
-    | null;
+  const body = (await req.json().catch(() => null)) as {
+    originalDate?: string;
+    date?: string;
+    isWorkload?: boolean;
+    entries?: {
+      id?: number;
+      taskText?: string;
+      commentText?: string | null;
+    }[];
+  } | null;
 
   const date = typeof body?.date === "string" ? body.date.trim() : "";
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -70,8 +68,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_date" }, { status: 400 });
   }
 
-  const originalDateRaw =
-    typeof body?.originalDate === "string" ? body.originalDate.trim() : "";
+  const originalDateRaw = typeof body?.originalDate === "string" ? body.originalDate.trim() : "";
   const hasOriginalDate = originalDateRaw.length > 0;
   const originalDate = hasOriginalDate ? originalDateRaw : date;
   if (hasOriginalDate && !dateRegex.test(originalDate)) {
@@ -109,8 +106,8 @@ export async function POST(req: Request) {
       typeof entry?.commentText === "string"
         ? entry.commentText.trim()
         : entry?.commentText === null
-        ? null
-        : "";
+          ? null
+          : "";
     const commentText = commentTextRaw ? commentTextRaw : null;
 
     normalized.push({ id, taskText, commentText });
@@ -182,10 +179,7 @@ export async function POST(req: Request) {
         .select({ id: workoutReports.id })
         .from(workoutReports)
         .where(
-          and(
-            eq(workoutReports.userId, userId),
-            inArray(workoutReports.planEntryId, removedIds)
-          )
+          and(eq(workoutReports.userId, userId), inArray(workoutReports.planEntryId, removedIds))
         );
 
       const reportIds = removedReportIds.map((row) => row.id);
@@ -196,9 +190,7 @@ export async function POST(req: Request) {
         await tx
           .delete(workoutReportShoes)
           .where(inArray(workoutReportShoes.workoutReportId, reportIds));
-        await tx
-          .delete(workoutReports)
-          .where(inArray(workoutReports.id, reportIds));
+        await tx.delete(workoutReports).where(inArray(workoutReports.id, reportIds));
       }
 
       await tx
@@ -310,9 +302,7 @@ export async function DELETE(req: Request) {
     const reportIds = await tx
       .select({ id: workoutReports.id })
       .from(workoutReports)
-      .where(
-        and(eq(workoutReports.userId, userId), inArray(workoutReports.planEntryId, entryIds))
-      );
+      .where(and(eq(workoutReports.userId, userId), inArray(workoutReports.planEntryId, entryIds)));
 
     const reportIdList = reportIds.map((row) => row.id);
     if (reportIdList.length > 0) {
@@ -322,9 +312,7 @@ export async function DELETE(req: Request) {
       await tx
         .delete(workoutReportShoes)
         .where(inArray(workoutReportShoes.workoutReportId, reportIdList));
-      await tx
-        .delete(workoutReports)
-        .where(inArray(workoutReports.id, reportIdList));
+      await tx.delete(workoutReports).where(inArray(workoutReports.id, reportIdList));
     }
 
     await tx

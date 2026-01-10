@@ -42,20 +42,12 @@ export function DiaryStatusBlock({
         ) : (
           <Tag>{labels.dayIncomplete}</Tag>
         )}
-        <Tag
-          color={
-            status?.hasWeightMorning && status?.hasWeightEvening
-              ? "green"
-              : "default"
-          }
-        >
-          {labels.weightLabel}:{" "}
-          {status?.hasWeightMorning ? labels.weightMorningShort : "-"} /{" "}
+        <Tag color={status?.hasWeightMorning && status?.hasWeightEvening ? "green" : "default"}>
+          {labels.weightLabel}: {status?.hasWeightMorning ? labels.weightMorningShort : "-"} /{" "}
           {status?.hasWeightEvening ? labels.weightEveningShort : "-"}
         </Tag>
         <Tag color={workoutsComplete ? "green" : "orange"}>
-          {labels.workoutsLabel}: {status?.workoutsWithFullReport ?? 0}/
-          {status?.workoutsTotal ?? 0}
+          {labels.workoutsLabel}: {status?.workoutsWithFullReport ?? 0}/{status?.workoutsTotal ?? 0}
         </Tag>
       </div>
     </>

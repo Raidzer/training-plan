@@ -83,9 +83,7 @@ const formatTemperatureValue = (value?: string | null) => {
   return `${temperatureText}°C`;
 };
 
-const formatWorkoutScore = (
-  report?: DayPayload["workoutReports"][number] | null
-) => {
+const formatWorkoutScore = (report?: DayPayload["workoutReports"][number] | null) => {
   if (!report) {
     return "-";
   }
@@ -100,10 +98,7 @@ const formatWorkoutScore = (
   return parts.join("-");
 };
 
-const buildDailyReportText = (params: {
-  date: string;
-  day: DayPayload | null;
-}) => {
+const buildDailyReportText = (params: { date: string; day: DayPayload | null }) => {
   if (!params.day) {
     return "";
   }
@@ -174,9 +169,7 @@ const buildDailyReportText = (params: {
   ]);
   const recoveryText = formatRecoveryFlags(params.day.recoveryEntry);
   const volumeKm =
-    params.day.status.totalDistanceKm > 0
-      ? params.day.status.totalDistanceKm.toFixed(2)
-      : "";
+    params.day.status.totalDistanceKm > 0 ? params.day.status.totalDistanceKm.toFixed(2) : "";
 
   const recoveryBlock = [
     sleepText || "-",
@@ -321,10 +314,7 @@ export function DiaryClient() {
     setWeightForm((prev) => ({ ...prev, [period]: value }));
   };
 
-  const handleRecoveryToggle = (
-    field: "hasBath" | "hasMfr" | "hasMassage",
-    checked: boolean
-  ) => {
+  const handleRecoveryToggle = (field: "hasBath" | "hasMfr" | "hasMassage", checked: boolean) => {
     setRecoveryForm((prev) => ({ ...prev, [field]: checked }));
   };
 
@@ -372,8 +362,7 @@ export function DiaryClient() {
         next = { ...current, [field]: value as string | number | null };
         if (field === "surface") {
           const surfaceValue = typeof value === "string" ? value : "";
-          const isIndoorSurface =
-            surfaceValue === "manezh" || surfaceValue === "treadmill";
+          const isIndoorSurface = surfaceValue === "manezh" || surfaceValue === "treadmill";
           if (isIndoorSurface) {
             next.weather = "";
             next.hasWind = "";
@@ -387,8 +376,7 @@ export function DiaryClient() {
 
   const status = dayData?.status;
   const workoutsComplete = status
-    ? status.workoutsTotal === 0 ||
-      status.workoutsWithFullReport === status.workoutsTotal
+    ? status.workoutsTotal === 0 || status.workoutsWithFullReport === status.workoutsTotal
     : false;
   const reportText = useMemo(
     () =>
@@ -403,11 +391,7 @@ export function DiaryClient() {
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space
-          orientation="vertical"
-          size="large"
-          className={styles.spaceStyle}
-        >
+        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
           <DiaryHeader
             title={headerLabels.title}
             subtitle={headerLabels.subtitle}
@@ -433,11 +417,7 @@ export function DiaryClient() {
                 loading={loadingDay && !dayData}
                 className={styles.dayCard}
               >
-                <Space
-                  orientation="vertical"
-                  size="middle"
-                  className={styles.spaceStyle}
-                >
+                <Space orientation="vertical" size="middle" className={styles.spaceStyle}>
                   <DiaryStatusBlock
                     status={status}
                     workoutsComplete={workoutsComplete}
@@ -489,9 +469,7 @@ export function DiaryClient() {
                         shoePlaceholder={workoutLabels.shoePlaceholder}
                         weatherPlaceholder={workoutLabels.weatherPlaceholder}
                         windPlaceholder={workoutLabels.windPlaceholder}
-                        temperaturePlaceholder={
-                          workoutLabels.temperaturePlaceholder
-                        }
+                        temperaturePlaceholder={workoutLabels.temperaturePlaceholder}
                         commentPlaceholder={workoutLabels.commentPlaceholder}
                         saveReportLabel={workoutLabels.saveReportLabel}
                         surfaceOptions={SURFACE_OPTIONS}

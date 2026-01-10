@@ -23,13 +23,7 @@ const usefulItems = [
   },
 ];
 
-export function Header({
-  mode,
-  onToggle,
-}: {
-  mode: Mode;
-  onToggle: (next: Mode) => void;
-}) {
+export function Header({ mode, onToggle }: { mode: Mode; onToggle: (next: Mode) => void }) {
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>

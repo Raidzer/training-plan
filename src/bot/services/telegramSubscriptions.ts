@@ -63,10 +63,7 @@ export const getEnabledSubscriptions = async () => {
     .where(eq(telegramSubscriptions.enabled, true));
 };
 
-export const markSubscriptionSent = async (params: {
-  id: number;
-  sentOn: string;
-}) => {
+export const markSubscriptionSent = async (params: { id: number; sentOn: string }) => {
   await db
     .update(telegramSubscriptions)
     .set({ lastSentOn: params.sentOn, updatedAt: new Date() })

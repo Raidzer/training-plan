@@ -1,10 +1,7 @@
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { linkAccount } from "@/bot/services/telegramLinking";
-import {
-  buildLinkReplyKeyboard,
-  buildMainMenuReplyKeyboard,
-} from "@/bot/menu/menuKeyboard";
+import { buildLinkReplyKeyboard, buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput } from "@/bot/menu/menuState";
 
 type LinkHandlerArgs = {
@@ -13,11 +10,7 @@ type LinkHandlerArgs = {
   text: string;
 };
 
-export const handleLinkPending = async ({
-  ctx,
-  chatId,
-  text,
-}: LinkHandlerArgs) => {
+export const handleLinkPending = async ({ ctx, chatId, text }: LinkHandlerArgs) => {
   if (!/^\d{6}$/.test(text)) {
     await ctx.reply("Введите 6-значный код с сайта или напишите 'отмена'.");
     return;
@@ -51,9 +44,7 @@ export const handleLinkPending = async ({
       );
       return;
     }
-    await ctx.reply(
-      "Код недействителен или истек. Попробуйте другой или напишите 'отмена'."
-    );
+    await ctx.reply("Код недействителен или истек. Попробуйте другой или напишите 'отмена'.");
     return;
   }
 

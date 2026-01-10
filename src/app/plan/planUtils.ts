@@ -75,9 +75,7 @@ export const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
 
   const rows: PlanDayEntry[] = [];
   for (const [date, dayEntries] of grouped) {
-    const sorted = [...dayEntries].sort(
-      (a, b) => a.sessionOrder - b.sessionOrder
-    );
+    const sorted = [...dayEntries].sort((a, b) => a.sessionOrder - b.sessionOrder);
     const tasks = sorted.map((entry) => entry.taskText);
     const comments = sorted.map((entry) => entry.commentText ?? "");
     const commentText = formatNumberedLines(comments, {

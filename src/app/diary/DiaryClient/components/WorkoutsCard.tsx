@@ -1,11 +1,7 @@
 "use client";
 
 import { Button, Card, Input, InputNumber, Select, Space, Tag, Typography } from "antd";
-import type {
-  PlanEntry,
-  SavingWorkoutsState,
-  WorkoutFormState,
-} from "../types/diaryTypes";
+import type { PlanEntry, SavingWorkoutsState, WorkoutFormState } from "../types/diaryTypes";
 import { normalizeStartTimeInput } from "../utils/diaryUtils";
 import styles from "../diary.module.scss";
 
@@ -58,9 +54,8 @@ type WorkoutsCardProps = {
   onSave: (entryId: number) => void;
 };
 
-const normalizeOptions = (
-  options: readonly { value: string | number; label: string }[]
-) => options.map((option) => ({ value: option.value, label: option.label }));
+const normalizeOptions = (options: readonly { value: string | number; label: string }[]) =>
+  options.map((option) => ({ value: option.value, label: option.label }));
 
 export function WorkoutsCard({
   title,
@@ -100,22 +95,16 @@ export function WorkoutsCard({
   return (
     <Card type="inner" title={title}>
       {entries.length ? (
-        <Space
-          orientation="vertical"
-          size="middle"
-          className={styles.workoutList}
-        >
+        <Space orientation="vertical" size="middle" className={styles.workoutList}>
           {entries.map((entry) => {
             const form = workoutForm[entry.id];
-            const isIndoorSurface =
-              form?.surface === "manezh" || form?.surface === "treadmill";
+            const isIndoorSurface = form?.surface === "manezh" || form?.surface === "treadmill";
             const surfaceValue = form?.surface ? form.surface : null;
             const shoeValue = Array.isArray(form?.shoeIds) ? form.shoeIds : [];
             const weatherValue = form?.weather ? form.weather : null;
             const windValue = form?.hasWind ? form.hasWind : null;
             const isComplete =
-              Boolean(form?.resultText?.trim()) &&
-              Boolean(form?.commentText?.trim());
+              Boolean(form?.resultText?.trim()) && Boolean(form?.commentText?.trim());
             return (
               <div key={entry.id} className={styles.workoutItem}>
                 <div className={styles.workoutHeader}>
@@ -124,10 +113,7 @@ export function WorkoutsCard({
                       {entry.sessionOrder}. {entry.taskText}
                     </Typography.Text>
                     {entry.commentText ? (
-                      <Typography.Paragraph
-                        type="secondary"
-                        className={styles.paragraphTight}
-                      >
+                      <Typography.Paragraph type="secondary" className={styles.paragraphTight}>
                         {entry.commentText}
                       </Typography.Paragraph>
                     ) : null}
@@ -142,27 +128,19 @@ export function WorkoutsCard({
                     maxLength={5}
                     placeholder={startTimePlaceholder}
                     onChange={(event) =>
-                      onChange(
-                        entry.id,
-                        "startTime",
-                        normalizeStartTimeInput(event.target.value)
-                      )
+                      onChange(entry.id, "startTime", normalizeStartTimeInput(event.target.value))
                     }
                   />
                   <Input.TextArea
                     value={form?.resultText ?? ""}
                     autoSize={{ minRows: 4, maxRows: 12 }}
                     placeholder={resultPlaceholder}
-                    onChange={(event) =>
-                      onChange(entry.id, "resultText", event.target.value)
-                    }
+                    onChange={(event) => onChange(entry.id, "resultText", event.target.value)}
                   />
                   <Input
                     value={form?.distanceKm ?? ""}
                     placeholder={distancePlaceholder}
-                    onChange={(event) =>
-                      onChange(entry.id, "distanceKm", event.target.value)
-                    }
+                    onChange={(event) => onChange(entry.id, "distanceKm", event.target.value)}
                   />
                   <div className={styles.workoutScores}>
                     <div className={styles.workoutScoreField}>
@@ -175,9 +153,7 @@ export function WorkoutsCard({
                         precision={0}
                         placeholder={scorePlaceholder}
                         value={form?.overallScore ?? null}
-                        onChange={(value) =>
-                          onChange(entry.id, "overallScore", value)
-                        }
+                        onChange={(value) => onChange(entry.id, "overallScore", value)}
                       />
                     </div>
                     <div className={styles.workoutScoreField}>
@@ -190,9 +166,7 @@ export function WorkoutsCard({
                         precision={0}
                         placeholder={scorePlaceholder}
                         value={form?.functionalScore ?? null}
-                        onChange={(value) =>
-                          onChange(entry.id, "functionalScore", value)
-                        }
+                        onChange={(value) => onChange(entry.id, "functionalScore", value)}
                       />
                     </div>
                     <div className={styles.workoutScoreField}>
@@ -205,9 +179,7 @@ export function WorkoutsCard({
                         precision={0}
                         placeholder={scorePlaceholder}
                         value={form?.muscleScore ?? null}
-                        onChange={(value) =>
-                          onChange(entry.id, "muscleScore", value)
-                        }
+                        onChange={(value) => onChange(entry.id, "muscleScore", value)}
                       />
                     </div>
                   </div>
@@ -217,9 +189,7 @@ export function WorkoutsCard({
                       placeholder={surfacePlaceholder}
                       options={normalizedSurfaceOptions}
                       allowClear
-                      onChange={(value) =>
-                        onChange(entry.id, "surface", value ?? "")
-                      }
+                      onChange={(value) => onChange(entry.id, "surface", value ?? "")}
                     />
                     <Select
                       mode="multiple"
@@ -228,9 +198,7 @@ export function WorkoutsCard({
                       options={normalizedShoeOptions}
                       allowClear
                       loading={shoeLoading}
-                      onChange={(value) =>
-                        onChange(entry.id, "shoeIds", value ?? [])
-                      }
+                      onChange={(value) => onChange(entry.id, "shoeIds", value ?? [])}
                     />
                     {isIndoorSurface ? null : (
                       <>
@@ -239,28 +207,20 @@ export function WorkoutsCard({
                           placeholder={weatherPlaceholder}
                           options={normalizedWeatherOptions}
                           allowClear
-                          onChange={(value) =>
-                            onChange(entry.id, "weather", value ?? "")
-                          }
+                          onChange={(value) => onChange(entry.id, "weather", value ?? "")}
                         />
                         <Select<string | null>
                           value={windValue}
                           placeholder={windPlaceholder}
                           options={normalizedWindOptions}
                           allowClear
-                          onChange={(value) =>
-                            onChange(entry.id, "hasWind", value ?? "")
-                          }
+                          onChange={(value) => onChange(entry.id, "hasWind", value ?? "")}
                         />
                         <Input
                           value={form?.temperatureC ?? ""}
                           placeholder={temperaturePlaceholder}
                           onChange={(event) =>
-                            onChange(
-                              entry.id,
-                              "temperatureC",
-                              event.target.value
-                            )
+                            onChange(entry.id, "temperatureC", event.target.value)
                           }
                         />
                       </>
@@ -270,9 +230,7 @@ export function WorkoutsCard({
                     value={form?.commentText ?? ""}
                     autoSize={{ minRows: 3, maxRows: 10 }}
                     placeholder={commentPlaceholder}
-                    onChange={(event) =>
-                      onChange(entry.id, "commentText", event.target.value)
-                    }
+                    onChange={(event) => onChange(entry.id, "commentText", event.target.value)}
                   />
                 </div>
                 <div className={styles.workoutActions}>

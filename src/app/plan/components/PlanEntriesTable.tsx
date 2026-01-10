@@ -1,9 +1,4 @@
-import {
-  BookOutlined,
-  CheckCircleOutlined,
-  EditOutlined,
-  FireOutlined,
-} from "@ant-design/icons";
+import { BookOutlined, CheckCircleOutlined, EditOutlined, FireOutlined } from "@ant-design/icons";
 import { Button, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
@@ -53,9 +48,7 @@ export function PlanEntriesTable({
         dataIndex: "taskText",
         className: styles.textColumn,
         onHeaderCell: () => ({ className: styles.textColumn }),
-        render: (value: string) => (
-          <span className={styles.multilineText}>{value}</span>
-        ),
+        render: (value: string) => <span className={styles.multilineText}>{value}</span>,
       },
       {
         title: PLAN_TEXT.table.comment,

@@ -53,8 +53,7 @@ const cellToString = (value: unknown): string => {
   return String(value ?? "");
 };
 
-const isHeader = (value: string, candidates: string[]) =>
-  candidates.some((c) => value.includes(c));
+const isHeader = (value: string, candidates: string[]) => candidates.some((c) => value.includes(c));
 
 const excelSerialToDate = (serial: number) => {
   const excelEpoch = Date.UTC(1899, 11, 30);
@@ -242,25 +241,19 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
 
     const taskLineCount = countNumberedLines(taskText);
     const taskChunks =
-      taskLineCount > 1
-        ? splitNumberedText(taskText).filter((chunk) => chunk.length > 0)
-        : [];
+      taskLineCount > 1 ? splitNumberedText(taskText).filter((chunk) => chunk.length > 0) : [];
     const tasks = taskChunks.length ? taskChunks : [taskText];
     const hasMultipleTasks = tasks.length > 1;
     const hasNumberedComments =
-      hasMultipleTasks && commentTextRaw
-        ? countNumberedLines(commentTextRaw) > 0
-        : false;
-    const commentChunks = hasNumberedComments
-      ? splitNumberedText(commentTextRaw)
-      : [];
+      hasMultipleTasks && commentTextRaw ? countNumberedLines(commentTextRaw) > 0 : false;
+    const commentChunks = hasNumberedComments ? splitNumberedText(commentTextRaw) : [];
 
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];
       let comment = "";
       if (commentTextRaw) {
         if (hasMultipleTasks) {
-          comment = hasNumberedComments ? commentChunks[i] ?? "" : commentTextRaw;
+          comment = hasNumberedComments ? (commentChunks[i] ?? "") : commentTextRaw;
         } else {
           comment = commentTextRaw;
         }
@@ -297,10 +290,7 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("file");
   if (!(file instanceof Blob)) {
-    return NextResponse.json(
-      { error: "Не найден файл в поле file" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Не найден файл в поле file" }, { status: 400 });
   }
 
   const filename = (file as any).name ?? "plan.xlsx";
@@ -310,8 +300,7 @@ export async function POST(req: Request) {
   try {
     parsed = await parseExcel(buffer);
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Не удалось прочитать файл";
+    const message = err instanceof Error ? err.message : "Не удалось прочитать файл";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
@@ -323,9 +312,7 @@ export async function POST(req: Request) {
   }
 
   // Нумерация сессий внутри дня по порядку строк.
-  const dateSequenceError = validateSequentialDates(
-    parsed.rows.map((row) => row.date)
-  );
+  const dateSequenceError = validateSequentialDates(parsed.rows.map((row) => row.date));
   if (dateSequenceError) {
     return NextResponse.json({ error: dateSequenceError }, { status: 400 });
   }
@@ -356,9 +343,7 @@ export async function POST(req: Request) {
   const existingDates = new Set(existingRows.map((row) => row.date));
   const newEntries = entries.filter((entry) => !existingDates.has(entry.date));
 
-  const uniqueNewDates = Array.from(
-    new Set(newEntries.map((entry) => entry.date))
-  ).sort();
+  const uniqueNewDates = Array.from(new Set(newEntries.map((entry) => entry.date))).sort();
   if (uniqueNewDates.length > 0) {
     const [lastRow] = await db
       .select({ date: planEntries.date })
@@ -409,8 +394,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const skippedCount =
-      parsed.errors.length + Math.max(0, entries.length - newEntries.length);
+    const skippedCount = parsed.errors.length + Math.max(0, entries.length - newEntries.length);
     await tx
       .update(planImports)
       .set({

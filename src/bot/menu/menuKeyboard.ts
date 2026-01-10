@@ -68,10 +68,7 @@ export const buildDateMenuReplyKeyboard = (params: { dateButtons: string[] }) =>
     }
     rows.push(row);
   }
-  rows.push([
-    { text: CUSTOM_DATE_BUTTON_TEXT },
-    { text: DATE_BACK_BUTTON_TEXT },
-  ]);
+  rows.push([{ text: CUSTOM_DATE_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }]);
   return {
     keyboard: rows,
     resize_keyboard: true,
@@ -82,10 +79,7 @@ export const buildDateMenuReplyKeyboard = (params: { dateButtons: string[] }) =>
 export const buildWeightDateReplyKeyboard = () => {
   return {
     keyboard: [
-      [
-        { text: WEIGHT_TODAY_BUTTON_TEXT },
-        { text: WEIGHT_CUSTOM_DATE_BUTTON_TEXT },
-      ],
+      [{ text: WEIGHT_TODAY_BUTTON_TEXT }, { text: WEIGHT_CUSTOM_DATE_BUTTON_TEXT }],
       [{ text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
@@ -96,10 +90,7 @@ export const buildWeightDateReplyKeyboard = () => {
 export const buildWeightPeriodReplyKeyboard = () => {
   return {
     keyboard: [
-      [
-        { text: WEIGHT_MORNING_BUTTON_TEXT },
-        { text: WEIGHT_EVENING_BUTTON_TEXT },
-      ],
+      [{ text: WEIGHT_MORNING_BUTTON_TEXT }, { text: WEIGHT_EVENING_BUTTON_TEXT }],
       [{ text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
@@ -112,10 +103,7 @@ export const buildWeightActionReplyKeyboard = () => {
     keyboard: [
       [{ text: REPORT_WEIGHT_BUTTON_TEXT }],
       [{ text: REPORT_RECOVERY_BUTTON_TEXT }],
-      [
-        { text: REPORT_MAIN_MENU_BUTTON_TEXT },
-        { text: DATE_BACK_BUTTON_TEXT },
-      ],
+      [{ text: REPORT_MAIN_MENU_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
     is_persistent: true,
@@ -145,10 +133,7 @@ export const buildRecoveryReplyKeyboard = (params: {
           text: formatRecoveryToggleLabel(RECOVERY_MFR_LABEL, params.hasMfr),
         },
         {
-          text: formatRecoveryToggleLabel(
-            RECOVERY_MASSAGE_LABEL,
-            params.hasMassage
-          ),
+          text: formatRecoveryToggleLabel(RECOVERY_MASSAGE_LABEL, params.hasMassage),
         },
       ],
       [
@@ -157,10 +142,7 @@ export const buildRecoveryReplyKeyboard = (params: {
         },
       ],
       [{ text: RECOVERY_SAVE_BUTTON_TEXT }],
-      [
-        { text: REPORT_MAIN_MENU_BUTTON_TEXT },
-        { text: DATE_BACK_BUTTON_TEXT },
-      ],
+      [{ text: REPORT_MAIN_MENU_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
     is_persistent: true,

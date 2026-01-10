@@ -42,9 +42,7 @@ const normalizeRecordDate = (value: string | Date) => {
   return value;
 };
 
-export const getPersonalRecords = async (params: {
-  userId: number;
-}): Promise<PersonalRecord[]> => {
+export const getPersonalRecords = async (params: { userId: number }): Promise<PersonalRecord[]> => {
   const rows = await db
     .select({
       distanceKey: personalRecords.distanceKey,

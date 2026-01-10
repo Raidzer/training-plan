@@ -8,19 +8,7 @@ import {
   StopOutlined,
   UserSwitchOutlined,
 } from "@ant-design/icons";
-import {
-  App,
-  Button,
-  Card,
-  Form,
-  Input,
-  Modal,
-  Select,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from "antd";
+import { App, Button, Card, Form, Input, Modal, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import { useState } from "react";
@@ -213,9 +201,7 @@ export function AdminUsersClient({ users }: Props) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        messageApi.error(
-          getApiErrorMessage(data, "Не удалось обновить роль.")
-        );
+        messageApi.error(getApiErrorMessage(data, "Не удалось обновить роль."));
         return;
       }
       updateRow(activeUser.id, { role: values.role });
@@ -243,9 +229,7 @@ export function AdminUsersClient({ users }: Props) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        messageApi.error(
-          getApiErrorMessage(data, "Не удалось обновить пароль.")
-        );
+        messageApi.error(getApiErrorMessage(data, "Не удалось обновить пароль."));
         return;
       }
       messageApi.success("Пароль обновлен.");
@@ -267,15 +251,11 @@ export function AdminUsersClient({ users }: Props) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        messageApi.error(
-          getApiErrorMessage(data, "Не удалось обновить статус.")
-        );
+        messageApi.error(getApiErrorMessage(data, "Не удалось обновить статус."));
         return;
       }
       updateRow(user.id, { isActive });
-      messageApi.success(
-        isActive ? "Пользователь включен." : "Пользователь отключен."
-      );
+      messageApi.success(isActive ? "Пользователь включен." : "Пользователь отключен.");
     } catch (error) {
       messageApi.error("Не удалось обновить статус.");
     } finally {
@@ -287,8 +267,7 @@ export function AdminUsersClient({ users }: Props) {
     const label = getUserLabel(user);
     modalApi.confirm({
       title: `Отключить пользователя ${label}?`,
-      content:
-        "Пользователь не сможет входить в систему до обратного включения.",
+      content: "Пользователь не сможет входить в систему до обратного включения.",
       okText: "Отключить",
       okType: "danger",
       cancelText: "Отмена",
@@ -338,11 +317,7 @@ export function AdminUsersClient({ users }: Props) {
       key: "role",
       render: (value) => {
         const meta = getRoleMeta(String(value ?? ""));
-        return meta.color ? (
-          <Tag color={meta.color}>{meta.label}</Tag>
-        ) : (
-          <Tag>{meta.label}</Tag>
-        );
+        return meta.color ? <Tag color={meta.color}>{meta.label}</Tag> : <Tag>{meta.label}</Tag>;
       },
     },
     {
@@ -356,9 +331,7 @@ export function AdminUsersClient({ users }: Props) {
       dataIndex: "isActive",
       key: "isActive",
       render: (value) => (
-        <Tag color={value ? "green" : "red"}>
-          {value ? "Активен" : "Отключен"}
-        </Tag>
+        <Tag color={value ? "green" : "red"}>{value ? "Активен" : "Отключен"}</Tag>
       ),
     },
     {
@@ -377,11 +350,7 @@ export function AdminUsersClient({ users }: Props) {
             >
               Роль
             </Button>
-            <Button
-              size="small"
-              icon={<LockOutlined />}
-              onClick={() => openPasswordModal(record)}
-            >
+            <Button size="small" icon={<LockOutlined />} onClick={() => openPasswordModal(record)}>
               Пароль
             </Button>
             <Button

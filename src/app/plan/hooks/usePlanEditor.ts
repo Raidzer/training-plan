@@ -189,10 +189,7 @@ export const usePlanEditor = ({
     }
 
     if (
-      entries.some(
-        (entry) =>
-          entry.date === normalizedDate && entry.date !== draft.originalDate
-      )
+      entries.some((entry) => entry.date === normalizedDate && entry.date !== draft.originalDate)
     ) {
       msgApi.error(PLAN_TEXT.messages.dateExists);
       return;
@@ -208,10 +205,7 @@ export const usePlanEditor = ({
       };
     });
 
-    if (
-      normalizedEntries.length === 0 ||
-      normalizedEntries.some((entry) => !entry.taskText)
-    ) {
+    if (normalizedEntries.length === 0 || normalizedEntries.some((entry) => !entry.taskText)) {
       msgApi.error(PLAN_TEXT.messages.fillWorkouts);
       return;
     }
@@ -244,9 +238,10 @@ export const usePlanEditor = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = (await res.json().catch(() => null)) as
-        | { entries?: PlanEntry[]; error?: string }
-        | null;
+      const data = (await res.json().catch(() => null)) as {
+        entries?: PlanEntry[];
+        error?: string;
+      } | null;
 
       if (!res.ok || !data?.entries) {
         const errorCode = data?.error;
@@ -301,15 +296,13 @@ export const usePlanEditor = ({
       onOk: async () => {
         setSaving(true);
         try {
-          const res = await fetch(
-            `/api/plans?date=${encodeURIComponent(targetDate)}`,
-            {
-              method: "DELETE",
-            }
-          );
-          const data = (await res.json().catch(() => null)) as
-            | { deleted?: boolean; error?: string }
-            | null;
+          const res = await fetch(`/api/plans?date=${encodeURIComponent(targetDate)}`, {
+            method: "DELETE",
+          });
+          const data = (await res.json().catch(() => null)) as {
+            deleted?: boolean;
+            error?: string;
+          } | null;
           if (!res.ok || !data?.deleted) {
             const errorCode = data?.error;
             if (res.status === 404 || errorCode === "not_found") {
@@ -319,9 +312,7 @@ export const usePlanEditor = ({
             }
             return;
           }
-          setEntries((prev) =>
-            prev.filter((entry) => entry.date !== targetDate)
-          );
+          setEntries((prev) => prev.filter((entry) => entry.date !== targetDate));
           msgApi.success(PLAN_TEXT.messages.dayDeleted);
           closeEditor();
         } catch (err) {

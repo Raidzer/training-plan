@@ -9,13 +9,7 @@ import { upsertWorkoutReport } from "@/lib/workoutReports";
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 const WEATHER_OPTIONS = new Set(["cloudy", "sunny", "rain", "snow"]);
-const SURFACE_OPTIONS = new Set([
-  "ground",
-  "asphalt",
-  "manezh",
-  "treadmill",
-  "stadium",
-]);
+const SURFACE_OPTIONS = new Set(["ground", "asphalt", "manezh", "treadmill", "stadium"]);
 
 const parseOptionalEnum = (value: unknown, options: Set<string>) => {
   if (value === undefined) {
@@ -65,8 +59,7 @@ const parseOptionalDistance = (value: unknown) => {
   if (value === null || value === "") {
     return { value: null, valid: true };
   }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
+  const parsed = typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
   if (!Number.isFinite(parsed) || parsed < 0) {
     return { value: null, valid: false };
   }
@@ -80,8 +73,7 @@ const parseOptionalTemperature = (value: unknown) => {
   if (value === null || value === "") {
     return { value: null, valid: true };
   }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
+  const parsed = typeof value === "number" ? value : Number(String(value).trim().replace(",", "."));
   if (!Number.isFinite(parsed)) {
     return { value: null, valid: false };
   }
@@ -119,8 +111,7 @@ const parseOptionalIdList = (value: unknown) => {
   const ids: number[] = [];
   const seen = new Set<number>();
   for (const item of value) {
-    const parsed =
-      typeof item === "number" ? item : Number(String(item).trim());
+    const parsed = typeof item === "number" ? item : Number(String(item).trim());
     if (!Number.isInteger(parsed) || parsed <= 0) {
       return { value: [], valid: false };
     }
@@ -143,40 +134,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | {
-        planEntryId?: number | string;
-        date?: string;
-        startTime?: string;
-        resultText?: string;
-        commentText?: string | null;
-        distanceKm?: number | string | null;
-        overallScore?: number | string | null;
-        functionalScore?: number | string | null;
-        muscleScore?: number | string | null;
-        weather?: string | null;
-        hasWind?: boolean | string | null;
-        temperatureC?: number | string | null;
-        surface?: string | null;
-        shoeIds?: number[] | string[] | null;
-      }
-    | null;
+  const body = (await req.json().catch(() => null)) as {
+    planEntryId?: number | string;
+    date?: string;
+    startTime?: string;
+    resultText?: string;
+    commentText?: string | null;
+    distanceKm?: number | string | null;
+    overallScore?: number | string | null;
+    functionalScore?: number | string | null;
+    muscleScore?: number | string | null;
+    weather?: string | null;
+    hasWind?: boolean | string | null;
+    temperatureC?: number | string | null;
+    surface?: string | null;
+    shoeIds?: number[] | string[] | null;
+  } | null;
 
   const planEntryId = Number(body?.planEntryId);
   const date = body?.date ?? null;
   const startTime = typeof body?.startTime === "string" ? body.startTime.trim() : "";
   const resultText = typeof body?.resultText === "string" ? body.resultText : "";
   const trimmedResultText = resultText.trim();
-  const commentText =
-    typeof body?.commentText === "string" ? body.commentText.trim() : null;
+  const commentText = typeof body?.commentText === "string" ? body.commentText.trim() : null;
   const distanceKm = parseOptionalDistance(body?.distanceKm);
   const overallScore = parseOptionalScore(body?.overallScore);
   const functionalScore = parseOptionalScore(body?.functionalScore);
   const muscleScore = parseOptionalScore(body?.muscleScore);
   const surface = parseOptionalEnum(body?.surface, SURFACE_OPTIONS);
   const shoeIds = parseOptionalIdList(body?.shoeIds);
-  const isIndoorSurface =
-    surface.value === "manezh" || surface.value === "treadmill";
+  const isIndoorSurface = surface.value === "manezh" || surface.value === "treadmill";
   const weather = isIndoorSurface
     ? { value: null, valid: true }
     : parseOptionalEnum(body?.weather, WEATHER_OPTIONS);

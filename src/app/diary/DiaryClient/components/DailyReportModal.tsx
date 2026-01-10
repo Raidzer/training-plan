@@ -59,9 +59,7 @@ export function DailyReportModal({
         </Button>,
       ]}
     >
-      <Typography.Paragraph className={styles.reportText}>
-        {reportText}
-      </Typography.Paragraph>
+      <Typography.Paragraph className={styles.reportText}>{reportText}</Typography.Paragraph>
     </Modal>
   );
 }

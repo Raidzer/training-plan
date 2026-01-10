@@ -14,9 +14,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | { date?: string; period?: string; weightKg?: number | string }
-    | null;
+  const body = (await req.json().catch(() => null)) as {
+    date?: string;
+    period?: string;
+    weightKg?: number | string;
+  } | null;
 
   const date = body?.date ?? null;
   const period = body?.period ?? null;

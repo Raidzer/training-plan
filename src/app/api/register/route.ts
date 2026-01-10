@@ -15,7 +15,7 @@ const schema = z.object({
   name: z.string().min(2, "Имя слишком короткое"),
   lastName: z.string().trim().max(255, "Фамилия слишком длинная").optional(),
   gender: z.enum(["male", "female"], {
-    required_error: "Выберите пол",
+    message: "Выберите пол",
   }),
   email: z.string().email("Некорректный email"),
   password: z.string().min(6, "Минимум 6 символов"),
@@ -46,14 +46,10 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Некорректные данные" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
   }
 
-  const { name, lastName, gender, email, login, password, inviteToken } =
-    parsed.data;
+  const { name, lastName, gender, email, login, password, inviteToken } = parsed.data;
   const normalizedLastName = lastName?.trim() ?? "";
   const lastNameValue = normalizedLastName.length > 0 ? normalizedLastName : null;
 
@@ -154,20 +150,11 @@ export async function POST(req: Request) {
         case "invite_expired":
           return NextResponse.json({ error: "invite_expired" }, { status: 410 });
         case "user_exists":
-          return NextResponse.json(
-            { error: "Email or login already in use" },
-            { status: 409 }
-          );
+          return NextResponse.json({ error: "Email or login already in use" }, { status: 409 });
         case "create_failed":
-          return NextResponse.json(
-            { error: "Failed to create user" },
-            { status: 500 }
-          );
+          return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
         default:
-          return NextResponse.json(
-            { error: "Failed to create user" },
-            { status: 500 }
-          );
+          return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
       }
     }
 

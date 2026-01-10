@@ -4,11 +4,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { registrationInvites, users } from "@/db/schema";
-import {
-  buildInviteExpiry,
-  generateInviteToken,
-  hashInviteToken,
-} from "@/lib/registrationInvites";
+import { buildInviteExpiry, generateInviteToken, hashInviteToken } from "@/lib/registrationInvites";
 
 const schema = z.object({
   role: z.enum(["athlete", "coach"]),
@@ -111,9 +107,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const sessionUserId = Number(
-    (session.user as { id?: string } | undefined)?.id
-  );
+  const sessionUserId = Number((session.user as { id?: string } | undefined)?.id);
   if (!Number.isFinite(sessionUserId)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }

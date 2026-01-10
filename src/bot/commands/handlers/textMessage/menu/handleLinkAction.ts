@@ -13,11 +13,7 @@ type LinkMenuActionArgs = {
   action: "cancelLink" | "link";
 };
 
-export const handleLinkMenuAction = async ({
-  ctx,
-  chatId,
-  action,
-}: LinkMenuActionArgs) => {
+export const handleLinkMenuAction = async ({ ctx, chatId, action }: LinkMenuActionArgs) => {
   if (action === "cancelLink") {
     clearPendingInput(chatId);
     await ctx.reply("Привязка отменена.", {

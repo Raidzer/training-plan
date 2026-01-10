@@ -6,10 +6,7 @@ type HelpMenuActionArgs = {
   userId: number;
 };
 
-export const handleHelpMenuAction = async ({
-  ctx,
-  userId,
-}: HelpMenuActionArgs) => {
+export const handleHelpMenuAction = async ({ ctx, userId }: HelpMenuActionArgs) => {
   const helpMessage = [
     "Что умеет бот:",
     " Сегодня - показать план на сегодня.",

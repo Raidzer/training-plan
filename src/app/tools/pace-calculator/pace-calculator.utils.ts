@@ -41,8 +41,7 @@ export const formatMinutesSeconds = (totalSeconds: number) => {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 };
 
-export const getDistanceLabel = (meters: number) =>
-  `${meters.toLocaleString("ru-RU")} м`;
+export const getDistanceLabel = (meters: number) => `${meters.toLocaleString("ru-RU")} м`;
 
 export const safeParseSaved = (raw: string | null): SavedResult[] => {
   if (!raw) {

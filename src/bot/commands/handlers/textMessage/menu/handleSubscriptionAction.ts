@@ -1,7 +1,4 @@
-import {
-  getSubscription,
-  upsertSubscription,
-} from "@/bot/services/telegramSubscriptions";
+import { getSubscription, upsertSubscription } from "@/bot/services/telegramSubscriptions";
 import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
 
 type SubscriptionMenuActionArgs = {

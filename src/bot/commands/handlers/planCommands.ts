@@ -1,9 +1,5 @@
 import type { Bot } from "grammy";
-import {
-  formatDateInTimeZone,
-  formatDateLocal,
-  parseDisplayDate,
-} from "@/bot/utils/dateTime";
+import { formatDateInTimeZone, formatDateLocal, parseDisplayDate } from "@/bot/utils/dateTime";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { getPlanEntriesByDate } from "@/lib/planEntries";
@@ -31,9 +27,7 @@ export const registerPlanCommands = (bot: Bot) => {
     const message = formatPlanMessage({ date: today, entries });
 
     if (!timeZone) {
-      return ctx.reply(
-        `${message}\n\nТаймзона не задана, использую время сервера.`
-      );
+      return ctx.reply(`${message}\n\nТаймзона не задана, использую время сервера.`);
     }
 
     return ctx.reply(message);

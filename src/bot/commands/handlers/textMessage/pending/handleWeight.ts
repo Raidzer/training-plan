@@ -37,12 +37,7 @@ type WeightHandlerArgs = {
   ctx: any;
   chatId: number;
   text: string;
-  pending:
-    | "weightDateMenu"
-    | "weightDate"
-    | "weightAction"
-    | "weightPeriod"
-    | "weightValue";
+  pending: "weightDateMenu" | "weightDate" | "weightAction" | "weightPeriod" | "weightValue";
   userId: number;
 };
 
@@ -89,7 +84,7 @@ export const handleWeightPending = async ({
       return;
     }
 
-    await ctx.reply("Выбери дату: \"Сегодня\" или \"Произвольная дата\".", {
+    await ctx.reply('Выбери дату: "Сегодня" или "Произвольная дата".', {
       reply_markup: buildWeightDateReplyKeyboard(),
     });
     return;
@@ -217,18 +212,12 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (
-      text === WEIGHT_MORNING_BUTTON_TEXT ||
-      text === WEIGHT_EVENING_BUTTON_TEXT
-    ) {
-      const period =
-        text === WEIGHT_MORNING_BUTTON_TEXT ? "morning" : "evening";
+    if (text === WEIGHT_MORNING_BUTTON_TEXT || text === WEIGHT_EVENING_BUTTON_TEXT) {
+      const period = text === WEIGHT_MORNING_BUTTON_TEXT ? "morning" : "evening";
       const periodLabel = period === "morning" ? "утренний" : "вечерний";
       setWeightDraft(chatId, { period });
       setPendingInput(chatId, "weightValue");
-      await ctx.reply(
-        `Введите ${periodLabel} вес в кг (например, 72.4) или напишите 'отмена'.`
-      );
+      await ctx.reply(`Введите ${periodLabel} вес в кг (например, 72.4) или напишите 'отмена'.`);
       return;
     }
 
@@ -284,12 +273,9 @@ export const handleWeightPending = async ({
   const subscription = await getSubscription(userId);
   const periodLabel = draft.period === "morning" ? "утро" : "вечер";
   const displayDate = formatDateForDisplay(draft.date);
-  await ctx.reply(
-    `Вес записан: ${weightText} кг (${periodLabel}, ${displayDate}).`,
-    {
-      reply_markup: buildMainMenuReplyKeyboard({
-        subscribed: subscription?.enabled ?? false,
-      }),
-    }
-  );
+  await ctx.reply(`Вес записан: ${weightText} кг (${periodLabel}, ${displayDate}).`, {
+    reply_markup: buildMainMenuReplyKeyboard({
+      subscribed: subscription?.enabled ?? false,
+    }),
+  });
 };

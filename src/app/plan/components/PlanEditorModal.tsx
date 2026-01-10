@@ -1,14 +1,5 @@
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import {
-  Button,
-  Card,
-  DatePicker,
-  Input,
-  Modal,
-  Space,
-  Switch,
-  Typography,
-} from "antd";
+import { Button, Card, DatePicker, Input, Modal, Space, Switch, Typography } from "antd";
 import type { Dayjs } from "dayjs";
 import { PLAN_DATE_DISPLAY_FORMAT } from "../planConstants";
 import styles from "../plan.module.scss";
@@ -86,18 +77,10 @@ export function PlanEditorModal({
             <Typography.Text>{PLAN_TEXT.editor.workloadLabel}</Typography.Text>
           </Space>
         </Space>
-        <Space
-          orientation="vertical"
-          size="middle"
-          className={styles.editorEntries}
-        >
+        <Space orientation="vertical" size="middle" className={styles.editorEntries}>
           {draft.entries.map((entry, index) => (
             <Card key={entry.id ?? `new-${index}`} size="small">
-              <Space
-                orientation="vertical"
-                size="small"
-                className={styles.editorEntryBody}
-              >
+              <Space orientation="vertical" size="small" className={styles.editorEntryBody}>
                 <div className={styles.editorEntryHeader}>
                   <Typography.Text strong>
                     {PLAN_TEXT.editor.workoutLabel(index + 1)}
@@ -112,14 +95,10 @@ export function PlanEditorModal({
                   />
                 </div>
                 <div className={styles.editorField}>
-                  <Typography.Text type="secondary">
-                    {PLAN_TEXT.editor.taskLabel}
-                  </Typography.Text>
+                  <Typography.Text type="secondary">{PLAN_TEXT.editor.taskLabel}</Typography.Text>
                   <TextArea
                     value={entry.taskText}
-                    onChange={(event) =>
-                      onEntryChange(index, { taskText: event.target.value })
-                    }
+                    onChange={(event) => onEntryChange(index, { taskText: event.target.value })}
                     autoSize={{ minRows: 2, maxRows: 6 }}
                   />
                 </div>

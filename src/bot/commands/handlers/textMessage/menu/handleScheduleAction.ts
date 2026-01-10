@@ -16,9 +16,7 @@ export const handleScheduleMenuAction = async ({
 }: ScheduleMenuActionArgs) => {
   setPendingInput(chatId, action);
   if (action === "time") {
-    await ctx.reply(
-      "Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'."
-    );
+    await ctx.reply("Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'.");
     return;
   }
 

@@ -1,9 +1,5 @@
 "use client";
-import {
-  LockOutlined,
-  MailOutlined,
-  LoginOutlined,
-} from "@ant-design/icons";
+import { LockOutlined, MailOutlined, LoginOutlined } from "@ant-design/icons";
 import { Button, Card, Form, Input, Typography, message } from "antd";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -43,37 +39,22 @@ export default function LoginPage() {
         <Typography.Paragraph type="secondary" className={styles.subtitle}>
           Используйте учетные данные, созданные при инициализации
         </Typography.Paragraph>
-        <Form<LoginFields>
-          layout="vertical"
-          onFinish={onFinish}
-          requiredMark={false}
-        >
+        <Form<LoginFields> layout="vertical" onFinish={onFinish} requiredMark={false}>
           <Form.Item
             name="email"
             label="Email или login"
             rules={[{ required: true, message: "Укажите email или логин" }]}
           >
-            <Input
-              prefix={<MailOutlined />}
-              placeholder="Введите email или логин"
-            />
+            <Input prefix={<MailOutlined />} placeholder="Введите email или логин" />
           </Form.Item>
           <Form.Item
             name="password"
             label="Пароль"
             rules={[{ required: true, message: "Введите пароль" }]}
           >
-            <Input.Password
-              prefix={<LockOutlined />}
-              placeholder="Введите пароль"
-            />
+            <Input.Password prefix={<LockOutlined />} placeholder="Введите пароль" />
           </Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            icon={<LoginOutlined />}
-            block
-          >
+          <Button type="primary" htmlType="submit" icon={<LoginOutlined />} block>
             Войти
           </Button>
         </Form>
