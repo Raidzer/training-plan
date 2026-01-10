@@ -39,8 +39,7 @@ export const upsertRecoveryEntry = async (params: {
     updates.muscleScore = params.muscleScore;
   }
   if (params.sleepHours !== undefined) {
-    updates.sleepHours =
-      params.sleepHours === null ? null : String(params.sleepHours);
+    updates.sleepHours = params.sleepHours === null ? null : String(params.sleepHours);
   }
 
   const insertValues: {
@@ -74,34 +73,22 @@ export const upsertRecoveryEntry = async (params: {
     insertValues.muscleScore = params.muscleScore;
   }
   if (params.sleepHours !== undefined) {
-    insertValues.sleepHours =
-      params.sleepHours === null ? null : String(params.sleepHours);
+    insertValues.sleepHours = params.sleepHours === null ? null : String(params.sleepHours);
   }
   const [existing] = await db
     .select({ id: recoveryEntries.id })
     .from(recoveryEntries)
-    .where(
-      and(
-        eq(recoveryEntries.userId, params.userId),
-        eq(recoveryEntries.date, params.date)
-      )
-    );
+    .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));
 
   if (existing) {
-    await db
-      .update(recoveryEntries)
-      .set(updates)
-      .where(eq(recoveryEntries.id, existing.id));
+    await db.update(recoveryEntries).set(updates).where(eq(recoveryEntries.id, existing.id));
     return;
   }
 
   await db.insert(recoveryEntries).values(insertValues);
 };
 
-export const getRecoveryEntryByDate = async (params: {
-  userId: number;
-  date: string;
-}) => {
+export const getRecoveryEntryByDate = async (params: { userId: number; date: string }) => {
   const [entry] = await db
     .select({
       id: recoveryEntries.id,
@@ -112,12 +99,7 @@ export const getRecoveryEntryByDate = async (params: {
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
-    .where(
-      and(
-        eq(recoveryEntries.userId, params.userId),
-        eq(recoveryEntries.date, params.date)
-      )
-    );
+    .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));
   if (!entry) {
     return null;
   }

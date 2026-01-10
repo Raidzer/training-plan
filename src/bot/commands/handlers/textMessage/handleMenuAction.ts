@@ -14,11 +14,7 @@ type MenuActionHandlerArgs = {
   action: string;
 };
 
-export const handleMenuAction = async ({
-  ctx,
-  chatId,
-  action,
-}: MenuActionHandlerArgs) => {
+export const handleMenuAction = async ({ ctx, chatId, action }: MenuActionHandlerArgs) => {
   if (action === "cancelLink" || action === "link") {
     await handleLinkMenuAction({ ctx, chatId, action });
     return;

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  CopyOutlined,
-  HomeOutlined,
-  PlusOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
+import { CopyOutlined, HomeOutlined, PlusOutlined, TeamOutlined } from "@ant-design/icons";
 import {
   App,
   Button,
@@ -176,9 +171,7 @@ export function AdminInvitesClient({ invites }: Props) {
     }
   };
 
-  const handleCreate: FormProps<InviteFormValues>["onFinish"] = async (
-    values
-  ) => {
+  const handleCreate: FormProps<InviteFormValues>["onFinish"] = async (values) => {
     setCreating(true);
     try {
       const res = await fetch("/api/admin/invites", {
@@ -188,9 +181,7 @@ export function AdminInvitesClient({ invites }: Props) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        messageApi.error(
-          getApiErrorMessage(data, "Не удалось создать ссылку.")
-        );
+        messageApi.error(getApiErrorMessage(data, "Не удалось создать ссылку."));
         return;
       }
       if (!data || typeof data !== "object") {
@@ -227,19 +218,11 @@ export function AdminInvitesClient({ invites }: Props) {
       render: (_, record) => {
         const token = tokenById[record.id];
         if (!token) {
-          return (
-            <Typography.Text type="secondary">
-              Недоступна
-            </Typography.Text>
-          );
+          return <Typography.Text type="secondary">Недоступна</Typography.Text>;
         }
         const inviteUrl = buildInviteUrl(token);
         return (
-          <Button
-            size="small"
-            icon={<CopyOutlined />}
-            onClick={() => handleCopy(inviteUrl)}
-          >
+          <Button size="small" icon={<CopyOutlined />} onClick={() => handleCopy(inviteUrl)}>
             Копировать
           </Button>
         );
@@ -260,11 +243,7 @@ export function AdminInvitesClient({ invites }: Props) {
       key: "role",
       render: (value) => {
         const meta = ROLE_META[String(value)] ?? { label: String(value) };
-        return meta.color ? (
-          <Tag color={meta.color}>{meta.label}</Tag>
-        ) : (
-          <Tag>{meta.label}</Tag>
-        );
+        return meta.color ? <Tag color={meta.color}>{meta.label}</Tag> : <Tag>{meta.label}</Tag>;
       },
     },
     {
@@ -308,8 +287,8 @@ export function AdminInvitesClient({ invites }: Props) {
               Приглашения
             </Typography.Title>
             <Typography.Paragraph type="secondary" className={styles.subtitle}>
-              Ссылки одноразовые и действуют 24 часа. Полный URL доступен только
-              сразу после создания.
+              Ссылки одноразовые и действуют 24 часа. Полный URL доступен только сразу после
+              создания.
             </Typography.Paragraph>
           </div>
           <Space size="small" className={styles.headerActions}>
@@ -336,12 +315,7 @@ export function AdminInvitesClient({ invites }: Props) {
             >
               <Select options={ROLE_OPTIONS} placeholder="Выберите роль" />
             </Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              icon={<PlusOutlined />}
-              loading={creating}
-            >
+            <Button type="primary" htmlType="submit" icon={<PlusOutlined />} loading={creating}>
               Создать ссылку
             </Button>
           </div>
@@ -351,15 +325,8 @@ export function AdminInvitesClient({ invites }: Props) {
           <div className={styles.createdInvite}>
             <Typography.Text strong>Ссылка создана</Typography.Text>
             <div className={styles.linkRow}>
-              <Input
-                className={styles.linkInput}
-                value={lastInviteUrl}
-                readOnly
-              />
-              <Button
-                icon={<CopyOutlined />}
-                onClick={() => handleCopy(lastInviteUrl)}
-              >
+              <Input className={styles.linkInput} value={lastInviteUrl} readOnly />
+              <Button icon={<CopyOutlined />} onClick={() => handleCopy(lastInviteUrl)}>
                 Копировать
               </Button>
             </div>

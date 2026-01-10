@@ -126,9 +126,7 @@ const buildStateFromPaceMile = (totalMinutes: number): SpeedToPaceValues => {
 };
 
 export const useSpeedToPace = (): UseSpeedToPaceReturn => {
-  const [values, setValues] = useState<SpeedToPaceValues>(() =>
-    buildStateFromKmH(DEFAULT_KMH)
-  );
+  const [values, setValues] = useState<SpeedToPaceValues>(() => buildStateFromKmH(DEFAULT_KMH));
 
   const handleSpeedKmhChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextValue = toNonNegativeFloat(event.target.value);
@@ -157,17 +155,13 @@ export const useSpeedToPace = (): UseSpeedToPaceReturn => {
     setValues(buildStateFromPaceKm(totalMinutes));
   };
 
-  const handlePaceMileMinutesChange = (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePaceMileMinutesChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextMinutes = toNonNegativeInt(event.target.value);
     const totalMinutes = toTotalMinutes(nextMinutes, values.paceMileSeconds);
     setValues(buildStateFromPaceMile(totalMinutes));
   };
 
-  const handlePaceMileSecondsChange = (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePaceMileSecondsChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextSeconds = toNonNegativeInt(event.target.value);
     const totalMinutes = toTotalMinutes(values.paceMileMinutes, nextSeconds);
     setValues(buildStateFromPaceMile(totalMinutes));

@@ -224,9 +224,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         );
         const nextWorkoutForm: WorkoutFormState = {};
         data.planEntries.forEach((entry) => {
-          nextWorkoutForm[entry.id] = toDefaultWorkoutForm(
-            reportMap.get(entry.id)
-          );
+          nextWorkoutForm[entry.id] = toDefaultWorkoutForm(reportMap.get(entry.id));
         });
         setWorkoutForm(nextWorkoutForm);
       } catch (err) {
@@ -266,8 +264,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
 
   const handleSaveWeight = useCallback(
     async (period: "morning" | "evening") => {
-      const value =
-        period === "morning" ? weightForm.morning : weightForm.evening;
+      const value = period === "morning" ? weightForm.morning : weightForm.evening;
       const weightInput = Number(String(value).replace(",", "."));
       if (!Number.isFinite(weightInput) || weightInput <= 0) {
         messageApi.error(messages.weightInvalid);
@@ -302,15 +299,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         setSavingWeight((prev) => ({ ...prev, [period]: false }));
       }
     },
-    [
-      loadDay,
-      loadMarks,
-      messageApi,
-      messages,
-      panelDate,
-      selectedDate,
-      weightForm,
-    ]
+    [loadDay, loadMarks, messageApi, messages, panelDate, selectedDate, weightForm]
   );
 
   const handleSaveWorkout = useCallback(
@@ -321,10 +310,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         return;
       }
       const distanceValue = form.distanceKm.trim();
-      const distanceKm =
-        distanceValue.length > 0
-          ? Number(distanceValue.replace(",", "."))
-          : null;
+      const distanceKm = distanceValue.length > 0 ? Number(distanceValue.replace(",", ".")) : null;
 
       if (
         distanceKm &&
@@ -336,27 +322,18 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       }
 
       const surfaceValue = form.surface.trim();
-      const isIndoorSurface =
-        surfaceValue === "manezh" || surfaceValue === "treadmill";
+      const isIndoorSurface = surfaceValue === "manezh" || surfaceValue === "treadmill";
       const weatherValue = isIndoorSurface ? "" : form.weather.trim();
       const hasWindValue = isIndoorSurface ? "" : form.hasWind;
       const temperatureValue = isIndoorSurface ? "" : form.temperatureC.trim();
       const temperatureC =
-        temperatureValue.length > 0
-          ? Number(temperatureValue.replace(",", "."))
-          : null;
+        temperatureValue.length > 0 ? Number(temperatureValue.replace(",", ".")) : null;
       const rawShoeIds = Array.isArray(form.shoeIds) ? form.shoeIds : [];
       const shoeIds = Array.from(
-        new Set(
-          rawShoeIds.filter((shoeId) => Number.isInteger(shoeId) && shoeId > 0)
-        )
+        new Set(rawShoeIds.filter((shoeId) => Number.isInteger(shoeId) && shoeId > 0))
       );
 
-      if (
-        !isIndoorSurface &&
-        temperatureValue.length > 0 &&
-        !Number.isFinite(temperatureC)
-      ) {
+      if (!isIndoorSurface && temperatureValue.length > 0 && !Number.isFinite(temperatureC)) {
         messageApi.error(messages.workoutTemperatureInvalid);
         return;
       }
@@ -377,12 +354,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
             muscleScore: form.muscleScore,
             surface: surfaceValue.length > 0 ? surfaceValue : null,
             weather: weatherValue.length > 0 ? weatherValue : null,
-            hasWind:
-              hasWindValue === "true"
-                ? true
-                : hasWindValue === "false"
-                ? false
-                : null,
+            hasWind: hasWindValue === "true" ? true : hasWindValue === "false" ? false : null,
             temperatureC,
             shoeIds,
           }),
@@ -404,15 +376,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         setSavingWorkouts((prev) => ({ ...prev, [planEntryId]: false }));
       }
     },
-    [
-      loadDay,
-      loadMarks,
-      messageApi,
-      messages,
-      panelDate,
-      selectedDate,
-      workoutForm,
-    ]
+    [loadDay, loadMarks, messageApi, messages, panelDate, selectedDate, workoutForm]
   );
 
   const handleSaveRecovery = useCallback(async () => {

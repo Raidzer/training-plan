@@ -59,16 +59,12 @@ export async function GET(req: Request) {
   });
 
   const buffer = await workbook.xlsx.writeBuffer();
-  const body =
-    buffer instanceof ArrayBuffer
-      ? buffer
-      : new Uint8Array(buffer as ArrayLike<number>);
+  const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer as ArrayLike<number>);
   const filename = `diary_${from}_${to}.xlsx`;
 
   return new NextResponse(body, {
     headers: {
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },

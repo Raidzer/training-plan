@@ -66,9 +66,7 @@ export function RecoveryCard({
             maxLength={5}
             placeholder={sleepPlaceholder}
             value={recoveryForm.sleepHours}
-            onChange={(event) =>
-              onSleepChange(normalizeStartTimeInput(event.target.value))
-            }
+            onChange={(event) => onSleepChange(normalizeStartTimeInput(event.target.value))}
           />
         </div>
       </div>

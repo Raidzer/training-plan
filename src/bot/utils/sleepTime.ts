@@ -20,8 +20,7 @@ export const formatSleepTimeValue = (value?: string | number | null) => {
   if (value === null || value === undefined || value === "") {
     return "";
   }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  const parsed = typeof value === "number" ? value : Number(String(value).replace(",", "."));
   if (!Number.isFinite(parsed)) {
     return "";
   }
@@ -35,10 +34,7 @@ export const formatSleepTimeValue = (value?: string | number | null) => {
   if (hours === 24) {
     minutes = 0;
   }
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-    2,
-    "0"
-  )}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 };
 
 export const parseSleepTimeInput = (value: string) => {

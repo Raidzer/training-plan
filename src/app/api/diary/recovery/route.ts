@@ -25,8 +25,7 @@ const parseOptionalScore = (value: unknown) => {
   if (value === null || value === "") {
     return { value: null, valid: true };
   }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).trim());
+  const parsed = typeof value === "number" ? value : Number(String(value).trim());
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 10) {
     return { value: null, valid: false };
   }
@@ -40,8 +39,7 @@ const parseOptionalSleepHours = (value: unknown) => {
   if (value === null || value === "") {
     return { value: null, valid: true };
   }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).trim());
+  const parsed = typeof value === "number" ? value : Number(String(value).trim());
   if (!Number.isFinite(parsed) || parsed < 0 || parsed > 24) {
     return { value: null, valid: false };
   }
@@ -59,18 +57,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | {
-        date?: string;
-        hasBath?: boolean | string;
-        hasMfr?: boolean | string;
-        hasMassage?: boolean | string;
-        overallScore?: number | string | null;
-        functionalScore?: number | string | null;
-        muscleScore?: number | string | null;
-        sleepHours?: number | string | null;
-      }
-    | null;
+  const body = (await req.json().catch(() => null)) as {
+    date?: string;
+    hasBath?: boolean | string;
+    hasMfr?: boolean | string;
+    hasMassage?: boolean | string;
+    overallScore?: number | string | null;
+    functionalScore?: number | string | null;
+    muscleScore?: number | string | null;
+    sleepHours?: number | string | null;
+  } | null;
 
   const date = body?.date ?? null;
   if (!date || !isValidDateString(date)) {

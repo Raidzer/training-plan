@@ -3,11 +3,7 @@
 import { useMemo, useState } from "react";
 import clsx from "clsx";
 import styles from "./results.module.scss";
-import type {
-  ResultsDistanceKey,
-  ResultsEntry,
-  ResultsGender,
-} from "../results.utils";
+import type { ResultsDistanceKey, ResultsEntry, ResultsGender } from "../results.utils";
 
 type DistanceTab = {
   key: ResultsDistanceKey;
@@ -81,22 +77,16 @@ const splitRecords = (items: ResultsEntry[]) => {
     return { records: [], rest: [] };
   }
   const bestTime = items[0].timeSeconds;
-  const records = items.filter(
-    (item) => Math.abs(item.timeSeconds - bestTime) <= EPSILON
-  );
-  const rest = items.filter(
-    (item) => Math.abs(item.timeSeconds - bestTime) > EPSILON
-  );
+  const records = items.filter((item) => Math.abs(item.timeSeconds - bestTime) <= EPSILON);
+  const rest = items.filter((item) => Math.abs(item.timeSeconds - bestTime) > EPSILON);
   return { records, rest };
 };
 
 export function ResultsClient({ results }: ResultsClientProps) {
-  const [activeDistance, setActiveDistance] =
-    useState<ResultsDistanceKey>("5k");
+  const [activeDistance, setActiveDistance] = useState<ResultsDistanceKey>("5k");
   const [activeGender, setActiveGender] = useState<GenderTabKey>("all");
   const panelId = "results-panel";
-  const activeLabel =
-    DISTANCE_TABS.find((tab) => tab.key === activeDistance)?.label ?? "";
+  const activeLabel = DISTANCE_TABS.find((tab) => tab.key === activeDistance)?.label ?? "";
 
   const { records, rest, sortedResults } = useMemo(() => {
     const filtered = results.filter((item) => {
@@ -118,17 +108,13 @@ export function ResultsClient({ results }: ResultsClientProps) {
       <header className={styles.header}>
         <h1 className={styles.title}>Результаты клуба</h1>
         <p className={styles.subtitle}>
-          Быстрые финиши участников по ключевым дистанциям. Сортировка внутри
-          каждой дистанции - от рекордов к полному списку.
+          Быстрые финиши участников по ключевым дистанциям. Сортировка внутри каждой дистанции - от
+          рекордов к полному списку.
         </p>
       </header>
 
       <div className={styles.filters}>
-        <div
-          className={styles.tabs}
-          role="tablist"
-          aria-label="Выбор дистанции"
-        >
+        <div className={styles.tabs} role="tablist" aria-label="Выбор дистанции">
           {DISTANCE_TABS.map((tab) => {
             const isActive = tab.key === activeDistance;
             return (
@@ -184,9 +170,7 @@ export function ResultsClient({ results }: ResultsClientProps) {
         </div>
 
         {sortedResults.length === 0 ? (
-          <p className={styles.empty}>
-            Пока нет результатов для этой дистанции.
-          </p>
+          <p className={styles.empty}>Пока нет результатов для этой дистанции.</p>
         ) : (
           <>
             <section className={styles.section}>
@@ -203,18 +187,12 @@ export function ResultsClient({ results }: ResultsClientProps) {
                     <article className={styles.recordCard} key={item.id}>
                       <span className={styles.recordBadge}>Рекорд</span>
                       <div className={styles.recordMain}>
-                        <span className={styles.recordTime}>
-                          {item.timeText}
-                        </span>
-                        <span className={styles.recordAthlete}>
-                          {item.athlete}
-                        </span>
+                        <span className={styles.recordTime}>{item.timeText}</span>
+                        <span className={styles.recordAthlete}>{item.athlete}</span>
                       </div>
                       <div className={styles.recordMeta}>
                         {metaItems.map((value, index) => (
-                          <span key={`${item.id}-record-meta-${index}`}>
-                            {value}
-                          </span>
+                          <span key={`${item.id}-record-meta-${index}`}>{value}</span>
                         ))}
                         {item.protocolUrl ? (
                           <a
@@ -237,9 +215,7 @@ export function ResultsClient({ results }: ResultsClientProps) {
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <h3 className={styles.sectionTitle}>Остальные результаты</h3>
-                  <p className={styles.sectionSubtitle}>
-                    Полный список финишей на дистанции.
-                  </p>
+                  <p className={styles.sectionSubtitle}>Полный список финишей на дистанции.</p>
                 </div>
                 <ol className={styles.resultsList}>
                   {rest.map((item, index) => {
@@ -250,18 +226,12 @@ export function ResultsClient({ results }: ResultsClientProps) {
                         <div className={styles.rankBadge}>#{rank}</div>
                         <div className={styles.resultBody}>
                           <div className={styles.resultHeader}>
-                            <span className={styles.resultTime}>
-                              {item.timeText}
-                            </span>
-                            <span className={styles.resultAthlete}>
-                              {item.athlete}
-                            </span>
+                            <span className={styles.resultTime}>{item.timeText}</span>
+                            <span className={styles.resultAthlete}>{item.athlete}</span>
                           </div>
                           <div className={styles.resultMeta}>
                             {metaItems.map((value, metaIndex) => (
-                              <span key={`${item.id}-meta-${metaIndex}`}>
-                                {value}
-                              </span>
+                              <span key={`${item.id}-meta-${metaIndex}`}>{value}</span>
                             ))}
                             {item.protocolUrl ? (
                               <a

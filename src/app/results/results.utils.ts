@@ -40,9 +40,7 @@ const normalizeGender = (value: string) => {
   return null;
 };
 
-const mapDistanceKey = (
-  key: PersonalRecordDistanceKey
-): ResultsDistanceKey | null => {
+const mapDistanceKey = (key: PersonalRecordDistanceKey): ResultsDistanceKey | null => {
   if (key === "5k") {
     return "5k";
   }
@@ -99,9 +97,7 @@ const parseTimeTextSeconds = (value: string): number | null => {
   return hoursValue * 3600 + minutesValue * 60 + secondsValue + fractionValue;
 };
 
-export const mapClubRecordsToResults = (
-  records: ClubRecord[]
-): ResultsEntry[] => {
+export const mapClubRecordsToResults = (records: ClubRecord[]): ResultsEntry[] => {
   const results: ResultsEntry[] = [];
   for (const record of records) {
     const distanceKey = mapDistanceKey(record.distanceKey);

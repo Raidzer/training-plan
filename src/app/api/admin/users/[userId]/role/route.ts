@@ -13,10 +13,7 @@ type Params = {
   userId: string;
 };
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<Params> }
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<Params> }) {
   const resolvedParams = await params;
   const session = await auth();
   if (!session) {

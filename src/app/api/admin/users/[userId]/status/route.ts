@@ -13,10 +13,7 @@ type Params = {
   userId: string;
 };
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<Params> }
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<Params> }) {
   const resolvedParams = await params;
   const session = await auth();
   if (!session) {
@@ -28,9 +25,7 @@ export async function PATCH(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const sessionUserId = Number(
-    (session.user as { id?: string } | undefined)?.id
-  );
+  const sessionUserId = Number((session.user as { id?: string } | undefined)?.id);
   if (!Number.isFinite(sessionUserId)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -47,10 +42,7 @@ export async function PATCH(
   }
 
   if (!parsed.data.isActive && userId === sessionUserId) {
-    return NextResponse.json(
-      { error: "cannot_disable_self" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "cannot_disable_self" }, { status: 400 });
   }
 
   const [updated] = await db

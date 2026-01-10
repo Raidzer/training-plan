@@ -1,20 +1,13 @@
 ﻿import { and, asc, eq, gt, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
-import {
-  telegramAccounts,
-  telegramLinkCodes,
-  telegramSubscriptions,
-} from "@/db/schema";
+import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/db/schema";
 import { hashTelegramLinkCode } from "@/lib/telegramLink";
 
 export type LinkAccountResult =
   | { ok: true }
   | {
       ok: false;
-      error:
-        | "код-недействителен"
-        | "чат-уже-связан"
-        | "пользователь-уже-связан";
+      error: "код-недействителен" | "чат-уже-связан" | "пользователь-уже-связан";
     };
 
 export const linkAccount = async (params: {

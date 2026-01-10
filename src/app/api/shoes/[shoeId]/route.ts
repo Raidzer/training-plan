@@ -23,10 +23,7 @@ const parseName = (payload: ShoePayload | null) => {
   return raw;
 };
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<Params> }
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<Params> }) {
   const resolvedParams = await params;
   const session = await auth();
   if (!session) {
@@ -68,10 +65,7 @@ export async function PATCH(
   return NextResponse.json({ shoe: updated });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<Params> }
-) {
+export async function DELETE(_req: Request, { params }: { params: Promise<Params> }) {
   const resolvedParams = await params;
   const session = await auth();
   if (!session) {

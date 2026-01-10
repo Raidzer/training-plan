@@ -9,14 +9,9 @@ export const formatPlanMessage = (params: {
   sendTime?: string | null;
 }) => {
   const displayDate = formatDateForDisplay(params.date);
-  const sendTimeText = params.sendTime
-    ? `Время рассылки: ${params.sendTime}.`
-    : "";
+  const sendTimeText = params.sendTime ? `Время рассылки: ${params.sendTime}.` : "";
   if (!params.entries.length) {
-    return [
-      `На ${displayDate} нет тренировки.`,
-      sendTimeText,
-    ].filter(Boolean).join("\n");
+    return [`На ${displayDate} нет тренировки.`, sendTimeText].filter(Boolean).join("\n");
   }
 
   const lines = params.entries.map((entry) => {
@@ -26,9 +21,5 @@ export const formatPlanMessage = (params: {
     return `${entry.sessionOrder}. ${parts}${comment ? `\n${comment}` : ""}`;
   });
 
-  return [
-    `План на ${displayDate}:`,
-    ...lines,
-    sendTimeText,
-  ].filter(Boolean).join("\n");
+  return [`План на ${displayDate}:`, ...lines, sendTimeText].filter(Boolean).join("\n");
 };

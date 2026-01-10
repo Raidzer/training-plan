@@ -226,9 +226,7 @@ export function VerifyTelegramClient() {
 
             {!linked && issuedCode && (
               <Card type="inner" className={styles.codeCard}>
-                <Typography.Text>
-                  Отправьте боту команду:
-                </Typography.Text>
+                <Typography.Text>Отправьте боту команду:</Typography.Text>
                 <Typography.Title level={4} className={styles.code}>
                   /link {issuedCode}
                 </Typography.Title>
@@ -243,4 +241,3 @@ export function VerifyTelegramClient() {
     </main>
   );
 }
-

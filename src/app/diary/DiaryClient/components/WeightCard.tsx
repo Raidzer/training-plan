@@ -34,11 +34,7 @@ export function WeightCard({
             placeholder={morningPlaceholder}
             onChange={(event) => onChange("morning", event.target.value)}
           />
-          <Button
-            type="primary"
-            loading={savingWeight.morning}
-            onClick={() => onSave("morning")}
-          >
+          <Button type="primary" loading={savingWeight.morning} onClick={() => onSave("morning")}>
             {saveLabel}
           </Button>
         </div>
@@ -48,11 +44,7 @@ export function WeightCard({
             placeholder={eveningPlaceholder}
             onChange={(event) => onChange("evening", event.target.value)}
           />
-          <Button
-            type="primary"
-            loading={savingWeight.evening}
-            onClick={() => onSave("evening")}
-          >
+          <Button type="primary" loading={savingWeight.evening} onClick={() => onSave("evening")}>
             {saveLabel}
           </Button>
         </div>

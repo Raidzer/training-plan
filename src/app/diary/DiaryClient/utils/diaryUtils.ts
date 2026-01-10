@@ -1,9 +1,5 @@
 import dayjs, { type Dayjs } from "dayjs";
-import type {
-  RecoveryEntry,
-  WorkoutFormEntry,
-  WorkoutReport,
-} from "../types/diaryTypes";
+import type { RecoveryEntry, WorkoutFormEntry, WorkoutReport } from "../types/diaryTypes";
 
 export const formatDate = (value: Dayjs) => value.format("YYYY-MM-DD");
 
@@ -17,9 +13,7 @@ export const getMonthRange = (value: Dayjs) => ({
   to: value.endOf("month").format("YYYY-MM-DD"),
 });
 
-export const toDefaultWorkoutForm = (
-  report?: WorkoutReport | null
-): WorkoutFormEntry => ({
+export const toDefaultWorkoutForm = (report?: WorkoutReport | null): WorkoutFormEntry => ({
   startTime: report?.startTime ?? "",
   resultText: report?.resultText ?? "",
   commentText: report?.commentText ?? "",
@@ -32,8 +26,8 @@ export const toDefaultWorkoutForm = (
     report?.hasWind === null || report?.hasWind === undefined
       ? ""
       : report.hasWind
-      ? "true"
-      : "false",
+        ? "true"
+        : "false",
   temperatureC: report?.temperatureC ?? "",
   surface: report?.surface ?? "",
   shoeIds: report?.shoes ? report.shoes.map((shoe) => shoe.id) : [],
@@ -64,8 +58,7 @@ export const formatSleepTimeValue = (value?: string | number | null) => {
   if (value === null || value === undefined || value === "") {
     return "";
   }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  const parsed = typeof value === "number" ? value : Number(String(value).replace(",", "."));
   if (!Number.isFinite(parsed)) {
     return "";
   }
@@ -79,10 +72,7 @@ export const formatSleepTimeValue = (value?: string | number | null) => {
   if (hours === 24) {
     minutes = 0;
   }
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-    2,
-    "0"
-  )}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 };
 
 export const parseSleepTimeInput = (value: string) => {
@@ -107,8 +97,7 @@ export const formatWeightValue = (value?: string | number | null) => {
   if (value === null || value === undefined || value === "") {
     return "";
   }
-  const parsed =
-    typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  const parsed = typeof value === "number" ? value : Number(String(value).replace(",", "."));
   if (!Number.isFinite(parsed)) {
     return "";
   }
@@ -119,9 +108,7 @@ export const joinValues = (values: Array<string | null | undefined>) => {
   if (!values.length) {
     return "";
   }
-  const normalized = values
-    .map(normalizeText)
-    .filter((item) => item.length > 0);
+  const normalized = values.map(normalizeText).filter((item) => item.length > 0);
   if (!normalized.length) {
     return "";
   }
@@ -157,11 +144,9 @@ export const formatScore = (entry?: RecoveryEntry | null) => {
   if (!entry) {
     return "";
   }
-  const parts = [
-    entry.overallScore,
-    entry.functionalScore,
-    entry.muscleScore,
-  ].filter((value): value is number => value !== null && value !== undefined);
+  const parts = [entry.overallScore, entry.functionalScore, entry.muscleScore].filter(
+    (value): value is number => value !== null && value !== undefined
+  );
   if (!parts.length) {
     return "";
   }

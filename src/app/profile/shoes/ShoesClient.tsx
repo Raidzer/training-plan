@@ -11,9 +11,7 @@ type ShoeItem = {
   updatedAt: string;
 };
 
-type NameValidation =
-  | { ok: true; value: string }
-  | { ok: false; error: string };
+type NameValidation = { ok: true; value: string } | { ok: false; error: string };
 
 const MAX_NAME_LENGTH = 255;
 
@@ -283,9 +281,7 @@ export function ShoesClient() {
           ) : (
             <>
               {items.length === 0 ? (
-                <Typography.Text type="secondary">
-                  {labels.emptyText}
-                </Typography.Text>
+                <Typography.Text type="secondary">{labels.emptyText}</Typography.Text>
               ) : (
                 <div>
                   {items.map((item) => {
@@ -309,10 +305,7 @@ export function ShoesClient() {
                             >
                               {labels.saveButton}
                             </Button>
-                            <Button
-                              onClick={handleCancelEdit}
-                              disabled={updatingId === item.id}
-                            >
+                            <Button onClick={handleCancelEdit} disabled={updatingId === item.id}>
                               {labels.cancelButton}
                             </Button>
                           </div>
@@ -322,18 +315,14 @@ export function ShoesClient() {
                     return (
                       <div className={styles.listItem} key={item.id}>
                         <div className={styles.itemRow}>
-                          <Typography.Text className={styles.itemName}>
-                            {item.name}
-                          </Typography.Text>
+                          <Typography.Text className={styles.itemName}>{item.name}</Typography.Text>
                           <div className={styles.itemActions}>
                             <Button
                               type="link"
                               onClick={() => {
                                 handleStartEdit(item);
                               }}
-                              disabled={
-                                saving || updatingId !== null || deletingId !== null
-                              }
+                              disabled={saving || updatingId !== null || deletingId !== null}
                             >
                               {labels.editButton}
                             </Button>
@@ -343,9 +332,7 @@ export function ShoesClient() {
                               onClick={() => {
                                 handleDelete(item);
                               }}
-                              disabled={
-                                saving || updatingId !== null || deletingId !== null
-                              }
+                              disabled={saving || updatingId !== null || deletingId !== null}
                               loading={deletingId === item.id}
                             >
                               {labels.deleteButton}

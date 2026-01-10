@@ -29,9 +29,7 @@ const getClientConfig = () => {
 
 const clientConfig = getClientConfig();
 if (!clientConfig) {
-  console.error(
-    "Database config is not set (expected DATABASE_URL or PG*/POSTGRES_* variables)"
-  );
+  console.error("Database config is not set (expected DATABASE_URL or PG*/POSTGRES_* variables)");
   process.exit(1);
 }
 

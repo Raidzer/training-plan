@@ -1,9 +1,6 @@
 import { TIME_REGEX } from "@/bot/utils/validators";
 import { resolveTimeZoneInput } from "@/bot/utils/dateTime";
-import {
-  getSubscription,
-  upsertSubscription,
-} from "@/bot/services/telegramSubscriptions";
+import { getSubscription, upsertSubscription } from "@/bot/services/telegramSubscriptions";
 import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput } from "@/bot/menu/menuState";
 
@@ -24,9 +21,7 @@ export const handleSchedulePending = async ({
 }: ScheduleHandlerArgs) => {
   if (pending === "time") {
     if (!TIME_REGEX.test(text)) {
-      await ctx.reply(
-        "Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'."
-      );
+      await ctx.reply("Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'.");
       return;
     }
 
@@ -48,9 +43,7 @@ export const handleSchedulePending = async ({
 
   const resolved = resolveTimeZoneInput(text);
   if (!resolved) {
-    await ctx.reply(
-      "Неверная таймзона. Пример: Europe/Moscow или +3. Или напишите 'отмена'."
-    );
+    await ctx.reply("Неверная таймзона. Пример: Europe/Moscow или +3. Или напишите 'отмена'.");
     return;
   }
 

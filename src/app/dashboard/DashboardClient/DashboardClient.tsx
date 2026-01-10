@@ -40,10 +40,7 @@ export function DashboardClient({ session }: Props) {
             <Typography.Title level={3} className={styles.paragraphTight}>
               Привет, {session.user?.name ?? session.user?.email}
             </Typography.Title>
-            <Typography.Paragraph
-              type="secondary"
-              className={styles.paragraphTight}
-            >
+            <Typography.Paragraph type="secondary" className={styles.paragraphTight}>
               Что планируем сегодня?
             </Typography.Paragraph>
           </div>
@@ -91,8 +88,7 @@ export function DashboardClient({ session }: Props) {
               title={<CardTitle icon={<TrophyOutlined />} title="Рекорды" />}
             >
               <Typography.Text type="secondary">
-                Заполните личные рекорды по дистанциям и добавьте ссылку на
-                протокол.
+                Заполните личные рекорды по дистанциям и добавьте ссылку на протокол.
               </Typography.Text>
             </Card>
           </Link>

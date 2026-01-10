@@ -5,14 +5,7 @@ import clsx from "clsx";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { usePathname } from "next/navigation";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import styles from "./ThemeProvider.module.scss";
 import { Header } from "../Header/Header";
 
@@ -30,8 +23,7 @@ dayjs.locale("ru");
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<Mode>("light");
   const pathname = usePathname();
-  const isWideRoute =
-    pathname.startsWith("/plan") || pathname.startsWith("/diary");
+  const isWideRoute = pathname.startsWith("/plan") || pathname.startsWith("/diary");
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -49,10 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   const algorithm = useMemo(
-    () =>
-      mode === "dark"
-        ? [antdTheme.darkAlgorithm]
-        : [antdTheme.defaultAlgorithm],
+    () => (mode === "dark" ? [antdTheme.darkAlgorithm] : [antdTheme.defaultAlgorithm]),
     [mode]
   );
 
@@ -69,18 +58,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         locale={ruRU}
       >
         <App>
-          <div
-            className={clsx(
-              styles.root,
-              mode === "dark" ? styles.dark : styles.light
-            )}
-          >
+          <div className={clsx(styles.root, mode === "dark" ? styles.dark : styles.light)}>
             <Header mode={mode} onToggle={(next) => setMode(next)} />
-            <main
-              className={clsx(styles.main, isWideRoute && styles.mainWide)}
-            >
-              {children}
-            </main>
+            <main className={clsx(styles.main, isWideRoute && styles.mainWide)}>{children}</main>
           </div>
         </App>
       </ConfigProvider>

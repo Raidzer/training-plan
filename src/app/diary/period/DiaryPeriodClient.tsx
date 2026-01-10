@@ -2,16 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
-import {
-  Button,
-  Card,
-  DatePicker,
-  Space,
-  Table,
-  Tag,
-  Typography,
-  message,
-} from "antd";
+import { Button, Card, DatePicker, Space, Table, Tag, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import styles from "./period.module.scss";
@@ -42,10 +33,7 @@ const formatDate = (value: Dayjs) => value.format("YYYY-MM-DD");
 
 export function DiaryPeriodClient() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [range, setRange] = useState<[Dayjs, Dayjs]>(() => [
-    dayjs().subtract(13, "day"),
-    dayjs(),
-  ]);
+  const [range, setRange] = useState<[Dayjs, Dayjs]>(() => [dayjs().subtract(13, "day"), dayjs()]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [days, setDays] = useState<DayStatus[]>([]);
@@ -60,12 +48,12 @@ export function DiaryPeriodClient() {
     async (from: Dayjs, to: Dayjs) => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/diary/period?from=${formatDate(from)}&to=${formatDate(to)}`
-        );
-        const data = (await res.json().catch(() => null)) as
-          | { days?: DayStatus[]; totals?: PeriodTotals; error?: string }
-          | null;
+        const res = await fetch(`/api/diary/period?from=${formatDate(from)}&to=${formatDate(to)}`);
+        const data = (await res.json().catch(() => null)) as {
+          days?: DayStatus[];
+          totals?: PeriodTotals;
+          error?: string;
+        } | null;
         if (!res.ok || !data?.days || !data?.totals) {
           messageApi.error(data?.error ?? "Не удалось загрузить дневник за период.");
           return;
@@ -91,13 +79,9 @@ export function DiaryPeriodClient() {
     const to = formatDate(range[1]);
     setExporting(true);
     try {
-      const res = await fetch(
-        `/api/diary/period-export?from=${from}&to=${to}`
-      );
+      const res = await fetch(`/api/diary/period-export?from=${from}&to=${to}`);
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
         messageApi.error(data?.error ?? "Не удалось выгрузить отчет.");
         return;
       }
@@ -132,16 +116,13 @@ export function DiaryPeriodClient() {
         title: "Вес",
         render: (_, record) => (
           <span>
-            {record.hasWeightMorning ? "У" : "-"} /{" "}
-            {record.hasWeightEvening ? "В" : "-"}
+            {record.hasWeightMorning ? "У" : "-"} / {record.hasWeightEvening ? "В" : "-"}
           </span>
         ),
       },
       {
         title: "Дистанция, км",
-        render: (_, record) => (
-          <span>{record.totalDistanceKm.toFixed(2)}</span>
-        ),
+        render: (_, record) => <span>{record.totalDistanceKm.toFixed(2)}</span>,
       },
       {
         title: "Восстановление",
@@ -163,11 +144,7 @@ export function DiaryPeriodClient() {
       {
         title: "Статус",
         render: (_, record) =>
-          record.dayHasReport ? (
-            <Tag color="green">Заполнено</Tag>
-          ) : (
-            <Tag>Не заполнено</Tag>
-          ),
+          record.dayHasReport ? <Tag color="green">Заполнено</Tag> : <Tag>Не заполнено</Tag>,
       },
     ],
     []
@@ -183,10 +160,7 @@ export function DiaryPeriodClient() {
               <Typography.Title level={3} className={styles.typographyTitle}>
                 Дневник за период
               </Typography.Title>
-              <Typography.Paragraph
-                type="secondary"
-                className={styles.typographyParagraph}
-              >
+              <Typography.Paragraph type="secondary" className={styles.typographyParagraph}>
                 Просмотр заполнения дневника за выбранный период.
               </Typography.Paragraph>
             </div>
@@ -198,11 +172,7 @@ export function DiaryPeriodClient() {
           </div>
 
           <Card type="inner">
-            <Space
-              size="middle"
-              className={styles.rangeRow}
-              wrap
-            >
+            <Space size="middle" className={styles.rangeRow} wrap>
               <RangePicker
                 value={range}
                 onChange={(values) => {
@@ -238,12 +208,8 @@ export function DiaryPeriodClient() {
               <Typography.Title level={4}>{totals.workoutsTotal}</Typography.Title>
             </Card>
             <Card className={styles.summaryCard}>
-              <Typography.Text type="secondary">
-                Тренировок с полным отчетом
-              </Typography.Text>
-              <Typography.Title level={4}>
-                {totals.workoutsWithFullReport}
-              </Typography.Title>
+              <Typography.Text type="secondary">Тренировок с полным отчетом</Typography.Text>
+              <Typography.Title level={4}>{totals.workoutsWithFullReport}</Typography.Title>
             </Card>
             <Card className={styles.summaryCard}>
               <Typography.Text type="secondary">Записей веса</Typography.Text>

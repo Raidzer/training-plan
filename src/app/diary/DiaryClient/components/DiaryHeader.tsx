@@ -27,10 +27,7 @@ export function DiaryHeader({
         <Typography.Title level={3} className={styles.typographyTitle}>
           {title}
         </Typography.Title>
-        <Typography.Paragraph
-          type="secondary"
-          className={styles.typographyParagraph}
-        >
+        <Typography.Paragraph type="secondary" className={styles.typographyParagraph}>
           {subtitle}
         </Typography.Paragraph>
       </div>

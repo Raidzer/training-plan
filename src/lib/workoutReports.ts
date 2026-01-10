@@ -1,11 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import {
-  shoes,
-  workoutReportConditions,
-  workoutReportShoes,
-  workoutReports,
-} from "@/db/schema";
+import { shoes, workoutReportConditions, workoutReportShoes, workoutReports } from "@/db/schema";
 
 export type WorkoutReportShoe = {
   id: number;
@@ -124,12 +119,7 @@ export const getWorkoutReportsByDate = async (params: {
       workoutReportConditions,
       eq(workoutReportConditions.workoutReportId, workoutReports.id)
     )
-    .where(
-      and(
-        eq(workoutReports.userId, params.userId),
-        eq(workoutReports.date, params.date)
-      )
-    );
+    .where(and(eq(workoutReports.userId, params.userId), eq(workoutReports.date, params.date)));
   const reportIds = reports.map((report) => report.id);
   const shoesMap = await loadReportShoes(reportIds);
   return reports.map((report) => ({
@@ -174,8 +164,7 @@ export const upsertWorkoutReport = async (params: {
     updatedAt: now,
   };
   if (params.distanceKm !== undefined) {
-    updateValues.distanceKm =
-      params.distanceKm === null ? null : String(params.distanceKm);
+    updateValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
   }
   if (params.overallScore !== undefined) {
     updateValues.overallScore = params.overallScore;
@@ -210,8 +199,7 @@ export const upsertWorkoutReport = async (params: {
     updatedAt: now,
   };
   if (params.distanceKm !== undefined) {
-    insertValues.distanceKm =
-      params.distanceKm === null ? null : String(params.distanceKm);
+    insertValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
   }
   if (params.overallScore !== undefined) {
     insertValues.overallScore = params.overallScore;
@@ -251,8 +239,8 @@ export const upsertWorkoutReport = async (params: {
         params.temperatureC === undefined
           ? null
           : params.temperatureC === null
-          ? null
-          : String(params.temperatureC),
+            ? null
+            : String(params.temperatureC),
       surface: params.surface ?? null,
       createdAt: now,
       updatedAt: now,
@@ -271,20 +259,16 @@ export const upsertWorkoutReport = async (params: {
       updateSet.hasWind = params.hasWind ?? null;
     }
     if (params.temperatureC !== undefined) {
-      updateSet.temperatureC =
-        params.temperatureC === null ? null : String(params.temperatureC);
+      updateSet.temperatureC = params.temperatureC === null ? null : String(params.temperatureC);
     }
     if (params.surface !== undefined) {
       updateSet.surface = params.surface ?? null;
     }
 
-    await db
-      .insert(workoutReportConditions)
-      .values(insertValues)
-      .onConflictDoUpdate({
-        target: workoutReportConditions.workoutReportId,
-        set: updateSet,
-      });
+    await db.insert(workoutReportConditions).values(insertValues).onConflictDoUpdate({
+      target: workoutReportConditions.workoutReportId,
+      set: updateSet,
+    });
   };
 
   const upsertShoes = async (workoutReportId: number) => {
@@ -317,10 +301,7 @@ export const upsertWorkoutReport = async (params: {
     );
 
   if (existing) {
-    await db
-      .update(workoutReports)
-      .set(updateValues)
-      .where(eq(workoutReports.id, existing.id));
+    await db.update(workoutReports).set(updateValues).where(eq(workoutReports.id, existing.id));
     await upsertConditions(existing.id);
     await upsertShoes(existing.id);
     return;

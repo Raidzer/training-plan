@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
-import {
-  telegramAccounts,
-  telegramLinkCodes,
-  telegramSubscriptions,
-} from "@/db/schema";
+import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/db/schema";
 
 export async function GET() {
   const session = await auth();

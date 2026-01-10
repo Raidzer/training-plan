@@ -1,15 +1,8 @@
 import type { Bot } from "grammy";
-import {
-  ensureLinked,
-  getLinkedAccount,
-  unlinkAccount,
-} from "@/bot/services/telegramAccounts";
+import { ensureLinked, getLinkedAccount, unlinkAccount } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { linkAccount } from "@/bot/services/telegramLinking";
-import {
-  buildLinkReplyKeyboard,
-  buildMainMenuReplyKeyboard,
-} from "@/bot/menu/menuKeyboard";
+import { buildLinkReplyKeyboard, buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import { resetPendingInput } from "@/bot/commands/handlers/helpers";
 
 export const registerAccountCommands = (bot: Bot) => {
