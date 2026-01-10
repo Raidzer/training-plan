@@ -30,7 +30,8 @@ dayjs.locale("ru");
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<Mode>("light");
   const pathname = usePathname();
-  const isPlanRoute = pathname.startsWith("/plan");
+  const isWideRoute =
+    pathname.startsWith("/plan") || pathname.startsWith("/diary");
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -76,7 +77,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           >
             <Header mode={mode} onToggle={(next) => setMode(next)} />
             <main
-              className={clsx(styles.main, isPlanRoute && styles.mainWide)}
+              className={clsx(styles.main, isWideRoute && styles.mainWide)}
             >
               {children}
             </main>

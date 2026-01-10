@@ -445,65 +445,68 @@ export function DiaryClient() {
                     labels={statusLabels}
                     onOpenReport={() => setIsReportOpen(true)}
                   />
-
-                  <WeightCard
-                    title={weightLabels.title}
-                    morningPlaceholder={weightLabels.morningPlaceholder}
-                    eveningPlaceholder={weightLabels.eveningPlaceholder}
-                    saveLabel={weightLabels.saveLabel}
-                    weightForm={weightForm}
-                    savingWeight={savingWeight}
-                    onChange={handleWeightChange}
-                    onSave={handleSaveWeight}
-                  />
-
-                  <RecoveryCard
-                    title={recoveryLabels.title}
-                    bathLabel={recoveryLabels.bathLabel}
-                    mfrLabel={recoveryLabels.mfrLabel}
-                    massageLabel={recoveryLabels.massageLabel}
-                    sleepLabel={recoveryLabels.sleepLabel}
-                    sleepPlaceholder={recoveryLabels.sleepPlaceholder}
-                    saveLabel={recoveryLabels.saveLabel}
-                    recoveryForm={recoveryForm}
-                    savingRecovery={savingRecovery}
-                    onToggle={handleRecoveryToggle}
-                    onSleepChange={handleRecoverySleepChange}
-                    onSave={handleSaveRecovery}
-                  />
-
-                  <WorkoutsCard
-                    title={workoutLabels.title}
-                    emptyLabel={workoutLabels.emptyLabel}
-                    completeLabel={workoutLabels.completeLabel}
-                    incompleteLabel={workoutLabels.incompleteLabel}
-                    startTimePlaceholder={workoutLabels.startTimePlaceholder}
-                    resultPlaceholder={workoutLabels.resultPlaceholder}
-                    distancePlaceholder={workoutLabels.distancePlaceholder}
-                    overallScoreLabel={workoutLabels.overallScoreLabel}
-                    functionalScoreLabel={workoutLabels.functionalScoreLabel}
-                    muscleScoreLabel={workoutLabels.muscleScoreLabel}
-                    scorePlaceholder={workoutLabels.scorePlaceholder}
-                    surfacePlaceholder={workoutLabels.surfacePlaceholder}
-                    shoePlaceholder={workoutLabels.shoePlaceholder}
-                    weatherPlaceholder={workoutLabels.weatherPlaceholder}
-                    windPlaceholder={workoutLabels.windPlaceholder}
-                    temperaturePlaceholder={
-                      workoutLabels.temperaturePlaceholder
-                    }
-                    commentPlaceholder={workoutLabels.commentPlaceholder}
-                    saveReportLabel={workoutLabels.saveReportLabel}
-                    surfaceOptions={SURFACE_OPTIONS}
-                    shoeOptions={shoeOptions}
-                    weatherOptions={WEATHER_OPTIONS}
-                    windOptions={WIND_OPTIONS}
-                    shoeLoading={loadingShoes}
-                    entries={dayData?.planEntries ?? []}
-                    workoutForm={workoutForm}
-                    savingWorkouts={savingWorkouts}
-                    onChange={handleWorkoutChange}
-                    onSave={handleSaveWorkout}
-                  />
+                  <div className={styles.dayBlock}>
+                    <div className={styles.weightRecoveryBlock}>
+                      <WeightCard
+                        title={weightLabels.title}
+                        morningPlaceholder={weightLabels.morningPlaceholder}
+                        eveningPlaceholder={weightLabels.eveningPlaceholder}
+                        saveLabel={weightLabels.saveLabel}
+                        weightForm={weightForm}
+                        savingWeight={savingWeight}
+                        onChange={handleWeightChange}
+                        onSave={handleSaveWeight}
+                      />
+                      <RecoveryCard
+                        title={recoveryLabels.title}
+                        bathLabel={recoveryLabels.bathLabel}
+                        mfrLabel={recoveryLabels.mfrLabel}
+                        massageLabel={recoveryLabels.massageLabel}
+                        sleepLabel={recoveryLabels.sleepLabel}
+                        sleepPlaceholder={recoveryLabels.sleepPlaceholder}
+                        saveLabel={recoveryLabels.saveLabel}
+                        recoveryForm={recoveryForm}
+                        savingRecovery={savingRecovery}
+                        onToggle={handleRecoveryToggle}
+                        onSleepChange={handleRecoverySleepChange}
+                        onSave={handleSaveRecovery}
+                      />
+                    </div>
+                    <div className={styles.workoutsBlock}>
+                      <WorkoutsCard
+                        title={workoutLabels.title}
+                        emptyLabel={workoutLabels.emptyLabel}
+                        completeLabel={workoutLabels.completeLabel}
+                        incompleteLabel={workoutLabels.incompleteLabel}
+                        startTimePlaceholder={workoutLabels.startTimePlaceholder}
+                        resultPlaceholder={workoutLabels.resultPlaceholder}
+                        distancePlaceholder={workoutLabels.distancePlaceholder}
+                        overallScoreLabel={workoutLabels.overallScoreLabel}
+                        functionalScoreLabel={workoutLabels.functionalScoreLabel}
+                        muscleScoreLabel={workoutLabels.muscleScoreLabel}
+                        scorePlaceholder={workoutLabels.scorePlaceholder}
+                        surfacePlaceholder={workoutLabels.surfacePlaceholder}
+                        shoePlaceholder={workoutLabels.shoePlaceholder}
+                        weatherPlaceholder={workoutLabels.weatherPlaceholder}
+                        windPlaceholder={workoutLabels.windPlaceholder}
+                        temperaturePlaceholder={
+                          workoutLabels.temperaturePlaceholder
+                        }
+                        commentPlaceholder={workoutLabels.commentPlaceholder}
+                        saveReportLabel={workoutLabels.saveReportLabel}
+                        surfaceOptions={SURFACE_OPTIONS}
+                        shoeOptions={shoeOptions}
+                        weatherOptions={WEATHER_OPTIONS}
+                        windOptions={WIND_OPTIONS}
+                        shoeLoading={loadingShoes}
+                        entries={dayData?.planEntries ?? []}
+                        workoutForm={workoutForm}
+                        savingWorkouts={savingWorkouts}
+                        onChange={handleWorkoutChange}
+                        onSave={handleSaveWorkout}
+                      />
+                    </div>
+                  </div>
                 </Space>
               </Card>
             </div>
