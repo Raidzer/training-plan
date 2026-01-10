@@ -14,12 +14,14 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import { ROLES } from "@/constants";
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   login: varchar("login", { length: 64 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: varchar("role", { length: 32 }).notNull().default("athlete"),
+  role: varchar("role", { length: 32 }).notNull().default(ROLES.ATHLETE),
   isActive: boolean("is_active").notNull().default(true),
   name: varchar("name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }),
@@ -42,12 +44,12 @@ export const registrationInvites = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => ({
-    registrationInvitesTokenHashIdx: uniqueIndex(
-      "registration_invites_token_hash_idx"
-    ).on(table.tokenHash),
-    registrationInvitesExpiresAtIdx: index(
-      "registration_invites_expires_at_idx"
-    ).on(table.expiresAt),
+    registrationInvitesTokenHashIdx: uniqueIndex("registration_invites_token_hash_idx").on(
+      table.tokenHash
+    ),
+    registrationInvitesExpiresAtIdx: index("registration_invites_expires_at_idx").on(
+      table.expiresAt
+    ),
   })
 );
 
@@ -96,10 +98,7 @@ export const planEntries = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => ({
-    planEntriesUserDateIdx: index("plan_entries_user_date_idx").on(
-      table.userId,
-      table.date
-    ),
+    planEntriesUserDateIdx: index("plan_entries_user_date_idx").on(table.userId, table.date),
   })
 );
 
@@ -135,9 +134,10 @@ export const personalRecords = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => ({
-    personalRecordsUserDistanceIdx: uniqueIndex(
-      "personal_records_user_distance_idx"
-    ).on(table.userId, table.distanceKey),
+    personalRecordsUserDistanceIdx: uniqueIndex("personal_records_user_distance_idx").on(
+      table.userId,
+      table.distanceKey
+    ),
     personalRecordsUserIdx: index("personal_records_user_idx").on(table.userId),
   })
 );
@@ -210,9 +210,11 @@ export const weightEntries = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => ({
-    weightEntriesUserDatePeriodIdx: uniqueIndex(
-      "weight_entries_user_date_period_idx"
-    ).on(table.userId, table.date, table.period),
+    weightEntriesUserDatePeriodIdx: uniqueIndex("weight_entries_user_date_period_idx").on(
+      table.userId,
+      table.date,
+      table.period
+    ),
   })
 );
 
@@ -235,9 +237,10 @@ export const recoveryEntries = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => ({
-    recoveryEntriesUserDateIdx: uniqueIndex(
-      "recovery_entries_user_date_idx"
-    ).on(table.userId, table.date),
+    recoveryEntriesUserDateIdx: uniqueIndex("recovery_entries_user_date_idx").on(
+      table.userId,
+      table.date
+    ),
   })
 );
 
@@ -263,9 +266,10 @@ export const workoutReports = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => ({
-    workoutReportsUserPlanIdx: uniqueIndex(
-      "workout_reports_user_plan_entry_idx"
-    ).on(table.userId, table.planEntryId),
+    workoutReportsUserPlanIdx: uniqueIndex("workout_reports_user_plan_entry_idx").on(
+      table.userId,
+      table.planEntryId
+    ),
   })
 );
 
@@ -284,9 +288,9 @@ export const workoutReportConditions = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => ({
-    workoutReportConditionsReportIdx: uniqueIndex(
-      "workout_report_conditions_report_idx"
-    ).on(table.workoutReportId),
+    workoutReportConditionsReportIdx: uniqueIndex("workout_report_conditions_report_idx").on(
+      table.workoutReportId
+    ),
   })
 );
 
@@ -303,14 +307,11 @@ export const workoutReportShoes = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => ({
-    workoutReportShoesReportIdx: index("workout_report_shoes_report_idx").on(
-      table.workoutReportId
-    ),
-    workoutReportShoesShoeIdx: index("workout_report_shoes_shoe_idx").on(
+    workoutReportShoesReportIdx: index("workout_report_shoes_report_idx").on(table.workoutReportId),
+    workoutReportShoesShoeIdx: index("workout_report_shoes_shoe_idx").on(table.shoeId),
+    workoutReportShoesUniqueIdx: uniqueIndex("workout_report_shoes_unique_idx").on(
+      table.workoutReportId,
       table.shoeId
     ),
-    workoutReportShoesUniqueIdx: uniqueIndex(
-      "workout_report_shoes_unique_idx"
-    ).on(table.workoutReportId, table.shoeId),
   })
 );
