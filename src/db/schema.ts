@@ -22,6 +22,8 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 32 }).notNull().default("athlete"),
   isActive: boolean("is_active").notNull().default(true),
   name: varchar("name", { length: 255 }).notNull(),
+  lastName: varchar("last_name", { length: 255 }),
+  gender: varchar("gender", { length: 16 }).notNull().default("male"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

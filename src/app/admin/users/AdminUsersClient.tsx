@@ -29,6 +29,8 @@ import styles from "./admin-users.module.scss";
 export type AdminUserRow = {
   id: number;
   name: string;
+  lastName: string;
+  gender: string;
   email: string;
   login: string;
   role: string;
@@ -99,6 +101,17 @@ const getUserLabel = (user: AdminUserRow) => {
     return user.email;
   }
   return `ID ${user.id}`;
+};
+
+const getGenderLabel = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "male") {
+    return "Мужской";
+  }
+  if (normalized === "female") {
+    return "Женский";
+  }
+  return value || "-";
 };
 
 const getApiError = (value: unknown) => {
@@ -301,10 +314,18 @@ export function AdminUsersClient({ users }: Props) {
       key: "user",
       render: (_, record) => (
         <Space orientation="vertical" size={0}>
-          <Typography.Text strong>{record.name}</Typography.Text>
+          <Typography.Text strong>
+            {record.name} {record.lastName}
+          </Typography.Text>
           <Typography.Text type="secondary">{record.email}</Typography.Text>
         </Space>
       ),
+    },
+    {
+      title: "Пол",
+      dataIndex: "gender",
+      key: "gender",
+      render: (value) => getGenderLabel(String(value ?? "")),
     },
     {
       title: "Логин",
