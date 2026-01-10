@@ -6,10 +6,18 @@ import styles from "./results.module.scss";
 import type {
   ResultsDistanceKey,
   ResultsEntry,
+  ResultsGender,
 } from "../results.utils";
 
 type DistanceTab = {
   key: ResultsDistanceKey;
+  label: string;
+};
+
+type GenderTabKey = "all" | ResultsGender;
+
+type GenderTab = {
+  key: GenderTabKey;
   label: string;
 };
 
@@ -22,6 +30,12 @@ const DISTANCE_TABS: readonly DistanceTab[] = [
   { key: "10k", label: "10 км" },
   { key: "21k", label: "21 км" },
   { key: "42k", label: "42 км" },
+];
+
+const GENDER_TABS: readonly GenderTab[] = [
+  { key: "all", label: "Все" },
+  { key: "male", label: "Мужчины" },
+  { key: "female", label: "Женщины" },
 ];
 
 const EPSILON = 0.0001;
@@ -79,18 +93,25 @@ const splitRecords = (items: ResultsEntry[]) => {
 export function ResultsClient({ results }: ResultsClientProps) {
   const [activeDistance, setActiveDistance] =
     useState<ResultsDistanceKey>("5k");
+  const [activeGender, setActiveGender] = useState<GenderTabKey>("all");
   const panelId = "results-panel";
   const activeLabel =
     DISTANCE_TABS.find((tab) => tab.key === activeDistance)?.label ?? "";
 
   const { records, rest, sortedResults } = useMemo(() => {
-    const filtered = results.filter(
-      (item) => item.distanceKey === activeDistance
-    );
+    const filtered = results.filter((item) => {
+      if (item.distanceKey !== activeDistance) {
+        return false;
+      }
+      if (activeGender === "all") {
+        return true;
+      }
+      return item.gender === activeGender;
+    });
     const sortedResults = sortResults(filtered);
     const { records, rest } = splitRecords(sortedResults);
     return { records, rest, sortedResults };
-  }, [activeDistance, results]);
+  }, [activeDistance, activeGender, results]);
 
   return (
     <main className={styles.page}>
@@ -102,26 +123,51 @@ export function ResultsClient({ results }: ResultsClientProps) {
         </p>
       </header>
 
-      <div className={styles.tabs} role="tablist" aria-label="Выбор дистанции">
-        {DISTANCE_TABS.map((tab) => {
-          const isActive = tab.key === activeDistance;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              role="tab"
-              id={`results-tab-${tab.key}`}
-              aria-selected={isActive}
-              aria-controls={panelId}
-              className={clsx(styles.tabButton, isActive && styles.tabActive)}
-              onClick={() => {
-                setActiveDistance(tab.key);
-              }}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
+      <div className={styles.filters}>
+        <div
+          className={styles.tabs}
+          role="tablist"
+          aria-label="Выбор дистанции"
+        >
+          {DISTANCE_TABS.map((tab) => {
+            const isActive = tab.key === activeDistance;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                id={`results-tab-${tab.key}`}
+                aria-selected={isActive}
+                aria-controls={panelId}
+                className={clsx(styles.tabButton, isActive && styles.tabActive)}
+                onClick={() => {
+                  setActiveDistance(tab.key);
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={styles.tabs} role="group" aria-label="Фильтр по полу">
+          {GENDER_TABS.map((tab) => {
+            const isActive = tab.key === activeGender;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                aria-pressed={isActive}
+                className={clsx(styles.tabButton, isActive && styles.tabActive)}
+                onClick={() => {
+                  setActiveGender(tab.key);
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <section

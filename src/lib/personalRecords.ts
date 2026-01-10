@@ -25,6 +25,8 @@ export type ClubRecord = {
   id: number;
   userId: number;
   userName: string;
+  userLastName: string | null;
+  userGender: string;
   distanceKey: PersonalRecordDistanceKey;
   timeText: string;
   recordDate: string;
@@ -71,6 +73,8 @@ export const getClubRecords = async (): Promise<ClubRecord[]> => {
       id: personalRecords.id,
       userId: personalRecords.userId,
       userName: users.name,
+      userLastName: users.lastName,
+      userGender: users.gender,
       distanceKey: personalRecords.distanceKey,
       timeText: personalRecords.timeText,
       recordDate: personalRecords.recordDate,
@@ -86,6 +90,8 @@ export const getClubRecords = async (): Promise<ClubRecord[]> => {
     id: row.id,
     userId: row.userId,
     userName: row.userName,
+    userLastName: row.userLastName ?? null,
+    userGender: row.userGender,
     distanceKey: row.distanceKey as PersonalRecordDistanceKey,
     timeText: row.timeText,
     recordDate: normalizeRecordDate(row.recordDate),

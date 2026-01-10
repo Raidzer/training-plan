@@ -23,6 +23,13 @@
   line-height: 1.5;
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
 .tabs {
   display: inline-flex;
   flex-wrap: wrap;

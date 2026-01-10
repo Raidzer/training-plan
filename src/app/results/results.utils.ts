@@ -2,17 +2,42 @@ import type { ClubRecord } from "@/lib/personalRecords";
 import type { PersonalRecordDistanceKey } from "@/lib/personalRecords.constants";
 
 export type ResultsDistanceKey = "5k" | "10k" | "21k" | "42k";
+export type ResultsGender = "male" | "female";
 
 export type ResultsEntry = {
   id: number;
   distanceKey: ResultsDistanceKey;
   athlete: string;
+  gender: ResultsGender | null;
   timeText: string;
   timeSeconds: number;
   recordDate: string;
   raceName: string | null;
   raceCity: string | null;
   protocolUrl: string | null;
+};
+
+const formatAthleteName = (name: string, lastName: string | null) => {
+  const trimmedName = name.trim();
+  const trimmedLastName = (lastName ?? "").trim();
+  if (!trimmedName) {
+    return trimmedLastName;
+  }
+  if (!trimmedLastName) {
+    return trimmedName;
+  }
+  return `${trimmedName} ${trimmedLastName}`;
+};
+
+const normalizeGender = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "male") {
+    return "male";
+  }
+  if (normalized === "female") {
+    return "female";
+  }
+  return null;
 };
 
 const mapDistanceKey = (
@@ -90,7 +115,8 @@ export const mapClubRecordsToResults = (
     results.push({
       id: record.id,
       distanceKey,
-      athlete: record.userName,
+      athlete: formatAthleteName(record.userName, record.userLastName),
+      gender: normalizeGender(record.userGender),
       timeText: record.timeText,
       timeSeconds,
       recordDate: record.recordDate,
