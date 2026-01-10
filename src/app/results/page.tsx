@@ -1,5 +1,9 @@
-﻿import { ResultsClient } from "./ResultsClient/ResultsClient";
+﻿import { getClubRecords } from "@/lib/personalRecords";
+import { ResultsClient } from "./ResultsClient/ResultsClient";
+import { mapClubRecordsToResults } from "./results.utils";
 
-export default function ResultsPage() {
-  return <ResultsClient />;
+export default async function ResultsPage() {
+  const records = await getClubRecords();
+  const results = mapClubRecordsToResults(records);
+  return <ResultsClient results={results} />;
 }

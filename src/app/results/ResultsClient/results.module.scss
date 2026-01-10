@@ -152,6 +152,16 @@
   color: var(--text-muted);
 }
 
+.protocolLink {
+  color: var(--accent-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.protocolLink:hover {
+  text-decoration: underline;
+}
+
 .resultsList {
   list-style: none;
   padding: 0;

@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { personalRecords } from "@/db/schema";
+import { personalRecords, users } from "@/db/schema";
 import type { PersonalRecordDistanceKey } from "./personalRecords.constants";
 
 export type PersonalRecord = {
@@ -19,6 +19,18 @@ export type PersonalRecordInput = {
   protocolUrl?: string | null;
   raceName?: string | null;
   raceCity?: string | null;
+};
+
+export type ClubRecord = {
+  id: number;
+  userId: number;
+  userName: string;
+  distanceKey: PersonalRecordDistanceKey;
+  timeText: string;
+  recordDate: string;
+  protocolUrl: string | null;
+  raceName: string | null;
+  raceCity: string | null;
 };
 
 const normalizeRecordDate = (value: string | Date) => {
@@ -44,6 +56,36 @@ export const getPersonalRecords = async (params: {
     .where(eq(personalRecords.userId, params.userId));
 
   return rows.map((row) => ({
+    distanceKey: row.distanceKey as PersonalRecordDistanceKey,
+    timeText: row.timeText,
+    recordDate: normalizeRecordDate(row.recordDate),
+    protocolUrl: row.protocolUrl ?? null,
+    raceName: row.raceName ?? null,
+    raceCity: row.raceCity ?? null,
+  }));
+};
+
+export const getClubRecords = async (): Promise<ClubRecord[]> => {
+  const rows = await db
+    .select({
+      id: personalRecords.id,
+      userId: personalRecords.userId,
+      userName: users.name,
+      distanceKey: personalRecords.distanceKey,
+      timeText: personalRecords.timeText,
+      recordDate: personalRecords.recordDate,
+      protocolUrl: personalRecords.protocolUrl,
+      raceName: personalRecords.raceName,
+      raceCity: personalRecords.raceCity,
+    })
+    .from(personalRecords)
+    .innerJoin(users, eq(users.id, personalRecords.userId))
+    .where(eq(users.isActive, true));
+
+  return rows.map((row) => ({
+    id: row.id,
+    userId: row.userId,
+    userName: row.userName,
     distanceKey: row.distanceKey as PersonalRecordDistanceKey,
     timeText: row.timeText,
     recordDate: normalizeRecordDate(row.recordDate),
