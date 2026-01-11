@@ -107,15 +107,24 @@ export async function GET(req: Request) {
     { header: "Результат", key: "result", width: 30 },
     { header: "Комментарий", key: "comment", width: 30 },
     { header: "Оценка", key: "score", width: 14 },
+    { header: "", key: "empty1", width: 1 },
+    { header: "", key: "empty2", width: 1 },
+    { header: "", key: "empty3", width: 1 },
+    { header: "", key: "empty4", width: 1 },
     { header: "Сон", key: "sleep", width: 10 },
     { header: "Вес", key: "weight", width: 14 },
     { header: "Массаж, баня", key: "recovery", width: 20 },
     { header: "Объём", key: "volume", width: 12 },
   ];
 
+  let weeklyVolume = 0;
+
   rows.forEach((row) => {
-    // We add the row with placeholder values for rich text columns to initialize the row object
-    // or just construct the object with rich text values directly.
+    const vol = parseFloat(row.volume);
+    if (!Number.isNaN(vol)) {
+      weeklyVolume += vol;
+    }
+
     const taskRichText = htmlToRichText(row.task);
     const commentRichText = htmlToRichText(row.comment);
 
@@ -127,18 +136,74 @@ export async function GET(req: Request) {
 
     const excelRow = sheet.addRow(rowValues);
 
-    if (!row.hasWorkload) {
-      return;
-    }
     excelRow.eachCell({ includeEmpty: true }, (cell) => {
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFDCE6F1" },
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
       };
+
+      if (row.hasWorkload) {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFDCE6F1" },
+        };
+      }
     });
+
+    if (row.dateTime.includes("(Вс)")) {
+      const summaryRowValues = {
+        dateTime: "",
+        task: "",
+        result: "",
+        comment: "",
+        score: "",
+        empty1: "",
+        empty2: "",
+        empty3: "",
+        empty4: "",
+        sleep: "",
+        weight: "",
+        recovery: "",
+        volume: `${weeklyVolume.toFixed(2)} км`,
+      };
+      const summaryRow = sheet.addRow(summaryRowValues);
+
+      summaryRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF0070C0" },
+        };
+
+        if (colNumber === 13) {
+          cell.font = {
+            color: { argb: "FFFFFFFF" },
+            bold: true,
+          };
+        }
+      });
+
+      weeklyVolume = 0;
+    }
   });
   sheet.getRow(1).font = { bold: true };
+  sheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+  });
   sheet.columns?.forEach((column) => {
     column.alignment = { vertical: "top", wrapText: true };
   });

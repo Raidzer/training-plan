@@ -189,7 +189,6 @@ export const telegramSubscriptions = pgTable("telegram_subscriptions", {
     .references(() => users.id)
     .unique(),
   chatId: bigint("chat_id", { mode: "number" }).notNull(),
-  timezone: varchar("timezone", { length: 64 }), // TODO: remove after migration
   sendTime: varchar("send_time", { length: 5 }),
   enabled: boolean("enabled").notNull().default(false),
   lastSentOn: date("last_sent_on"),
