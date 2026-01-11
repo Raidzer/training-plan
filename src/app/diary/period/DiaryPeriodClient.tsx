@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import { Button, Card, DatePicker, Space, Table, Tag, Typography, message } from "antd";
+import { ArrowLeftOutlined, HomeOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import styles from "./period.module.scss";
@@ -154,7 +155,7 @@ export function DiaryPeriodClient() {
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space direction="vertical" size="large" className={styles.spaceStyle}>
+        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
           <div className={styles.headerRow}>
             <div className={styles.headerText}>
               <Typography.Title level={3} className={styles.typographyTitle}>
@@ -166,7 +167,10 @@ export function DiaryPeriodClient() {
             </div>
             <Space size="small" className={styles.headerActions}>
               <Link href="/diary" passHref>
-                <Button>Назад к дневному виду</Button>
+                <Button icon={<ArrowLeftOutlined />}>Назад к дневному виду</Button>
+              </Link>
+              <Link href="/" passHref>
+                <Button icon={<HomeOutlined />}>На главную</Button>
               </Link>
             </Space>
           </div>

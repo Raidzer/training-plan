@@ -20,6 +20,7 @@ const schema = z.object({
   email: z.string().email("Некорректный email"),
   password: z.string().min(6, "Минимум 6 символов"),
   inviteToken: z.string().trim().min(10, "invite-required"),
+  timezone: z.string().min(1, "Выберите часовой пояс").optional(),
 });
 
 type RegisterErrorCode =
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
   }
 
-  const { name, lastName, gender, email, login, password, inviteToken } = parsed.data;
+  const { name, lastName, gender, email, login, password, inviteToken, timezone } = parsed.data;
   const normalizedLastName = lastName?.trim() ?? "";
   const lastNameValue = normalizedLastName.length > 0 ? normalizedLastName : null;
 
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
           lastName: lastNameValue,
           gender,
           role: invite.role,
+          timezone: timezone ?? "Europe/Moscow",
         })
         .returning({ id: users.id, email: users.email, name: users.name });
 

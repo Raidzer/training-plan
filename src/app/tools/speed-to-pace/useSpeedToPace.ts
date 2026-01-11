@@ -1,11 +1,11 @@
+"use client";
 import { useState, type ChangeEvent } from "react";
 import {
   KM_PER_MILE,
   roundTo,
   splitMinutesSeconds,
   toNonNegativeFloat,
-  toNonNegativeInt,
-  toTotalMinutes,
+  parseTimeInputToTotalMinutes,
 } from "./speed-to-pace.utils";
 
 type SpeedToPaceValues = {
@@ -22,10 +22,13 @@ type UseSpeedToPaceReturn = SpeedToPaceValues & {
   handleSpeedKmhChange: (event: ChangeEvent<HTMLInputElement>) => void;
   handleSpeedMpsChange: (event: ChangeEvent<HTMLInputElement>) => void;
   handleSpeedMphChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handlePaceKmMinutesChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handlePaceKmSecondsChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handlePaceMileMinutesChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handlePaceMileSecondsChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  handlePaceKmTimeChange: (value: string) => void;
+  handlePaceMileTimeChange: (value: string) => void;
+  paceKmTimeString: string;
+  paceMileTimeString: string;
+  speedKmhString: string;
+  speedMpsString: string;
+  speedMphString: string;
 };
 
 const DEFAULT_KMH = 10;
@@ -128,53 +131,88 @@ const buildStateFromPaceMile = (totalMinutes: number): SpeedToPaceValues => {
 export const useSpeedToPace = (): UseSpeedToPaceReturn => {
   const [values, setValues] = useState<SpeedToPaceValues>(() => buildStateFromKmH(DEFAULT_KMH));
 
+  const [activeInput, setActiveInput] = useState<
+    "paceKm" | "paceMile" | "speedKmh" | "speedMps" | "speedMph" | null
+  >(null);
+  const [inputValue, setInputValue] = useState("");
+
   const handleSpeedKmhChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeFloat(event.target.value);
+    const rawValue = event.target.value;
+    const valWithComma = rawValue.replace(".", ",");
+    setActiveInput("speedKmh");
+    setInputValue(valWithComma);
+
+    const nextValue = toNonNegativeFloat(valWithComma);
     setValues(buildStateFromKmH(nextValue));
   };
 
   const handleSpeedMpsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeFloat(event.target.value);
+    const rawValue = event.target.value;
+    const valWithComma = rawValue.replace(".", ",");
+    setActiveInput("speedMps");
+    setInputValue(valWithComma);
+
+    const nextValue = toNonNegativeFloat(valWithComma);
     setValues(buildStateFromMps(nextValue));
   };
 
   const handleSpeedMphChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeFloat(event.target.value);
+    const rawValue = event.target.value;
+    const valWithComma = rawValue.replace(".", ",");
+    setActiveInput("speedMph");
+    setInputValue(valWithComma);
+
+    const nextValue = toNonNegativeFloat(valWithComma);
     setValues(buildStateFromMph(nextValue));
   };
 
-  const handlePaceKmMinutesChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextMinutes = toNonNegativeInt(event.target.value);
-    const totalMinutes = toTotalMinutes(nextMinutes, values.paceKmSeconds);
+  const handlePaceKmTimeChange = (value: string) => {
+    setActiveInput("paceKm");
+    setInputValue(value);
+    const totalMinutes = parseTimeInputToTotalMinutes(value);
     setValues(buildStateFromPaceKm(totalMinutes));
   };
 
-  const handlePaceKmSecondsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextSeconds = toNonNegativeInt(event.target.value);
-    const totalMinutes = toTotalMinutes(values.paceKmMinutes, nextSeconds);
-    setValues(buildStateFromPaceKm(totalMinutes));
-  };
-
-  const handlePaceMileMinutesChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextMinutes = toNonNegativeInt(event.target.value);
-    const totalMinutes = toTotalMinutes(nextMinutes, values.paceMileSeconds);
+  const handlePaceMileTimeChange = (value: string) => {
+    setActiveInput("paceMile");
+    setInputValue(value);
+    const totalMinutes = parseTimeInputToTotalMinutes(value);
     setValues(buildStateFromPaceMile(totalMinutes));
   };
 
-  const handlePaceMileSecondsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextSeconds = toNonNegativeInt(event.target.value);
-    const totalMinutes = toTotalMinutes(values.paceMileMinutes, nextSeconds);
-    setValues(buildStateFromPaceMile(totalMinutes));
+  // Helper to format MM:SS for TimeInput
+  const formatPaceString = (min: number, sec: number) => {
+    return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   };
+
+  const paceKmTimeString =
+    activeInput === "paceKm"
+      ? inputValue
+      : formatPaceString(values.paceKmMinutes, values.paceKmSeconds);
+
+  const paceMileTimeString =
+    activeInput === "paceMile"
+      ? inputValue
+      : formatPaceString(values.paceMileMinutes, values.paceMileSeconds);
+
+  const speedKmhString =
+    activeInput === "speedKmh" ? inputValue : values.speedKmh.toString().replace(".", ",");
+  const speedMpsString =
+    activeInput === "speedMps" ? inputValue : values.speedMps.toString().replace(".", ",");
+  const speedMphString =
+    activeInput === "speedMph" ? inputValue : values.speedMph.toString().replace(".", ",");
 
   return {
     ...values,
     handleSpeedKmhChange,
     handleSpeedMpsChange,
     handleSpeedMphChange,
-    handlePaceKmMinutesChange,
-    handlePaceKmSecondsChange,
-    handlePaceMileMinutesChange,
-    handlePaceMileSecondsChange,
+    handlePaceKmTimeChange,
+    handlePaceMileTimeChange,
+    paceKmTimeString,
+    paceMileTimeString,
+    speedKmhString,
+    speedMpsString,
+    speedMphString,
   };
 };

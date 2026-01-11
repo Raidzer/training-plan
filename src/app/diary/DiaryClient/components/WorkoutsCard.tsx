@@ -110,11 +110,22 @@ export function WorkoutsCard({
                 <div className={styles.workoutHeader}>
                   <div>
                     <Typography.Text strong>
-                      {entry.sessionOrder}. {entry.taskText}
+                      {entry.sessionOrder}.{" "}
+                      <span
+                        className={styles.multilineText}
+                        dangerouslySetInnerHTML={{ __html: entry.taskText }}
+                      />
                     </Typography.Text>
                     {entry.commentText ? (
-                      <Typography.Paragraph type="secondary" className={styles.paragraphTight}>
-                        {entry.commentText}
+                      <Typography.Paragraph
+                        type="secondary"
+                        className={styles.paragraphTight}
+                        style={{ marginTop: "1em" }}
+                      >
+                        <span
+                          className={styles.multilineText}
+                          dangerouslySetInnerHTML={{ __html: entry.commentText }}
+                        />
                       </Typography.Paragraph>
                     ) : null}
                   </div>

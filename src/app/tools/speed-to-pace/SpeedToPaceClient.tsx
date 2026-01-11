@@ -1,24 +1,22 @@
 "use client";
 
+import { Input } from "antd";
+import { TimeInput } from "@/app/profile/records/TimeInput";
 import styles from "./speed-to-pace.module.scss";
 import { useSpeedToPace } from "./useSpeedToPace";
 
 export function SpeedToPaceClient() {
   const {
-    speedKmh,
-    speedMps,
-    speedMph,
-    paceKmMinutes,
-    paceKmSeconds,
-    paceMileMinutes,
-    paceMileSeconds,
+    paceKmTimeString,
+    paceMileTimeString,
+    speedKmhString,
+    speedMpsString,
+    speedMphString,
     handleSpeedKmhChange,
     handleSpeedMpsChange,
     handleSpeedMphChange,
-    handlePaceKmMinutesChange,
-    handlePaceKmSecondsChange,
-    handlePaceMileMinutesChange,
-    handlePaceMileSecondsChange,
+    handlePaceKmTimeChange,
+    handlePaceMileTimeChange,
   } = useSpeedToPace();
 
   return (
@@ -45,14 +43,13 @@ export function SpeedToPaceClient() {
               <div className={styles.field}>
                 <span className={styles.fieldLabel}>Км в час</span>
                 <div className={styles.fieldRow}>
-                  <input
+                  <Input
                     className={styles.input}
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={speedKmh}
+                    inputMode="decimal"
+                    value={speedKmhString}
                     onChange={handleSpeedKmhChange}
                     aria-label="Километров в час"
+                    style={{ textAlign: "center" }}
                   />
                   <span className={styles.unit}>км/ч</span>
                 </div>
@@ -60,14 +57,13 @@ export function SpeedToPaceClient() {
               <div className={styles.field}>
                 <span className={styles.fieldLabel}>Метров в сек</span>
                 <div className={styles.fieldRow}>
-                  <input
+                  <Input
                     className={styles.input}
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={speedMps}
+                    inputMode="decimal"
+                    value={speedMpsString}
                     onChange={handleSpeedMpsChange}
                     aria-label="Метров в секунду"
+                    style={{ textAlign: "center" }}
                   />
                   <span className={styles.unit}>м/с</span>
                 </div>
@@ -75,14 +71,13 @@ export function SpeedToPaceClient() {
               <div className={styles.field}>
                 <span className={styles.fieldLabel}>Миль в час</span>
                 <div className={styles.fieldRow}>
-                  <input
+                  <Input
                     className={styles.input}
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={speedMph}
+                    inputMode="decimal"
+                    value={speedMphString}
                     onChange={handleSpeedMphChange}
                     aria-label="Миль в час"
+                    style={{ textAlign: "center" }}
                   />
                   <span className={styles.unit}>миль/ч</span>
                 </div>
@@ -97,28 +92,14 @@ export function SpeedToPaceClient() {
                 <span className={styles.fieldLabel}>Минут на км</span>
                 <div className={styles.fieldRow}>
                   <div className={styles.inputGroup}>
-                    <input
+                    <TimeInput
                       className={`${styles.input} ${styles.inputCompact}`}
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={paceKmMinutes}
-                      onChange={handlePaceKmMinutesChange}
-                      aria-label="Минут на километр"
+                      placeholder="00:00"
+                      value={paceKmTimeString}
+                      onChange={handlePaceKmTimeChange}
+                      style={{ width: 100, textAlign: "center" }}
                     />
-                    <span className={styles.unit}>мин</span>
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <input
-                      className={`${styles.input} ${styles.inputCompact}`}
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={paceKmSeconds}
-                      onChange={handlePaceKmSecondsChange}
-                      aria-label="Секунд на километр"
-                    />
-                    <span className={styles.unit}>сек</span>
+                    <span className={styles.unit}>мин:сек</span>
                   </div>
                 </div>
               </div>
@@ -126,28 +107,14 @@ export function SpeedToPaceClient() {
                 <span className={styles.fieldLabel}>Минут на милю</span>
                 <div className={styles.fieldRow}>
                   <div className={styles.inputGroup}>
-                    <input
+                    <TimeInput
                       className={`${styles.input} ${styles.inputCompact}`}
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={paceMileMinutes}
-                      onChange={handlePaceMileMinutesChange}
-                      aria-label="Минут на милю"
+                      placeholder="00:00"
+                      value={paceMileTimeString}
+                      onChange={handlePaceMileTimeChange}
+                      style={{ width: 100, textAlign: "center" }}
                     />
-                    <span className={styles.unit}>мин</span>
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <input
-                      className={`${styles.input} ${styles.inputCompact}`}
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={paceMileSeconds}
-                      onChange={handlePaceMileSecondsChange}
-                      aria-label="Секунд на милю"
-                    />
-                    <span className={styles.unit}>сек</span>
+                    <span className={styles.unit}>мин:сек</span>
                   </div>
                 </div>
               </div>

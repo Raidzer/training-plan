@@ -13,13 +13,19 @@ const eslintConfig = [
   {
     ignores: [".next/", "node_modules/", "next-env.d.ts"],
   },
-  ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),
-  ...compat.plugins("prettier"),
+  ...compat.extends(
+    "next/core-web-vitals",
+    "next/typescript",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ),
+  ...compat.plugins("prettier", "@typescript-eslint/eslint-plugin"),
   {
     rules: {
       "prettier/prettier": "error",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "warn",
+      "no-const-assign": "error",
     },
   },
 ];

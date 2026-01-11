@@ -7,6 +7,7 @@ import {
   getDistanceLabel,
   safeParseSaved,
   toNonNegativeInt,
+  parseTimeInputToSeconds,
 } from "./pace-calculator.utils";
 
 type UsePaceCalculatorReturn = {
@@ -24,17 +25,16 @@ type UsePaceCalculatorReturn = {
   canSave: boolean;
   handleDistanceChange: (event: ChangeEvent<HTMLInputElement>) => void;
   handleDistancePreset: (value: number) => void;
-  handleResultHoursChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleResultMinutesChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleResultSecondsChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handlePaceMinutesChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handlePaceSecondsChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleLapMinutesChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleLapSecondsChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleSaveResult: () => void;
-  handleDeleteResult: (id: string) => void;
   formatSplitTime: (seconds: number) => string;
   getSavedDistanceLabel: (meters: number) => string;
+  resultTimeString: string;
+  paceTimeString: string;
+  lapTimeString: string;
+  handleResultTimeChange: (value: string) => void;
+  handlePaceTimeChange: (value: string) => void;
+  handleLapTimeChange: (value: string) => void;
+  handleSaveResult: () => void;
+  handleDeleteResult: (id: string) => void;
 };
 
 export const usePaceCalculator = (): UsePaceCalculatorReturn => {
@@ -48,10 +48,14 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   const [lapSeconds, setLapSeconds] = useState(30);
   const [lastEdited, setLastEdited] = useState<LastEdited>("result");
   const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
+  const [inputValue, setInputValue] = useState<string>("");
 
   useEffect(() => {
     const stored = safeParseSaved(localStorage.getItem(STORAGE_KEY));
     setSavedResults(stored);
+
+    // Initialize inputValue based on default result
+    setInputValue(formatTime(37 * 60 + 30));
   }, []);
 
   useEffect(() => {
@@ -67,39 +71,28 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     const hours = Math.floor(safeSeconds / 3600);
     const minutes = Math.floor((safeSeconds % 3600) / 60);
     const seconds = safeSeconds % 60;
-    if (resultHours !== hours) {
-      setResultHours(hours);
-    }
-    if (resultMinutes !== minutes) {
-      setResultMinutes(minutes);
-    }
-    if (resultSeconds !== seconds) {
-      setResultSeconds(seconds);
-    }
+
+    // Only update state if changed to avoid loops if we were careful, but here explicit check needed?
+    // React state updates bail out if same value, but we split across 3 states.
+    if (resultHours !== hours) setResultHours(hours);
+    if (resultMinutes !== minutes) setResultMinutes(minutes);
+    if (resultSeconds !== seconds) setResultSeconds(seconds);
   };
 
   const setPaceFromSeconds = (totalSeconds: number) => {
     const safeSeconds = getCeilSeconds(totalSeconds);
     const minutes = Math.floor(safeSeconds / 60);
     const seconds = safeSeconds % 60;
-    if (paceMinutes !== minutes) {
-      setPaceMinutes(minutes);
-    }
-    if (paceSeconds !== seconds) {
-      setPaceSeconds(seconds);
-    }
+    if (paceMinutes !== minutes) setPaceMinutes(minutes);
+    if (paceSeconds !== seconds) setPaceSeconds(seconds);
   };
 
   const setLapFromSeconds = (totalSeconds: number) => {
     const safeSeconds = getCeilSeconds(totalSeconds);
     const minutes = Math.floor(safeSeconds / 60);
     const seconds = safeSeconds % 60;
-    if (lapMinutes !== minutes) {
-      setLapMinutes(minutes);
-    }
-    if (lapSeconds !== seconds) {
-      setLapSeconds(seconds);
-    }
+    if (lapMinutes !== minutes) setLapMinutes(minutes);
+    if (lapSeconds !== seconds) setLapSeconds(seconds);
   };
 
   const syncFromResult = (nextResultSeconds: number, nextDistance: number) => {
@@ -159,6 +152,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
       syncFromLap(lapTotalSeconds, nextDistance);
       return;
     }
+    // Default or result
     syncFromResult(resultTotalSeconds, nextDistance);
   };
 
@@ -171,59 +165,42 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     updateDistance(value);
   };
 
-  const handleResultHoursChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
-    setResultHours(nextValue);
+  const resultTimeString = useMemo(() => {
+    if (lastEdited === "result") return inputValue;
+    return formatTime(resultTotalSeconds);
+  }, [resultTotalSeconds, lastEdited, inputValue]);
+
+  const paceTimeString = useMemo(() => {
+    if (lastEdited === "pace") return inputValue;
+    return formatTime(paceTotalSeconds);
+  }, [paceTotalSeconds, lastEdited, inputValue]);
+
+  const lapTimeString = useMemo(() => {
+    if (lastEdited === "lap") return inputValue;
+    return formatTime(lapTotalSeconds);
+  }, [lapTotalSeconds, lastEdited, inputValue]);
+
+  const handleResultTimeChange = (value: string) => {
     setLastEdited("result");
-    const nextTotalSeconds = nextValue * 3600 + resultMinutes * 60 + resultSeconds;
+    setInputValue(value);
+    const nextTotalSeconds = parseTimeInputToSeconds(value);
+    setResultFromSeconds(nextTotalSeconds);
     syncFromResult(nextTotalSeconds, distance);
   };
 
-  const handleResultMinutesChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
-    setResultMinutes(nextValue);
-    setLastEdited("result");
-    const nextTotalSeconds = resultHours * 3600 + nextValue * 60 + resultSeconds;
-    syncFromResult(nextTotalSeconds, distance);
-  };
-
-  const handleResultSecondsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
-    setResultSeconds(nextValue);
-    setLastEdited("result");
-    const nextTotalSeconds = resultHours * 3600 + resultMinutes * 60 + nextValue;
-    syncFromResult(nextTotalSeconds, distance);
-  };
-
-  const handlePaceMinutesChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
-    setPaceMinutes(nextValue);
+  const handlePaceTimeChange = (value: string) => {
     setLastEdited("pace");
-    const nextTotalSeconds = nextValue * 60 + paceSeconds;
+    setInputValue(value);
+    const nextTotalSeconds = parseTimeInputToSeconds(value);
+    setPaceFromSeconds(nextTotalSeconds);
     syncFromPace(nextTotalSeconds, distance);
   };
 
-  const handlePaceSecondsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
-    setPaceSeconds(nextValue);
-    setLastEdited("pace");
-    const nextTotalSeconds = paceMinutes * 60 + nextValue;
-    syncFromPace(nextTotalSeconds, distance);
-  };
-
-  const handleLapMinutesChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
-    setLapMinutes(nextValue);
+  const handleLapTimeChange = (value: string) => {
     setLastEdited("lap");
-    const nextTotalSeconds = nextValue * 60 + lapSeconds;
-    syncFromLap(nextTotalSeconds, distance);
-  };
-
-  const handleLapSecondsChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
-    setLapSeconds(nextValue);
-    setLastEdited("lap");
-    const nextTotalSeconds = lapMinutes * 60 + nextValue;
+    setInputValue(value);
+    const nextTotalSeconds = parseTimeInputToSeconds(value);
+    setLapFromSeconds(nextTotalSeconds);
     syncFromLap(nextTotalSeconds, distance);
   };
 
@@ -293,13 +270,12 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     canSave,
     handleDistanceChange,
     handleDistancePreset,
-    handleResultHoursChange,
-    handleResultMinutesChange,
-    handleResultSecondsChange,
-    handlePaceMinutesChange,
-    handlePaceSecondsChange,
-    handleLapMinutesChange,
-    handleLapSecondsChange,
+    handleResultTimeChange,
+    handlePaceTimeChange,
+    handleLapTimeChange,
+    resultTimeString,
+    paceTimeString,
+    lapTimeString,
     handleSaveResult,
     handleDeleteResult,
     formatSplitTime: formatTime,

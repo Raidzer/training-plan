@@ -5,6 +5,17 @@ import { db } from "@/db/client";
 import { planEntries, planImports } from "@/db/schema";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
+// Helper to strip HTML tags for logic checks
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
+
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
 export const runtime = "nodejs";
 
 type ParsedRow = {
@@ -25,6 +36,90 @@ const normalizeHeader = (value: unknown) =>
     .trim()
     .toLowerCase();
 
+const argbToCss = (argb: string) => {
+  if (argb.length === 8) {
+    const alpha = parseInt(argb.slice(0, 2), 16) / 255;
+    const r = parseInt(argb.slice(2, 4), 16);
+    const g = parseInt(argb.slice(4, 6), 16);
+    const b = parseInt(argb.slice(6, 8), 16);
+    if (alpha > 0.99) {
+      return `#${argb.slice(2)}`;
+    }
+    return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+  }
+  return `#${argb}`;
+};
+
+const richTextToHtml = (value: ExcelJS.CellRichTextValue): string => {
+  const lines: string[] = [""];
+
+  value.richText.forEach((part) => {
+    const textParts = (part.text || "").split(/\r\n|\n/);
+
+    let style = "";
+    if (part.font?.bold) {
+      style += "font-weight: bold;";
+    }
+    if (part.font?.color?.argb) {
+      const cssColor = argbToCss(part.font.color.argb);
+      style += `color: ${cssColor};`;
+    }
+
+    textParts.forEach((textFragment, index) => {
+      let fragment = escapeHtml(textFragment);
+      if (style && fragment) {
+        fragment = `<span style="${style}">${fragment}</span>`;
+      }
+
+      lines[lines.length - 1] += fragment;
+
+      // If there are more parts, it means we had newlines
+      if (index < textParts.length - 1) {
+        lines.push("");
+      }
+    });
+  });
+
+  return lines.join("\n");
+};
+
+const removeNumberedPrefix = (html: string): string => {
+  const stripped = stripHtml(html);
+  const match = stripped.match(/^\s*\d+\)\s*/);
+  if (!match) return html;
+  const prefix = match[0];
+
+  let prefixIndex = 0;
+  let htmlIndex = 0;
+  const openTags: string[] = [];
+
+  while (prefixIndex < prefix.length && htmlIndex < html.length) {
+    if (html[htmlIndex] === "<") {
+      const tagEnd = html.indexOf(">", htmlIndex);
+      if (tagEnd === -1) break;
+      const tag = html.substring(htmlIndex, tagEnd + 1);
+      if (tag.startsWith("</")) {
+        openTags.pop();
+      } else if (!tag.endsWith("/>")) {
+        openTags.push(tag);
+      }
+      htmlIndex = tagEnd + 1;
+      continue;
+    }
+
+    if (html[htmlIndex] === prefix[prefixIndex]) {
+      prefixIndex++;
+      htmlIndex++;
+    } else {
+      // Tolerance for whitespace mismatch or simple skip
+      htmlIndex++;
+    }
+  }
+
+  const suffix = html.substring(htmlIndex);
+  return openTags.join("") + suffix;
+};
+
 const cellToString = (value: unknown): string => {
   if (value === null || value === undefined) {
     return "";
@@ -40,11 +135,11 @@ const cellToString = (value: unknown): string => {
   }
   if (typeof value === "object") {
     const v = value as any;
-    if (typeof v.text === "string") {
+    if (typeof v.text === "string" && !v.richText) {
       return v.text;
     }
     if (Array.isArray(v.richText)) {
-      return v.richText.map((r: any) => r?.text ?? "").join("");
+      return richTextToHtml(v);
     }
     if (v.result !== undefined) {
       return cellToString(v.result);
@@ -140,7 +235,7 @@ const countNumberedLines = (value: string) =>
   value
     .replace(/\r\n/g, "\n")
     .split("\n")
-    .filter((line) => NUMBERED_LINE_REGEX.test(line)).length;
+    .filter((line) => NUMBERED_LINE_REGEX.test(stripHtml(line))).length;
 
 const splitNumberedText = (value: string) => {
   const normalized = value.replace(/\r\n/g, "\n").trim();
@@ -156,10 +251,10 @@ const splitNumberedText = (value: string) => {
     if (!trimmed) {
       continue;
     }
-    const match = trimmed.match(NUMBERED_LINE_REGEX);
+    const match = stripHtml(trimmed).match(NUMBERED_LINE_REGEX);
     if (match) {
       hasNumbered = true;
-      const body = match[1].trim();
+      const body = removeNumberedPrefix(trimmed).trim();
       const combined = prefix ? `${prefix} ${body}` : body;
       parts.push(combined.trim());
       prefix = "";

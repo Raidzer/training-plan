@@ -5,6 +5,79 @@ import { getDiaryExportRows, isValidDateString } from "@/lib/diary";
 
 export const runtime = "nodejs";
 
+const htmlToRichText = (html: string | null | undefined): ExcelJS.RichText[] | string => {
+  if (!html) return "";
+
+  // If no HTML tags, return plain string (decoding basic entities if needed)
+  if (!html.includes("<")) {
+    return html
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"');
+  }
+
+  const parts: ExcelJS.RichText[] = [];
+
+  // Regex to match tags and captures content
+  // We handle simple nesting by regex, assuming well-formed input from our own system
+  // Matches: <b>...</b> OR <span style="...">...</span> OR <br/>
+  // Note: This is a simple parser optimized for the specific format we generate:
+  // - <b>text</b>
+  // - <span style="color: #RRGGBB;">text</span>
+  // - text (plain)
+  // - <br/> or \n
+
+  // Actually, a simpler approach for our specific flat structure (likely not deeply nested):
+  // We can split by tags and process. But splitting by regex including delimiters is easier.
+
+  // Regex for our expected tags: <b>, </b>, <span style="...">, </span>, <br>
+  const tagRegex = /(<b>|<\/b>|<span style="[^"]+">|<\/span>|<br\s*\/?>)/g;
+
+  const tokens = html.split(tagRegex).filter((t) => t !== "");
+
+  // strict simple stack is maybe overkill if we assume local style implies scope, but let's be safe-ish
+  const fontStack: Partial<ExcelJS.Font>[] = [{}];
+
+  for (const token of tokens) {
+    if (token === "<b>") {
+      const newFont = { ...fontStack[fontStack.length - 1], bold: true };
+      fontStack.push(newFont);
+    } else if (token === "</b>") {
+      if (fontStack.length > 1) fontStack.pop();
+    } else if (token.startsWith("<span style=")) {
+      const match = token.match(/color:\s*(#[0-9a-fA-F]{6})/i);
+      const color = match ? match[1] : undefined;
+      const newFont = { ...fontStack[fontStack.length - 1] };
+      if (color) {
+        // exceljs expects argb, usually without #, but let's strip it and prepend FF
+        newFont.color = { argb: "FF" + color.replace("#", "").toUpperCase() };
+      }
+      fontStack.push(newFont);
+    } else if (token === "</span>") {
+      if (fontStack.length > 1) fontStack.pop();
+    } else if (token.match(/^<br\s*\/?>$/)) {
+      parts.push({ text: "\n", font: fontStack[fontStack.length - 1] });
+    } else {
+      // Plain text
+      // Decode entities
+      const text = token
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"');
+
+      if (text) {
+        parts.push({ text: text, font: fontStack[fontStack.length - 1] });
+      }
+    }
+  }
+
+  return parts;
+};
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session) {
@@ -41,7 +114,19 @@ export async function GET(req: Request) {
   ];
 
   rows.forEach((row) => {
-    const excelRow = sheet.addRow(row);
+    // We add the row with placeholder values for rich text columns to initialize the row object
+    // or just construct the object with rich text values directly.
+    const taskRichText = htmlToRichText(row.task);
+    const commentRichText = htmlToRichText(row.comment);
+
+    const rowValues = {
+      ...row,
+      task: Array.isArray(taskRichText) ? { richText: taskRichText } : taskRichText,
+      comment: Array.isArray(commentRichText) ? { richText: commentRichText } : commentRichText,
+    };
+
+    const excelRow = sheet.addRow(rowValues);
+
     if (!row.hasWorkload) {
       return;
     }

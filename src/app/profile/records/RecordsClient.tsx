@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Alert, App, Button, Card, Input, Typography } from "antd";
 import styles from "./records.module.scss";
+import { TimeInput } from "./TimeInput";
 import {
   MAX_PROTOCOL_URL_LENGTH,
   MAX_RACE_CITY_LENGTH,
@@ -46,14 +47,14 @@ const labels = {
   subtitle: "Заполните дистанции, по которым у вас есть рекорды. Остальные можно оставить пустыми.",
   alertTitle: "Как заполнять",
   alertText:
-    "Формат времени: ЧЧ:ММ:СС или ЧЧ:ММ:СС.СС. Если время указано, дата обязательна. Пустое время удаляет запись при сохранении.",
+    "Формат времени: ЧЧ:ММ:СС или ММ:СС. Если время указано, дата обязательна. Пустое время удаляет запись при сохранении.",
   distanceLabel: "Дистанция",
   timeLabel: "Время",
   dateLabel: "Дата",
   raceNameLabel: "Название забега",
   raceCityLabel: "Город",
   protocolLabel: "Ссылка на протокол",
-  timePlaceholder: "00:00:00.00",
+  timePlaceholder: "00:00:00",
   datePlaceholder: "ГГГГ-ММ-ДД",
   raceNamePlaceholder: "Название забега",
   raceCityPlaceholder: "Город",
@@ -354,18 +355,17 @@ export function RecordsClient() {
                       <Typography.Text className={styles.fieldLabel}>
                         {labels.timeLabel}
                       </Typography.Text>
-                      <Input
+                      <TimeInput
                         value={row.timeText}
-                        onChange={(event) => {
+                        onChange={(value) => {
                           handleFieldChange(row.distanceKey, {
-                            timeText: event.target.value,
+                            timeText: value,
                           });
                         }}
                         placeholder={labels.timePlaceholder}
                         status={timeStatus}
                         disabled={saving}
                         maxLength={16}
-                        inputMode="numeric"
                       />
                     </div>
                     <div className={styles.field}>

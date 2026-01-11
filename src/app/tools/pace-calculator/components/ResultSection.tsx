@@ -1,41 +1,26 @@
+import { TimeInput } from "@/app/profile/records/TimeInput";
 import styles from "../pace-calculator.module.scss";
 
 type ResultSectionProps = {
-  resultHours: number;
-  resultMinutes: number;
-  resultSeconds: number;
-  paceMinutes: number;
-  paceSeconds: number;
-  lapMinutes: number;
-  lapSeconds: number;
+  resultTime: string;
+  paceTime: string;
+  lapTime: string;
   canSave: boolean;
   onSave: () => void;
-  onResultHoursChange: React.ChangeEventHandler<HTMLInputElement>;
-  onResultMinutesChange: React.ChangeEventHandler<HTMLInputElement>;
-  onResultSecondsChange: React.ChangeEventHandler<HTMLInputElement>;
-  onPaceMinutesChange: React.ChangeEventHandler<HTMLInputElement>;
-  onPaceSecondsChange: React.ChangeEventHandler<HTMLInputElement>;
-  onLapMinutesChange: React.ChangeEventHandler<HTMLInputElement>;
-  onLapSecondsChange: React.ChangeEventHandler<HTMLInputElement>;
+  onResultTimeChange: (value: string) => void;
+  onPaceTimeChange: (value: string) => void;
+  onLapTimeChange: (value: string) => void;
 };
 
 export function ResultSection({
-  resultHours,
-  resultMinutes,
-  resultSeconds,
-  paceMinutes,
-  paceSeconds,
-  lapMinutes,
-  lapSeconds,
+  resultTime,
+  paceTime,
+  lapTime,
   canSave,
   onSave,
-  onResultHoursChange,
-  onResultMinutesChange,
-  onResultSecondsChange,
-  onPaceMinutesChange,
-  onPaceSecondsChange,
-  onLapMinutesChange,
-  onLapSecondsChange,
+  onResultTimeChange,
+  onPaceTimeChange,
+  onLapTimeChange,
 }: ResultSectionProps) {
   return (
     <div className={styles.section}>
@@ -49,40 +34,13 @@ export function ResultSection({
         <span className={styles.rowLabel}>Результат:</span>
         <div className={styles.fields}>
           <div className={styles.fieldGroup}>
-            <input
+            <TimeInput
               className={styles.input}
-              type="number"
-              min={0}
-              step={1}
-              value={resultHours}
-              onChange={onResultHoursChange}
-              aria-label="Часы"
+              placeholder="00:00:00"
+              value={resultTime}
+              onChange={onResultTimeChange}
+              style={{ width: 120, textAlign: "center" }}
             />
-            <span className={styles.unit}>час</span>
-          </div>
-          <div className={styles.fieldGroup}>
-            <input
-              className={styles.input}
-              type="number"
-              min={0}
-              step={1}
-              value={resultMinutes}
-              onChange={onResultMinutesChange}
-              aria-label="Минуты"
-            />
-            <span className={styles.unit}>мин</span>
-          </div>
-          <div className={styles.fieldGroup}>
-            <input
-              className={styles.input}
-              type="number"
-              min={0}
-              step={1}
-              value={resultSeconds}
-              onChange={onResultSecondsChange}
-              aria-label="Секунды"
-            />
-            <span className={styles.unit}>сек</span>
           </div>
         </div>
       </div>
@@ -90,30 +48,14 @@ export function ResultSection({
       <div className={styles.inputRow}>
         <span className={styles.rowLabel}>Темп (мин/км):</span>
         <div className={styles.fields}>
-          <div className={styles.fieldSpacer} aria-hidden="true" />
           <div className={styles.fieldGroup}>
-            <input
+            <TimeInput
               className={styles.input}
-              type="number"
-              min={0}
-              step={1}
-              value={paceMinutes}
-              onChange={onPaceMinutesChange}
-              aria-label="Минуты на километр"
+              placeholder="00:00"
+              value={paceTime}
+              onChange={onPaceTimeChange}
+              style={{ width: 100, textAlign: "center" }}
             />
-            <span className={styles.unit}>мин</span>
-          </div>
-          <div className={styles.fieldGroup}>
-            <input
-              className={styles.input}
-              type="number"
-              min={0}
-              step={1}
-              value={paceSeconds}
-              onChange={onPaceSecondsChange}
-              aria-label="Секунды на километр"
-            />
-            <span className={styles.unit}>сек</span>
           </div>
         </div>
       </div>
@@ -121,30 +63,14 @@ export function ResultSection({
       <div className={styles.inputRow}>
         <span className={styles.rowLabel}>Время на круге (400 м):</span>
         <div className={styles.fields}>
-          <div className={styles.fieldSpacer} aria-hidden="true" />
           <div className={styles.fieldGroup}>
-            <input
+            <TimeInput
               className={styles.input}
-              type="number"
-              min={0}
-              step={1}
-              value={lapMinutes}
-              onChange={onLapMinutesChange}
-              aria-label="Минуты на круге"
+              placeholder="00:00"
+              value={lapTime}
+              onChange={onLapTimeChange}
+              style={{ width: 100, textAlign: "center" }}
             />
-            <span className={styles.unit}>мин</span>
-          </div>
-          <div className={styles.fieldGroup}>
-            <input
-              className={styles.input}
-              type="number"
-              min={0}
-              step={1}
-              value={lapSeconds}
-              onChange={onLapSecondsChange}
-              aria-label="Секунды на круге"
-            />
-            <span className={styles.unit}>сек</span>
           </div>
         </div>
       </div>

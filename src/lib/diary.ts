@@ -802,6 +802,16 @@ export const getDiaryExportRows = async (params: {
     return `${temperatureText}°C`;
   };
 
+  const formatDateWithDay = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const weekDays = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    const dayOfWeek = weekDays[date.getDay()];
+    return `${day}.${month}.${year}(${dayOfWeek})`;
+  };
+
   const rows: DiaryExportRow[] = [];
   for (const date of buildDateRange(params.from, params.to)) {
     const dayEntries = planByDate.get(date) ?? [];
@@ -812,9 +822,11 @@ export const getDiaryExportRows = async (params: {
     const recoveryText = formatRecovery(recovery);
     const hasWorkload = dayEntries.some((entry) => entry.isWorkload);
 
+    const datePart = formatDateWithDay(date);
+
     if (dayEntries.length === 0) {
       rows.push({
-        dateTime: date,
+        dateTime: datePart,
         task: "-",
         result: "-",
         comment: "-",
@@ -880,7 +892,8 @@ export const getDiaryExportRows = async (params: {
     const resultText = formatNumberedLines(results);
     const commentText = formatNumberedLines(comments);
     const scoreText = formatNumberedLines(scores);
-    const dateTime = startTimes.length ? `${date} ${startTimes.join(", ")}` : date;
+    const timePart = startTimes.length ? startTimes.join(", ") : "";
+    const dateTime = timePart ? `${datePart}\n${timePart}` : datePart;
     const volumeText = totalDistanceKm > 0 ? totalDistanceKm.toFixed(2) : "-";
 
     rows.push({

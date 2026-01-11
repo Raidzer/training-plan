@@ -43,6 +43,26 @@ export const formatMinutesSeconds = (totalSeconds: number) => {
 
 export const getDistanceLabel = (meters: number) => `${meters.toLocaleString("ru-RU")} м`;
 
+export const parseTimeInputToSeconds = (value: string): number => {
+  if (!value) return 0;
+  const parts = value.split(":");
+  let seconds = 0;
+  if (parts.length === 3) {
+    // HH:MM:SS
+    seconds += Number(parts[0]) * 3600;
+    seconds += Number(parts[1]) * 60;
+    seconds += Number(parts[2]);
+  } else if (parts.length === 2) {
+    // MM:SS
+    seconds += Number(parts[0]) * 60;
+    seconds += Number(parts[1]);
+  } else if (parts.length === 1) {
+    // SS (or just number)
+    seconds += Number(parts[0]);
+  }
+  return seconds;
+};
+
 export const safeParseSaved = (raw: string | null): SavedResult[] => {
   if (!raw) {
     return [];

@@ -48,7 +48,9 @@ export function PlanEntriesTable({
         dataIndex: "taskText",
         className: styles.textColumn,
         onHeaderCell: () => ({ className: styles.textColumn }),
-        render: (value: string) => <span className={styles.multilineText}>{value}</span>,
+        render: (value: string) => (
+          <span className={styles.multilineText} dangerouslySetInnerHTML={{ __html: value }} />
+        ),
       },
       {
         title: PLAN_TEXT.table.comment,
@@ -56,7 +58,9 @@ export function PlanEntriesTable({
         className: styles.textColumn,
         onHeaderCell: () => ({ className: styles.textColumn }),
         render: (value: string | null) =>
-          value ? <span className={styles.multilineText}>{value}</span> : null,
+          value ? (
+            <span className={styles.multilineText} dangerouslySetInnerHTML={{ __html: value }} />
+          ) : null,
       },
       {
         title: PLAN_TEXT.table.report,

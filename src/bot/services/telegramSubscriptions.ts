@@ -1,16 +1,17 @@
 ﻿import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { telegramSubscriptions } from "@/db/schema";
+import { telegramSubscriptions, users } from "@/db/schema";
 
 export const getSubscription = async (userId: number) => {
   const [subscription] = await db
     .select({
       id: telegramSubscriptions.id,
-      timezone: telegramSubscriptions.timezone,
+      timezone: users.timezone,
       sendTime: telegramSubscriptions.sendTime,
       enabled: telegramSubscriptions.enabled,
     })
     .from(telegramSubscriptions)
+    .innerJoin(users, eq(telegramSubscriptions.userId, users.id))
     .where(eq(telegramSubscriptions.userId, userId));
   return subscription ?? null;
 };
@@ -30,19 +31,28 @@ export const upsertSubscription = async (params: {
     .from(telegramSubscriptions)
     .where(eq(telegramSubscriptions.userId, params.userId));
 
+  const { timezone, ...subPatch } = params.patch;
+
+  if (timezone) {
+    await db.update(users).set({ timezone }).where(eq(users.id, params.userId));
+  }
+
   if (existing) {
-    await db
-      .update(telegramSubscriptions)
-      .set({ ...params.patch, updatedAt: now })
-      .where(eq(telegramSubscriptions.id, existing.id));
+    if (Object.keys(subPatch).length > 0) {
+      await db
+        .update(telegramSubscriptions)
+        .set({ ...subPatch, updatedAt: now })
+        .where(eq(telegramSubscriptions.id, existing.id));
+    }
   } else {
+    // For new subscription, we might not have updated timezone if it wasn't in patch
+    // But timezone is on users table, which must exist for userId to verify
     await db.insert(telegramSubscriptions).values({
       userId: params.userId,
       chatId: params.chatId,
       enabled: false,
-      timezone: null,
       sendTime: null,
-      ...params.patch,
+      ...subPatch,
       createdAt: now,
       updatedAt: now,
     });
@@ -55,11 +65,12 @@ export const getEnabledSubscriptions = async () => {
       id: telegramSubscriptions.id,
       userId: telegramSubscriptions.userId,
       chatId: telegramSubscriptions.chatId,
-      timezone: telegramSubscriptions.timezone,
+      timezone: users.timezone,
       sendTime: telegramSubscriptions.sendTime,
       lastSentOn: telegramSubscriptions.lastSentOn,
     })
     .from(telegramSubscriptions)
+    .innerJoin(users, eq(telegramSubscriptions.userId, users.id))
     .where(eq(telegramSubscriptions.enabled, true));
 };
 

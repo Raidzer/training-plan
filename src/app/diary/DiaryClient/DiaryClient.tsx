@@ -20,6 +20,8 @@ import { RecoveryCard } from "./components/RecoveryCard";
 import { WorkoutsCard } from "./components/WorkoutsCard";
 import { DailyReportModal } from "./components/DailyReportModal";
 
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
+
 const formatRecoveryFlags = (entry?: RecoveryEntry | null) => {
   if (!entry) {
     return "";
@@ -114,7 +116,7 @@ const buildDailyReportText = (params: { date: string; day: DayPayload | null }) 
 
   for (const [index, entry] of params.day.planEntries.entries()) {
     const report = reportByPlan.get(entry.id);
-    const taskText = entry.taskText?.trim() ? entry.taskText : "-";
+    const taskText = entry.taskText?.trim() ? stripHtml(entry.taskText) : "-";
     const resultText = report?.resultText?.trim() ? report.resultText : "-";
     const commentParts: string[] = [];
     if (report?.commentText?.trim()) {
