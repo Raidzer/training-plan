@@ -2,6 +2,7 @@
 
 import { Button, Space, Typography } from "antd";
 import Link from "next/link";
+import { CalendarOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import styles from "../diary.module.scss";
 
 type DiaryHeaderProps = {
@@ -33,10 +34,10 @@ export function DiaryHeader({
       </div>
       <Space size="small" className={styles.headerActions}>
         <Link href={periodHref} passHref>
-          <Button>{periodLabel}</Button>
+          <Button icon={<CalendarOutlined />}>{periodLabel}</Button>
         </Link>
         <Link href={dashboardHref} passHref>
-          <Button>{dashboardLabel}</Button>
+          <Button icon={<ArrowLeftOutlined />}>{dashboardLabel}</Button>
         </Link>
       </Space>
     </div>
