@@ -241,3 +241,8 @@
     min-width: 0;
   }
 }
+
+.multilineText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
