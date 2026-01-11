@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
-import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/db/schema";
+import { telegramAccounts, telegramLinkCodes, telegramSubscriptions, users } from "@/db/schema";
 
 export async function GET() {
   const session = await auth();
@@ -23,10 +23,11 @@ export async function GET() {
   const [subscription] = await db
     .select({
       enabled: telegramSubscriptions.enabled,
-      timezone: telegramSubscriptions.timezone,
+      timezone: users.timezone,
       sendTime: telegramSubscriptions.sendTime,
     })
     .from(telegramSubscriptions)
+    .innerJoin(users, eq(telegramSubscriptions.userId, users.id))
     .where(eq(telegramSubscriptions.userId, userId));
 
   const [codeRow] = await db
