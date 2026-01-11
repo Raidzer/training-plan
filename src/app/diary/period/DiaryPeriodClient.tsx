@@ -154,7 +154,7 @@ export function DiaryPeriodClient() {
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space direction="vertical" size="large" className={styles.spaceStyle}>
+        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
           <div className={styles.headerRow}>
             <div className={styles.headerText}>
               <Typography.Title level={3} className={styles.typographyTitle}>
