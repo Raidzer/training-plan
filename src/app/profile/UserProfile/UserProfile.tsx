@@ -11,6 +11,7 @@ import { ProfileForm } from './ProfileForm';
 export const UserProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState({
+    id: '',
     email: '',
     password: '',
     name: '',
@@ -26,6 +27,7 @@ export const UserProfile = () => {
           return result.json();
         });
         setUserData({
+          id: data.user.id,
           email: data.user.email,
           password: data.user.password,
           name: data.user.name,
@@ -48,4 +50,3 @@ export const UserProfile = () => {
   }
   return <ProfileForm userData={userData} />;
 };
-
