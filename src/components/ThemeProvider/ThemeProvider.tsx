@@ -5,7 +5,7 @@ import clsx from "clsx";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import styles from "./ThemeProvider.module.scss";
 import { Header } from "../Header/Header";
 
@@ -20,25 +20,30 @@ const ThemeContext = createContext<ThemeContextValue>({
 const STORAGE_KEY = "ui-theme";
 dayjs.locale("ru");
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<Mode>("light");
+export function ThemeProvider({
+  children,
+  initialTheme,
+}: {
+  children: ReactNode;
+  initialTheme: Mode;
+}) {
+  const [mode, setMode] = useState<Mode>(initialTheme);
   const pathname = usePathname();
   const isWideRoute = pathname.startsWith("/plan") || pathname.startsWith("/diary");
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark") {
-      setMode(saved);
-      return;
-    }
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setMode("dark");
-    }
-  }, []);
+  const handleSetMode = (next: Mode) => {
+    setMode(next);
+    localStorage.setItem(STORAGE_KEY, next);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, mode);
-  }, [mode]);
+    // Set cookie for 1 year
+    document.cookie = `ui-theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
+
+    if (next === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   const algorithm = useMemo(
     () => (mode === "dark" ? [antdTheme.darkAlgorithm] : [antdTheme.defaultAlgorithm]),
@@ -46,7 +51,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ThemeContext.Provider value={{ mode, setMode }}>
+    <ThemeContext.Provider value={{ mode, setMode: handleSetMode }}>
       <ConfigProvider
         theme={{
           algorithm,
@@ -58,8 +63,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         locale={ruRU}
       >
         <App>
-          <div className={clsx(styles.root, mode === "dark" ? styles.dark : styles.light)}>
-            <Header mode={mode} onToggle={(next) => setMode(next)} />
+          <div className={styles.root}>
+            <Header mode={mode} onToggle={handleSetMode} />
             <main className={clsx(styles.main, isWideRoute && styles.mainWide)}>{children}</main>
           </div>
         </App>
