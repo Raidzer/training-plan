@@ -1,48 +1,11 @@
+"use client";
+
 import { Input, type InputProps } from "antd";
 import { useEffect, useState } from "react";
 
 type TimeInputProps = Omit<InputProps, "onChange" | "value"> & {
   value?: string;
   onChange?: (value: string) => void;
-};
-
-// Helper to format raw digits into HH:MM:SS or MM:SS
-const formatTime = (raw: string): string => {
-  // Remove non-digits
-  const digits = raw.replace(/\D/g, "");
-
-  if (!digits) return "";
-
-  // If we have seconds part (and optionally fractional) handle checks?
-  // But here we want to just mask 00:00 or 00:00:00
-
-  // Strategy:
-  // 1-2 digits: MM (or SS) -> just digits
-  // 3-4 digits: MM:SS
-  // 5-6 digits: HH:MM:SS
-  // We can just inject ':' every 2 digits from the RIGHT? No, usually from left.
-  // But standard is HH:MM:SS.
-  // Let's try simple left-to-right filling.
-
-  let formatted = "";
-  for (let i = 0; i < digits.length; i++) {
-    if (i > 0 && i % 2 === 0 && i < 6) {
-      formatted += ":";
-    }
-    formatted += digits[i];
-  }
-
-  // Cut to HH:MM:SS max length (8 chars: 2+1+2+1+2)
-  if (formatted.length > 8) {
-    // If user keeps typing, maybe they want milliseconds?
-    // The requirement said "00:00:00.00" is allowed.
-    // So we should handle the fractional part separately perhaps.
-    // But standard "smart mask" usually just handles colons.
-    // Let's stick to max 6 digits for the main time part for now or allow more if we support HH:MM:SS
-    // Actually, if we allow MM:SS (4 digits) and HH:MM:SS (6 digits).
-  }
-
-  return formatted;
 };
 
 export function TimeInput({ value, onChange, onBlur, ...props }: TimeInputProps) {

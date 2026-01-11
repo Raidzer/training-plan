@@ -11,26 +11,18 @@ import { usePaceCalculator } from "./usePaceCalculator";
 export function PaceCalculatorClient() {
   const {
     distance,
-    resultHours,
-    resultMinutes,
-    resultSeconds,
-    paceMinutes,
-    paceSeconds,
-    lapMinutes,
-    lapSeconds,
     splits,
     splitGroups,
     savedResults,
+    resultTimeString,
+    paceTimeString,
+    lapTimeString,
     canSave,
     handleDistanceChange,
     handleDistancePreset,
-    handleResultHoursChange,
-    handleResultMinutesChange,
-    handleResultSecondsChange,
-    handlePaceMinutesChange,
-    handlePaceSecondsChange,
-    handleLapMinutesChange,
-    handleLapSecondsChange,
+    handleResultTimeChange,
+    handlePaceTimeChange,
+    handleLapTimeChange,
     handleSaveResult,
     handleDeleteResult,
     getSavedDistanceLabel,
@@ -61,22 +53,14 @@ export function PaceCalculatorClient() {
           />
           <div className={styles.sectionDivider} />
           <ResultSection
-            resultHours={resultHours}
-            resultMinutes={resultMinutes}
-            resultSeconds={resultSeconds}
-            paceMinutes={paceMinutes}
-            paceSeconds={paceSeconds}
-            lapMinutes={lapMinutes}
-            lapSeconds={lapSeconds}
+            resultTime={resultTimeString}
+            paceTime={paceTimeString}
+            lapTime={lapTimeString}
             canSave={canSave}
             onSave={handleSaveResult}
-            onResultHoursChange={handleResultHoursChange}
-            onResultMinutesChange={handleResultMinutesChange}
-            onResultSecondsChange={handleResultSecondsChange}
-            onPaceMinutesChange={handlePaceMinutesChange}
-            onPaceSecondsChange={handlePaceSecondsChange}
-            onLapMinutesChange={handleLapMinutesChange}
-            onLapSecondsChange={handleLapSecondsChange}
+            onResultTimeChange={handleResultTimeChange}
+            onPaceTimeChange={handlePaceTimeChange}
+            onLapTimeChange={handleLapTimeChange}
           />
         </div>
         <SplitsPanel splits={splits} splitGroups={splitGroups} />
