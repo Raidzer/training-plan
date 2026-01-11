@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx src/scripts/seed.ts",
+    "type-check": "tsc --noEmit",
     "dev:init": "node init.js && npm run db:up && npm run db:wait && npm run db:push && npm run seed",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
