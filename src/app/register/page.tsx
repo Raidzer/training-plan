@@ -1,11 +1,27 @@
 ﻿"use client";
 
-import { Button, Card, Form, Input, Typography, message, type FormProps, Radio } from "antd";
-import { Suspense, useState } from "react";
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  Typography,
+  message,
+  type FormProps,
+  Radio,
+  Select,
+} from "antd";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { LockOutlined, MailOutlined, UserOutlined, UserAddOutlined } from "@ant-design/icons";
+import {
+  LockOutlined,
+  MailOutlined,
+  UserOutlined,
+  UserAddOutlined,
+  GlobalOutlined,
+} from "@ant-design/icons";
 import styles from "./register.module.scss";
 
 type RegisterFields = {
@@ -16,6 +32,7 @@ type RegisterFields = {
   email: string;
   password: string;
   confirmPassword: string;
+  timezone: string;
 };
 
 const GENDER_OPTIONS = [
@@ -31,6 +48,59 @@ function RegisterContent() {
   const searchParams = useSearchParams();
   const inviteToken = (searchParams.get("invite") ?? "").trim();
   const hasInvite = inviteToken.length >= 10;
+
+  const timezoneOptions = useMemo(() => {
+    try {
+      const timeZones = Intl.supportedValuesOf("timeZone");
+      const formatter = new Intl.DateTimeFormat("ru-RU", {
+        timeZoneName: "longOffset",
+        hour12: false,
+      });
+      const cityFormatter = new Intl.DateTimeFormat("ru-RU", {
+        timeZoneName: "long",
+        hour12: false,
+      });
+
+      return timeZones.map((tz) => {
+        try {
+          // Get offset (e.g. "GMT+3")
+          const parts = formatter.formatToParts(new Date());
+          const offsetPart = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+
+          // Get city/region name manually or use English fallback if simpler,
+          // but let's try to make it nice.
+          // Often just "Europe/Moscow" -> "Москва" is hard without a library.
+          // Let's settle for "Europe/Moscow (GMT+3)" format but localized where possible if using standard APIs.
+          // A better user experience is "Region/City (OFFSET)".
+
+          // Let's keep it simple and robust: "Europe/Moscow (GMT+3:00)"
+          // And maybe simple replace for common ones if we want russian cities,
+          // but 'Intl' doesn't translate city names well usually.
+
+          // Actually, we can just use the ID + Offset.
+          // Or try `timeZoneName: "location"` (not fully supported everywhere).
+
+          const date = new Date();
+          const gmt =
+            new Intl.DateTimeFormat("en-US", {
+              timeZone: tz,
+              timeZoneName: "longOffset",
+            })
+              .formatToParts(date)
+              .find((p) => p.type === "timeZoneName")?.value ?? "";
+
+          return { value: tz, label: `${tz} (${gmt})` };
+        } catch {
+          return { value: tz, label: tz };
+        }
+      });
+    } catch {
+      return [
+        { value: "Europe/Moscow", label: "Europe/Moscow (GMT+3)" },
+        { value: "UTC", label: "UTC (GMT+0)" },
+      ];
+    }
+  }, []);
 
   const onFinish: FormProps<RegisterFields>["onFinish"] = async (values) => {
     if (!hasInvite) {
@@ -106,7 +176,7 @@ function RegisterContent() {
             layout="vertical"
             onFinish={onFinish}
             requiredMark={false}
-            initialValues={{ gender: "male" }}
+            initialValues={{ gender: "male", timezone: "Europe/Moscow" }}
           >
             <Form.Item name="name" label="Имя" rules={[{ required: true, message: "Введите имя" }]}>
               <Input prefix={<UserOutlined />} placeholder="Иван" />
@@ -144,6 +214,19 @@ function RegisterContent() {
               ]}
             >
               <Input prefix={<MailOutlined />} placeholder="Ваш email" />
+            </Form.Item>
+            <Form.Item
+              name="timezone"
+              label="Часовой пояс"
+              rules={[{ required: true, message: "Выберите часовой пояс" }]}
+            >
+              <Select
+                showSearch
+                options={timezoneOptions}
+                placeholder="Выберите часовой пояс"
+                optionFilterProp="label"
+                suffixIcon={<GlobalOutlined />}
+              />
             </Form.Item>
             <Form.Item
               name="password"
