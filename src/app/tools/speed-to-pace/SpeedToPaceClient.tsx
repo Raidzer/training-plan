@@ -44,12 +44,11 @@ export function SpeedToPaceClient() {
                 <span className={styles.fieldLabel}>Км в час</span>
                 <div className={styles.fieldRow}>
                   <Input
-                    className={styles.input}
+                    className={`${styles.input} ${styles.centeredInput}`}
                     inputMode="decimal"
                     value={speedKmhString}
                     onChange={handleSpeedKmhChange}
                     aria-label="Километров в час"
-                    style={{ textAlign: "center" }}
                   />
                   <span className={styles.unit}>км/ч</span>
                 </div>
@@ -58,12 +57,11 @@ export function SpeedToPaceClient() {
                 <span className={styles.fieldLabel}>Метров в сек</span>
                 <div className={styles.fieldRow}>
                   <Input
-                    className={styles.input}
+                    className={`${styles.input} ${styles.centeredInput}`}
                     inputMode="decimal"
                     value={speedMpsString}
                     onChange={handleSpeedMpsChange}
                     aria-label="Метров в секунду"
-                    style={{ textAlign: "center" }}
                   />
                   <span className={styles.unit}>м/с</span>
                 </div>
@@ -72,12 +70,11 @@ export function SpeedToPaceClient() {
                 <span className={styles.fieldLabel}>Миль в час</span>
                 <div className={styles.fieldRow}>
                   <Input
-                    className={styles.input}
+                    className={`${styles.input} ${styles.centeredInput}`}
                     inputMode="decimal"
                     value={speedMphString}
                     onChange={handleSpeedMphChange}
                     aria-label="Миль в час"
-                    style={{ textAlign: "center" }}
                   />
                   <span className={styles.unit}>миль/ч</span>
                 </div>
@@ -93,11 +90,10 @@ export function SpeedToPaceClient() {
                 <div className={styles.fieldRow}>
                   <div className={styles.inputGroup}>
                     <TimeInput
-                      className={`${styles.input} ${styles.inputCompact}`}
+                      className={`${styles.input} ${styles.timeInput}`}
                       placeholder="00:00"
                       value={paceKmTimeString}
                       onChange={handlePaceKmTimeChange}
-                      style={{ width: 100, textAlign: "center" }}
                     />
                     <span className={styles.unit}>мин:сек</span>
                   </div>
@@ -108,11 +104,10 @@ export function SpeedToPaceClient() {
                 <div className={styles.fieldRow}>
                   <div className={styles.inputGroup}>
                     <TimeInput
-                      className={`${styles.input} ${styles.inputCompact}`}
+                      className={`${styles.input} ${styles.timeInput}`}
                       placeholder="00:00"
                       value={paceMileTimeString}
                       onChange={handlePaceMileTimeChange}
-                      style={{ width: 100, textAlign: "center" }}
                     />
                     <span className={styles.unit}>мин:сек</span>
                   </div>

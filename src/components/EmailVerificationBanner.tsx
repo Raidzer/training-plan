@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Alert, Button, message } from "antd";
 import { useSession } from "next-auth/react";
 
+import styles from "./EmailVerificationBanner.module.scss";
+
 export function EmailVerificationBanner() {
   const { data: session } = useSession();
   const [visible, setVisible] = useState(false);
@@ -53,20 +55,12 @@ export function EmailVerificationBanner() {
   if (!visible) return null;
 
   return (
-    <div style={{ marginBottom: 16 }}>
+    <div className={styles.container}>
       {contextHolder}
       <Alert
         title="Ваш Email не подтвержден"
         description={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 8,
-            }}
-          >
+          <div className={styles.description}>
             <span>Подтвердите почту для доступа ко всем функциям и восстановления доступа.</span>
             <Button size="small" type="primary" onClick={handleResend} loading={loading}>
               Отправить письмо повторно

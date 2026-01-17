@@ -117,11 +117,7 @@ export function WorkoutsCard({
                       />
                     </Typography.Text>
                     {entry.commentText ? (
-                      <Typography.Paragraph
-                        type="secondary"
-                        className={styles.paragraphTight}
-                        style={{ marginTop: "1em" }}
-                      >
+                      <Typography.Paragraph type="secondary" className={styles.commentParagraph}>
                         <span
                           className={styles.multilineText}
                           dangerouslySetInnerHTML={{ __html: entry.commentText }}
