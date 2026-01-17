@@ -38,7 +38,7 @@ function ResetPasswordForm() {
 
       if (response.ok) {
         messageApi.success("Пароль успешно изменен!");
-        router.push("/auth/login");
+        router.push("/login");
       } else {
         messageApi.error(data.error || "Произошла ошибка при сбросе пароля.");
       }
