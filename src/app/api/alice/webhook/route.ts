@@ -29,7 +29,6 @@ type AliceRequest = {
   };
   state?: {
     session?: {
-      is_moderator?: boolean;
       expected_period?: "morning" | "evening";
     };
   };
@@ -43,17 +42,9 @@ type AliceResponse = {
     end_session: boolean;
   };
   session_state?: {
-    is_moderator?: boolean;
     expected_period?: "morning" | "evening";
   };
 };
-
-const MODERATOR_CODE = "999999";
-
-if (!(globalThis as any).moderatorSessions) {
-  (globalThis as any).moderatorSessions = new Set<string>();
-}
-const moderatorSessions = (globalThis as any).moderatorSessions as Set<string>;
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,7 +52,6 @@ export async function POST(req: NextRequest) {
     const aliceUserId = body.session.user.user_id;
     const command = body.request.command;
     const originalUtterance = body.request.original_utterance;
-    const sessionId = body.session.session_id;
 
     if (originalUtterance === "ping") {
       return NextResponse.json({
@@ -74,8 +64,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const isModeratorSession =
-      body.state?.session?.is_moderator === true || moderatorSessions.has(sessionId);
     const expectedPeriod = body.state?.session?.expected_period;
 
     const response: AliceResponse = {
@@ -86,12 +74,8 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    if (isModeratorSession) {
-      response.session_state = { ...response.session_state, is_moderator: true };
-      moderatorSessions.add(sessionId);
-    }
-
     const userData = await getUserIdByAliceId(aliceUserId);
+
     if (
       command.toLowerCase().includes("помощь") ||
       command.toLowerCase().includes("что ты умеешь") ||
@@ -100,7 +84,7 @@ export async function POST(req: NextRequest) {
       response.response.text =
         "Я умею записывать ваш утренний и вечерний вес в дневник тренировок. \n\n" +
         "Просто скажите: 'Вес утро 75.5' или 'Запиши вечерний вес 76'. \n\n" +
-        (userData || isModeratorSession
+        (userData
           ? "Вы уже привязали аккаунт и можете диктовать вес."
           : "Сначала нужно связать аккаунт с Telegram-ботом. Скажите 'Связать аккаунт' и назовите код из бота.");
       return NextResponse.json(response);
@@ -114,15 +98,6 @@ export async function POST(req: NextRequest) {
     ) {
       if (codeMatch) {
         const code = codeMatch[0];
-
-        if (code === MODERATOR_CODE) {
-          response.response.text =
-            "Аккаунт успешно привязан! (Режим проверки). Теперь вы можете диктовать мне свой вес.";
-          response.response.end_session = false;
-          response.session_state = { is_moderator: true };
-          moderatorSessions.add(sessionId);
-          return NextResponse.json(response);
-        }
 
         const success = await linkAliceAccount(aliceUserId, code);
         if (success) {
@@ -143,13 +118,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!userData && !isModeratorSession) {
+    if (!userData) {
       response.response.text =
         "Я вас пока не знаю. Получите код привязки в Telegram боте и скажите мне: 'Связать аккаунт [код]'.";
       return NextResponse.json(response);
     }
 
-    const { userId, timezone } = userData || { userId: 0, timezone: "UTC" };
+    const { userId, timezone } = userData;
 
     const weightData = parseWeightCommand(command);
     if (weightData) {
@@ -160,24 +135,21 @@ export async function POST(req: NextRequest) {
         weightData.period = "evening";
       }
 
-      if (!isModeratorSession) {
-        const today =
-          timezone && isValidTimeZone(timezone)
-            ? formatDateInTimeZone(new Date(), timezone)
-            : formatDateLocal(new Date());
+      const today =
+        timezone && isValidTimeZone(timezone)
+          ? formatDateInTimeZone(new Date(), timezone)
+          : formatDateLocal(new Date());
 
-        await upsertWeightEntry({
-          userId,
-          date: today,
-          period: weightData.period,
-          weightKg: weightData.weight,
-        });
-      }
+      await upsertWeightEntry({
+        userId,
+        date: today,
+        period: weightData.period,
+        weightKg: weightData.weight,
+      });
 
       const periodLabel = weightData.period === "morning" ? "утренний" : "вечерний";
-      const debugSuffix = isModeratorSession ? " (Тестовая запись, не сохранена)" : "";
 
-      response.response.text = `Записала ${periodLabel} вес: ${weightData.weight} кг.${debugSuffix}`;
+      response.response.text = `Записала ${periodLabel} вес: ${weightData.weight} кг.`;
       response.response.end_session = true;
       return NextResponse.json(response);
     }
