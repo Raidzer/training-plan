@@ -151,11 +151,10 @@ export async function POST(req: NextRequest) {
 
     const { userId, timezone } = userData || { userId: 0, timezone: "UTC" };
 
-    const weightData = parseWeightCommand(originalUtterance);
+    const weightData = parseWeightCommand(command);
     if (weightData) {
       const explicitMorning =
-        originalUtterance.toLowerCase().includes("утро") ||
-        originalUtterance.toLowerCase().includes("утрен");
+        command.toLowerCase().includes("утро") || command.toLowerCase().includes("утрен");
 
       if (weightData.period === "morning" && !explicitMorning && expectedPeriod === "evening") {
         weightData.period = "evening";
