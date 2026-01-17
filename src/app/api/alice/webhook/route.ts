@@ -61,6 +61,17 @@ export async function POST(req: NextRequest) {
     const originalUtterance = body.request.original_utterance;
     const sessionId = body.session.session_id;
 
+    if (originalUtterance === "ping") {
+      return NextResponse.json({
+        version: body.version,
+        session: body.session,
+        response: {
+          text: "pong",
+          end_session: true,
+        },
+      });
+    }
+
     const isModeratorSession =
       body.state?.session?.is_moderator === true || moderatorSessions.has(sessionId);
 
