@@ -10,20 +10,22 @@ export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const token = searchParams.get("token");
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+
   if (!token) {
-    return NextResponse.redirect(new URL("/auth/verify-email?error=missing_token", req.url));
+    return NextResponse.redirect(new URL("/auth/verify-email?error=missing_token", baseUrl));
   }
 
   const existingToken = await getVerificationTokenByToken(token);
 
   if (!existingToken) {
-    return NextResponse.redirect(new URL("/auth/verify-email?error=invalid_token", req.url));
+    return NextResponse.redirect(new URL("/auth/verify-email?error=invalid_token", baseUrl));
   }
 
   const hasExpired = new Date(existingToken.expires) < new Date();
 
   if (hasExpired) {
-    return NextResponse.redirect(new URL("/auth/verify-email?error=expired", req.url));
+    return NextResponse.redirect(new URL("/auth/verify-email?error=expired", baseUrl));
   }
 
   const [existingUser] = await db
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
     .where(eq(users.email, existingToken.identifier));
 
   if (!existingUser) {
-    return NextResponse.redirect(new URL("/auth/verify-email?error=email_not_found", req.url));
+    return NextResponse.redirect(new URL("/auth/verify-email?error=email_not_found", baseUrl));
   }
 
   await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, existingUser.id));
@@ -42,8 +44,8 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (session) {
-    return NextResponse.redirect(new URL("/dashboard?verified=true", req.url));
+    return NextResponse.redirect(new URL("/dashboard?verified=true", baseUrl));
   }
 
-  return NextResponse.redirect(new URL("/login?verified=true", req.url));
+  return NextResponse.redirect(new URL("/login?verified=true", baseUrl));
 }
