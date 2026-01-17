@@ -7,6 +7,7 @@ import { handleScheduleMenuAction } from "@/bot/commands/handlers/textMessage/me
 import { handleSubscriptionMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleSubscriptionAction";
 import { handleUnlinkMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleUnlinkAction";
 import { handleWeightMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleWeightAction";
+import { handleAliceLinkAction } from "@/bot/commands/handlers/textMessage/menu/handleAliceLinkAction";
 
 type MenuActionHandlerArgs = {
   ctx: any;
@@ -49,6 +50,9 @@ export const handleMenuAction = async ({ ctx, chatId, action }: MenuActionHandle
       return;
     case "help":
       await handleHelpMenuAction({ ctx, userId });
+      return;
+    case "aliceLink":
+      await handleAliceLinkAction({ ctx, userId });
       return;
     default:
       return;

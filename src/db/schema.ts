@@ -333,3 +333,29 @@ export const workoutReportShoes = pgTable(
     ),
   })
 );
+
+export const aliceAccounts = pgTable("alice_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  aliceUserId: text("alice_user_id").notNull().unique(),
+  linkedAt: timestamp("linked_at").notNull().defaultNow(),
+});
+
+export const aliceLinkCodes = pgTable(
+  "alice_link_codes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    code: varchar("code", { length: 16 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    aliceLinkCodesCodeIdx: uniqueIndex("alice_link_codes_code_idx").on(table.code),
+  })
+);
