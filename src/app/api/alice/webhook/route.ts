@@ -30,6 +30,7 @@ type AliceRequest = {
   state?: {
     session?: {
       is_moderator?: boolean;
+      expected_period?: "morning" | "evening";
     };
   };
   version: string;
@@ -43,6 +44,7 @@ type AliceResponse = {
   };
   session_state?: {
     is_moderator?: boolean;
+    expected_period?: "morning" | "evening";
   };
 };
 
@@ -74,6 +76,7 @@ export async function POST(req: NextRequest) {
 
     const isModeratorSession =
       body.state?.session?.is_moderator === true || moderatorSessions.has(sessionId);
+    const expectedPeriod = body.state?.session?.expected_period;
 
     const response: AliceResponse = {
       version: body.version,
@@ -84,12 +87,11 @@ export async function POST(req: NextRequest) {
     };
 
     if (isModeratorSession) {
-      response.session_state = { is_moderator: true };
+      response.session_state = { ...response.session_state, is_moderator: true };
       moderatorSessions.add(sessionId);
     }
 
     const userData = await getUserIdByAliceId(aliceUserId);
-
     if (
       command.toLowerCase().includes("помощь") ||
       command.toLowerCase().includes("что ты умеешь") ||
@@ -151,6 +153,14 @@ export async function POST(req: NextRequest) {
 
     const weightData = parseWeightCommand(originalUtterance);
     if (weightData) {
+      const explicitMorning =
+        originalUtterance.toLowerCase().includes("утро") ||
+        originalUtterance.toLowerCase().includes("утрен");
+
+      if (weightData.period === "morning" && !explicitMorning && expectedPeriod === "evening") {
+        weightData.period = "evening";
+      }
+
       if (!isModeratorSession) {
         const today =
           timezone && isValidTimeZone(timezone)
@@ -186,8 +196,10 @@ export async function POST(req: NextRequest) {
     ) {
       if (normalizedCommand.includes("утренний") || normalizedCommand.includes("утро")) {
         response.response.text = "Привет! Диктуйте утренний вес.";
+        response.session_state = { ...response.session_state, expected_period: "morning" };
       } else if (normalizedCommand.includes("вечерний") || normalizedCommand.includes("вечер")) {
         response.response.text = "Привет! Диктуйте вечерний вес.";
+        response.session_state = { ...response.session_state, expected_period: "evening" };
       } else {
         response.response.text = "Привет! Диктуйте утренний или вечерний вес.";
       }
