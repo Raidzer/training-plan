@@ -1,0 +1,22 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding: 20px 0;
+}
+
+.card {
+  max-width: 400px;
+  width: 100%;
+}
+
+.cardCenter {
+  @extend .card;
+  text-align: center;
+}
+
+.titleWrapper {
+  text-align: center;
+  margin-bottom: 24px;
+}

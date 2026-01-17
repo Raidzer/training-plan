@@ -1,12 +1,18 @@
 .root {
   min-height: 100vh;
   transition: background 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .main {
   max-width: 980px;
   margin: 0 auto;
   padding: 0 16px 48px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .mainWide {

@@ -28,7 +28,25 @@ export const users = pgTable("users", {
   lastName: varchar("last_name", { length: 255 }),
   gender: varchar("gender", { length: 16 }).notNull().default("male"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  emailVerified: timestamp("email_verified"),
 });
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    id: serial("id").primaryKey(),
+    identifier: varchar("identifier", { length: 255 }).notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires").notNull(),
+    type: varchar("type", { length: 32 }).notNull(), // 'verify-email', 'reset-password'
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    verificationTokensIdentifierTokenIdx: uniqueIndex(
+      "verification_tokens_identifier_token_idx"
+    ).on(table.identifier, table.token),
+  })
+);
 
 export const registrationInvites = pgTable(
   "registration_invites",
@@ -313,5 +331,31 @@ export const workoutReportShoes = pgTable(
       table.workoutReportId,
       table.shoeId
     ),
+  })
+);
+
+export const aliceAccounts = pgTable("alice_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  aliceUserId: text("alice_user_id").notNull().unique(),
+  linkedAt: timestamp("linked_at").notNull().defaultNow(),
+});
+
+export const aliceLinkCodes = pgTable(
+  "alice_link_codes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    code: varchar("code", { length: 16 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    aliceLinkCodesCodeIdx: uniqueIndex("alice_link_codes_code_idx").on(table.code),
   })
 );

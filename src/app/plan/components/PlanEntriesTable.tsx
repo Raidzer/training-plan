@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { PLAN_PAGE_SIZE } from "../planConstants";
 import { PLAN_TEXT } from "../planText";
-import type { PlanDayEntry } from "../planUtils";
+import { formatDateWithWeekday, type PlanDayEntry } from "../planUtils";
 import styles from "../plan.module.scss";
 
 type PlanEntriesTableProps = {
@@ -42,6 +42,7 @@ export function PlanEntriesTable({
         title: PLAN_TEXT.table.date,
         dataIndex: "date",
         width: 120,
+        render: (value: string) => formatDateWithWeekday(value),
       },
       {
         title: PLAN_TEXT.table.task,
