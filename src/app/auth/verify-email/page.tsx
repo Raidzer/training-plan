@@ -49,8 +49,8 @@ export default function VerifyEmailPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "100vh",
-        padding: "20px",
+        flex: 1,
+        padding: "20px 0",
       }}
     >
       <Suspense fallback={<Spin size="large" />}>

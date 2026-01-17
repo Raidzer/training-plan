@@ -10,6 +10,7 @@ const { Title, Text } = Typography;
 export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const onFinish = async (values: { email: string }) => {
     setLoading(true);
@@ -22,12 +23,12 @@ export default function ForgotPasswordPage() {
 
       if (response.ok) {
         setSuccess(true);
-        message.success("Если аккаунт существует, мы отправили письмо с инструкциями.");
+        messageApi.success("Если аккаунт существует, мы отправили письмо с инструкциями.");
       } else {
-        message.error("Произошла ошибка при отправке запроса.");
+        messageApi.error("Произошла ошибка при отправке запроса.");
       }
     } catch {
-      message.error("Произошла ошибка. Пожалуйста, попробуйте позже.");
+      messageApi.error("Произошла ошибка. Пожалуйста, попробуйте позже.");
     } finally {
       setLoading(false);
     }
@@ -40,10 +41,11 @@ export default function ForgotPasswordPage() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: "100vh",
-          padding: "20px",
+          flex: 1,
+          padding: "20px 0",
         }}
       >
+        {contextHolder}
         <Card style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
           <Title level={3}>Проверьте почту</Title>
           <Text>Мы отправили письмо с ссылкой для сброса пароля. Пожалуйста проверьте почту</Text>
@@ -63,10 +65,11 @@ export default function ForgotPasswordPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "100vh",
-        padding: "20px",
+        flex: 1,
+        padding: "20px 0",
       }}
     >
+      {contextHolder}
       <Card style={{ maxWidth: 400, width: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <Title level={3}>Сброс пароля</Title>

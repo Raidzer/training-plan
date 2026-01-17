@@ -12,6 +12,7 @@ function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const [messageApi, contextHolder] = message.useMessage();
 
   if (!token) {
     return (
@@ -36,13 +37,13 @@ function ResetPasswordForm() {
       const data = await response.json();
 
       if (response.ok) {
-        message.success("Пароль успешно изменен!");
+        messageApi.success("Пароль успешно изменен!");
         router.push("/auth/login");
       } else {
-        message.error(data.error || "Произошла ошибка при сбросе пароля.");
+        messageApi.error(data.error || "Произошла ошибка при сбросе пароля.");
       }
     } catch (error) {
-      message.error("Произошла ошибка. Пожалуйста, попробуйте позже.");
+      messageApi.error("Произошла ошибка. Пожалуйста, попробуйте позже.");
     } finally {
       setLoading(false);
     }
@@ -50,6 +51,7 @@ function ResetPasswordForm() {
 
   return (
     <Card style={{ maxWidth: 400, width: "100%" }}>
+      {contextHolder}
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         <Title level={3}>Новый пароль</Title>
         <Text type="secondary">Придумайте новый надежный пароль</Text>
@@ -104,8 +106,8 @@ export default function ResetPasswordPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "100vh",
-        padding: "20px",
+        flex: 1,
+        padding: "20px 0",
       }}
     >
       <Suspense fallback={<Card loading style={{ maxWidth: 400, width: "100%" }} />}>

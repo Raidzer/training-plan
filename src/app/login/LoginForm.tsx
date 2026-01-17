@@ -4,6 +4,7 @@ import { LockOutlined, MailOutlined, LoginOutlined } from "@ant-design/icons";
 import { Button, Card, Form, Input, Typography, message } from "antd";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { FormProps } from "antd";
 import styles from "./login.module.scss";
 
@@ -58,6 +59,9 @@ export function LoginForm() {
           <Button type="primary" htmlType="submit" icon={<LoginOutlined />} block>
             Войти
           </Button>
+          <div style={{ textAlign: "center", marginTop: 16 }}>
+            <Link href="/auth/forgot-password">Забыли пароль?</Link>
+          </div>
         </Form>
       </Card>
     </main>
