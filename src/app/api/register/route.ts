@@ -141,6 +141,16 @@ export async function POST(req: Request) {
       return { user: created };
     });
 
+    try {
+      const { generateVerificationToken } = await import("@/lib/tokens");
+      const { sendVerificationEmail } = await import("@/lib/email");
+
+      const token = await generateVerificationToken(result.user.email);
+      await sendVerificationEmail(result.user.email, token);
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError);
+    }
+
     return NextResponse.json({ user: result.user }, { status: 201 });
   } catch (error) {
     if (error instanceof RegisterError) {

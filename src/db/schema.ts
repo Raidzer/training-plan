@@ -28,7 +28,25 @@ export const users = pgTable("users", {
   lastName: varchar("last_name", { length: 255 }),
   gender: varchar("gender", { length: 16 }).notNull().default("male"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  emailVerified: timestamp("email_verified"),
 });
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    id: serial("id").primaryKey(),
+    identifier: varchar("identifier", { length: 255 }).notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires").notNull(),
+    type: varchar("type", { length: 32 }).notNull(), // 'verify-email', 'reset-password'
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    verificationTokensIdentifierTokenIdx: uniqueIndex(
+      "verification_tokens_identifier_token_idx"
+    ).on(table.identifier, table.token),
+  })
+);
 
 export const registrationInvites = pgTable(
   "registration_invites",

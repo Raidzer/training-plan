@@ -17,7 +17,6 @@ type Props = { session: Session };
 
 export function DashboardClient({ session }: Props) {
   const isAdmin = session.user?.role === "admin";
-  console.log(isAdmin);
   const adminCard = isAdmin ? (
     <Link href="/admin/users" passHref>
       <Card

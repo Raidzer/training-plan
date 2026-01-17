@@ -1,6 +1,7 @@
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider/ThemeProvider";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { AuthProvider } from "../components/AuthProvider";
 
 import { cookies } from "next/headers";
 import { type Mode } from "../components/ThemeProvider/ThemeProvider";
@@ -14,7 +15,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head />
       <body>
         <AntdRegistry>
-          <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+          </AuthProvider>
         </AntdRegistry>
       </body>
     </html>
