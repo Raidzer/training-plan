@@ -24,6 +24,8 @@ export const RECOVERY_MASSAGE_LABEL = "Массаж";
 export const RECOVERY_BATH_LABEL = "Баня";
 export const RECOVERY_SAVE_BUTTON_TEXT = "Сохранить";
 
+export const ALICE_LINK_BUTTON_TEXT = "Связать с Алисой";
+
 export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) => {
   const subscribed = params?.subscribed ?? false;
   return {
@@ -37,6 +39,7 @@ export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) =>
       ],
       [{ text: TIME_BUTTON_TEXT }, { text: TIMEZONE_BUTTON_TEXT }],
       [{ text: UNLINK_BUTTON_TEXT }, { text: HELP_BUTTON_TEXT }],
+      [{ text: ALICE_LINK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
     is_persistent: true,

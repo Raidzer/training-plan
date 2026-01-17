@@ -24,5 +24,7 @@ const getPoolConfig = () => {
   return { host, port, user, password, database } as const;
 };
 
+import * as schema from "./schema";
+
 const pool = new Pool(getPoolConfig());
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });
