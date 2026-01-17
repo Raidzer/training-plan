@@ -61,6 +61,14 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.emailVerified = user.emailVerified;
       }
+
+      if (token.sub) {
+        const freshUser = await getUserById(Number(token.sub));
+        if (freshUser) {
+          token.emailVerified = freshUser.emailVerified;
+          token.role = freshUser.role;
+        }
+      }
       return token;
     },
   },
