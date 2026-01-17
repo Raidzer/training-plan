@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     await db.delete(verificationTokens).where(eq(verificationTokens.id, existingToken.id));
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

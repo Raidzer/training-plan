@@ -3,6 +3,8 @@ import { db } from "@/db/client";
 import { users, verificationTokens } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getVerificationTokenByToken } from "@/lib/tokens";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -37,6 +39,11 @@ export async function GET(req: NextRequest) {
 
   await db.delete(verificationTokens).where(eq(verificationTokens.id, existingToken.id));
 
-  // Redirect to login with success message
-  return NextResponse.redirect(new URL("/auth/login?verified=true", req.url));
+  const session = await getServerSession(authOptions);
+
+  if (session) {
+    return NextResponse.redirect(new URL("/dashboard?verified=true", req.url));
+  }
+
+  return NextResponse.redirect(new URL("/login?verified=true", req.url));
 }

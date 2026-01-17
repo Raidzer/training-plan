@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
 
     const [existingUser] = await db.select().from(users).where(eq(users.email, email));
 
-    // Always return success even if user not found to prevent enumeration
     if (!existingUser) {
       return NextResponse.json({ success: true });
     }
@@ -26,7 +25,7 @@ export async function POST(req: NextRequest) {
     await sendPasswordResetEmail(email, token);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

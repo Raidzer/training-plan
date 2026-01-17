@@ -20,6 +20,7 @@ export async function getUserById(id: number) {
       role: users.role,
       isActive: users.isActive,
       passwordHash: users.passwordHash,
+      emailVerified: users.emailVerified,
     })
     .from(users)
     .where(eq(users.id, id));

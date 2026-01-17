@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport(smtpConfig);
 const FROM_EMAIL = process.env.SMTP_FROM || '"Training Plan" <noreply@training-plan.com>';
 
 export async function sendVerificationEmail(email: string, token: string) {
-  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${token}`;
+  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}`;
 
   await transporter.sendMail({
     from: FROM_EMAIL,

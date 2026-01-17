@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
       } else {
         message.error("Произошла ошибка при отправке запроса.");
       }
-    } catch (error) {
+    } catch {
       message.error("Произошла ошибка. Пожалуйста, попробуйте позже.");
     } finally {
       setLoading(false);
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
           <Title level={3}>Проверьте почту</Title>
           <Text>Мы отправили письмо с ссылкой для сброса пароля. Пожалуйста проверьте почту</Text>
           <div style={{ marginTop: 20 }}>
-            <Link href="/auth/login">
+            <Link href="/login">
               <Button type="primary">Вернуться ко входу</Button>
             </Link>
           </div>
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
           </Form.Item>
 
           <div style={{ textAlign: "center" }}>
-            <Link href="/auth/login" style={{ color: "inherit" }}>
+            <Link href="/login" style={{ color: "inherit" }}>
               Вспомнили пароль? Войти
             </Link>
           </div>
