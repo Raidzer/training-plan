@@ -99,3 +99,9 @@ export const sortPlanEntries = (items: PlanEntry[]) =>
     }
     return b.date.localeCompare(a.date);
   });
+
+export const formatDateWithWeekday = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+  return `${dateStr} (${days[date.getUTCDay()]})`;
+};
