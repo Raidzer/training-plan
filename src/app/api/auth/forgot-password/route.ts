@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { generatePasswordResetToken } from "@/lib/tokens";
+import { sendPasswordResetEmail } from "@/lib/email";
+import { z } from "zod";
+
+const schema = z.object({
+  email: z.string().email(),
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { email } = schema.parse(body);
+
+    const [existingUser] = await db.select().from(users).where(eq(users.email, email));
+
+    // Always return success even if user not found to prevent enumeration
+    if (!existingUser) {
+      return NextResponse.json({ success: true });
+    }
+
+    const token = await generatePasswordResetToken(email);
+    await sendPasswordResetEmail(email, token);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+  }
+}
