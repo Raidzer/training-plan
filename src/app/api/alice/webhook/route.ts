@@ -46,14 +46,25 @@ type AliceResponse = {
   };
 };
 
+type SessionData = {
+  expectedPeriod?: "morning" | "evening";
+};
+
+if (!(globalThis as any).sessionStore) {
+  (globalThis as any).sessionStore = new Map<string, SessionData>();
+}
+const sessionStore = (globalThis as any).sessionStore as Map<string, SessionData>;
+
 export async function POST(req: NextRequest) {
   try {
     const body: AliceRequest = await req.json();
     const aliceUserId = body.session.user.user_id;
     const command = body.request.command;
     const originalUtterance = body.request.original_utterance;
+    const sessionId = body.session.session_id;
 
     if (originalUtterance === "ping") {
+      sessionStore.delete(sessionId);
       return NextResponse.json({
         version: body.version,
         session: body.session,
@@ -64,7 +75,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const expectedPeriod = body.state?.session?.expected_period;
+    const memoryState = sessionStore.get(sessionId);
+    const expectedPeriod = body.state?.session?.expected_period || memoryState?.expectedPeriod;
 
     const response: AliceResponse = {
       version: body.version,
@@ -151,6 +163,7 @@ export async function POST(req: NextRequest) {
 
       response.response.text = `Записала ${periodLabel} вес: ${weightData.weight} кг.`;
       response.response.end_session = true;
+      sessionStore.delete(sessionId);
       return NextResponse.json(response);
     }
 
@@ -168,9 +181,11 @@ export async function POST(req: NextRequest) {
       if (normalizedCommand.includes("утренний") || normalizedCommand.includes("утро")) {
         response.response.text = "Привет! Диктуйте утренний вес.";
         response.session_state = { ...response.session_state, expected_period: "morning" };
+        sessionStore.set(sessionId, { expectedPeriod: "morning" });
       } else if (normalizedCommand.includes("вечерний") || normalizedCommand.includes("вечер")) {
         response.response.text = "Привет! Диктуйте вечерний вес.";
         response.session_state = { ...response.session_state, expected_period: "evening" };
+        sessionStore.set(sessionId, { expectedPeriod: "evening" });
       } else {
         response.response.text = "Привет! Диктуйте утренний или вечерний вес.";
       }
