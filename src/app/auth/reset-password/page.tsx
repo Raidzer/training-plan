@@ -4,6 +4,7 @@ import React, { useState, Suspense } from "react";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import { LockOutlined } from "@ant-design/icons";
 import { useRouter, useSearchParams } from "next/navigation";
+import styles from "./page.module.scss";
 
 const { Title, Text } = Typography;
 
@@ -16,7 +17,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <Card style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
+      <Card className={styles.cardCenter}>
         <Title level={4} type="danger">
           Ошибка
         </Title>
@@ -42,7 +43,7 @@ function ResetPasswordForm() {
       } else {
         messageApi.error(data.error || "Произошла ошибка при сбросе пароля.");
       }
-    } catch (error) {
+    } catch {
       messageApi.error("Произошла ошибка. Пожалуйста, попробуйте позже.");
     } finally {
       setLoading(false);
@@ -50,9 +51,9 @@ function ResetPasswordForm() {
   };
 
   return (
-    <Card style={{ maxWidth: 400, width: "100%" }}>
+    <Card className={styles.card}>
       {contextHolder}
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
+      <div className={styles.titleWrapper}>
         <Title level={3}>Новый пароль</Title>
         <Text type="secondary">Придумайте новый надежный пароль</Text>
       </div>
@@ -101,16 +102,8 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flex: 1,
-        padding: "20px 0",
-      }}
-    >
-      <Suspense fallback={<Card loading style={{ maxWidth: 400, width: "100%" }} />}>
+    <div className={styles.container}>
+      <Suspense fallback={<Card loading className={styles.card} />}>
         <ResetPasswordForm />
       </Suspense>
     </div>

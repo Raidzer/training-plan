@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import { MailOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import styles from "./page.module.scss";
 
 const { Title, Text } = Typography;
 
@@ -36,20 +37,12 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flex: 1,
-          padding: "20px 0",
-        }}
-      >
+      <div className={styles.container}>
         {contextHolder}
-        <Card style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
+        <Card className={styles.cardCenter}>
           <Title level={3}>Проверьте почту</Title>
           <Text>Мы отправили письмо с ссылкой для сброса пароля. Пожалуйста проверьте почту</Text>
-          <div style={{ marginTop: 20 }}>
+          <div className={styles.backToLogin}>
             <Link href="/login">
               <Button type="primary">Вернуться ко входу</Button>
             </Link>
@@ -60,18 +53,10 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flex: 1,
-        padding: "20px 0",
-      }}
-    >
+    <div className={styles.container}>
       {contextHolder}
-      <Card style={{ maxWidth: 400, width: "100%" }}>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
+      <Card className={styles.card}>
+        <div className={styles.header}>
           <Title level={3}>Сброс пароля</Title>
           <Text type="secondary">Введите email, чтобы получить ссылку для сброса</Text>
         </div>
@@ -94,8 +79,8 @@ export default function ForgotPasswordPage() {
             </Button>
           </Form.Item>
 
-          <div style={{ textAlign: "center" }}>
-            <Link href="/login" style={{ color: "inherit" }}>
+          <div className={styles.footer}>
+            <Link href="/login" className={styles.linkCommon}>
               Вспомнили пароль? Войти
             </Link>
           </div>

@@ -59,7 +59,7 @@ export function LoginForm() {
           <Button type="primary" htmlType="submit" icon={<LoginOutlined />} block>
             Войти
           </Button>
-          <div style={{ textAlign: "center", marginTop: 16 }}>
+          <div className={styles.links}>
             <Link href="/auth/forgot-password">Забыли пароль?</Link>
           </div>
         </Form>

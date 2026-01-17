@@ -35,11 +35,10 @@ export function ResultSection({
         <div className={styles.fields}>
           <div className={styles.fieldGroup}>
             <TimeInput
-              className={styles.input}
+              className={`${styles.input} ${styles.timeInputLarge}`}
               placeholder="00:00:00"
               value={resultTime}
               onChange={onResultTimeChange}
-              style={{ width: 120, textAlign: "center" }}
             />
           </div>
         </div>
@@ -50,11 +49,10 @@ export function ResultSection({
         <div className={styles.fields}>
           <div className={styles.fieldGroup}>
             <TimeInput
-              className={styles.input}
+              className={`${styles.input} ${styles.timeInputMedium}`}
               placeholder="00:00"
               value={paceTime}
               onChange={onPaceTimeChange}
-              style={{ width: 100, textAlign: "center" }}
             />
           </div>
         </div>
@@ -65,11 +63,10 @@ export function ResultSection({
         <div className={styles.fields}>
           <div className={styles.fieldGroup}>
             <TimeInput
-              className={styles.input}
+              className={`${styles.input} ${styles.timeInputMedium}`}
               placeholder="00:00"
               value={lapTime}
               onChange={onLapTimeChange}
-              style={{ width: 100, textAlign: "center" }}
             />
           </div>
         </div>

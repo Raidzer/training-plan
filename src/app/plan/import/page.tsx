@@ -111,7 +111,7 @@ export default function PlanImportPage() {
           </Button>
           {result && (
             <Card type="inner" title="Результат импорта">
-              <Typography.Paragraph style={{ marginBottom: 4 }}>
+              <Typography.Paragraph className={styles.resultParagraph}>
                 Импорт #{result.importId}: добавлено {result.inserted}, пропущено {result.skipped}.
               </Typography.Paragraph>
               {result.errors && result.errors.length > 0 && (
@@ -125,7 +125,7 @@ export default function PlanImportPage() {
                         Строка {err.row}: {err.message}
                       </List.Item>
                     )}
-                    style={{ marginTop: 8 }}
+                    className={styles.errorList}
                   />
                 </>
               )}
