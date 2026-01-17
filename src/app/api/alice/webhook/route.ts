@@ -136,12 +136,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(response);
     }
 
-    const { userId, timezone } = userData || { userId: 0, timezone: "UTC" }; // Fallback for moderator
-
-    if (body.session.new && !command) {
-      response.response.text = "Привет! Жду ваш вес (утро или вечер).";
-      return NextResponse.json(response);
-    }
+    const { userId, timezone } = userData || { userId: 0, timezone: "UTC" };
 
     const weightData = parseWeightCommand(originalUtterance);
     if (weightData) {
@@ -167,7 +162,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(response);
     }
 
-    response.response.text = "Не поняла команду. Скажите, например: 'Вес утро 75.5'";
+    const normalizedCommand = command.toLowerCase();
+
+    if (
+      (body.session.new && !command) ||
+      normalizedCommand === "привет" ||
+      normalizedCommand.includes("запиши") ||
+      normalizedCommand.includes("записать") ||
+      normalizedCommand.includes("старт") ||
+      normalizedCommand.includes("меню") ||
+      normalizedCommand.includes("вес")
+    ) {
+      if (normalizedCommand.includes("утренний") || normalizedCommand.includes("утро")) {
+        response.response.text = "Привет! Диктуйте утренний вес.";
+      } else if (normalizedCommand.includes("вечерний") || normalizedCommand.includes("вечер")) {
+        response.response.text = "Привет! Диктуйте вечерний вес.";
+      } else {
+        response.response.text = "Привет! Диктуйте утренний или вечерний вес.";
+      }
+      return NextResponse.json(response);
+    }
+
+    response.response.text = "Не поняла команду. Скажите, например: 'Вес утро 75 и 5'";
     return NextResponse.json(response);
   } catch (error) {
     console.error("Alice Webhook Error:", error);
