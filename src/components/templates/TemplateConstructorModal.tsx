@@ -86,9 +86,10 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
   const handleApply = () => {
     form.validateFields().then((allValues) => {
-      const results = blocks.map((block) => {
+      // 1. Calculate result for ALL blocks first
+      const blockOutputs = blocks.map((block) => {
         const template = templates.find((t) => t.id === block.templateId);
-        if (!template) return "";
+        if (!template) return { id: block.id, code: "", text: "", isInline: false };
 
         let result = template.outputTemplate;
         const schema = (template.schema as any[]) || [];
@@ -108,10 +109,70 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           result = result.replace(new RegExp(`{{${field.key}}}`, "g"), String(value));
         });
 
-        return result.trim();
+        return {
+          id: block.id,
+          code: template.code || "",
+          text: result.trim(),
+          isInline: template.isInline || false,
+        };
       });
 
-      const finalReport = results.filter((r) => r.length > 0).join("\n\n");
+      // 2. Perform Variable Substitution ({{CODE}})
+      // We need to know which blocks were "consumed" to avoid printing them twice
+      const consumedBlockIds = new Set<string>();
+
+      const finalOutputs = blockOutputs.map((currentBlock, index) => {
+        let text = currentBlock.text;
+
+        // Find all {{CODE}} patterns in the current text
+        const matches = text.match(/{{([A-Za-z0-9_]+)}}/g);
+        if (matches) {
+          matches.forEach((match) => {
+            const code = match.replace(/{{|}}/g, "");
+
+            // STRICT NEIGHBOR STRATEGY:
+            // Look only at the *immediate next* block (skipping already consumed ones).
+
+            // 1. Get all following blocks
+            const followingBlocks = blockOutputs.slice(index + 1);
+
+            // 2. Find the first one that hasn't been consumed yet
+            const nextAvailableBlock = followingBlocks.find((b) => !consumedBlockIds.has(b.id));
+
+            // 3. Check if this next neighbor matches the requested code
+            if (nextAvailableBlock && nextAvailableBlock.code === code) {
+              text = text.replace(match, nextAvailableBlock.text);
+              consumedBlockIds.add(nextAvailableBlock.id);
+            } else {
+              text = text.replace(match, "");
+            }
+          });
+        }
+        return { ...currentBlock, text };
+      });
+
+      // 3. Filter out consumed blocks and empty results
+      const visibleBlocks = finalOutputs.filter(
+        (b) => !consumedBlockIds.has(b.id) && b.text.length > 0
+      );
+
+      // 4. Join blocks with intelligent separators (handling isInline)
+      let finalReport = "";
+      visibleBlocks.forEach((block, index) => {
+        if (index === 0) {
+          finalReport += block.text;
+        } else {
+          // If current block is inline, join with space.
+          // If previous block allowed inline... wait, logic is:
+          // "Is this block Inline?" -> it means "I attach myself to the previous one".
+          if (block.isInline) {
+            finalReport += " " + block.text;
+          } else {
+            finalReport += "\n\n" + block.text;
+          }
+        }
+      });
+
       onApply(finalReport);
     });
   };

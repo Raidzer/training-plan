@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Form, Input, Button, Select, Space, Card, Typography, App } from "antd";
+import { Form, Input, Button, Select, Space, Card, Typography, App, Checkbox } from "antd";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import type { NewDiaryResultTemplate } from "@/app/actions/diaryTemplates";
 import styles from "./TemplateEditor.module.scss";
@@ -76,11 +76,27 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         </Form.Item>
 
         <Form.Item
+          name="code"
+          label="Системный код (для вставки)"
+          tooltip="Уникальный код латиницей (например, PULSE). Результат этого шаблона можно вставить в другой шаблон через {{PULSE}}."
+        >
+          <Input placeholder="PULSE" style={{ textTransform: "uppercase" }} />
+        </Form.Item>
+
+        <Form.Item
           name="matchPattern"
           label="Ключевые слова для авто-поиска"
           tooltip="Фразы, по которым система поймет, что нужно использовать этот шаблон. Можно перечислить несколько через точку с запятой. Можно использовать спец-символы: '#' для любого числа, '*' для любого текста. Пример: '# км(до 22)'"
         >
           <Input placeholder="интервалы; фартлек" />
+        </Form.Item>
+
+        <Form.Item
+          name="isInline"
+          valuePropName="checked"
+          tooltip="Если отмечено, блок не будет начинаться с новой строки, а приклеится к предыдущему через пробел."
+        >
+          <Checkbox>Встраиваемый блок (Inline)</Checkbox>
         </Form.Item>
       </Card>
 
