@@ -84,6 +84,21 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
   };
 
+  // Helper functions for Time Calculations
+  const timeToSeconds = (timeStr: string): number => {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(":").map(Number);
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    return parts[0]; // Seconds only
+  };
+
+  const secondsToTime = (totalSeconds: number): string => {
+    const mm = Math.floor(totalSeconds / 60);
+    const ss = Math.round(totalSeconds % 60);
+    return `${mm}:${ss.toString().padStart(2, "0")}`;
+  };
+
   const handleApply = () => {
     form.validateFields().then((allValues) => {
       // 1. Calculate result for ALL blocks first
@@ -93,7 +108,68 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
         let result = template.outputTemplate;
         const schema = (template.schema as any[]) || [];
+        const calculations = (template.calculations as any[]) || [];
 
+        // Pre-calculate values
+        const calculatedValues: Record<string, string> = {};
+
+        calculations.forEach((calc) => {
+          try {
+            const args = (calc.args as string[]) || [];
+            const values = args.map((argKey) => {
+              // Try getting from form
+              const formKey = `${block.id}_${argKey}`;
+              const val = allValues[formKey];
+              // If list, join it? No, keep as is for SUM_TIME
+              return val;
+            });
+
+            let computed = "";
+
+            if (calc.formula === "PACE") {
+              // PACE(dist, time)
+              const dist = parseFloat(String(values[0]).replace(",", "."));
+              const timeSec = timeToSeconds(String(values[1]));
+              if (dist > 0 && timeSec > 0) {
+                const paceSec = timeSec / dist;
+                computed = secondsToTime(paceSec);
+              }
+            } else if (calc.formula === "SUM_TIME") {
+              // SUM_TIME(list) or SUM_TIME(t1, t2)
+              // Usually it's a list from a list field
+              let totalSec = 0;
+              values.forEach((v) => {
+                if (Array.isArray(v)) {
+                  v.forEach((t) => (totalSec += timeToSeconds(String(t))));
+                } else if (typeof v === "string") {
+                  // It might be a semicolon separated string manually entered
+                  v.split(";").forEach((t) => (totalSec += timeToSeconds(t.trim())));
+                }
+              });
+              computed = secondsToTime(totalSec);
+            } else if (calc.formula === "MULT") {
+              const a = parseFloat(String(values[0]).replace(",", "."));
+              const b = parseFloat(String(values[1]).replace(",", "."));
+              if (!isNaN(a) && !isNaN(b)) computed = String(Number((a * b).toFixed(2)));
+            } else if (calc.formula === "DIV") {
+              const a = parseFloat(String(values[0]).replace(",", "."));
+              const b = parseFloat(String(values[1]).replace(",", "."));
+              if (!isNaN(a) && !isNaN(b) && b !== 0) computed = String(Number((a / b).toFixed(2)));
+            } else if (calc.formula === "SUB") {
+              const a = parseFloat(String(values[0]).replace(",", "."));
+              const b = parseFloat(String(values[1]).replace(",", "."));
+              if (!isNaN(a) && !isNaN(b)) computed = String(Number((a - b).toFixed(2)));
+            }
+
+            if (computed) {
+              calculatedValues[calc.key] = computed;
+            }
+          } catch (e) {
+            console.error("Calc error", e);
+          }
+        });
+
+        // Replace standard schema fields
         schema.forEach((field) => {
           const formKey = `${block.id}_${field.key}`;
           let value = allValues[formKey];
@@ -107,6 +183,11 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           }
 
           result = result.replace(new RegExp(`{{${field.key}}}`, "g"), String(value));
+        });
+
+        // Replace calculated fields
+        Object.entries(calculatedValues).forEach(([key, val]) => {
+          result = result.replace(new RegExp(`{{${key}}}`, "g"), String(val));
         });
 
         return {

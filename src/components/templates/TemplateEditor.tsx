@@ -36,6 +36,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
       form.setFieldsValue({
         ...initialValues,
         schema: initialValues.schema || [],
+        calculations: initialValues.calculations || [],
       });
     } else {
       form.resetFields();
@@ -49,6 +50,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         ...values,
         sortOrder: values.sortOrder ? Number(values.sortOrder) : 0,
         schema: values.schema || [],
+        calculations: values.calculations || [],
       };
 
       await onSave(templateData);
@@ -97,6 +99,69 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           tooltip="Если отмечено, блок не будет начинаться с новой строки, а приклеится к предыдущему через пробел."
         >
           <Checkbox>Встраиваемый блок (Inline)</Checkbox>
+        </Form.Item>
+      </Card>
+
+      <Card title="Вычисления (формулы)" className={styles.card}>
+        <Form.Item noStyle shouldUpdate={(prev, curr) => prev.schema !== curr.schema}>
+          {({ getFieldValue }) => {
+            const schemaFields = getFieldValue("schema") || [];
+            return (
+              <Form.List name="calculations">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <Space key={key} className={styles.fieldRow} align="baseline">
+                        <Form.Item
+                          {...restField}
+                          name={[name, "key"]}
+                          rules={[{ required: true, message: "Имя перем." }]}
+                          style={{ width: 120 }}
+                        >
+                          <Input placeholder="avg_pace" />
+                        </Form.Item>
+                        <div style={{ display: "flex", alignItems: "center" }}>=</div>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "formula"]}
+                          initialValue="PACE"
+                          style={{ width: 140 }}
+                        >
+                          <Select placeholder="Функция">
+                            <Option value="PACE">Темп (мин/км)</Option>
+                            <Option value="SUM_TIME">Сумма вр.</Option>
+                            <Option value="MULT">Умножение</Option>
+                            <Option value="DIV">Деление</Option>
+                            <Option value="SUB">Вычитание</Option>
+                          </Select>
+                        </Form.Item>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "args"]}
+                          rules={[{ required: true, message: "Аргументы" }]}
+                          style={{ width: 200 }}
+                        >
+                          <Select mode="tags" placeholder="Поля (dist, time)">
+                            {schemaFields.map((f: any) => (
+                              <Option key={f.key} value={f.key}>
+                                {f.label || f.key}
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    ))}
+                    <Form.Item>
+                      <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                        Добавить формулу
+                      </Button>
+                    </Form.Item>
+                  </>
+                )}
+              </Form.List>
+            );
+          }}
         </Form.Item>
       </Card>
 
