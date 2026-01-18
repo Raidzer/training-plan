@@ -33,62 +33,61 @@ export async function deleteTemplate(id: number) {
 
 export async function findMatchingTemplate(userId: number, taskText: string) {
   const templates = await getTemplates(userId);
-  const normalizedText = taskText.toLowerCase();
 
-  // Find all templates that match and determine their position
-  const matchesWithIndex = templates
-    .map((t) => {
-      if (!t.matchPattern) {
-        return null;
-      }
+  // Accumulate all matches found
+  const allMatches: { template: DiaryResultTemplate; index: number }[] = [];
 
-      const patterns = t.matchPattern
-        .split(";")
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0);
+  templates.forEach((t) => {
+    if (!t.matchPattern) return;
 
-      let firstMatchIndex = Infinity;
-      let isMatch = false;
+    const patterns = t.matchPattern
+      .split(";")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
 
-      patterns.forEach((pattern) => {
-        const subIndex = normalizedText.indexOf(pattern.toLowerCase());
-        if (subIndex !== -1) {
-          isMatch = true;
-          if (subIndex < firstMatchIndex) firstMatchIndex = subIndex;
+    // Track indices found for this specific template to avoid duplicates
+    // if multiple patterns match the same text location (e.g. Smart vs Raw)
+    const foundIndicesForTemplate = new Set<number>();
+
+    patterns.forEach((pattern) => {
+      // Helper function to add match if unique for this template
+      const addMatch = (index: number) => {
+        if (!foundIndicesForTemplate.has(index)) {
+          allMatches.push({ template: t, index });
+          foundIndicesForTemplate.add(index);
         }
+      };
 
-        try {
-          let smartPattern = pattern;
-          smartPattern = smartPattern.replace(/[.+?^${}()|[\]\\#*]/g, "\\$&");
-          smartPattern = smartPattern.replace(/\\#/g, "\\d+");
-          smartPattern = smartPattern.replace(/\\\*/g, ".*");
+      // 1. Smart Pattern Match
+      try {
+        let smartPattern = pattern;
+        // Escape standard regex characters
+        smartPattern = smartPattern.replace(/[.+?^${}()|[\]\\#*]/g, "\\$&");
+        // Restore custom wildcards: # -> \d+, * -> .*
+        smartPattern = smartPattern.replace(/\\#/g, "\\d+");
+        smartPattern = smartPattern.replace(/\\\*/g, ".*");
 
-          const smartRegex = new RegExp(smartPattern, "i");
-          const currMatch = smartRegex.exec(taskText);
-          if (currMatch) {
-            isMatch = true;
-            if (currMatch.index < firstMatchIndex) firstMatchIndex = currMatch.index;
-          }
-        } catch (e) {}
+        // Use 'g' flag for global search
+        const smartRegex = new RegExp(smartPattern, "gi");
+        let match;
+        while ((match = smartRegex.exec(taskText)) !== null) {
+          addMatch(match.index);
+        }
+      } catch (e) {}
 
-        try {
-          const regex = new RegExp(pattern, "i");
-          const currMatch = regex.exec(taskText);
-          if (currMatch) {
-            isMatch = true;
-            if (currMatch.index < firstMatchIndex) firstMatchIndex = currMatch.index;
-          }
-        } catch (e) {}
-      });
+      // 2. Raw Regex Match
+      try {
+        const regex = new RegExp(pattern, "gi");
+        let match;
+        while ((match = regex.exec(taskText)) !== null) {
+          addMatch(match.index);
+        }
+      } catch (e) {}
+    });
+  });
 
-      if (isMatch) {
-        return { template: t, index: firstMatchIndex };
-      }
-      return null;
-    })
-    .filter((item): item is { template: DiaryResultTemplate; index: number } => item !== null)
-    .sort((a, b) => a.index - b.index)
-    .map((item) => item.template);
+  // Sort all matches by their position in the text
+  allMatches.sort((a, b) => a.index - b.index);
 
-  return matchesWithIndex;
+  return allMatches.map((item) => item.template);
 }
