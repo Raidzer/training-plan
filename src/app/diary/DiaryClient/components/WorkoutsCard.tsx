@@ -1,8 +1,12 @@
 "use client";
 
-import { Button, Card, Input, InputNumber, Select, Space, Tag, Typography } from "antd";
+import { useState } from "react";
+import { Button, Card, Input, InputNumber, Select, Space, Tag, Typography, Tooltip } from "antd";
+import { BuildOutlined } from "@ant-design/icons";
+import type { MessageInstance } from "antd/es/message/interface";
 import type { PlanEntry, SavingWorkoutsState, WorkoutFormState } from "../types/diaryTypes";
 import { normalizeStartTimeInput } from "../utils/diaryUtils";
+import { TemplateConstructorModal } from "@/components/templates/TemplateConstructorModal";
 import styles from "../diary.module.scss";
 
 type WorkoutField =
@@ -20,6 +24,8 @@ type WorkoutField =
   | "shoeIds";
 
 type WorkoutsCardProps = {
+  userId: number;
+  messageApi: MessageInstance;
   title: string;
   emptyLabel: string;
   completeLabel: string;
@@ -58,6 +64,8 @@ const normalizeOptions = (options: readonly { value: string | number; label: str
   options.map((option) => ({ value: option.value, label: option.label }));
 
 export function WorkoutsCard({
+  userId,
+  messageApi,
   title,
   emptyLabel,
   completeLabel,
@@ -92,6 +100,35 @@ export function WorkoutsCard({
   const normalizedWeatherOptions = normalizeOptions(weatherOptions);
   const normalizedWindOptions = normalizeOptions(windOptions);
 
+  const [constructorState, setConstructorState] = useState<{
+    visible: boolean;
+    entryId: number | null;
+    taskText: string;
+  }>({
+    visible: false,
+    entryId: null,
+    taskText: "",
+  });
+
+  const openConstructor = (entryId: number, taskText: string) => {
+    setConstructorState({
+      visible: true,
+      entryId,
+      taskText,
+    });
+  };
+
+  const closeConstructor = () => {
+    setConstructorState((prev) => ({ ...prev, visible: false }));
+  };
+
+  const applyConstructorResult = (resultText: string) => {
+    if (constructorState.entryId !== null) {
+      onChange(constructorState.entryId, "resultText", resultText);
+    }
+    closeConstructor();
+  };
+
   return (
     <Card type="inner" title={title}>
       {entries.length ? (
@@ -105,6 +142,11 @@ export function WorkoutsCard({
             const windValue = form?.hasWind ? form.hasWind : null;
             const isComplete =
               Boolean(form?.resultText?.trim()) && Boolean(form?.commentText?.trim());
+
+            // Strip HTML from task text for matching logic, but keep it for display if needed
+            // Actually findMatchingTemplate expects plain text ideally
+            const rawTaskText = entry.taskText.replace(/<[^>]*>?/gm, "");
+
             return (
               <div key={entry.id} className={styles.workoutItem}>
                 <div className={styles.workoutHeader}>
@@ -138,12 +180,24 @@ export function WorkoutsCard({
                       onChange(entry.id, "startTime", normalizeStartTimeInput(event.target.value))
                     }
                   />
-                  <Input.TextArea
-                    value={form?.resultText ?? ""}
-                    autoSize={{ minRows: 4, maxRows: 12 }}
-                    placeholder={resultPlaceholder}
-                    onChange={(event) => onChange(entry.id, "resultText", event.target.value)}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <Input.TextArea
+                      value={form?.resultText ?? ""}
+                      autoSize={{ minRows: 4, maxRows: 12 }}
+                      placeholder={resultPlaceholder}
+                      onChange={(event) => onChange(entry.id, "resultText", event.target.value)}
+                      style={{ paddingRight: 40 }}
+                    />
+                    <Tooltip title="Конструктор отчета">
+                      <Button
+                        icon={<BuildOutlined />}
+                        size="small"
+                        type="text"
+                        style={{ position: "absolute", top: 8, right: 8, zIndex: 1, opacity: 0.6 }}
+                        onClick={() => openConstructor(entry.id, rawTaskText)}
+                      />
+                    </Tooltip>
+                  </div>
                   <Input
                     value={form?.distanceKm ?? ""}
                     placeholder={distancePlaceholder}
@@ -256,6 +310,15 @@ export function WorkoutsCard({
       ) : (
         <Typography.Text type="secondary">{emptyLabel}</Typography.Text>
       )}
+
+      <TemplateConstructorModal
+        visible={constructorState.visible}
+        onCancel={closeConstructor}
+        onApply={applyConstructorResult}
+        taskText={constructorState.taskText}
+        userId={userId}
+        messageApi={messageApi}
+      />
     </Card>
   );
 }
