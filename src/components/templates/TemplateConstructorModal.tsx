@@ -10,7 +10,20 @@ import styles from "./TemplateConstructorModal.module.scss";
 const { Text } = Typography;
 const { Option } = Select;
 
-// ... (Props and Block types same as before)
+type TemplateConstructorModalProps = {
+  visible: boolean;
+  onCancel: () => void;
+  onApply: (resultText: string) => void;
+  taskText: string;
+  userId: number;
+  messageApi: MessageInstance;
+};
+
+type Block = {
+  id: string;
+  templateId: number;
+  values: Record<string, any>;
+};
 
 export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> = ({
   visible,
@@ -126,11 +139,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
       }}
       destroyOnHidden
     >
-      {loading ? (
-        <div style={{ textAlign: "center", padding: "40px" }}>
-          <Spin size="large" tip="Подбираем шаблоны..." />
-        </div>
-      ) : (
+      <Spin spinning={loading} tip="Подбираем шаблоны...">
         <Form form={form} layout="vertical">
           <div className={styles.modalContent}>
             {blocks.map((block, index) => {
@@ -169,7 +178,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
             })}
           </div>
 
-          {blocks.length === 0 && (
+          {blocks.length === 0 && !loading && (
             <div className={styles.emptyState}>Шаблоны не найдены. Добавьте блок вручную.</div>
           )}
 
@@ -204,7 +213,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
             </Button>
           </Space>
         </Form>
-      )}
+      </Spin>
     </Modal>
   );
 };
