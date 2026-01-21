@@ -3,7 +3,18 @@ import ExcelJS from "exceljs";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { planEntries, planImports } from "@/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
+
+// Helper to strip HTML tags for logic checks
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
+
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 export const runtime = "nodejs";
 
@@ -11,7 +22,8 @@ type ParsedRow = {
   date: string;
   taskText: string;
   commentText: string | null;
-  rawRow: { date: string; task: string; comment?: string };
+  isWorkload: boolean;
+  rawRow: { date: string; task: string; comment?: string; isWorkload: boolean };
 };
 
 type ParseResult = {
@@ -24,35 +36,163 @@ const normalizeHeader = (value: unknown) =>
     .trim()
     .toLowerCase();
 
+const argbToCss = (argb: string) => {
+  if (argb.length === 8) {
+    const alpha = parseInt(argb.slice(0, 2), 16) / 255;
+    const r = parseInt(argb.slice(2, 4), 16);
+    const g = parseInt(argb.slice(4, 6), 16);
+    const b = parseInt(argb.slice(6, 8), 16);
+    if (alpha > 0.99) {
+      return `#${argb.slice(2)}`;
+    }
+    return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+  }
+  return `#${argb}`;
+};
+
+const richTextToHtml = (value: ExcelJS.CellRichTextValue): string => {
+  const lines: string[] = [""];
+
+  value.richText.forEach((part) => {
+    const textParts = (part.text || "").split(/\r\n|\n/);
+
+    let style = "";
+    if (part.font?.bold) {
+      style += "font-weight: bold;";
+    }
+    if (part.font?.color?.argb) {
+      const cssColor = argbToCss(part.font.color.argb);
+      style += `color: ${cssColor};`;
+    }
+
+    textParts.forEach((textFragment, index) => {
+      let fragment = escapeHtml(textFragment);
+      if (style && fragment) {
+        fragment = `<span style="${style}">${fragment}</span>`;
+      }
+
+      lines[lines.length - 1] += fragment;
+
+      // If there are more parts, it means we had newlines
+      if (index < textParts.length - 1) {
+        lines.push("");
+      }
+    });
+  });
+
+  return lines.join("\n");
+};
+
+const removeNumberedPrefix = (html: string): string => {
+  const stripped = stripHtml(html);
+  const match = stripped.match(/^\s*\d+\)\s*/);
+  if (!match) return html;
+  const prefix = match[0];
+
+  let prefixIndex = 0;
+  let htmlIndex = 0;
+  const openTags: string[] = [];
+
+  while (prefixIndex < prefix.length && htmlIndex < html.length) {
+    if (html[htmlIndex] === "<") {
+      const tagEnd = html.indexOf(">", htmlIndex);
+      if (tagEnd === -1) break;
+      const tag = html.substring(htmlIndex, tagEnd + 1);
+      if (tag.startsWith("</")) {
+        openTags.pop();
+      } else if (!tag.endsWith("/>")) {
+        openTags.push(tag);
+      }
+      htmlIndex = tagEnd + 1;
+      continue;
+    }
+
+    if (html[htmlIndex] === prefix[prefixIndex]) {
+      prefixIndex++;
+      htmlIndex++;
+    } else {
+      // Tolerance for whitespace mismatch or simple skip
+      htmlIndex++;
+    }
+  }
+
+  const suffix = html.substring(htmlIndex);
+  return openTags.join("") + suffix;
+};
+
 const cellToString = (value: unknown): string => {
-  if (value === null || value === undefined) return "";
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === "number") return String(value);
-  if (typeof value === "string") return value;
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === "number") {
+    return String(value);
+  }
+  if (typeof value === "string") {
+    return value;
+  }
   if (typeof value === "object") {
     const v = value as any;
-    if (typeof v.text === "string") return v.text;
-    if (Array.isArray(v.richText))
-      return v.richText.map((r: any) => r?.text ?? "").join("");
-    if (v.result !== undefined) return cellToString(v.result);
+    if (typeof v.text === "string" && !v.richText) {
+      return v.text;
+    }
+    if (Array.isArray(v.richText)) {
+      return richTextToHtml(v);
+    }
+    if (v.result !== undefined) {
+      return cellToString(v.result);
+    }
   }
   return String(value ?? "");
 };
 
-const isHeader = (value: string, candidates: string[]) =>
-  candidates.some((c) => value.includes(c));
+const isHeader = (value: string, candidates: string[]) => candidates.some((c) => value.includes(c));
 
 const excelSerialToDate = (serial: number) => {
   const excelEpoch = Date.UTC(1899, 11, 30);
   return new Date(excelEpoch + serial * 24 * 60 * 60 * 1000);
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toUtcMs = (value: string): number | null => {
+  const [yy, mm, dd] = value.split("-").map((part) => Number(part));
+  if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) {
+    return null;
+  }
+  return Date.UTC(yy, mm - 1, dd);
+};
+
+const validateSequentialDates = (dates: string[]): string | null => {
+  const uniqueDates = Array.from(new Set(dates)).sort();
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prev = toUtcMs(uniqueDates[i - 1]);
+    const next = toUtcMs(uniqueDates[i]);
+    if (prev === null || next === null) {
+      return "Ошибка импорта: некорректный формат даты. Проверьте даты.";
+    }
+    const diffDays = (next - prev) / DAY_MS;
+    if (diffDays !== 1) {
+      return "Ошибка импорта: даты должны идти подряд без пропусков. Проверьте последовательность дат.";
+    }
+  }
+  return null;
+};
+
 const toDateString = (value: unknown): string | null => {
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === "number") return excelSerialToDate(value).toISOString().slice(0, 10);
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === "number") {
+    return excelSerialToDate(value).toISOString().slice(0, 10);
+  }
   if (typeof value === "string") {
     const trimmed = value.trim();
-    if (!trimmed) return null;
+    if (!trimmed) {
+      return null;
+    }
     const match = trimmed.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
     if (match) {
       const [_, dd, mm, yy] = match;
@@ -60,19 +200,85 @@ const toDateString = (value: unknown): string | null => {
       const month = Number(mm) - 1;
       const day = Number(dd);
       const parsed = new Date(Date.UTC(year, month, day));
-      if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10);
+      }
     }
     const parsed = new Date(trimmed);
-    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().slice(0, 10);
+    }
   }
   return null;
+};
+
+const hasFillColor = (cell: ExcelJS.Cell | undefined) => {
+  if (!cell) {
+    return false;
+  }
+  const fill: any = (cell as any).fill;
+  if (!fill) {
+    return false;
+  }
+  if (fill.fgColor || fill.bgColor) {
+    return true;
+  }
+  if (Array.isArray(fill.stops)) {
+    return fill.stops.some((s: any) => s?.color);
+  }
+  return false;
+};
+
+const NUMBERED_LINE_REGEX = /^\s*\d+\)\s*(.*)$/;
+
+const countNumberedLines = (value: string) =>
+  value
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter((line) => NUMBERED_LINE_REGEX.test(stripHtml(line))).length;
+
+const splitNumberedText = (value: string) => {
+  const normalized = value.replace(/\r\n/g, "\n").trim();
+  if (!normalized) {
+    return [];
+  }
+  const lines = normalized.split("\n");
+  const parts: string[] = [];
+  let hasNumbered = false;
+  let prefix = "";
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      continue;
+    }
+    const match = stripHtml(trimmed).match(NUMBERED_LINE_REGEX);
+    if (match) {
+      hasNumbered = true;
+      const body = removeNumberedPrefix(trimmed).trim();
+      const combined = prefix ? `${prefix} ${body}` : body;
+      parts.push(combined.trim());
+      prefix = "";
+      continue;
+    }
+    if (hasNumbered && parts.length) {
+      parts[parts.length - 1] = `${parts[parts.length - 1]} ${trimmed}`.trim();
+      continue;
+    }
+    prefix = prefix ? `${prefix} ${trimmed}` : trimmed;
+  }
+  if (!parts.length) {
+    return [normalized];
+  }
+  return parts;
 };
 
 async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
   const sheet = workbook.worksheets[0];
-  if (!sheet) throw new Error("Файл не содержит листов");
+  if (!sheet) {
+    throw new Error("Файл не содержит листов");
+  }
 
   const headerRow = sheet.getRow(1);
   let dateCol = 0;
@@ -80,26 +286,40 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   let commentCol = 0;
   headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
     const header = normalizeHeader(cell.text || cell.value);
-    if (!dateCol && isHeader(header, ["дата", "date"])) dateCol = colNumber;
-    if (!taskCol && isHeader(header, ["задан", "task", "workout"])) taskCol = colNumber;
-    if (!commentCol && isHeader(header, ["коммент", "comment"])) commentCol = colNumber;
+    if (!dateCol && isHeader(header, ["дата", "date"])) {
+      dateCol = colNumber;
+    }
+    if (!taskCol && isHeader(header, ["задан", "task", "workout"])) {
+      taskCol = colNumber;
+    }
+    if (!commentCol && isHeader(header, ["коммент", "comment"])) {
+      commentCol = colNumber;
+    }
   });
 
-  if (!dateCol || !taskCol) throw new Error("Не найдены колонки Дата/Задание в первой строке");
+  if (!dateCol || !taskCol) {
+    throw new Error("Не найдены колонки Дата/Задание в первой строке");
+  }
 
   const rows: ParsedRow[] = [];
   const errors: ParseResult["errors"] = [];
   for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
     const row = sheet.getRow(rowNumber);
-    const dateCell = row.getCell(dateCol).value;
-    const taskCell = row.getCell(taskCol).value;
+    const dateCellObj = row.getCell(dateCol);
+    const taskCellObj = row.getCell(taskCol);
+    const commentCellObj = commentCol > 0 ? row.getCell(commentCol) : undefined;
+
+    const dateCell = dateCellObj.value;
+    const taskCell = taskCellObj.value;
     const commentCell = commentCol > 0 ? row.getCell(commentCol).value : "";
 
     const date = toDateString(dateCell);
     const taskText = cellToString(taskCell).trim();
     const commentTextRaw = cellToString(commentCell).trim();
 
-    if (!date && !taskText && !commentTextRaw) continue;
+    if (!date && !taskText && !commentTextRaw) {
+      continue;
+    }
     if (!date) {
       errors.push({ row: rowNumber, message: "Некорректная дата" });
       continue;
@@ -109,16 +329,44 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
       continue;
     }
 
-    rows.push({
-      date,
-      taskText,
-      commentText: commentTextRaw || null,
-      rawRow: {
+    const isWorkload =
+      hasFillColor(taskCellObj) ||
+      hasFillColor(dateCellObj) ||
+      (commentCellObj ? hasFillColor(commentCellObj) : false);
+
+    const taskLineCount = countNumberedLines(taskText);
+    const taskChunks =
+      taskLineCount > 1 ? splitNumberedText(taskText).filter((chunk) => chunk.length > 0) : [];
+    const tasks = taskChunks.length ? taskChunks : [taskText];
+    const hasMultipleTasks = tasks.length > 1;
+    const hasNumberedComments =
+      hasMultipleTasks && commentTextRaw ? countNumberedLines(commentTextRaw) > 0 : false;
+    const commentChunks = hasNumberedComments ? splitNumberedText(commentTextRaw) : [];
+
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      let comment = "";
+      if (commentTextRaw) {
+        if (hasMultipleTasks) {
+          comment = hasNumberedComments ? (commentChunks[i] ?? "") : commentTextRaw;
+        } else {
+          comment = commentTextRaw;
+        }
+      }
+      const normalizedComment = comment.trim();
+      rows.push({
         date,
-        task: taskText,
-        ...(commentTextRaw ? { comment: commentTextRaw } : {}),
-      },
-    });
+        taskText: task,
+        commentText: normalizedComment.length ? normalizedComment : null,
+        isWorkload,
+        rawRow: {
+          date,
+          task,
+          isWorkload,
+          ...(normalizedComment ? { comment: normalizedComment } : {}),
+        },
+      });
+    }
   }
 
   return { rows, errors };
@@ -126,9 +374,13 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const userId = Number((session.user as any)?.id);
-  if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const formData = await req.formData();
   const file = formData.get("file");
@@ -148,10 +400,18 @@ export async function POST(req: Request) {
   }
 
   if (parsed.rows.length === 0) {
-    return NextResponse.json({ error: "Файл пуст или не содержит валидных строк" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Файл пуст или не содержит валидных строк" },
+      { status: 400 }
+    );
   }
 
   // Нумерация сессий внутри дня по порядку строк.
+  const dateSequenceError = validateSequentialDates(parsed.rows.map((row) => row.date));
+  if (dateSequenceError) {
+    return NextResponse.json({ error: dateSequenceError }, { status: 400 });
+  }
+
   const sessionCounter = new Map<string, number>();
   const entries = parsed.rows.map((row) => {
     const current = sessionCounter.get(row.date) ?? 0;
@@ -163,77 +423,90 @@ export async function POST(req: Request) {
       sessionOrder: next,
       taskText: row.taskText,
       commentText: row.commentText,
+      isWorkload: row.isWorkload,
       rawRow: row.rawRow,
     };
   });
 
-  // Уберём дубликаты: если запись с тем же пользователем, датой, порядком и текстом уже есть, не вставляем.
-  let duplicates = 0;
-  let deduped = entries;
-  if (entries.length) {
-    const dates = Array.from(sessionCounter.keys());
-    const existing =
-      dates.length === 0
-        ? []
-        : await db
-            .select({
-              date: planEntries.date,
-              sessionOrder: planEntries.sessionOrder,
-              taskText: planEntries.taskText,
-              commentText: planEntries.commentText,
-            })
-            .from(planEntries)
-            .where(and(eq(planEntries.userId, userId), inArray(planEntries.date, dates)));
+  const dates = Array.from(sessionCounter.keys());
+  const existingRows = dates.length
+    ? await db
+        .select({ date: planEntries.date })
+        .from(planEntries)
+        .where(and(eq(planEntries.userId, userId), inArray(planEntries.date, dates)))
+    : [];
+  const existingDates = new Set(existingRows.map((row) => row.date));
+  const newEntries = entries.filter((entry) => !existingDates.has(entry.date));
 
-    const existingKeys = new Set(
-      existing.map(
-        (e) => `${e.date}#${e.sessionOrder}#${e.taskText}#${e.commentText ?? ""}`
-      )
-    );
-
-    deduped = entries.filter((e) => {
-      const key = `${e.date}#${e.sessionOrder}#${e.taskText}#${e.commentText ?? ""}`;
-      if (existingKeys.has(key)) {
-        duplicates += 1;
-        return false;
+  const uniqueNewDates = Array.from(new Set(newEntries.map((entry) => entry.date))).sort();
+  if (uniqueNewDates.length > 0) {
+    const [lastRow] = await db
+      .select({ date: planEntries.date })
+      .from(planEntries)
+      .where(eq(planEntries.userId, userId))
+      .orderBy(desc(planEntries.date))
+      .limit(1);
+    if (lastRow?.date) {
+      const lastMs = toUtcMs(lastRow.date);
+      const firstMs = toUtcMs(uniqueNewDates[0]);
+      if (lastMs === null || firstMs === null) {
+        return NextResponse.json(
+          { error: "Ошибка импорта: некорректный формат даты. Проверьте даты." },
+          { status: 400 }
+        );
       }
-      existingKeys.add(key);
-      return true;
-    });
+      const diffDays = (firstMs - lastMs) / DAY_MS;
+      if (diffDays !== 1) {
+        return NextResponse.json(
+          {
+            error:
+              "Ошибка импорта: новые даты должны начинаться на следующий день после последней даты плана. Проверьте даты.",
+          },
+          { status: 400 }
+        );
+      }
+    }
   }
+  const now = new Date();
+  const createdImport = await db.transaction(async (tx) => {
+    const [importRow] = await tx
+      .insert(planImports)
+      .values({
+        userId,
+        filename,
+        rowCount: parsed.rows.length,
+        insertedCount: entries.length,
+        skippedCount: parsed.errors.length,
+      })
+      .returning({ id: planImports.id });
 
-  const [createdImport] = await db
-    .insert(planImports)
-    .values({
-      userId,
-      filename,
-      rowCount: parsed.rows.length,
-      insertedCount: deduped.length,
-      skippedCount: parsed.errors.length + duplicates,
-    })
-    .returning({ id: planImports.id });
+    if (newEntries.length) {
+      await tx.insert(planEntries).values(
+        newEntries.map((e) => ({
+          ...e,
+          importId: importRow.id,
+        }))
+      );
+    }
 
-  if (deduped.length) {
-    await db.insert(planEntries).values(
-      deduped.map((e) => ({
-        ...e,
-        importId: createdImport.id,
-      }))
-    );
-  }
+    const skippedCount = parsed.errors.length + Math.max(0, entries.length - newEntries.length);
+    await tx
+      .update(planImports)
+      .set({
+        insertedCount: newEntries.length,
+        skippedCount,
+        completedAt: now,
+      })
+      .where(eq(planImports.id, importRow.id));
 
-  await db
-    .update(planImports)
-    .set({
-      insertedCount: deduped.length,
-      completedAt: new Date(),
-    })
-    .where(eq(planImports.id, createdImport.id));
+    return { id: importRow.id, insertedCount: newEntries.length };
+  });
 
+  const skippedDates = entries.length - createdImport.insertedCount;
   return NextResponse.json({
     importId: createdImport.id,
-    inserted: deduped.length,
-    skipped: parsed.errors.length + duplicates,
+    inserted: createdImport.insertedCount,
+    skipped: parsed.errors.length + Math.max(0, skippedDates),
     errors: parsed.errors,
   });
 }

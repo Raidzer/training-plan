@@ -1,14 +1,11 @@
 "use client";
 import { App, ConfigProvider, theme as antdTheme } from "antd";
+import ruRU from "antd/locale/ru_RU";
 import clsx from "clsx";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import dayjs from "dayjs";
+import "dayjs/locale/ru";
+import { usePathname } from "next/navigation";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import styles from "./ThemeProvider.module.scss";
 import { Header } from "../Header/Header";
 
@@ -21,35 +18,40 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 const STORAGE_KEY = "ui-theme";
+dayjs.locale("ru");
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<Mode>("light");
+export function ThemeProvider({
+  children,
+  initialTheme,
+}: {
+  children: ReactNode;
+  initialTheme: Mode;
+}) {
+  const [mode, setMode] = useState<Mode>(initialTheme);
+  const pathname = usePathname();
+  const isWideRoute = pathname.startsWith("/plan") || pathname.startsWith("/diary");
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark") {
-      setMode(saved);
-      return;
+  const handleSetMode = (next: Mode) => {
+    setMode(next);
+    localStorage.setItem(STORAGE_KEY, next);
+
+    // Set cookie for 1 year
+    document.cookie = `ui-theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
+
+    if (next === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
     }
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setMode("dark");
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, mode);
-  }, [mode]);
+  };
 
   const algorithm = useMemo(
-    () =>
-      mode === "dark"
-        ? [antdTheme.darkAlgorithm]
-        : [antdTheme.defaultAlgorithm],
+    () => (mode === "dark" ? [antdTheme.darkAlgorithm] : [antdTheme.defaultAlgorithm]),
     [mode]
   );
 
   return (
-    <ThemeContext.Provider value={{ mode, setMode }}>
+    <ThemeContext.Provider value={{ mode, setMode: handleSetMode }}>
       <ConfigProvider
         theme={{
           algorithm,
@@ -58,16 +60,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             borderRadius: 10,
           },
         }}
+        locale={ruRU}
       >
         <App>
-          <div
-            className={clsx(
-              styles.root,
-              mode === "dark" ? styles.dark : styles.light
-            )}
-          >
-            <Header mode={mode} onToggle={(next) => setMode(next)} />
-            <main className={styles.main}>{children}</main>
+          <div className={styles.root}>
+            <Header mode={mode} onToggle={handleSetMode} />
+            <main className={clsx(styles.main, isWideRoute && styles.mainWide)}>{children}</main>
           </div>
         </App>
       </ConfigProvider>

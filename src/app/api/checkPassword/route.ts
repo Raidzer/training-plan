@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import z from 'zod';
-import { db } from '@/db/client';
-import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from "next/server";
+import z from "zod";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 const schema = z.object({
   userId: z.number(),
-  password: z.string().min(6, 'Минимум 6 символов'),
+  password: z.string().min(6, "Минимум 6 символов"),
 });
 
 export async function POST(req: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const parsed = schema.safeParse(await req.json());
 
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Некорректные данные' }, { status: 400 });
+      return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
     }
 
     const { userId, password } = parsed.data;
@@ -36,12 +36,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
-      return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 });
+      return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
     }
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Неверный пароль' }, { status: 401 });
+      return NextResponse.json({ error: "Неверный пароль" }, { status: 401 });
     }
 
     // Возвращаем успешный ответ (без passwordHash)
@@ -50,13 +50,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Пароль верный',
+        message: "Пароль верный",
         user: userWithoutPassword,
       },
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
-    console.error('Ошибка при проверке пароля:', error);
-    return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
+    console.error("Ошибка при проверке пароля:", error);
+    return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
   }
 }

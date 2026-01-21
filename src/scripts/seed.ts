@@ -1,20 +1,24 @@
-import "dotenv/config";
-import bcrypt from "bcryptjs";
-import { db } from "../db/client";
-import { users } from "../db/schema";
+﻿import { db } from "@/db/client";
+import { users } from "@/db/schema";
+import { hash } from "bcryptjs";
 
-const run = async () => {
-  const hash = await bcrypt.hash("password123", 10);
+const SEED_EMAIL = "test@example.com";
+
+async function main() {
   await db
     .insert(users)
     .values({
-      email: "you@example.com",
-      passwordHash: hash,
-      role: "admin",
-      name: "You",
+      name: "Test User",
+      lastName: "",
+      gender: "male",
+      email: SEED_EMAIL,
+      login: "test",
+      passwordHash: await hash("password", 10),
     })
     .onConflictDoNothing();
-  console.log("Seed done");
-  process.exit(0);
-};
-run();
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

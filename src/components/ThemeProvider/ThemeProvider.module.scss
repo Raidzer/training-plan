@@ -3,18 +3,12 @@
   transition: background 0.3s ease;
 }
 
-.light {
-  background: #f5f6fb;
-  --brand-color: #0f172a;
-}
-
-.dark {
-  background: #0f172a;
-  --brand-color: #f0f4ff;
-}
-
 .main {
   max-width: 980px;
   margin: 0 auto;
   padding: 0 16px 48px;
+}
+
+.mainWide {
+  max-width: 1400px;
 }

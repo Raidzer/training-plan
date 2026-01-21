@@ -1,16 +1,8 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  List,
-  Space,
-  Typography,
-  Upload,
-  message,
-  type UploadFile,
-} from "antd";
-import { InboxOutlined, CloudUploadOutlined } from "@ant-design/icons";
+import { Button, Card, List, Space, Typography, Upload, message, type UploadFile } from "antd";
+import { ArrowLeftOutlined, CloudUploadOutlined, InboxOutlined } from "@ant-design/icons";
+import Link from "next/link";
 import { useState } from "react";
 import styles from "./import.module.scss";
 
@@ -53,9 +45,7 @@ export default function PlanImportPage() {
       }
       setResult(data);
       if (data.errors && data.errors.length > 0) {
-        msgApi.warning(
-          `Загружено: ${data.inserted}, пропущено: ${data.errors.length}`
-        );
+        msgApi.warning(`Загружено: ${data.inserted}, пропущено: ${data.errors.length}`);
       } else {
         msgApi.success(`Загружено строк: ${data.inserted}`);
       }
@@ -71,22 +61,22 @@ export default function PlanImportPage() {
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space
-          orientation="vertical"
-          size="large"
-          className={styles.spaceStyle}
-        >
-          <div>
-            <Typography.Title level={3} className={styles.typographyTitle}>
-              Импорт плана из Excel
-            </Typography.Title>
-            <Typography.Paragraph
-              type="secondary"
-              className={styles.typographyParagraph}
-            >
-              Файл должен содержать колонки «Дата», «Задание», «Комментарий»
-              (первая строка — заголовки). Используется только первый лист.
-            </Typography.Paragraph>
+        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
+          <div className={styles.headerRow}>
+            <div className={styles.headerText}>
+              <Typography.Title level={3} className={styles.typographyTitle}>
+                Импорт плана из Excel
+              </Typography.Title>
+              <Typography.Paragraph type="secondary" className={styles.typographyParagraph}>
+                Файл должен содержать колонки «Дата», «Задание», «Комментарий» (первая строка —
+                заголовки). Используется только первый лист.
+              </Typography.Paragraph>
+            </div>
+            <div className={styles.headerActions}>
+              <Link href="/plan" passHref>
+                <Button icon={<ArrowLeftOutlined />}>Обратно к плану</Button>
+              </Link>
+            </div>
           </div>
           <Dragger
             name="file"
@@ -105,12 +95,9 @@ export default function PlanImportPage() {
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
-            <p className="ant-upload-text">
-              Перетащите файл сюда или кликните для выбора
-            </p>
+            <p className="ant-upload-text">Перетащите файл сюда или кликните для выбора</p>
             <p className="ant-upload-hint">
-              При повторной загрузке строки добавятся как новая версия (старые
-              не обновляются).
+              При повторной загрузке строки добавятся как новая версия (старые не обновляются).
             </p>
           </Dragger>
           <Button
@@ -125,8 +112,7 @@ export default function PlanImportPage() {
           {result && (
             <Card type="inner" title="Результат импорта">
               <Typography.Paragraph style={{ marginBottom: 4 }}>
-                Импорт #{result.importId}: добавлено {result.inserted},
-                пропущено {result.skipped}.
+                Импорт #{result.importId}: добавлено {result.inserted}, пропущено {result.skipped}.
               </Typography.Paragraph>
               {result.errors && result.errors.length > 0 && (
                 <>

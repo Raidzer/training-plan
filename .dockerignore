@@ -1,0 +1,12 @@
+.git
+.github
+.next
+node_modules
+npm-debug.log
+yarn-error.log
+tmp
+drizzle
+
+.env
+.env.*
+!.env.example

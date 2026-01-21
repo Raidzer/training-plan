@@ -1,5 +1,8 @@
 node_modules/*
 .next/*
 .env
-.env.sample
+.env.*
 tmp/*
+.codex
+.codex/*
+AGENTS.md

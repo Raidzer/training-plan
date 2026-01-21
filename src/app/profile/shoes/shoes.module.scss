@@ -1,0 +1,83 @@
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 70vh;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  margin-bottom: 12px;
+}
+
+.alert {
+  margin-bottom: 16px;
+}
+
+.form {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.formInput {
+  flex: 1 1 240px;
+}
+
+.listTitle {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.list {
+  margin-top: 8px;
+}
+
+.listItem {
+  display: grid;
+  gap: 8px;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.itemName {
+  font-weight: 500;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.editInput {
+  flex: 1 1 240px;
+  min-width: 220px;
+}
