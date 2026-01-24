@@ -371,6 +371,8 @@ export const diaryResultTemplates = pgTable("diary_result_templates", {
   isInline: boolean("is_inline").notNull().default(false),
   calculations: jsonb("calculations"),
   sortOrder: integer("sort_order").notNull().default(0),
+  type: varchar("type", { length: 32 }).notNull().default("common"),
+  level: varchar("level", { length: 32 }).notNull().default("general"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
