@@ -32,8 +32,12 @@ export async function createTemplate(data: NewDiaryResultTemplate) {
   if (session?.user?.role !== "admin") {
     throw new Error("Unauthorized");
   }
-  await db.insert(diaryResultTemplates).values(data);
+  const [newTemplate] = await db
+    .insert(diaryResultTemplates)
+    .values(data)
+    .returning({ id: diaryResultTemplates.id });
   revalidatePath("/tools/templates");
+  return newTemplate.id;
 }
 
 export async function updateTemplate(id: number, data: Partial<NewDiaryResultTemplate>) {

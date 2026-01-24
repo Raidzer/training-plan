@@ -114,76 +114,6 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         </Form.Item>
       </Card>
 
-      <Card title="Вычисления (формулы)" className={styles.card}>
-        <Form.Item noStyle shouldUpdate={(prev, curr) => prev.schema !== curr.schema}>
-          {({ getFieldValue }) => {
-            const schemaFields = getFieldValue("schema") || [];
-            return (
-              <Form.List name="calculations">
-                {(fields, { add, remove }) => (
-                  <>
-                    {fields.map(({ key, name, ...restField }) => (
-                      <Space key={key} className={styles.fieldRow} align="baseline">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "key"]}
-                          rules={[{ required: true, message: "Имя перем." }]}
-                          style={{ width: 120 }}
-                        >
-                          <Input placeholder="avg_pace" />
-                        </Form.Item>
-                        <div style={{ display: "flex", alignItems: "center" }}>=</div>
-                        <Form.Item
-                          {...restField}
-                          name={[name, "formula"]}
-                          initialValue="PACE"
-                          style={{ width: 140 }}
-                        >
-                          <Select placeholder="Функция">
-                            <Option value="PACE">Темп (мин/км)</Option>
-                            <Option value="SUM_TIME">Сумма вр.</Option>
-                            <Option value="MULT">Умножение</Option>
-                            <Option value="DIV">Деление</Option>
-                            <Option value="SUB">Вычитание</Option>
-                          </Select>
-                        </Form.Item>
-                        <Form.Item
-                          {...restField}
-                          name={[name, "args"]}
-                          rules={[{ required: true, message: "Аргументы" }]}
-                          style={{ width: 200 }}
-                        >
-                          <Select mode="tags" placeholder="Поля (dist, time)">
-                            {schemaFields.map((f: any) =>
-                              f ? (
-                                <Option key={f.key} value={f.key}>
-                                  {f.label || f.key}
-                                </Option>
-                              ) : null
-                            )}
-                          </Select>
-                        </Form.Item>
-                        <MinusCircleOutlined onClick={() => remove(name)} />
-                      </Space>
-                    ))}
-                    <Form.Item>
-                      <Button
-                        type="dashed"
-                        onClick={() => add({ key: "", formula: "PACE", args: [] })}
-                        block
-                        icon={<PlusOutlined />}
-                      >
-                        Добавить формулу
-                      </Button>
-                    </Form.Item>
-                  </>
-                )}
-              </Form.List>
-            );
-          }}
-        </Form.Item>
-      </Card>
-
       <Card title="Поля формы" className={styles.card}>
         <Form.List name="schema">
           {(fields, { add, remove }) => (
@@ -291,6 +221,24 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         <Text type="secondary" className={styles.helperText}>
           Используйте двойные фигурные скобки для вставки значений полей по их коду. <br />
           Пример: <code>Разминка {"{{warmup}}"} км</code>
+          <br />
+          <br />
+          <b>Доступные функции:</b>
+          <br />
+          <code>{"{{AVG_TIME(list_key)}}"}</code> - среднее время из списка
+          <br />
+          <code>{"{{SUM_TIME(list_key)}}"}</code> - сумма времени из списка
+          <br />
+          <br />
+          <b>Конструкции:</b>
+          <br />
+          <code>{"{{#if variable}}...{{/if}}"}</code> - условие
+          <br />
+          <code>{"{{#each list}}...{{this}}...{{/each}}"}</code> - перебор списка
+          <br />
+          <code>{"{{#repeat count}}...{{/repeat}}"}</code> - повтор N раз
+          <br />
+          <code>{"{{list[i]}}"}</code> - доступ к элементу параллельного списка в цикле
         </Text>
         <Form.Item name="outputTemplate" label="Текст отчета" rules={[{ required: true }]}>
           <TextArea rows={6} />

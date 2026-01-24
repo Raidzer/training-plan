@@ -300,8 +300,8 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     }
   });
 
-  // Pre-process AVG and SUM (Legacy/Simple approach compatibility)
-  const avgRegex = /{{AVG\(([a-zA-Z0-9_]+)\)}}/g;
+  // Pre-process AVG_TIME and SUM (Legacy/Simple approach compatibility)
+  const avgRegex = /{{AVG_TIME\(([a-zA-Z0-9_]+)\)}}/g;
   result = result.replace(avgRegex, (_, listKey) => {
     const list = processedValues[listKey];
     if (Array.isArray(list)) {
@@ -310,7 +310,7 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     return "";
   });
 
-  const sumRegex = /{{SUM\(([a-zA-Z0-9_]+)\)}}/g;
+  const sumRegex = /{{SUM_TIME\(([a-zA-Z0-9_]+)\)}}/g;
   result = result.replace(sumRegex, (_, listKey) => {
     const list = processedValues[listKey];
     if (Array.isArray(list)) {

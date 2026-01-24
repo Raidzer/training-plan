@@ -42,15 +42,15 @@ describe("templateEngine", () => {
       expect(result).toBe("List: A; B; C");
     });
 
-    it("should process {{AVG(...)}} calculation", () => {
-      const template = createTemplate("Average: {{AVG(times)}}");
+    it("should process {{AVG_TIME(...)}} calculation", () => {
+      const template = createTemplate("Average: {{AVG_TIME(times)}}");
       const values = { times: ["1:00", "2:00"] };
       const result = processTemplate(template, values);
       expect(result).toBe("Average: 1:30");
     });
 
-    it("should process {{SUM(...)}} calculation", () => {
-      const template = createTemplate("Total: {{SUM(times)}}");
+    it("should process {{SUM_TIME(...)}} calculation", () => {
+      const template = createTemplate("Total: {{SUM_TIME(times)}}");
       const values = { times: ["1:00", "0:30"] };
       const result = processTemplate(template, values);
       expect(result).toBe("Total: 1:30");
@@ -138,7 +138,7 @@ describe("templateEngine", () => {
 
     describe("Time Formatting", () => {
       it("should format avg time with milliseconds", () => {
-        const template = createTemplate("Avg: {{AVG(times)}}");
+        const template = createTemplate("Avg: {{AVG_TIME(times)}}");
         // 1.5s + 2.0s = 3.5s / 2 = 1.75s -> 0:01,8 (rounded 1 decimal)
         const values = { times: ["0:01.5", "0:02"] };
         const result = processTemplate(template, values);

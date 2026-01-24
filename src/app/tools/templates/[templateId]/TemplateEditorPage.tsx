@@ -21,11 +21,12 @@ export const TemplateEditorPage = ({ template, userId }: Props) => {
   const handleSave = async (values: NewDiaryResultTemplate) => {
     if (template) {
       await updateTemplate(template.id, values);
+      router.refresh();
     } else {
-      await createTemplate({ ...values, userId });
+      const newId = await createTemplate({ ...values, userId });
+      // Redirect to the edit page of the new template to stay in context
+      router.replace(`/tools/templates/${newId}`);
     }
-    router.push("/tools/templates");
-    router.refresh();
   };
 
   return (
