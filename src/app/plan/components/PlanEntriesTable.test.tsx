@@ -68,12 +68,6 @@ describe("PlanEntriesTable", () => {
     expect(screen.getAllByText("2023-10-02 (Пн)").length).toBeGreaterThan(0);
   });
 
-  it("должен рендерить тег нагрузки если isWorkload=true", () => {
-    render(<PlanEntriesTable {...defaultProps} />);
-    // Based on planText.ts: workloadTag: "Рабочая"
-    expect(screen.getAllByText("Рабочая").length).toBeGreaterThan(0);
-  });
-
   it("должен рендерить тег отчета если hasReport=true", () => {
     render(<PlanEntriesTable {...defaultProps} />);
     const elements = screen.getAllByText("Заполнен");

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, App, Button, Card, Input, Typography } from "antd";
+import { Alert, App, Button, Card, DatePicker, Input, Typography } from "antd";
+import dayjs, { type Dayjs } from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import styles from "./records.module.scss";
 import { TimeInput } from "./TimeInput";
 import {
@@ -12,6 +14,8 @@ import {
   PERSONAL_RECORD_TIME_REGEX,
   type PersonalRecordDistanceKey,
 } from "@/lib/personalRecords.constants";
+
+dayjs.extend(customParseFormat);
 
 type ApiRecord = {
   distanceKey: string;
@@ -26,7 +30,7 @@ type RecordRow = {
   distanceKey: PersonalRecordDistanceKey;
   label: string;
   timeText: string;
-  recordDate: string;
+  recordDate: Dayjs | null;
   protocolUrl: string;
   raceName: string;
   raceCity: string;
@@ -39,8 +43,6 @@ type RecordFieldErrors = {
   raceName?: boolean;
   raceCity?: boolean;
 };
-
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 const labels = {
   title: "Мои рекорды",
@@ -55,7 +57,7 @@ const labels = {
   raceCityLabel: "Город",
   protocolLabel: "Ссылка на протокол",
   timePlaceholder: "00:00:00",
-  datePlaceholder: "ГГГГ-ММ-ДД",
+  datePlaceholder: "ДД.ММ.ГГГГ",
   raceNamePlaceholder: "Название забега",
   raceCityPlaceholder: "Город",
   protocolPlaceholder: "https://",
@@ -76,7 +78,7 @@ const buildDefaultRows = (): RecordRow[] =>
     distanceKey: distance.key,
     label: distance.label,
     timeText: "",
-    recordDate: "",
+    recordDate: null,
     protocolUrl: "",
     raceName: "",
     raceCity: "",
@@ -112,7 +114,7 @@ const mapRecordsToRows = (records: ApiRecord[]): RecordRow[] => {
       distanceKey: distance.key,
       label: distance.label,
       timeText: record?.timeText ? String(record.timeText) : "",
-      recordDate: record?.recordDate ? String(record.recordDate) : "",
+      recordDate: record?.recordDate ? dayjs(record.recordDate) : null,
       protocolUrl: record?.protocolUrl ? String(record.protocolUrl) : "",
       raceName: record?.raceName ? String(record.raceName) : "",
       raceCity: record?.raceCity ? String(record.raceCity) : "",
@@ -130,7 +132,6 @@ const validateRows = (rows: RecordRow[]) => {
 
   for (const row of rows) {
     const normalizedTime = normalizeTimeText(row.timeText);
-    const recordDate = row.recordDate.trim();
     const protocolUrl = row.protocolUrl.trim();
     const raceName = row.raceName.trim();
     const raceCity = row.raceCity.trim();
@@ -141,7 +142,7 @@ const validateRows = (rows: RecordRow[]) => {
         rowErrors.time = true;
         hasTimeError = true;
       }
-      if (!recordDate || !DATE_REGEX.test(recordDate)) {
+      if (!row.recordDate || !row.recordDate.isValid()) {
         rowErrors.date = true;
         hasDateError = true;
       }
@@ -181,7 +182,7 @@ const validateRows = (rows: RecordRow[]) => {
   };
 };
 
-export function RecordsClient() {
+export function RecordsClient({ apiUrl = "/api/personal-records" }: { apiUrl?: string }) {
   const { message: messageApi } = App.useApp();
   const [rows, setRows] = useState<RecordRow[]>(() => buildDefaultRows());
   const [loading, setLoading] = useState(true);
@@ -191,7 +192,7 @@ export function RecordsClient() {
   const loadRecords = async (showError = true) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/personal-records", { cache: "no-store" });
+      const res = await fetch(apiUrl, { cache: "no-store" });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         if (showError) {
@@ -215,7 +216,7 @@ export function RecordsClient() {
 
   useEffect(() => {
     void loadRecords(false);
-  }, []);
+  }, [apiUrl]);
 
   const handleFieldChange = (distanceKey: PersonalRecordDistanceKey, patch: Partial<RecordRow>) => {
     setRows((prev) =>
@@ -255,14 +256,14 @@ export function RecordsClient() {
 
     const payload = rows.map((row) => {
       const normalizedTime = normalizeTimeText(row.timeText);
-      const recordDate = row.recordDate.trim();
+      const recordDate = row.recordDate ? row.recordDate.format("YYYY-MM-DD") : "";
       const protocolUrl = row.protocolUrl.trim();
       const raceName = row.raceName.trim();
       const raceCity = row.raceCity.trim();
       return {
         distanceKey: row.distanceKey,
         timeText: normalizedTime,
-        recordDate: normalizedTime ? recordDate : null,
+        recordDate: normalizedTime ? recordDate || null : null,
         protocolUrl: normalizedTime ? protocolUrl || null : null,
         raceName: normalizedTime ? raceName || null : null,
         raceCity: normalizedTime ? raceCity || null : null,
@@ -271,7 +272,7 @@ export function RecordsClient() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/personal-records", {
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ records: payload }),
@@ -372,17 +373,18 @@ export function RecordsClient() {
                       <Typography.Text className={styles.fieldLabel}>
                         {labels.dateLabel}
                       </Typography.Text>
-                      <Input
+                      <DatePicker
                         value={row.recordDate}
-                        onChange={(event) => {
+                        onChange={(date) => {
                           handleFieldChange(row.distanceKey, {
-                            recordDate: event.target.value,
+                            recordDate: date,
                           });
                         }}
                         placeholder={labels.datePlaceholder}
                         status={dateStatus}
                         disabled={saving}
-                        type="date"
+                        format="DD.MM.YYYY"
+                        style={{ width: "100%" }}
                       />
                     </div>
                     <div className={styles.field}>
