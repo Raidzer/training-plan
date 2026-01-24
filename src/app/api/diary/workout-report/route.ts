@@ -199,8 +199,12 @@ export async function POST(req: Request) {
   if (weather && weather.length > 255) {
     return NextResponse.json({ error: "invalid_weather" }, { status: 400 });
   }
+
   if (surface && surface.length > 255) {
     return NextResponse.json({ error: "invalid_surface" }, { status: 400 });
+  }
+  if (!distanceKm.valid) {
+    return NextResponse.json({ error: "invalid_distance" }, { status: 400 });
   }
   if (!shoeIds.valid) {
     return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
