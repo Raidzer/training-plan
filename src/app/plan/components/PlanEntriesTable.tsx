@@ -1,4 +1,4 @@
-import { BookOutlined, CheckCircleOutlined, EditOutlined, FireOutlined } from "@ant-design/icons";
+import { BookOutlined, CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
@@ -27,17 +27,6 @@ export function PlanEntriesTable({
 }: PlanEntriesTableProps) {
   const columns: ColumnsType<PlanDayEntry> = useMemo(
     () => [
-      {
-        title: PLAN_TEXT.table.workload,
-        dataIndex: "isWorkload",
-        width: 120,
-        render: (value: boolean) =>
-          value ? (
-            <Tag icon={<FireOutlined />} color="volcano">
-              {PLAN_TEXT.table.workloadTag}
-            </Tag>
-          ) : null,
-      },
       {
         title: PLAN_TEXT.table.date,
         dataIndex: "date",
