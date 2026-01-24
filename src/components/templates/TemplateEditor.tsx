@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Form, Input, Button, Select, Space, Card, Typography, App, Checkbox } from "antd";
+import {
+  Form,
+  Input,
+  Button,
+  Select,
+  Space,
+  Card,
+  Typography,
+  App,
+  Checkbox,
+  InputNumber,
+} from "antd";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import type { NewDiaryResultTemplate } from "@/app/actions/diaryTemplates";
 import styles from "./TemplateEditor.module.scss";
@@ -13,7 +24,7 @@ export type TemplateField = {
   key: string;
   label: string;
   type: "text" | "number" | "time" | "list";
-  suffix?: string;
+  listSize?: number;
 };
 
 type TemplateEditorProps = {
@@ -177,32 +188,58 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
-                <Space key={key} className={styles.fieldRow} align="baseline">
+                <Space
+                  key={key}
+                  className={styles.fieldRow}
+                  align="baseline"
+                  style={{ display: "flex", width: "100%" }}
+                >
                   <Form.Item
                     {...restField}
                     name={[name, "key"]}
-                    rules={[{ required: true, message: "Код обязателен" }]}
+                    rules={[{ required: true, message: "Код" }]}
+                    style={{ flex: 1, minWidth: 100 }}
                   >
                     <Input placeholder="Код (lat)" className={styles.codeInput} />
                   </Form.Item>
                   <Form.Item
                     {...restField}
                     name={[name, "label"]}
-                    rules={[{ required: true, message: "Название обязательно" }]}
+                    rules={[{ required: true, message: "Название" }]}
+                    style={{ flex: 2, minWidth: 150 }}
                   >
                     <Input placeholder="Название поля" />
                   </Form.Item>
-                  <Form.Item {...restField} name={[name, "type"]} initialValue="text">
+                  <Form.Item
+                    {...restField}
+                    name={[name, "type"]}
+                    initialValue="text"
+                    style={{ width: 140 }}
+                  >
                     <Select className={styles.selectType}>
                       <Option value="text">Текст</Option>
                       <Option value="time">Время</Option>
                       <Option value="number">Число</Option>
-                      <Option value="list">Список (время)</Option>
+                      <Option value="list">Список</Option>
                     </Select>
                   </Form.Item>
-                  <Form.Item {...restField} name={[name, "suffix"]}>
-                    <Input placeholder="Суффикс (км)" className={styles.suffixInput} />
+
+                  <Form.Item
+                    noStyle
+                    shouldUpdate={(prev, curr) =>
+                      prev.schema?.[name]?.type !== curr.schema?.[name]?.type
+                    }
+                  >
+                    {({ getFieldValue }) => {
+                      const type = getFieldValue(["schema", name, "type"]);
+                      return type === "list" ? (
+                        <Form.Item {...restField} name={[name, "listSize"]} style={{ width: 100 }}>
+                          <InputNumber placeholder="Len" min={0} max={20} />
+                        </Form.Item>
+                      ) : null;
+                    }}
                   </Form.Item>
+
                   <MinusCircleOutlined onClick={() => remove(name)} />
                 </Space>
               ))}
