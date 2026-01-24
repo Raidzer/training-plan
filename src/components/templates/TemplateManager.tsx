@@ -30,16 +30,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ initialTemplat
       key: "matchPattern",
       render: (text: string) => (text ? text.split(";").map((t) => <Tag key={t}>{t}</Tag>) : "-"),
     },
-    {
-      title: "Тип",
-      key: "type",
-      render: (_: any, record: DiaryResultTemplate) =>
-        record.userId === null ? (
-          <Tag color="blue">Системный</Tag>
-        ) : (
-          <Tag color="geekblue">Личный</Tag>
-        ),
-    },
+
     {
       title: "Действия",
       key: "action",
