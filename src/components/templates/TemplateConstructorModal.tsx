@@ -26,6 +26,32 @@ type Block = {
   values: Record<string, any>;
 };
 
+// Helper Component for Time Input
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const TimeInput = ({ value, onChange, ...props }: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, "");
+    let formatted = raw;
+
+    // MM:SS
+    if (raw.length > 2) {
+      formatted = raw.slice(0, 2) + ":" + raw.slice(2);
+    }
+    // HH:MM:SS (if more than 4 digits)
+    if (raw.length > 4) {
+      formatted = formatted.slice(0, 5) + ":" + raw.slice(4);
+    }
+    // Limit length (e.g. 00:00:00)
+    if (formatted.length > 8) {
+      formatted = formatted.slice(0, 8);
+    }
+
+    onChange?.(formatted);
+  };
+
+  return <Input {...props} value={value} onChange={handleChange} placeholder="мм:сс" />;
+};
+
 export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> = ({
   visible,
   onCancel,
@@ -158,7 +184,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
   return (
     <Modal
-      title="Конструктор отчета (LEGO)"
+      title="Конструктор отчета"
       open={visible}
       onCancel={onCancel}
       width={700}
@@ -197,45 +223,90 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                     </Button>
                   </div>
 
-                  {schema.map((field: any) => (
-                    <div key={field.key} className={styles.formItemContainer}>
-                      {field.type === "list" && field.listSize && field.listSize > 0 ? (
-                        <Form.Item label={field.label + (field.suffix ? ` (${field.suffix})` : "")}>
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
-                              gap: 8,
-                            }}
+                  {schema.map((field: any) => {
+                    const itemType = field.itemType || "text";
+
+                    const renderTypedInput = (props: any) => {
+                      if (itemType === "number") {
+                        return <Input type="number" {...props} />;
+                      }
+                      if (itemType === "time") {
+                        return <TimeInput {...props} />;
+                      }
+                      return <Input {...props} />;
+                    };
+
+                    return (
+                      <div key={field.key} className={styles.formItemContainer}>
+                        {field.type === "list" && field.listSize && field.listSize > 0 ? (
+                          <Form.Item label={field.label}>
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+                                gap: 8,
+                              }}
+                            >
+                              {Array.from({ length: field.listSize }).map((_, idx) => (
+                                <Form.Item
+                                  key={idx}
+                                  name={[`${block.id}_${field.key}`, idx]}
+                                  noStyle
+                                  rules={
+                                    itemType === "time"
+                                      ? [
+                                          {
+                                            pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
+                                            message: "Формат чч:мм:сс",
+                                          },
+                                        ]
+                                      : []
+                                  }
+                                >
+                                  {renderTypedInput({
+                                    size: "small",
+                                    placeholder: `${idx + 1}`,
+                                  })}
+                                </Form.Item>
+                              ))}
+                            </div>
+                          </Form.Item>
+                        ) : (
+                          <Form.Item
+                            name={`${block.id}_${field.key}`}
+                            label={field.label}
+                            className={styles.formItem}
+                            rules={
+                              field.type === "time"
+                                ? [
+                                    {
+                                      pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
+                                      message: "Формат чч:мм:сс",
+                                    },
+                                  ]
+                                : []
+                            }
                           >
-                            {Array.from({ length: field.listSize }).map((_, idx) => (
-                              <Form.Item key={idx} name={[`${block.id}_${field.key}`, idx]} noStyle>
-                                <Input size="small" placeholder={`${idx + 1}`} />
-                              </Form.Item>
-                            ))}
-                          </div>
-                        </Form.Item>
-                      ) : (
-                        <Form.Item
-                          name={`${block.id}_${field.key}`}
-                          label={field.label + (field.suffix ? ` (${field.suffix})` : "")}
-                          className={styles.formItem}
-                        >
-                          {field.type === "list" ? (
-                            <Select
-                              mode="tags"
-                              style={{ width: "100%" }}
-                              placeholder="Введите значения (Enter)"
-                              tokenSeparators={[",", ";", "\n", " "]}
-                              size="small"
-                            />
-                          ) : (
-                            <Input size="small" />
-                          )}
-                        </Form.Item>
-                      )}
-                    </div>
-                  ))}
+                            {field.type === "list" ? (
+                              <Select
+                                mode="tags"
+                                style={{ width: "100%" }}
+                                placeholder="Введите значения (Enter)"
+                                tokenSeparators={[",", ";", "\n", " "]}
+                                size="small"
+                              />
+                            ) : field.type === "time" ? (
+                              <TimeInput size="small" />
+                            ) : field.type === "number" ? (
+                              <Input type="number" size="small" />
+                            ) : (
+                              <Input size="small" />
+                            )}
+                          </Form.Item>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}

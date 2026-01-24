@@ -25,6 +25,7 @@ export type TemplateField = {
   label: string;
   type: "text" | "number" | "time" | "list";
   listSize?: number;
+  itemType?: "text" | "number" | "time";
 };
 
 type TemplateEditorProps = {
@@ -223,7 +224,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       <Option value="list">Список</Option>
                     </Select>
                   </Form.Item>
-
+                  {/* Conditional List Settings Inline */}
                   <Form.Item
                     noStyle
                     shouldUpdate={(prev, curr) =>
@@ -233,9 +234,24 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     {({ getFieldValue }) => {
                       const type = getFieldValue(["schema", name, "type"]);
                       return type === "list" ? (
-                        <Form.Item {...restField} name={[name, "listSize"]} style={{ width: 100 }}>
-                          <InputNumber placeholder="Len" min={0} max={20} />
-                        </Form.Item>
+                        <>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "itemType"]}
+                            style={{ width: 100 }}
+                            initialValue="text"
+                            tooltip="Тип данных в списке"
+                          >
+                            <Select placeholder="Тип">
+                              <Option value="text">Текст</Option>
+                              <Option value="time">Время</Option>
+                              <Option value="number">Число</Option>
+                            </Select>
+                          </Form.Item>
+                          <Form.Item {...restField} name={[name, "listSize"]} style={{ width: 80 }}>
+                            <InputNumber placeholder="Len" min={0} max={20} />
+                          </Form.Item>
+                        </>
                       ) : null;
                     }}
                   </Form.Item>
