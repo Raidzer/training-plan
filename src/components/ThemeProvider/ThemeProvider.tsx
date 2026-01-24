@@ -29,8 +29,11 @@ export function ThemeProvider({
 }) {
   const [mode, setMode] = useState<Mode>(initialTheme);
   const pathname = usePathname();
+  const isFullWidthRoute = pathname.startsWith("/tools/templates/");
   const isWideRoute =
-    pathname.startsWith("/plan") || pathname.startsWith("/diary") || pathname.startsWith("/tools");
+    pathname.startsWith("/plan") ||
+    pathname.startsWith("/diary") ||
+    pathname === "/tools/templates";
 
   const handleSetMode = (next: Mode) => {
     setMode(next);
@@ -70,7 +73,7 @@ export function ThemeProvider({
               className={clsx(
                 styles.main,
                 isWideRoute && styles.mainWide,
-                pathname.startsWith("/tools") && styles.mainFull
+                isFullWidthRoute && styles.mainFull
               )}
             >
               {children}

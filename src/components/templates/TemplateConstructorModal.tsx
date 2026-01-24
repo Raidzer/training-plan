@@ -24,24 +24,20 @@ type Block = {
   id: string;
   templateId: number;
   values: Record<string, any>;
+  repeatCount?: number;
 };
 
-// Helper Component for Time Input
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TimeInput = ({ value, onChange, ...props }: any) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9]/g, "");
     let formatted = raw;
 
-    // MM:SS
     if (raw.length > 2) {
       formatted = raw.slice(0, 2) + ":" + raw.slice(2);
     }
-    // HH:MM:SS (if more than 4 digits)
     if (raw.length > 4) {
       formatted = formatted.slice(0, 5) + ":" + raw.slice(4);
     }
-    // Limit length (e.g. 00:00:00)
     if (formatted.length > 8) {
       formatted = formatted.slice(0, 8);
     }
@@ -113,12 +109,13 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
   const handleApply = () => {
     form.validateFields().then((allValues) => {
-      const blockOutputs = blocks.map((block) => {
+      const blockOutputs: { id: string; code: string; text: string; isInline: boolean }[] = [];
+
+      blocks.forEach((block) => {
         const template = templates.find((t) => t.id === block.templateId);
-        if (!template) return { id: block.id, code: "", text: "", isInline: false };
+        if (!template) return;
 
         const formValues: Record<string, any> = {};
-
         Object.keys(allValues).forEach((key) => {
           if (key.startsWith(`${block.id}_`)) {
             const fieldKey = key.replace(`${block.id}_`, "");
@@ -127,13 +124,16 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         });
 
         const result = processTemplate(template, formValues);
+        const count = block.repeatCount || 1;
 
-        return {
-          id: block.id,
-          code: template.code || "",
-          text: result.trim(),
-          isInline: template.isInline || false,
-        };
+        for (let i = 0; i < count; i++) {
+          blockOutputs.push({
+            id: `${block.id}_rep_${i}`,
+            code: template.code || "",
+            text: result.trim(),
+            isInline: template.isInline || false,
+          });
+        }
       });
 
       const consumedBlockIds = new Set<string>();
@@ -215,9 +215,30 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
               return (
                 <div key={block.id} className={styles.blockContainer}>
                   <div className={styles.blockHeader}>
-                    <Text strong className={styles.templateName}>
-                      Блок {index + 1}: {template?.name}
-                    </Text>
+                    <Space>
+                      <Text strong className={styles.templateName}>
+                        Блок {index + 1}: {template?.name}
+                      </Text>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Повторов:
+                        </Text>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={99}
+                          size="small"
+                          style={{ width: 60 }}
+                          value={block.repeatCount || 1}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1;
+                            const newBlocks = [...blocks];
+                            newBlocks[index].repeatCount = val;
+                            setBlocks(newBlocks);
+                          }}
+                        />
+                      </div>
+                    </Space>
                     <Button type="text" danger size="small" onClick={() => removeBlock(block.id)}>
                       Удалить
                     </Button>
