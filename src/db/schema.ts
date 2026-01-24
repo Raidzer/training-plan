@@ -298,10 +298,10 @@ export const workoutReportConditions = pgTable(
     workoutReportId: integer("workout_report_id")
       .notNull()
       .references(() => workoutReports.id),
-    weather: varchar("weather", { length: 16 }),
+    weather: varchar("weather", { length: 255 }),
     hasWind: boolean("has_wind"),
     temperatureC: numeric("temperature_c", { precision: 5, scale: 1 }),
-    surface: varchar("surface", { length: 16 }),
+    surface: varchar("surface", { length: 255 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

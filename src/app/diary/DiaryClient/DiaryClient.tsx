@@ -68,7 +68,7 @@ const WIND_OPTIONS = [
 const getOptionLabel = (
   options: readonly { value: string; label: string }[],
   value?: string | null
-) => options.find((option) => option.value === value)?.label ?? "";
+) => options.find((option) => option.value === value)?.label ?? value ?? "";
 
 const formatTemperatureValue = (value?: string | null) => {
   if (value === null || value === undefined) {

@@ -1,7 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Input, InputNumber, Select, Space, Tag, Typography, Tooltip } from "antd";
+import {
+  AutoComplete,
+  Button,
+  Card,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+  Tag,
+  Typography,
+  Tooltip,
+} from "antd";
 import { BuildOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { PlanEntry, SavingWorkoutsState, WorkoutFormState } from "../types/diaryTypes";
@@ -95,9 +106,19 @@ export function WorkoutsCard({
   onChange,
   onSave,
 }: WorkoutsCardProps) {
-  const normalizedSurfaceOptions = normalizeOptions(surfaceOptions);
+  const getDisplayValue = (
+    val: string | null | undefined,
+    opts: readonly { value: string | number; label: string }[]
+  ) => {
+    if (!val) return "";
+    const match = opts.find((o) => o.value === val);
+    return match ? match.label : val;
+  };
+
+  const surfaceOptionsAC = surfaceOptions.map((o) => ({ value: o.label, label: o.label }));
+  const weatherOptionsAC = weatherOptions.map((o) => ({ value: o.label, label: o.label }));
+
   const normalizedShoeOptions = normalizeOptions(shoeOptions);
-  const normalizedWeatherOptions = normalizeOptions(weatherOptions);
   const normalizedWindOptions = normalizeOptions(windOptions);
 
   const [constructorState, setConstructorState] = useState<{
@@ -135,7 +156,14 @@ export function WorkoutsCard({
         <Space orientation="vertical" size="middle" className={styles.workoutList}>
           {entries.map((entry) => {
             const form = workoutForm[entry.id];
-            const isIndoorSurface = form?.surface === "manezh" || form?.surface === "treadmill";
+
+            const surfaceVal = form?.surface;
+            const isIndoorSurface =
+              surfaceVal === "manezh" ||
+              surfaceVal === "treadmill" ||
+              surfaceVal === "Манеж" ||
+              surfaceVal === "Беговая дорожка";
+
             const surfaceValue = form?.surface ? form.surface : null;
             const shoeValue = Array.isArray(form?.shoeIds) ? form.shoeIds : [];
             const weatherValue = form?.weather ? form.weather : null;
@@ -245,12 +273,15 @@ export function WorkoutsCard({
                     </div>
                   </div>
                   <div className={styles.workoutMetaGrid}>
-                    <Select<string | null>
-                      value={surfaceValue}
+                    <AutoComplete
+                      value={getDisplayValue(surfaceValue, surfaceOptions)}
                       placeholder={surfacePlaceholder}
-                      options={normalizedSurfaceOptions}
+                      options={surfaceOptionsAC}
                       allowClear
-                      onChange={(value) => onChange(entry.id, "surface", value ?? "")}
+                      onChange={(value: string) => onChange(entry.id, "surface", value)}
+                      filterOption={(inputValue, option) =>
+                        (option?.label ?? "").toUpperCase().includes(inputValue.toUpperCase())
+                      }
                     />
                     <Select
                       mode="multiple"
@@ -263,12 +294,15 @@ export function WorkoutsCard({
                     />
                     {isIndoorSurface ? null : (
                       <>
-                        <Select<string | null>
-                          value={weatherValue}
+                        <AutoComplete
+                          value={getDisplayValue(weatherValue, weatherOptions)}
                           placeholder={weatherPlaceholder}
-                          options={normalizedWeatherOptions}
+                          options={weatherOptionsAC}
                           allowClear
-                          onChange={(value) => onChange(entry.id, "weather", value ?? "")}
+                          onChange={(value: string) => onChange(entry.id, "weather", value)}
+                          filterOption={(inputValue, option) =>
+                            (option?.label ?? "").toUpperCase().includes(inputValue.toUpperCase())
+                          }
                         />
                         <Select<string | null>
                           value={windValue}
