@@ -112,6 +112,7 @@ export function DiaryPeriodClient() {
         title: "Дата",
         dataIndex: "date",
         width: 130,
+        render: (value: string) => dayjs(value).format("DD.MM.YYYY"),
       },
       {
         title: "Вес",
@@ -179,6 +180,7 @@ export function DiaryPeriodClient() {
             <Space size="middle" className={styles.rangeRow} wrap>
               <RangePicker
                 value={range}
+                format="DD.MM.YYYY"
                 onChange={(values) => {
                   if (!values || values.length !== 2) {
                     return;
