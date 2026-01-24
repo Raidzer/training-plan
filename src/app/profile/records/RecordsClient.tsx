@@ -181,7 +181,7 @@ const validateRows = (rows: RecordRow[]) => {
   };
 };
 
-export function RecordsClient() {
+export function RecordsClient({ apiUrl = "/api/personal-records" }: { apiUrl?: string }) {
   const { message: messageApi } = App.useApp();
   const [rows, setRows] = useState<RecordRow[]>(() => buildDefaultRows());
   const [loading, setLoading] = useState(true);
@@ -191,7 +191,7 @@ export function RecordsClient() {
   const loadRecords = async (showError = true) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/personal-records", { cache: "no-store" });
+      const res = await fetch(apiUrl, { cache: "no-store" });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         if (showError) {
@@ -215,7 +215,7 @@ export function RecordsClient() {
 
   useEffect(() => {
     void loadRecords(false);
-  }, []);
+  }, [apiUrl]);
 
   const handleFieldChange = (distanceKey: PersonalRecordDistanceKey, patch: Partial<RecordRow>) => {
     setRows((prev) =>
@@ -271,7 +271,7 @@ export function RecordsClient() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/personal-records", {
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ records: payload }),
