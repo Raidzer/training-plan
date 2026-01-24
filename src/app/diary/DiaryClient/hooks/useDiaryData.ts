@@ -322,7 +322,11 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       }
 
       const surfaceValue = form.surface.trim();
-      const isIndoorSurface = surfaceValue === "manezh" || surfaceValue === "treadmill";
+      const isIndoorSurface =
+        surfaceValue === "manezh" ||
+        surfaceValue === "treadmill" ||
+        surfaceValue === "Манеж" ||
+        surfaceValue === "Беговая дорожка";
       const weatherValue = isIndoorSurface ? "" : form.weather.trim();
       const hasWindValue = isIndoorSurface ? "" : form.hasWind;
       const temperatureValue = isIndoorSurface ? "" : form.temperatureC.trim();

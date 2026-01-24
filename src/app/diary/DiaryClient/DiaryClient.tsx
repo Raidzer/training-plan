@@ -364,7 +364,11 @@ export function DiaryClient({ userId }: { userId: number }) {
         next = { ...current, [field]: value as string | number | null };
         if (field === "surface") {
           const surfaceValue = typeof value === "string" ? value : "";
-          const isIndoorSurface = surfaceValue === "manezh" || surfaceValue === "treadmill";
+          const isIndoorSurface =
+            surfaceValue === "manezh" ||
+            surfaceValue === "treadmill" ||
+            surfaceValue === "Манеж" ||
+            surfaceValue === "Беговая дорожка";
           if (isIndoorSurface) {
             next.weather = "";
             next.hasWind = "";
