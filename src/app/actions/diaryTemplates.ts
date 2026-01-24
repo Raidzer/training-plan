@@ -25,17 +25,31 @@ export async function getTemplateById(id: number) {
   return result[0] || null;
 }
 
+import { auth } from "@/auth";
+
 export async function createTemplate(data: NewDiaryResultTemplate) {
+  const session = await auth();
+  if (session?.user?.role !== "admin") {
+    throw new Error("Unauthorized");
+  }
   await db.insert(diaryResultTemplates).values(data);
   revalidatePath("/tools/templates");
 }
 
 export async function updateTemplate(id: number, data: Partial<NewDiaryResultTemplate>) {
+  const session = await auth();
+  if (session?.user?.role !== "admin") {
+    throw new Error("Unauthorized");
+  }
   await db.update(diaryResultTemplates).set(data).where(eq(diaryResultTemplates.id, id));
   revalidatePath("/tools/templates");
 }
 
 export async function deleteTemplate(id: number) {
+  const session = await auth();
+  if (session?.user?.role !== "admin") {
+    throw new Error("Unauthorized");
+  }
   await db.delete(diaryResultTemplates).where(eq(diaryResultTemplates.id, id));
   revalidatePath("/tools/templates");
 }

@@ -15,6 +15,10 @@ export default async function Page({ params }: Props) {
     redirect("/login");
   }
 
+  if (session.user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   const userId = Number(session.user.id);
   let template = null;
 
@@ -26,10 +30,7 @@ export default async function Page({ params }: Props) {
   }
 
   if (template) {
-    if (template.userId !== userId && template.userId !== null) {
-    }
-    if (template.userId === null && session.user.role !== "admin") {
-    }
+    // Security checks can be implemented here if needed
   }
 
   return <TemplateEditorPage template={template} userId={userId} />;
