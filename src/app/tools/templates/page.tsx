@@ -10,6 +10,10 @@ export default async function TemplatesPage() {
     redirect("/login");
   }
 
+  if (session.user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   const userId = Number(session.user.id);
   const templates = await getTemplates(userId);
 
