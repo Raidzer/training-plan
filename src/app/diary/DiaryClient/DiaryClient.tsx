@@ -279,7 +279,7 @@ const reportLabels = {
   closeLabel: "Закрыть",
 };
 
-export function DiaryClient() {
+export function DiaryClient({ userId }: { userId: number }) {
   const [messageApi, contextHolder] = message.useMessage();
   const {
     selectedDate,
@@ -456,6 +456,8 @@ export function DiaryClient() {
                     </div>
                     <div className={styles.workoutsBlock}>
                       <WorkoutsCard
+                        userId={userId}
+                        messageApi={messageApi}
                         title={workoutLabels.title}
                         emptyLabel={workoutLabels.emptyLabel}
                         completeLabel={workoutLabels.completeLabel}

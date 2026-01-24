@@ -4,6 +4,7 @@ import {
   CalendarOutlined,
   MessageOutlined,
   ShoppingOutlined,
+  SnippetsOutlined,
   TeamOutlined,
   TrophyOutlined,
 } from "@ant-design/icons";
@@ -31,6 +32,20 @@ export function DashboardClient({ session }: Props) {
     </Link>
   ) : null;
 
+  const templatesCard = isAdmin ? (
+    <Link href="/tools/templates" passHref>
+      <Card
+        hoverable
+        className={styles.card}
+        title={<CardTitle icon={<SnippetsOutlined />} title="Шаблоны" />}
+      >
+        <Typography.Text type="secondary">
+          Редактор шаблонов для дневника тренировок.
+        </Typography.Text>
+      </Card>
+    </Link>
+  ) : null;
+
   return (
     <Space size="middle" className={styles.wrapper}>
       <Card>
@@ -47,6 +62,7 @@ export function DashboardClient({ session }: Props) {
         </div>
         <div className={styles.cards}>
           {adminCard}
+          {templatesCard}
           <Link href="/plan" passHref>
             <Card
               hoverable
