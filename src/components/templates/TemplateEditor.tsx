@@ -142,18 +142,25 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                           style={{ width: 200 }}
                         >
                           <Select mode="tags" placeholder="Поля (dist, time)">
-                            {schemaFields.map((f: any) => (
-                              <Option key={f.key} value={f.key}>
-                                {f.label || f.key}
-                              </Option>
-                            ))}
+                            {schemaFields.map((f: any) =>
+                              f ? (
+                                <Option key={f.key} value={f.key}>
+                                  {f.label || f.key}
+                                </Option>
+                              ) : null
+                            )}
                           </Select>
                         </Form.Item>
                         <MinusCircleOutlined onClick={() => remove(name)} />
                       </Space>
                     ))}
                     <Form.Item>
-                      <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                      <Button
+                        type="dashed"
+                        onClick={() => add({ key: "", formula: "PACE", args: [] })}
+                        block
+                        icon={<PlusOutlined />}
+                      >
                         Добавить формулу
                       </Button>
                     </Form.Item>
@@ -200,7 +207,12 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 </Space>
               ))}
               <Form.Item>
-                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                <Button
+                  type="dashed"
+                  onClick={() => add({ type: "text", key: "", label: "" })}
+                  block
+                  icon={<PlusOutlined />}
+                >
                   Добавить поле
                 </Button>
               </Form.Item>
