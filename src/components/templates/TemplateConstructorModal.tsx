@@ -29,18 +29,31 @@ type Block = {
 
 const TimeInput = ({ value, onChange, ...props }: any) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/[^0-9]/g, "");
-    let formatted = raw;
+    const raw = e.target.value;
 
-    if (raw.length > 2) {
-      formatted = raw.slice(0, 2) + ":" + raw.slice(2);
+    if (value && raw.length < value.length) {
+      onChange?.(raw);
+      return;
     }
-    if (raw.length > 4) {
-      formatted = formatted.slice(0, 5) + ":" + raw.slice(4);
+
+    const clean = raw.replace(/[^0-9:,.]/g, "").replace(/\./g, ",");
+
+    let formatted = clean;
+    const parts = clean.split(",");
+    let mainPart = parts[0].replace(/[^0-9]/g, "");
+    const msPart = parts.length > 1 ? "," + parts[1].slice(0, 1) : "";
+
+    if (mainPart.length > 2) {
+      mainPart = mainPart.slice(0, 2) + ":" + mainPart.slice(2);
     }
-    if (formatted.length > 8) {
-      formatted = formatted.slice(0, 8);
+    if (mainPart.length > 5) {
+      mainPart = mainPart.slice(0, 5) + ":" + mainPart.slice(5);
     }
+    if (mainPart.length > 8) {
+      mainPart = mainPart.slice(0, 8);
+    }
+
+    formatted = mainPart + msPart;
 
     onChange?.(formatted);
   };
@@ -278,7 +291,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                                       ? [
                                           {
                                             pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
-                                            message: "Формат чч:мм:сс",
+                                            message: "Формат чч:мм:сс или мм:сс,м",
                                           },
                                         ]
                                       : []
@@ -302,7 +315,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                                 ? [
                                     {
                                       pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
-                                      message: "Формат чч:мм:сс",
+                                      message: "Формат чч:мм:сс или мм:сс,м",
                                     },
                                   ]
                                 : []
