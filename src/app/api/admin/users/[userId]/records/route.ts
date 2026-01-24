@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
 import { isValidDateString } from "@/lib/diary";
 import {
   MAX_PROTOCOL_URL_LENGTH,
@@ -65,6 +68,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ userId:
   const userId = Number(userIdParam);
   if (!Number.isFinite(userId)) {
     return NextResponse.json({ error: "invalid_user_id" }, { status: 400 });
+  }
+
+  const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId));
+  if (!existingUser) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
   const body = (await req.json().catch(() => null)) as { records?: PersonalRecordPayload[] } | null;
