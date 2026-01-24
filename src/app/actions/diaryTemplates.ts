@@ -16,6 +16,15 @@ export async function getTemplates(userId: number) {
     .orderBy(desc(diaryResultTemplates.sortOrder), desc(diaryResultTemplates.createdAt));
 }
 
+export async function getTemplateById(id: number) {
+  const result = await db
+    .select()
+    .from(diaryResultTemplates)
+    .where(eq(diaryResultTemplates.id, id))
+    .limit(1);
+  return result[0] || null;
+}
+
 export async function createTemplate(data: NewDiaryResultTemplate) {
   await db.insert(diaryResultTemplates).values(data);
   revalidatePath("/tools/templates");

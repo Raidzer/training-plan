@@ -189,41 +189,45 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, ...restField }) => (
-                <Space
+                <div
                   key={key}
                   className={styles.fieldRow}
-                  align="baseline"
-                  style={{ display: "flex", width: "100%" }}
+                  style={{ display: "flex", width: "100%", alignItems: "baseline", gap: 8 }}
                 >
                   <Form.Item
                     {...restField}
                     name={[name, "key"]}
                     rules={[{ required: true, message: "Код" }]}
-                    style={{ flex: 1, minWidth: 100 }}
+                    style={{ flex: 1, minWidth: 100, marginBottom: 0 }}
                   >
-                    <Input placeholder="Код (lat)" className={styles.codeInput} />
+                    <Input
+                      placeholder="Код (lat)"
+                      className={styles.codeInput}
+                      style={{ width: "100%" }}
+                    />
                   </Form.Item>
                   <Form.Item
                     {...restField}
                     name={[name, "label"]}
                     rules={[{ required: true, message: "Название" }]}
-                    style={{ flex: 2, minWidth: 150 }}
+                    style={{ flex: 2, minWidth: 150, marginBottom: 0 }}
                   >
-                    <Input placeholder="Название поля" />
+                    <Input placeholder="Название поля" style={{ width: "100%" }} />
                   </Form.Item>
                   <Form.Item
                     {...restField}
                     name={[name, "type"]}
                     initialValue="text"
-                    style={{ width: 140 }}
+                    style={{ width: 140, marginBottom: 0 }}
                   >
-                    <Select className={styles.selectType}>
+                    <Select className={styles.selectType} style={{ width: "100%" }}>
                       <Option value="text">Текст</Option>
                       <Option value="time">Время</Option>
                       <Option value="number">Число</Option>
                       <Option value="list">Список</Option>
                     </Select>
                   </Form.Item>
+
                   {/* Conditional List Settings Inline */}
                   <Form.Item
                     noStyle
@@ -238,26 +242,35 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                           <Form.Item
                             {...restField}
                             name={[name, "itemType"]}
-                            style={{ width: 100 }}
+                            style={{ width: 100, marginBottom: 0 }}
                             initialValue="text"
                             tooltip="Тип данных в списке"
                           >
-                            <Select placeholder="Тип">
+                            <Select placeholder="Тип" style={{ width: "100%" }}>
                               <Option value="text">Текст</Option>
                               <Option value="time">Время</Option>
                               <Option value="number">Число</Option>
                             </Select>
                           </Form.Item>
-                          <Form.Item {...restField} name={[name, "listSize"]} style={{ width: 80 }}>
-                            <InputNumber placeholder="Len" min={0} max={20} />
+                          <Form.Item
+                            {...restField}
+                            name={[name, "listSize"]}
+                            style={{ width: 80, marginBottom: 0 }}
+                          >
+                            <InputNumber
+                              placeholder="Len"
+                              min={0}
+                              max={20}
+                              style={{ width: "100%" }}
+                            />
                           </Form.Item>
                         </>
                       ) : null;
                     }}
                   </Form.Item>
 
-                  <MinusCircleOutlined onClick={() => remove(name)} />
-                </Space>
+                  <MinusCircleOutlined onClick={() => remove(name)} style={{ marginLeft: 8 }} />
+                </div>
               ))}
               <Form.Item>
                 <Button
