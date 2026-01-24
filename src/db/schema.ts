@@ -298,10 +298,10 @@ export const workoutReportConditions = pgTable(
     workoutReportId: integer("workout_report_id")
       .notNull()
       .references(() => workoutReports.id),
-    weather: varchar("weather", { length: 16 }),
+    weather: varchar("weather", { length: 255 }),
     hasWind: boolean("has_wind"),
     temperatureC: numeric("temperature_c", { precision: 5, scale: 1 }),
-    surface: varchar("surface", { length: 16 }),
+    surface: varchar("surface", { length: 255 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -359,3 +359,20 @@ export const aliceLinkCodes = pgTable(
     aliceLinkCodesCodeIdx: uniqueIndex("alice_link_codes_code_idx").on(table.code),
   })
 );
+
+export const diaryResultTemplates = pgTable("diary_result_templates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 64 }),
+  matchPattern: text("match_pattern"),
+  schema: jsonb("schema").notNull(),
+  outputTemplate: text("output_template").notNull(),
+  isInline: boolean("is_inline").notNull().default(false),
+  calculations: jsonb("calculations"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  type: varchar("type", { length: 32 }).notNull().default("common"),
+  level: varchar("level", { length: 32 }).notNull().default("general"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

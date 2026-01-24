@@ -29,7 +29,11 @@ export function ThemeProvider({
 }) {
   const [mode, setMode] = useState<Mode>(initialTheme);
   const pathname = usePathname();
-  const isWideRoute = pathname.startsWith("/plan") || pathname.startsWith("/diary");
+  const isFullWidthRoute = pathname.startsWith("/tools/templates/");
+  const isWideRoute =
+    pathname.startsWith("/plan") ||
+    pathname.startsWith("/diary") ||
+    pathname === "/tools/templates";
 
   const handleSetMode = (next: Mode) => {
     setMode(next);
@@ -65,7 +69,15 @@ export function ThemeProvider({
         <App>
           <div className={styles.root}>
             <Header mode={mode} onToggle={handleSetMode} />
-            <main className={clsx(styles.main, isWideRoute && styles.mainWide)}>{children}</main>
+            <main
+              className={clsx(
+                styles.main,
+                isWideRoute && styles.mainWide,
+                isFullWidthRoute && styles.mainFull
+              )}
+            >
+              {children}
+            </main>
           </div>
         </App>
       </ConfigProvider>

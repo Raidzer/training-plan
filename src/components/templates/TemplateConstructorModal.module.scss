@@ -1,0 +1,54 @@
+.modalBody {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.blockContainer {
+  border: 1px solid #303030;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #141414;
+  position: relative;
+}
+
+.blockHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.templateName {
+  color: #177ddc;
+}
+
+.blockGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.formItem {
+  margin-bottom: 0;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.addBlockContainer {
+  width: 100%;
+  justify-content: center;
+}
+
+.selectTemplate {
+  width: 250px;
+}

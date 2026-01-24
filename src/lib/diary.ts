@@ -673,14 +673,14 @@ export const getDiaryExportRows = async (params: {
       if (temperatureText) {
         commentParts.push(temperatureText);
       }
-      const weatherText = report?.weather ? (weatherLabels[report.weather] ?? "") : "";
+      const weatherText = report?.weather ? (weatherLabels[report.weather] ?? report.weather) : "";
       if (weatherText) {
         commentParts.push(weatherText);
       }
       if (report?.hasWind) {
         commentParts.push("ветер");
       }
-      const surfaceText = report?.surface ? (surfaceLabels[report.surface] ?? "") : "";
+      const surfaceText = report?.surface ? (surfaceLabels[report.surface] ?? report.surface) : "";
       if (surfaceText) {
         commentParts.push(surfaceText);
       }

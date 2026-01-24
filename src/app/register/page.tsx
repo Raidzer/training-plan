@@ -52,34 +52,8 @@ function RegisterContent() {
   const timezoneOptions = useMemo(() => {
     try {
       const timeZones = Intl.supportedValuesOf("timeZone");
-      const formatter = new Intl.DateTimeFormat("ru-RU", {
-        timeZoneName: "longOffset",
-        hour12: false,
-      });
-      const cityFormatter = new Intl.DateTimeFormat("ru-RU", {
-        timeZoneName: "long",
-        hour12: false,
-      });
-
       return timeZones.map((tz) => {
         try {
-          // Get offset (e.g. "GMT+3")
-          const parts = formatter.formatToParts(new Date());
-          const offsetPart = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
-
-          // Get city/region name manually or use English fallback if simpler,
-          // but let's try to make it nice.
-          // Often just "Europe/Moscow" -> "Москва" is hard without a library.
-          // Let's settle for "Europe/Moscow (GMT+3)" format but localized where possible if using standard APIs.
-          // A better user experience is "Region/City (OFFSET)".
-
-          // Let's keep it simple and robust: "Europe/Moscow (GMT+3:00)"
-          // And maybe simple replace for common ones if we want russian cities,
-          // but 'Intl' doesn't translate city names well usually.
-
-          // Actually, we can just use the ID + Offset.
-          // Or try `timeZoneName: "location"` (not fully supported everywhere).
-
           const date = new Date();
           const gmt =
             new Intl.DateTimeFormat("en-US", {
