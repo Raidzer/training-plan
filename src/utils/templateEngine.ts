@@ -312,22 +312,34 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     }
   });
 
-  const avgRegex = /{{AVG_TIME\(([a-zA-Z0-9_]+)\)}}/g;
-  result = result.replace(avgRegex, (_, listKey) => {
-    const list = processedValues[listKey];
-    if (Array.isArray(list)) {
-      return calculateAverage(list);
-    }
-    return "";
+  const collectValues = (argsStr: string): string[] => {
+    const keys = argsStr.split(",").map((k) => k.trim());
+    const collected: string[] = [];
+
+    keys.forEach((key) => {
+      const val = processedValues[key];
+      if (Array.isArray(val)) {
+        val.forEach((v) => {
+          if (typeof v === "string") collected.push(v);
+        });
+      } else if (typeof val === "string") {
+        collected.push(val);
+      }
+    });
+
+    return collected;
+  };
+
+  const avgRegex = /{{AVG_TIME\(([^)]+)\)}}/g;
+  result = result.replace(avgRegex, (_, args) => {
+    const valuesList = collectValues(args);
+    return calculateAverage(valuesList);
   });
 
-  const sumRegex = /{{SUM_TIME\(([a-zA-Z0-9_]+)\)}}/g;
-  result = result.replace(sumRegex, (_, listKey) => {
-    const list = processedValues[listKey];
-    if (Array.isArray(list)) {
-      return calculateSum(list);
-    }
-    return "";
+  const sumRegex = /{{SUM_TIME\(([^)]+)\)}}/g;
+  result = result.replace(sumRegex, (_, args) => {
+    const valuesList = collectValues(args);
+    return calculateSum(valuesList);
   });
 
   const tokens = betterTokenize(result);

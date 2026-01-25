@@ -225,9 +225,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <br />
           <b>Доступные функции:</b>
           <br />
-          <code>{"{{AVG_TIME(list_key)}}"}</code> - среднее время из списка
+          <code>{"{{AVG_TIME(list_key, ...)}}"}</code> - среднее время из списков/полей
           <br />
-          <code>{"{{SUM_TIME(list_key)}}"}</code> - сумма времени из списка
+          <code>{"{{SUM_TIME(list_key, ...)}}"}</code> - сумма времени из списков/полей
           <br />
           <br />
           <b>Конструкции:</b>
