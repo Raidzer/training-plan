@@ -58,63 +58,9 @@ export async function deleteTemplate(id: number) {
   revalidatePath("/tools/templates");
 }
 
+import { matchTemplates } from "@/utils/templateMatching";
+
 export async function findMatchingTemplate(userId: number, taskText: string) {
   const templates = await getTemplates(userId);
-
-  // Accumulate all matches found
-  const allMatches: { template: DiaryResultTemplate; index: number }[] = [];
-
-  templates.forEach((t) => {
-    if (!t.matchPattern) return;
-
-    const patterns = t.matchPattern
-      .split(";")
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0);
-
-    // Track indices found for this specific template to avoid duplicates
-    // if multiple patterns match the same text location (e.g. Smart vs Raw)
-    const foundIndicesForTemplate = new Set<number>();
-
-    patterns.forEach((pattern) => {
-      // Helper function to add match if unique for this template
-      const addMatch = (index: number) => {
-        if (!foundIndicesForTemplate.has(index)) {
-          allMatches.push({ template: t, index });
-          foundIndicesForTemplate.add(index);
-        }
-      };
-
-      // 1. Smart Pattern Match
-      try {
-        let smartPattern = pattern;
-        // Escape standard regex characters
-        smartPattern = smartPattern.replace(/[.+?^${}()|[\]\\#*]/g, "\\$&");
-        // Restore custom wildcards: # -> \d+, * -> .*
-        smartPattern = smartPattern.replace(/\\#/g, "\\d+");
-        smartPattern = smartPattern.replace(/\\\*/g, ".*");
-
-        // Use 'g' flag for global search
-        const smartRegex = new RegExp(smartPattern, "gi");
-        let match;
-        while ((match = smartRegex.exec(taskText)) !== null) {
-          addMatch(match.index);
-        }
-      } catch (e) {}
-
-      // 2. Raw Regex Match
-      try {
-        const regex = new RegExp(pattern, "gi");
-        let match;
-        while ((match = regex.exec(taskText)) !== null) {
-          addMatch(match.index);
-        }
-      } catch (e) {}
-    });
-  });
-
-  // Sort all matches by their position in the text
-  allMatches.sort((a, b) => a.index - b.index);
-
-  return allMatches.map((item) => item.template);
+  return matchTemplates(templates, taskText);
 }
