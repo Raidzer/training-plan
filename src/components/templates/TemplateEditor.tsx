@@ -245,6 +245,8 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <code>{"{{#repeat count}}...{{/repeat}}"}</code> - повтор N раз
           <br />
           <code>{"{{list[i]}}"}</code> - доступ к элементу параллельного списка в цикле
+          <br />
+          <code>{"{{list[1]}}"}</code> - доступ к элементу списка по номеру (с 1)
         </Text>
         <Form.Item name="outputTemplate" label="Текст отчета" rules={[{ required: true }]}>
           <TextArea rows={6} />

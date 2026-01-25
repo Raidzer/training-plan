@@ -340,7 +340,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                               style={{
                                 display: "grid",
                                 gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
-                                gap: 8,
+                                gap: 16,
                               }}
                             >
                               {Array.from({ length: field.listSize }).map((_, idx) => (
