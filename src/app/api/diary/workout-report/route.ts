@@ -263,7 +263,7 @@ export async function POST(req: Request) {
   if (surface !== null) {
     upsertParams.surface = surface;
   }
-  if (weather !== null) {
+  if (isIndoorSurface || body?.weather !== undefined) {
     upsertParams.weather = weather;
   }
   if (hasWind.value !== undefined) {

@@ -22,12 +22,25 @@ function timeToSeconds(timeStr: string): number {
 function secondsToTime(totalSeconds: number): string {
   if (isNaN(totalSeconds)) return "";
 
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
+  let h = Math.floor(totalSeconds / 3600);
+  let m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
 
-  const sInt = Math.floor(s);
-  const ms = Math.round((s - sInt) * 10); // 1 decimal place
+  let sInt = Math.floor(s);
+  let ms = Math.round((s - sInt) * 10);
+
+  if (ms === 10) {
+    ms = 0;
+    sInt += 1;
+    if (sInt >= 60) {
+      sInt = 0;
+      m += 1;
+      if (m >= 60) {
+        m = 0;
+        h += 1;
+      }
+    }
+  }
 
   let result = "";
   if (h > 0) result += `${h}:`;
@@ -202,11 +215,10 @@ function renderAST(
       return String(indexState?.total ?? 0);
     }
 
-    // Handle array parallel access: key[i]
     const arrMatch = varName.match(/^([a-zA-Z0-9_]+)\[i\]$/);
     if (arrMatch) {
       const key = arrMatch[1];
-      const list = globalContext[key]; // Access from global/top context usually
+      const list = globalContext[key];
       if (Array.isArray(list) && indexState) {
         return String(list[indexState.index] ?? "");
       }
@@ -300,7 +312,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     }
   });
 
-  // Pre-process AVG_TIME and SUM (Legacy/Simple approach compatibility)
   const avgRegex = /{{AVG_TIME\(([a-zA-Z0-9_]+)\)}}/g;
   result = result.replace(avgRegex, (_, listKey) => {
     const list = processedValues[listKey];
@@ -317,12 +328,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
       return calculateSum(list);
     }
     return "";
-  });
-
-  const calculations =
-    (template.calculations as { formula: string; args: string[]; key: string }[]) || [];
-  calculations.forEach((calc) => {
-    // If we have calculated fields, add them to processedValues
   });
 
   const tokens = betterTokenize(result);
