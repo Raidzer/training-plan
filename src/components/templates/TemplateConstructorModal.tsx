@@ -140,6 +140,21 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   };
 
   const changeBlockTemplate = (index: number, templateId: number) => {
+    const blockId = blocks[index].id;
+    const currentValues = form.getFieldsValue();
+    const keysToReset = Object.keys(currentValues).filter((key) => key.startsWith(`${blockId}_`));
+
+    if (keysToReset.length > 0) {
+      const resetObj = keysToReset.reduce(
+        (acc, key) => {
+          acc[key] = undefined;
+          return acc;
+        },
+        {} as Record<string, undefined>
+      );
+      form.setFieldsValue(resetObj);
+    }
+
     setBlocks((prev) => {
       const newBlocks = [...prev];
       newBlocks[index] = {

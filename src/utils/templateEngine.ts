@@ -312,7 +312,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     }
   });
 
-  // Helper to collect all values from comma-separated keys (lists or single values)
   const collectValues = (argsStr: string): string[] => {
     const keys = argsStr.split(",").map((k) => k.trim());
     const collected: string[] = [];
@@ -337,7 +336,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
 
     keys.forEach((key) => {
       const val = processedValues[key];
-      // Helper to parse value
       const parseVal = (v: any): number | null => {
         if (typeof v === "number") return v;
         if (typeof v === "string") {
@@ -361,7 +359,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     return collected;
   };
 
-  // PACE(time, distance)
   const paceRegex = /{{PACE\(([^,]+),([^)]+)\)}}/g;
   result = result.replace(paceRegex, (_, timeArg, distArg) => {
     // timeArg and distArg are keys or literals
