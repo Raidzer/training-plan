@@ -61,7 +61,7 @@ export async function deleteTemplate(id: number) {
 export async function findMatchingTemplate(userId: number, taskText: string) {
   const templates = await getTemplates(userId);
 
-  const allMatches: { template: DiaryResultTemplate; index: number }[] = [];
+  const allMatches: { template: DiaryResultTemplate; index: number; length: number }[] = [];
 
   templates.forEach((t) => {
     if (!t.matchPattern) return;
@@ -74,9 +74,9 @@ export async function findMatchingTemplate(userId: number, taskText: string) {
     const foundIndicesForTemplate = new Set<number>();
 
     patterns.forEach((pattern) => {
-      const addMatch = (index: number) => {
+      const addMatch = (index: number, length: number) => {
         if (!foundIndicesForTemplate.has(index)) {
-          allMatches.push({ template: t, index });
+          allMatches.push({ template: t, index, length });
           foundIndicesForTemplate.add(index);
         }
       };
@@ -122,7 +122,7 @@ export async function findMatchingTemplate(userId: number, taskText: string) {
           });
 
           if (isValid) {
-            addMatch(currentMatch.index);
+            addMatch(currentMatch.index, currentMatch[0].length);
           }
         }
       } catch (e) {
@@ -133,14 +133,28 @@ export async function findMatchingTemplate(userId: number, taskText: string) {
         const regex = new RegExp(pattern, "gi");
         let match;
         while ((match = regex.exec(taskText)) !== null) {
-          addMatch(match.index);
+          addMatch(match.index, match[0].length);
         }
       } catch (e) {}
     });
   });
 
-  // Sort all matches by their position in the text
-  allMatches.sort((a, b) => a.index - b.index);
+  allMatches.sort((a, b) => {
+    if (a.index !== b.index) {
+      return a.index - b.index;
+    }
+    return b.length - a.length;
+  });
 
-  return allMatches.map((item) => item.template);
+  const uniqueMatches: DiaryResultTemplate[] = [];
+  let lastMatchEnd = -1;
+
+  allMatches.forEach((m) => {
+    if (m.index >= lastMatchEnd) {
+      uniqueMatches.push(m.template);
+      lastMatchEnd = m.index + m.length;
+    }
+  });
+
+  return uniqueMatches;
 }
