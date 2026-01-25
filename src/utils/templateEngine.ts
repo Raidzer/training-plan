@@ -312,6 +312,7 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     }
   });
 
+  // Helper to collect all values from comma-separated keys (lists or single values)
   const collectValues = (argsStr: string): string[] => {
     const keys = argsStr.split(",").map((k) => k.trim());
     const collected: string[] = [];
@@ -329,6 +330,81 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
 
     return collected;
   };
+
+  const collectNumericValues = (argsStr: string): number[] => {
+    const keys = argsStr.split(",").map((k) => k.trim());
+    const collected: number[] = [];
+
+    keys.forEach((key) => {
+      const val = processedValues[key];
+      // Helper to parse value
+      const parseVal = (v: any): number | null => {
+        if (typeof v === "number") return v;
+        if (typeof v === "string") {
+          const parsed = parseFloat(v.replace(",", "."));
+          return isNaN(parsed) ? null : parsed;
+        }
+        return null;
+      };
+
+      if (Array.isArray(val)) {
+        val.forEach((v) => {
+          const p = parseVal(v);
+          if (p !== null) collected.push(p);
+        });
+      } else {
+        const p = parseVal(val);
+        if (p !== null) collected.push(p);
+      }
+    });
+
+    return collected;
+  };
+
+  // PACE(time, distance)
+  const paceRegex = /{{PACE\(([^,]+),([^)]+)\)}}/g;
+  result = result.replace(paceRegex, (_, timeArg, distArg) => {
+    // timeArg and distArg are keys or literals
+    const getVal = (k: string) => {
+      const v = processedValues[k];
+      return v !== undefined ? v : k; // fallback to literal
+    };
+
+    const tRaw = getVal(timeArg.trim());
+    const dRaw = getVal(distArg.trim());
+
+    const totalSeconds = timeToSeconds(String(tRaw));
+    const dist = parseFloat(
+      String(dRaw)
+        .replace(",", ".")
+        .replace(/[^\d.]/g, "")
+    );
+
+    if (!dist || dist <= 0) return "";
+
+    const secondsPerKm = totalSeconds / dist;
+    return secondsToTime(secondsPerKm);
+  });
+
+  const avgNumRegex = /{{AVG_NUM\(([^)]+)\)}}/g;
+  result = result.replace(avgNumRegex, (_, args) => {
+    const nums = collectNumericValues(args);
+    if (nums.length === 0) return "";
+    const sum = nums.reduce((a, b) => a + b, 0);
+    const avg = sum / nums.length;
+    // Round to 1 decimal, replace dot with comma for RU locale usually, or keep dot?
+    // Existing code uses comma in secondsToTime output for ms. Let's standarize on simple output (dot or comma?).
+    // Usually sports apps use dot or user locale. Let's use 1 decimal place.
+    return (Math.round(avg * 10) / 10).toString();
+  });
+
+  const sumNumRegex = /{{SUM_NUM\(([^)]+)\)}}/g;
+  result = result.replace(sumNumRegex, (_, args) => {
+    const nums = collectNumericValues(args);
+    if (nums.length === 0) return "";
+    const sum = nums.reduce((a, b) => a + b, 0);
+    return sum.toString(); // Integer or float? keep as is.
+  });
 
   const avgRegex = /{{AVG_TIME\(([^)]+)\)}}/g;
   result = result.replace(avgRegex, (_, args) => {
