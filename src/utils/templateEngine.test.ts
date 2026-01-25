@@ -134,6 +134,13 @@ describe("templateEngine", () => {
         const result = processTemplate(template, values);
         expect(result).toBe("Alice:10;Bob:20;");
       });
+
+      it("должен поддерживать доступ по индексу (с 1)", () => {
+        const template = createTemplate("First: {{list[1]}}, Second: {{list[2]}}");
+        const values = { list: ["A", "B", "C"] };
+        const result = processTemplate(template, values);
+        expect(result).toBe("First: A, Second: B");
+      });
     });
 
     describe("Форматирование времени", () => {

@@ -225,6 +225,17 @@ function renderAST(
       return "";
     }
 
+    const explicitIndexMatch = varName.match(/^([a-zA-Z0-9_]+)\[(\d+)\]$/);
+    if (explicitIndexMatch) {
+      const key = explicitIndexMatch[1];
+      const idx = parseInt(explicitIndexMatch[2], 10);
+      const list = context?.[key] ?? globalContext[key];
+      if (Array.isArray(list)) {
+        return String(list[idx - 1] ?? "");
+      }
+      return "";
+    }
+
     let val = context?.[varName];
     if (val === undefined) {
       val = globalContext[varName];
