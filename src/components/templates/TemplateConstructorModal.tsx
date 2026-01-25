@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Modal, Select, Form, Input, Button, Typography, Space, Divider, Spin } from "antd";
+import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { DiaryResultTemplate } from "@/app/actions/diaryTemplates";
 import { findMatchingTemplate, getTemplates } from "@/app/actions/diaryTemplates";
@@ -120,6 +121,51 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
   };
 
+  const moveBlockUp = (index: number) => {
+    if (index === 0) return;
+    setBlocks((prev) => {
+      const newBlocks = [...prev];
+      [newBlocks[index - 1], newBlocks[index]] = [newBlocks[index], newBlocks[index - 1]];
+      return newBlocks;
+    });
+  };
+
+  const moveBlockDown = (index: number) => {
+    if (index === blocks.length - 1) return;
+    setBlocks((prev) => {
+      const newBlocks = [...prev];
+      [newBlocks[index + 1], newBlocks[index]] = [newBlocks[index], newBlocks[index + 1]];
+      return newBlocks;
+    });
+  };
+
+  const changeBlockTemplate = (index: number, templateId: number) => {
+    const blockId = blocks[index].id;
+    const currentValues = form.getFieldsValue();
+    const keysToReset = Object.keys(currentValues).filter((key) => key.startsWith(`${blockId}_`));
+
+    if (keysToReset.length > 0) {
+      const resetObj = keysToReset.reduce(
+        (acc, key) => {
+          acc[key] = undefined;
+          return acc;
+        },
+        {} as Record<string, undefined>
+      );
+      form.setFieldsValue(resetObj);
+    }
+
+    setBlocks((prev) => {
+      const newBlocks = [...prev];
+      newBlocks[index] = {
+        ...newBlocks[index],
+        templateId,
+        values: {},
+      };
+      return newBlocks;
+    });
+  };
+
   const handleApply = () => {
     form.validateFields().then((allValues) => {
       const blockOutputs: { id: string; code: string; text: string; isInline: boolean }[] = [];
@@ -228,33 +274,42 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
               return (
                 <div key={block.id} className={styles.blockContainer}>
                   <div className={styles.blockHeader}>
-                    <Space>
-                      <Text strong className={styles.templateName}>
-                        Блок {index + 1}: {template?.name}
+                    <Space style={{ flex: 1 }}>
+                      <Text strong style={{ marginRight: 8 }}>
+                        Блок {index + 1}:
                       </Text>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          Повторов:
-                        </Text>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={99}
-                          size="small"
-                          style={{ width: 60 }}
-                          value={block.repeatCount || 1}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value) || 1;
-                            const newBlocks = [...blocks];
-                            newBlocks[index].repeatCount = val;
-                            setBlocks(newBlocks);
-                          }}
-                        />
-                      </div>
+                      <Select
+                        showSearch
+                        style={{ width: 220 }}
+                        size="small"
+                        value={block.templateId}
+                        onChange={(val) => changeBlockTemplate(index, val)}
+                        optionFilterProp="children"
+                      >
+                        {templates.map((t) => (
+                          <Option key={t.id} value={t.id}>
+                            {t.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Space>
-                    <Button type="text" danger size="small" onClick={() => removeBlock(block.id)}>
-                      Удалить
-                    </Button>
+                    <Space>
+                      <Button
+                        icon={<ArrowUpOutlined />}
+                        size="small"
+                        disabled={index === 0}
+                        onClick={() => moveBlockUp(index)}
+                      />
+                      <Button
+                        icon={<ArrowDownOutlined />}
+                        size="small"
+                        disabled={index === blocks.length - 1}
+                        onClick={() => moveBlockDown(index)}
+                      />
+                      <Button type="text" danger size="small" onClick={() => removeBlock(block.id)}>
+                        Удалить
+                      </Button>
+                    </Space>
                   </div>
 
                   {schema.map((field: any) => {
@@ -262,7 +317,14 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
                     const renderTypedInput = (props: any) => {
                       if (itemType === "number") {
-                        return <Input type="number" {...props} />;
+                        return (
+                          <Input
+                            type="number"
+                            {...props}
+                            style={{ ...props.style, width: 100 }}
+                            onWheel={(e) => e.currentTarget.blur()}
+                          />
+                        );
                       }
                       if (itemType === "time") {
                         return <TimeInput {...props} />;
@@ -332,7 +394,12 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                             ) : field.type === "time" ? (
                               <TimeInput size="small" />
                             ) : field.type === "number" ? (
-                              <Input type="number" size="small" />
+                              <Input
+                                type="number"
+                                size="small"
+                                style={{ width: 100 }}
+                                onWheel={(e) => e.currentTarget.blur()}
+                              />
                             ) : (
                               <Input size="small" />
                             )}

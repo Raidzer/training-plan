@@ -22,12 +22,25 @@ function timeToSeconds(timeStr: string): number {
 function secondsToTime(totalSeconds: number): string {
   if (isNaN(totalSeconds)) return "";
 
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
+  let h = Math.floor(totalSeconds / 3600);
+  let m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
 
-  const sInt = Math.floor(s);
-  const ms = Math.round((s - sInt) * 10); // 1 decimal place
+  let sInt = Math.floor(s);
+  let ms = Math.round((s - sInt) * 10);
+
+  if (ms === 10) {
+    ms = 0;
+    sInt += 1;
+    if (sInt >= 60) {
+      sInt = 0;
+      m += 1;
+      if (m >= 60) {
+        m = 0;
+        h += 1;
+      }
+    }
+  }
 
   let result = "";
   if (h > 0) result += `${h}:`;
@@ -202,11 +215,10 @@ function renderAST(
       return String(indexState?.total ?? 0);
     }
 
-    // Handle array parallel access: key[i]
     const arrMatch = varName.match(/^([a-zA-Z0-9_]+)\[i\]$/);
     if (arrMatch) {
       const key = arrMatch[1];
-      const list = globalContext[key]; // Access from global/top context usually
+      const list = globalContext[key];
       if (Array.isArray(list) && indexState) {
         return String(list[indexState.index] ?? "");
       }
@@ -300,29 +312,107 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     }
   });
 
-  // Pre-process AVG_TIME and SUM (Legacy/Simple approach compatibility)
-  const avgRegex = /{{AVG_TIME\(([a-zA-Z0-9_]+)\)}}/g;
-  result = result.replace(avgRegex, (_, listKey) => {
-    const list = processedValues[listKey];
-    if (Array.isArray(list)) {
-      return calculateAverage(list);
-    }
-    return "";
+  const collectValues = (argsStr: string): string[] => {
+    const keys = argsStr.split(",").map((k) => k.trim());
+    const collected: string[] = [];
+
+    keys.forEach((key) => {
+      const val = processedValues[key];
+      if (Array.isArray(val)) {
+        val.forEach((v) => {
+          if (typeof v === "string") collected.push(v);
+        });
+      } else if (typeof val === "string") {
+        collected.push(val);
+      }
+    });
+
+    return collected;
+  };
+
+  const collectNumericValues = (argsStr: string): number[] => {
+    const keys = argsStr.split(",").map((k) => k.trim());
+    const collected: number[] = [];
+
+    keys.forEach((key) => {
+      const val = processedValues[key];
+      const parseVal = (v: any): number | null => {
+        if (typeof v === "number") return v;
+        if (typeof v === "string") {
+          const parsed = parseFloat(v.replace(",", "."));
+          return isNaN(parsed) ? null : parsed;
+        }
+        return null;
+      };
+
+      if (Array.isArray(val)) {
+        val.forEach((v) => {
+          const p = parseVal(v);
+          if (p !== null) collected.push(p);
+        });
+      } else {
+        const p = parseVal(val);
+        if (p !== null) collected.push(p);
+      }
+    });
+
+    return collected;
+  };
+
+  const paceRegex = /{{PACE\(([^,]+),([^)]+)\)}}/g;
+  result = result.replace(paceRegex, (_, timeArg, distArg) => {
+    // timeArg and distArg are keys or literals
+    const getVal = (k: string) => {
+      const v = processedValues[k];
+      return v !== undefined ? v : k; // fallback to literal
+    };
+
+    const tRaw = getVal(timeArg.trim());
+    const dRaw = getVal(distArg.trim());
+
+    const totalSeconds = timeToSeconds(String(tRaw));
+    const dist = parseFloat(
+      String(dRaw)
+        .replace(",", ".")
+        .replace(/[^\d.]/g, "")
+    );
+
+    if (!dist || dist <= 0) return "";
+
+    const secondsPerKm = totalSeconds / dist;
+    return secondsToTime(secondsPerKm);
   });
 
-  const sumRegex = /{{SUM_TIME\(([a-zA-Z0-9_]+)\)}}/g;
-  result = result.replace(sumRegex, (_, listKey) => {
-    const list = processedValues[listKey];
-    if (Array.isArray(list)) {
-      return calculateSum(list);
-    }
-    return "";
+  const avgNumRegex = /{{AVG_NUM\(([^)]+)\)}}/g;
+  result = result.replace(avgNumRegex, (_, args) => {
+    const nums = collectNumericValues(args);
+    if (nums.length === 0) return "";
+    const sum = nums.reduce((a, b) => a + b, 0);
+    const avg = sum / nums.length;
+    // Round to 1 decimal, replace dot with comma for RU locale usually, or keep dot?
+    // Existing code uses comma in secondsToTime output for ms. Let's standarize on simple output (dot or comma?).
+    // Usually sports apps use dot or user locale. Let's use 1 decimal place.
+    return (Math.round(avg * 10) / 10).toString();
   });
 
-  const calculations =
-    (template.calculations as { formula: string; args: string[]; key: string }[]) || [];
-  calculations.forEach((calc) => {
-    // If we have calculated fields, add them to processedValues
+  const sumNumRegex = /{{SUM_NUM\(([^)]+)\)}}/g;
+  result = result.replace(sumNumRegex, (_, args) => {
+    const nums = collectNumericValues(args);
+    if (nums.length === 0) return "";
+    const sum = nums.reduce((a, b) => a + b, 0);
+    return sum.toString(); // Integer or float? keep as is.
+  });
+
+  const avgRegex = /{{AVG_TIME\(([^)]+)\)}}/g;
+  result = result.replace(avgRegex, (_, args) => {
+    const valuesList = collectValues(args);
+    return calculateAverage(valuesList);
+  });
+
+  const sumRegex = /{{SUM_TIME\(([^)]+)\)}}/g;
+  result = result.replace(sumRegex, (_, args) => {
+    const valuesList = collectValues(args);
+    return calculateSum(valuesList);
   });
 
   const tokens = betterTokenize(result);

@@ -163,8 +163,6 @@ export async function POST(req: Request) {
   const muscleScore = parseOptionalScore(body?.muscleScore);
   const surface = typeof body?.surface === "string" ? body.surface.trim() : null;
   const shoeIds = parseOptionalIdList(body?.shoeIds);
-  // Check against known codes OR labels OR just assume if it's string it's valid for logic
-  // Update: logic for indoor should be robust.
   const isIndoorSurface =
     surface === "manezh" ||
     surface === "treadmill" ||
@@ -263,7 +261,7 @@ export async function POST(req: Request) {
   if (surface !== null) {
     upsertParams.surface = surface;
   }
-  if (weather !== null) {
+  if (isIndoorSurface || body?.weather !== undefined) {
     upsertParams.weather = weather;
   }
   if (hasWind.value !== undefined) {
