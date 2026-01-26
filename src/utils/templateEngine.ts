@@ -401,7 +401,9 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
 
     if (!dist || dist <= 0) return "";
 
-    dist = dist / 1000;
+    if (dist >= 50) {
+      dist = dist / 1000;
+    }
 
     const secondsPerKm = totalSeconds / dist;
     return secondsToTime(secondsPerKm);
@@ -457,7 +459,9 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
 
     if (!dist || dist <= 0) return "";
 
-    dist = dist / 1000;
+    if (dist >= 50) {
+      dist = dist / 1000;
+    }
 
     const avgHeight = height / dist;
     return (Math.round(avgHeight * 10) / 10).toString().replace(".", ",");
