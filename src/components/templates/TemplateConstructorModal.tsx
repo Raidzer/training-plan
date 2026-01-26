@@ -175,10 +175,45 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         if (!template) return;
 
         const formValues: Record<string, any> = {};
+
+        const normalizeTime = (val: any) => {
+          if (typeof val !== "string") return val;
+          const clean = val.trim();
+          const parts = clean.split(":");
+
+          while (parts.length > 1 && parseInt(parts[0], 10) === 0) {
+            parts.shift();
+          }
+
+          if (parts.length > 0) {
+            const numericPart = parseInt(parts[0], 10);
+            parts[0] = parts[0].replace(/^\d+/, numericPart.toString());
+          }
+
+          return parts.join(":");
+        };
+
+        const schema = (template.schema as any[]) || [];
+
         Object.keys(allValues).forEach((key) => {
           if (key.startsWith(`${block.id}_`)) {
             const fieldKey = key.replace(`${block.id}_`, "");
-            formValues[fieldKey] = allValues[key];
+            let val = allValues[key];
+
+            const field = schema.find((f) => f.key === fieldKey);
+            if (field) {
+              const isTime =
+                field.type === "time" || (field.type === "list" && field.itemType === "time");
+              if (isTime) {
+                if (Array.isArray(val)) {
+                  val = val.map(normalizeTime);
+                } else {
+                  val = normalizeTime(val);
+                }
+              }
+            }
+
+            formValues[fieldKey] = val;
           }
         });
 

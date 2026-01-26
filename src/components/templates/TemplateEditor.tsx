@@ -13,7 +13,13 @@ import {
   Checkbox,
   InputNumber,
 } from "antd";
-import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  MinusCircleOutlined,
+  PlusOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+} from "@ant-design/icons";
+
 import type { NewDiaryResultTemplate } from "@/app/actions/diaryTemplates";
 import styles from "./TemplateEditor.module.scss";
 const { Option } = Select;
@@ -116,9 +122,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
       <Card title="Поля формы" className={styles.card}>
         <Form.List name="schema">
-          {(fields, { add, remove }) => (
+          {(fields, { add, remove, move }) => (
             <>
-              {fields.map(({ key, name, ...restField }) => (
+              {fields.map(({ key, name, ...restField }, index) => (
                 <div
                   key={key}
                   className={styles.fieldRow}
@@ -158,7 +164,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     </Select>
                   </Form.Item>
 
-                  {/* Conditional List Settings Inline */}
+                  <Form.Item
+                    {...restField}
+                    name={[name, "weight"]}
+                    style={{ width: 100, marginBottom: 0 }}
+                    tooltip="Вес/Дистанция (в метрах) для расчетов"
+                  >
+                    <InputNumber placeholder="Метры" style={{ width: "100%" }} />
+                  </Form.Item>
                   <Form.Item
                     noStyle
                     shouldUpdate={(prev, curr) =>
@@ -199,7 +212,21 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     }}
                   </Form.Item>
 
-                  <MinusCircleOutlined onClick={() => remove(name)} style={{ marginLeft: 8 }} />
+                  <Space>
+                    <Button
+                      type="text"
+                      icon={<ArrowUpOutlined />}
+                      disabled={index === 0}
+                      onClick={() => move(index, index - 1)}
+                    />
+                    <Button
+                      type="text"
+                      icon={<ArrowDownOutlined />}
+                      disabled={index === fields.length - 1}
+                      onClick={() => move(index, index + 1)}
+                    />
+                    <MinusCircleOutlined onClick={() => remove(name)} />
+                  </Space>
                 </div>
               ))}
               <Form.Item>
@@ -225,7 +252,8 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <br />
           <b>Доступные функции:</b>
           <br />
-          <code>{"{{PACE(time, dist)}}"}</code> - темп (мин/км)
+          <code>{"{{PACE(time, [dist])}}"}</code> - темп (мин/км). Если дист. не указана, берется из
+          настройки &quot;Вес&quot;.
           <br />
           <code>{"{{AVG_TIME(list_key, ...)}}"}</code> - среднее время
           <br />
@@ -234,6 +262,15 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <code>{"{{AVG_NUM(list_key, ...)}}"}</code> - среднее число
           <br />
           <code>{"{{SUM_NUM(list_key, ...)}}"}</code> - сумма чисел
+          <br />
+          <code>{"{{AVG_HEIGHT(height, dist)}}"}</code> - средняя высота
+          <br />
+          <br />
+          <b>Переменные:</b>
+          <br />
+          <code>{"{{code}}"}</code> - значение поля
+          <br />
+          <code>{"{{code_weight}}"}</code> - вес поля (из настроек)
           <br />
           <br />
           <b>Конструкции:</b>
