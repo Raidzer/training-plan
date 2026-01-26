@@ -457,7 +457,12 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     const height = parseNum(hRaw);
     let dist = parseNum(dRaw);
 
-    if (!dist || dist <= 0) return "";
+    if (isNaN(height)) {
+      return "";
+    }
+    if (!dist || dist <= 0) {
+      return "";
+    }
 
     if (dist >= 50) {
       dist = dist / 1000;
