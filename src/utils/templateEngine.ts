@@ -175,7 +175,6 @@ function parse(tokens: Token[]): ASTNode {
       }
       stack.push(newNode);
     } else if (token.type === "CLOSE_BLOCK") {
-      // Check if matches
       if (stack.length > 1) {
         const openBlock = stack[stack.length - 1];
         if (openBlock.type === "BLOCK" && openBlock.tagType === token.value) {
@@ -301,10 +300,9 @@ function renderAST(
 
 export function processTemplate(template: DiaryResultTemplate, values: BlockValues): string {
   let result = template.outputTemplate || "";
+  result = result.replace(/^[ \t]*({{[#\/](if|each|repeat).*?}})[ \t]*(\r\n|\n)/gm, "$1");
   const schema = (template.schema as { key: string; type: string }[]) || [];
-
   const processedValues: Record<string, any> = { ...values };
-
   schema.forEach((field: { key: string; type: string }) => {
     const key = field.key;
     const val = values[key];
@@ -320,6 +318,10 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
       } else {
         processedValues[key] = [];
       }
+    }
+
+    if ((field as any).weight !== undefined && (field as any).weight !== null) {
+      processedValues[`${key}_weight`] = (field as any).weight;
     }
   });
 
@@ -370,25 +372,38 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     return collected;
   };
 
-  const paceRegex = /{{PACE\(([^,]+),([^)]+)\)}}/g;
-  result = result.replace(paceRegex, (_, timeArg, distArg) => {
-    // timeArg and distArg are keys or literals
+  const paceRegex = /{{PACE\(([^)]+)\)}}/g;
+  result = result.replace(paceRegex, (_, args) => {
+    const parts = args.split(",").map((s: string) => s.trim());
+    const timeArg = parts[0];
+    const distArg = parts.length > 1 ? parts[1] : null;
+
     const getVal = (k: string) => {
       const v = processedValues[k];
-      return v !== undefined ? v : k; // fallback to literal
+      return v !== undefined ? v : k;
     };
 
-    const tRaw = getVal(timeArg.trim());
-    const dRaw = getVal(distArg.trim());
+    const tRaw = getVal(timeArg);
+    let dRaw;
+
+    if (distArg) {
+      dRaw = getVal(distArg);
+    } else {
+      dRaw = processedValues[`${timeArg}_weight`];
+    }
 
     const totalSeconds = timeToSeconds(String(tRaw));
-    const dist = parseFloat(
+    let dist = parseFloat(
       String(dRaw)
         .replace(",", ".")
         .replace(/[^\d.]/g, "")
     );
 
     if (!dist || dist <= 0) return "";
+
+    if (dist >= 50) {
+      dist = dist / 1000;
+    }
 
     const secondsPerKm = totalSeconds / dist;
     return secondsToTime(secondsPerKm);
@@ -400,9 +415,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     if (nums.length === 0) return "";
     const sum = nums.reduce((a, b) => a + b, 0);
     const avg = sum / nums.length;
-    // Round to 1 decimal, replace dot with comma for RU locale usually, or keep dot?
-    // Existing code uses comma in secondsToTime output for ms. Let's standarize on simple output (dot or comma?).
-    // Usually sports apps use dot or user locale. Let's use 1 decimal place.
     return (Math.round(avg * 10) / 10).toString();
   });
 
@@ -412,6 +424,52 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     if (nums.length === 0) return "";
     const sum = nums.reduce((a, b) => a + b, 0);
     return sum.toString(); // Integer or float? keep as is.
+  });
+
+  const avgHeightRegex = /{{AVG_HEIGHT\(([^)]+)\)}}/g;
+  result = result.replace(avgHeightRegex, (_, args) => {
+    const parts = args.split(",").map((s: string) => s.trim());
+    const heightArg = parts[0];
+    const distArg = parts.length > 1 ? parts[1] : null;
+
+    const getVal = (k: string) => {
+      const v = processedValues[k];
+      return v !== undefined ? v : k;
+    };
+
+    const hRaw = getVal(heightArg);
+    let dRaw;
+
+    if (distArg) {
+      dRaw = getVal(distArg);
+    } else {
+      dRaw = processedValues[`${heightArg}_weight`];
+    }
+
+    const parseNum = (val: any) => {
+      return parseFloat(
+        String(val)
+          .replace(",", ".")
+          .replace(/[^\d.]/g, "")
+      );
+    };
+
+    const height = parseNum(hRaw);
+    let dist = parseNum(dRaw);
+
+    if (isNaN(height)) {
+      return "";
+    }
+    if (!dist || dist <= 0) {
+      return "";
+    }
+
+    if (dist >= 50) {
+      dist = dist / 1000;
+    }
+
+    const avgHeight = height / dist;
+    return (Math.round(avgHeight * 10) / 10).toString().replace(".", ",");
   });
 
   const avgRegex = /{{AVG_TIME\(([^)]+)\)}}/g;
