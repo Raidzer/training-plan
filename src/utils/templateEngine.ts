@@ -175,7 +175,6 @@ function parse(tokens: Token[]): ASTNode {
       }
       stack.push(newNode);
     } else if (token.type === "CLOSE_BLOCK") {
-      // Check if matches
       if (stack.length > 1) {
         const openBlock = stack[stack.length - 1];
         if (openBlock.type === "BLOCK" && openBlock.tagType === token.value) {
@@ -372,10 +371,9 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
 
   const paceRegex = /{{PACE\(([^,]+),([^)]+)\)}}/g;
   result = result.replace(paceRegex, (_, timeArg, distArg) => {
-    // timeArg and distArg are keys or literals
     const getVal = (k: string) => {
       const v = processedValues[k];
-      return v !== undefined ? v : k; // fallback to literal
+      return v !== undefined ? v : k;
     };
 
     const tRaw = getVal(timeArg.trim());
@@ -400,9 +398,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     if (nums.length === 0) return "";
     const sum = nums.reduce((a, b) => a + b, 0);
     const avg = sum / nums.length;
-    // Round to 1 decimal, replace dot with comma for RU locale usually, or keep dot?
-    // Existing code uses comma in secondsToTime output for ms. Let's standarize on simple output (dot or comma?).
-    // Usually sports apps use dot or user locale. Let's use 1 decimal place.
     return (Math.round(avg * 10) / 10).toString();
   });
 
@@ -412,6 +407,33 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     if (nums.length === 0) return "";
     const sum = nums.reduce((a, b) => a + b, 0);
     return sum.toString(); // Integer or float? keep as is.
+  });
+
+  const avgHeightRegex = /{{AVG_HEIGHT\(([^,]+),([^)]+)\)}}/g;
+  result = result.replace(avgHeightRegex, (_, heightArg, distArg) => {
+    const getVal = (k: string) => {
+      const v = processedValues[k];
+      return v !== undefined ? v : k;
+    };
+
+    const hRaw = getVal(heightArg.trim());
+    const dRaw = getVal(distArg.trim());
+
+    const parseNum = (val: any) => {
+      return parseFloat(
+        String(val)
+          .replace(",", ".")
+          .replace(/[^\d.]/g, "")
+      );
+    };
+
+    const height = parseNum(hRaw);
+    const dist = parseNum(dRaw);
+
+    if (!dist || dist <= 0) return "";
+
+    const avgHeight = height / dist;
+    return (Math.round(avgHeight * 10) / 10).toString().replace(".", ",");
   });
 
   const avgRegex = /{{AVG_TIME\(([^)]+)\)}}/g;

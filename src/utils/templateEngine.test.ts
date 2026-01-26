@@ -211,5 +211,31 @@ describe("templateEngine", () => {
         expect(result).toBe("Pace: 5:00");
       });
     });
+
+    describe("Расчет AVG_HEIGHT", () => {
+      it("должен рассчитывать среднюю высоту", () => {
+        const template = createTemplate("Avg Height: {{AVG_HEIGHT(height, dist)}}");
+        const values = { height: 100, dist: 10 };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Avg Height: 10");
+      });
+
+      it("должен округлять до десятых", () => {
+        const template = createTemplate("Avg: {{AVG_HEIGHT(500, 12)}}");
+        const values = {};
+        const result = processTemplate(template, values);
+        // 500 / 12 = 41.666... -> 41.7
+        expect(result).toBe("Avg: 41,7");
+      });
+
+      it("должен обрабатывать строковые значения с запятой", () => {
+        const template = createTemplate("Avg: {{AVG_HEIGHT(height, dist)}}");
+        const values = { height: "100,5", dist: "10,0" };
+        const result = processTemplate(template, values);
+        // 100.5 / 10 = 10.05 -> 10.1 (rounding) or 10.0?
+        // Math.round(10.05 * 10) / 10 = Math.round(100.5) / 10 = 101 / 10 = 10.1
+        expect(result).toBe("Avg: 10,1");
+      });
+    });
   });
 });

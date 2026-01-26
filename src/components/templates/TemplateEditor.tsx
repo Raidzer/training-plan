@@ -235,6 +235,8 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <br />
           <code>{"{{SUM_NUM(list_key, ...)}}"}</code> - сумма чисел
           <br />
+          <code>{"{{AVG_HEIGHT(height, dist)}}"}</code> - средняя высота
+          <br />
           <br />
           <b>Конструкции:</b>
           <br />
