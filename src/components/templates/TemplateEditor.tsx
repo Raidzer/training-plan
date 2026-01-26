@@ -13,7 +13,13 @@ import {
   Checkbox,
   InputNumber,
 } from "antd";
-import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  MinusCircleOutlined,
+  PlusOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+} from "@ant-design/icons";
+
 import type { NewDiaryResultTemplate } from "@/app/actions/diaryTemplates";
 import styles from "./TemplateEditor.module.scss";
 const { Option } = Select;
@@ -116,9 +122,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
       <Card title="Поля формы" className={styles.card}>
         <Form.List name="schema">
-          {(fields, { add, remove }) => (
+          {(fields, { add, remove, move }) => (
             <>
-              {fields.map(({ key, name, ...restField }) => (
+              {fields.map(({ key, name, ...restField }, index) => (
                 <div
                   key={key}
                   className={styles.fieldRow}
@@ -199,7 +205,21 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     }}
                   </Form.Item>
 
-                  <MinusCircleOutlined onClick={() => remove(name)} style={{ marginLeft: 8 }} />
+                  <Space>
+                    <Button
+                      type="text"
+                      icon={<ArrowUpOutlined />}
+                      disabled={index === 0}
+                      onClick={() => move(index, index - 1)}
+                    />
+                    <Button
+                      type="text"
+                      icon={<ArrowDownOutlined />}
+                      disabled={index === fields.length - 1}
+                      onClick={() => move(index, index + 1)}
+                    />
+                    <MinusCircleOutlined onClick={() => remove(name)} />
+                  </Space>
                 </div>
               ))}
               <Form.Item>
