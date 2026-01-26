@@ -164,7 +164,14 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     </Select>
                   </Form.Item>
 
-                  {/* Conditional List Settings Inline */}
+                  <Form.Item
+                    {...restField}
+                    name={[name, "weight"]}
+                    style={{ width: 100, marginBottom: 0 }}
+                    tooltip="Вес/Дистанция (в метрах) для расчетов"
+                  >
+                    <InputNumber placeholder="Метры" style={{ width: "100%" }} />
+                  </Form.Item>
                   <Form.Item
                     noStyle
                     shouldUpdate={(prev, curr) =>
@@ -245,7 +252,8 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <br />
           <b>Доступные функции:</b>
           <br />
-          <code>{"{{PACE(time, dist)}}"}</code> - темп (мин/км)
+          <code>{"{{PACE(time, [dist])}}"}</code> - темп (мин/км). Если дист. не указана, берется из
+          настройки &quot;Вес&quot;.
           <br />
           <code>{"{{AVG_TIME(list_key, ...)}}"}</code> - среднее время
           <br />
@@ -256,6 +264,13 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <code>{"{{SUM_NUM(list_key, ...)}}"}</code> - сумма чисел
           <br />
           <code>{"{{AVG_HEIGHT(height, dist)}}"}</code> - средняя высота
+          <br />
+          <br />
+          <b>Переменные:</b>
+          <br />
+          <code>{"{{code}}"}</code> - значение поля
+          <br />
+          <code>{"{{code_weight}}"}</code> - вес поля (из настроек)
           <br />
           <br />
           <b>Конструкции:</b>

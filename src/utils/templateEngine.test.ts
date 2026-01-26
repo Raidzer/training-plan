@@ -192,20 +192,20 @@ describe("templateEngine", () => {
     describe("Расчет PACE (темпа)", () => {
       it("должен рассчитывать PACE из времени и дистанции", () => {
         const template = createTemplate("Pace: {{PACE(time, dist)}}");
-        const values = { time: "45:00", dist: "10" };
+        const values = { time: "45:00", dist: "10000" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 4:30");
       });
 
       it("должен обрабатывать запятые в дистанции", () => {
         const template = createTemplate("Pace: {{PACE(time, dist)}}");
-        const values = { time: "22:30", dist: "5,0" };
+        const values = { time: "22:30", dist: "5000" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 4:30");
       });
 
       it("должен обрабатывать сырые строки в PACE (fallback логика)", () => {
-        const template = createTemplate("Pace: {{PACE(time, 10)}}");
+        const template = createTemplate("Pace: {{PACE(time, 10000)}}");
         const values = { time: "50:00" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 5:00");
@@ -215,26 +215,58 @@ describe("templateEngine", () => {
     describe("Расчет AVG_HEIGHT", () => {
       it("должен рассчитывать среднюю высоту", () => {
         const template = createTemplate("Avg Height: {{AVG_HEIGHT(height, dist)}}");
-        const values = { height: 100, dist: 10 };
+        const values = { height: 100, dist: 10000 };
         const result = processTemplate(template, values);
         expect(result).toBe("Avg Height: 10");
       });
 
       it("должен округлять до десятых", () => {
-        const template = createTemplate("Avg: {{AVG_HEIGHT(500, 12)}}");
+        const template = createTemplate("Avg: {{AVG_HEIGHT(500, 12000)}}");
         const values = {};
         const result = processTemplate(template, values);
-        // 500 / 12 = 41.666... -> 41.7
         expect(result).toBe("Avg: 41,7");
       });
 
       it("должен обрабатывать строковые значения с запятой", () => {
         const template = createTemplate("Avg: {{AVG_HEIGHT(height, dist)}}");
-        const values = { height: "100,5", dist: "10,0" };
+        const values = { height: "100,5", dist: "10000" };
         const result = processTemplate(template, values);
-        // 100.5 / 10 = 10.05 -> 10.1 (rounding) or 10.0?
-        // Math.round(10.05 * 10) / 10 = Math.round(100.5) / 10 = 101 / 10 = 10.1
         expect(result).toBe("Avg: 10,1");
+      });
+    });
+    describe("Умный вес и дистанция", () => {
+      it("должен использовать вес поля для расчета PACE, если дистанция не указана", () => {
+        const template = createTemplate("Pace: {{PACE(time)}}", [
+          { key: "time", type: "time", weight: 2000 } as any,
+        ]);
+        const values = { time: "08:00" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 4:00");
+      });
+
+      it("должен конвертировать метры в км для PACE (явная дистанция > 50)", () => {
+        const template = createTemplate("Pace: {{PACE(time, dist)}}");
+        const values = { time: "04:00", dist: "2000" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 2:00");
+      });
+
+      it("должен предоставлять доступ к переменной веса {{key_weight}}", () => {
+        const template = createTemplate("Weight: {{t_weight}}", [
+          { key: "t", type: "time", weight: 500 } as any,
+        ]);
+        const values = { t: "01:30" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Weight: 500");
+      });
+
+      it("должен использовать вес для AVG_HEIGHT и конвертировать метры в км", () => {
+        const template = createTemplate("Height: {{AVG_HEIGHT(h)}}", [
+          { key: "h", type: "text", weight: 10000 } as any,
+        ]);
+        const values = { h: "100" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Height: 10");
       });
     });
   });

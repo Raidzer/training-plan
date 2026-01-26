@@ -300,10 +300,9 @@ function renderAST(
 
 export function processTemplate(template: DiaryResultTemplate, values: BlockValues): string {
   let result = template.outputTemplate || "";
+  result = result.replace(/^[ \t]*({{[#\/](if|each|repeat).*?}})[ \t]*(\r\n|\n)/gm, "$1");
   const schema = (template.schema as { key: string; type: string }[]) || [];
-
   const processedValues: Record<string, any> = { ...values };
-
   schema.forEach((field: { key: string; type: string }) => {
     const key = field.key;
     const val = values[key];
@@ -319,6 +318,10 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
       } else {
         processedValues[key] = [];
       }
+    }
+
+    if ((field as any).weight !== undefined && (field as any).weight !== null) {
+      processedValues[`${key}_weight`] = (field as any).weight;
     }
   });
 
@@ -369,24 +372,36 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     return collected;
   };
 
-  const paceRegex = /{{PACE\(([^,]+),([^)]+)\)}}/g;
-  result = result.replace(paceRegex, (_, timeArg, distArg) => {
+  const paceRegex = /{{PACE\(([^)]+)\)}}/g;
+  result = result.replace(paceRegex, (_, args) => {
+    const parts = args.split(",").map((s: string) => s.trim());
+    const timeArg = parts[0];
+    const distArg = parts.length > 1 ? parts[1] : null;
+
     const getVal = (k: string) => {
       const v = processedValues[k];
       return v !== undefined ? v : k;
     };
 
-    const tRaw = getVal(timeArg.trim());
-    const dRaw = getVal(distArg.trim());
+    const tRaw = getVal(timeArg);
+    let dRaw;
+
+    if (distArg) {
+      dRaw = getVal(distArg);
+    } else {
+      dRaw = processedValues[`${timeArg}_weight`];
+    }
 
     const totalSeconds = timeToSeconds(String(tRaw));
-    const dist = parseFloat(
+    let dist = parseFloat(
       String(dRaw)
         .replace(",", ".")
         .replace(/[^\d.]/g, "")
     );
 
     if (!dist || dist <= 0) return "";
+
+    dist = dist / 1000;
 
     const secondsPerKm = totalSeconds / dist;
     return secondsToTime(secondsPerKm);
@@ -409,15 +424,25 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     return sum.toString(); // Integer or float? keep as is.
   });
 
-  const avgHeightRegex = /{{AVG_HEIGHT\(([^,]+),([^)]+)\)}}/g;
-  result = result.replace(avgHeightRegex, (_, heightArg, distArg) => {
+  const avgHeightRegex = /{{AVG_HEIGHT\(([^)]+)\)}}/g;
+  result = result.replace(avgHeightRegex, (_, args) => {
+    const parts = args.split(",").map((s: string) => s.trim());
+    const heightArg = parts[0];
+    const distArg = parts.length > 1 ? parts[1] : null;
+
     const getVal = (k: string) => {
       const v = processedValues[k];
       return v !== undefined ? v : k;
     };
 
-    const hRaw = getVal(heightArg.trim());
-    const dRaw = getVal(distArg.trim());
+    const hRaw = getVal(heightArg);
+    let dRaw;
+
+    if (distArg) {
+      dRaw = getVal(distArg);
+    } else {
+      dRaw = processedValues[`${heightArg}_weight`];
+    }
 
     const parseNum = (val: any) => {
       return parseFloat(
@@ -428,9 +453,11 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     };
 
     const height = parseNum(hRaw);
-    const dist = parseNum(dRaw);
+    let dist = parseNum(dRaw);
 
     if (!dist || dist <= 0) return "";
+
+    dist = dist / 1000;
 
     const avgHeight = height / dist;
     return (Math.round(avgHeight * 10) / 10).toString().replace(".", ",");
