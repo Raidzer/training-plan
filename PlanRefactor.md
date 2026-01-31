@@ -70,6 +70,11 @@
   - Инвентаризация (прямые импорты db в app/api и app/actions):
     - app/actions: src/app/actions/diaryTemplates.ts.
     - app/api: admin/invites, admin/users/[userId]/{password,records,role,status}, auth/{forgot-password,reset-password,verify-email}, diary/workout-report, plans, plans/import, register, shoes, shoes/[shoeId], telegram/{link-code,status,unlink}.
+  - ✅ app/actions/diaryTemplates.ts переведён на src/server/diaryTemplates (без прямых импортов db).
+  - ✅ app/api/auth/* переведён на src/server/auth (без прямых импортов db).
+  - ✅ app/api/telegram/* переведён на src/server/telegram (без прямых импортов db).
+  - ✅ app/api/register/route.ts переведён на src/server/register (без прямых импортов db).
+  - ✅ app/api/plans/* переведён на src/server/plans и src/server/planImports (без прямых импортов db).
 
 Критерий готовности B: нет прямых импортов db из app/api, всё через server.
 

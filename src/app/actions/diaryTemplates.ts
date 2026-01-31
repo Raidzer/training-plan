@@ -1,42 +1,33 @@
 "use server";
 
-import { desc, eq, isNull, or } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { diaryResultTemplates } from "@/server/db/schema";
 import { revalidatePath } from "next/cache";
 import type { NewDiaryResultTemplate } from "@/shared/types/diary-templates";
-import { matchTemplates } from "@/shared/utils/templateMatching";
+import {
+  createTemplateInDb,
+  deleteTemplateInDb,
+  findMatchingTemplates,
+  getTemplateByIdFromDb,
+  getTemplatesForUser,
+  updateTemplateInDb,
+} from "@/server/diaryTemplates";
+import { auth } from "@/auth";
 
 export async function getTemplates(userId: number) {
-  return await db
-    .select()
-    .from(diaryResultTemplates)
-    .where(or(isNull(diaryResultTemplates.userId), eq(diaryResultTemplates.userId, userId)))
-    .orderBy(desc(diaryResultTemplates.sortOrder), desc(diaryResultTemplates.createdAt));
+  return await getTemplatesForUser(userId);
 }
 
 export async function getTemplateById(id: number) {
-  const result = await db
-    .select()
-    .from(diaryResultTemplates)
-    .where(eq(diaryResultTemplates.id, id))
-    .limit(1);
-  return result[0] || null;
+  return await getTemplateByIdFromDb(id);
 }
-
-import { auth } from "@/auth";
 
 export async function createTemplate(data: NewDiaryResultTemplate) {
   const session = await auth();
   if (session?.user?.role !== "admin") {
     throw new Error("Unauthorized");
   }
-  const [newTemplate] = await db
-    .insert(diaryResultTemplates)
-    .values(data)
-    .returning({ id: diaryResultTemplates.id });
+  const newTemplateId = await createTemplateInDb(data);
   revalidatePath("/tools/templates");
-  return newTemplate.id;
+  return newTemplateId;
 }
 
 export async function updateTemplate(id: number, data: Partial<NewDiaryResultTemplate>) {
@@ -44,7 +35,7 @@ export async function updateTemplate(id: number, data: Partial<NewDiaryResultTem
   if (session?.user?.role !== "admin") {
     throw new Error("Unauthorized");
   }
-  await db.update(diaryResultTemplates).set(data).where(eq(diaryResultTemplates.id, id));
+  await updateTemplateInDb(id, data);
   revalidatePath("/tools/templates");
 }
 
@@ -53,11 +44,10 @@ export async function deleteTemplate(id: number) {
   if (session?.user?.role !== "admin") {
     throw new Error("Unauthorized");
   }
-  await db.delete(diaryResultTemplates).where(eq(diaryResultTemplates.id, id));
+  await deleteTemplateInDb(id);
   revalidatePath("/tools/templates");
 }
 
 export async function findMatchingTemplate(userId: number, taskText: string) {
-  const templates = await getTemplates(userId);
-  return matchTemplates(templates, taskText);
+  return await findMatchingTemplates(userId, taskText);
 }

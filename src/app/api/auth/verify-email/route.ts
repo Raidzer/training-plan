@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/server/db/client";
-import { users, verificationTokens } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
 import { getVerificationTokenByToken } from "@/server/tokens";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { deleteVerificationTokenById, getUserByEmail, markEmailVerifiedById } from "@/server/auth";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -28,18 +26,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/auth/verify-email?error=expired", baseUrl));
   }
 
-  const [existingUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, existingToken.identifier));
+  const existingUser = await getUserByEmail(existingToken.identifier);
 
   if (!existingUser) {
     return NextResponse.redirect(new URL("/auth/verify-email?error=email_not_found", baseUrl));
   }
 
-  await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, existingUser.id));
-
-  await db.delete(verificationTokens).where(eq(verificationTokens.id, existingToken.id));
+  await markEmailVerifiedById(existingUser.id);
+  await deleteVerificationTokenById(existingToken.id);
 
   const session = await getServerSession(authOptions);
 

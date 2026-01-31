@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/server/db/client";
-import { users } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
 import { generatePasswordResetToken } from "@/server/tokens";
 import { sendPasswordResetEmail } from "@/server/email";
 import { z } from "zod";
+import { getUserByEmail } from "@/server/auth";
 
 const schema = z.object({
   email: z.string().email(),
@@ -15,7 +13,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email } = schema.parse(body);
 
-    const [existingUser] = await db.select().from(users).where(eq(users.email, email));
+    const existingUser = await getUserByEmail(email);
 
     if (!existingUser) {
       return NextResponse.json({ success: true });

@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
-import { telegramAccounts } from "@/server/db/schema";
 import { issueTelegramLinkCode } from "@/server/telegramLink";
+import { getTelegramAccountIdByUserId } from "@/server/telegram";
 
 export async function POST() {
   const session = await auth();
@@ -12,12 +10,9 @@ export async function POST() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [existing] = await db
-    .select({ id: telegramAccounts.id })
-    .from(telegramAccounts)
-    .where(eq(telegramAccounts.userId, userId));
+  const existingAccountId = await getTelegramAccountIdByUserId(userId);
 
-  if (existing) {
+  if (existingAccountId) {
     return NextResponse.json({ error: "already-linked" }, { status: 409 });
   }
 

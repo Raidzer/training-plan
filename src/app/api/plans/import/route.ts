@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
-import { planEntries, planImports } from "@/server/db/schema";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import {
+  createPlanImport,
+  getExistingPlanEntryDates,
+  getLatestPlanEntryDate,
+} from "@/server/planImports";
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
 
@@ -425,25 +427,14 @@ export async function POST(req: Request) {
   });
 
   const dates = Array.from(sessionCounter.keys());
-  const existingRows = dates.length
-    ? await db
-        .select({ date: planEntries.date })
-        .from(planEntries)
-        .where(and(eq(planEntries.userId, userId), inArray(planEntries.date, dates)))
-    : [];
-  const existingDates = new Set(existingRows.map((row) => row.date));
+  const existingDates = await getExistingPlanEntryDates(userId, dates);
   const newEntries = entries.filter((entry) => !existingDates.has(entry.date));
 
   const uniqueNewDates = Array.from(new Set(newEntries.map((entry) => entry.date))).sort();
   if (uniqueNewDates.length > 0) {
-    const [lastRow] = await db
-      .select({ date: planEntries.date })
-      .from(planEntries)
-      .where(eq(planEntries.userId, userId))
-      .orderBy(desc(planEntries.date))
-      .limit(1);
-    if (lastRow?.date) {
-      const lastMs = toUtcMs(lastRow.date);
+    const lastDate = await getLatestPlanEntryDate(userId);
+    if (lastDate) {
+      const lastMs = toUtcMs(lastDate);
       const firstMs = toUtcMs(uniqueNewDates[0]);
       if (lastMs === null || firstMs === null) {
         return NextResponse.json(
@@ -463,39 +454,13 @@ export async function POST(req: Request) {
       }
     }
   }
-  const now = new Date();
-  const createdImport = await db.transaction(async (tx) => {
-    const [importRow] = await tx
-      .insert(planImports)
-      .values({
-        userId,
-        filename,
-        rowCount: parsed.rows.length,
-        insertedCount: entries.length,
-        skippedCount: parsed.errors.length,
-      })
-      .returning({ id: planImports.id });
-
-    if (newEntries.length) {
-      await tx.insert(planEntries).values(
-        newEntries.map((e) => ({
-          ...e,
-          importId: importRow.id,
-        }))
-      );
-    }
-
-    const skippedCount = parsed.errors.length + Math.max(0, entries.length - newEntries.length);
-    await tx
-      .update(planImports)
-      .set({
-        insertedCount: newEntries.length,
-        skippedCount,
-        completedAt: now,
-      })
-      .where(eq(planImports.id, importRow.id));
-
-    return { id: importRow.id, insertedCount: newEntries.length };
+  const createdImport = await createPlanImport({
+    userId,
+    filename,
+    rowCount: parsed.rows.length,
+    entries,
+    newEntries,
+    errorsCount: parsed.errors.length,
   });
 
   const skippedDates = entries.length - createdImport.insertedCount;

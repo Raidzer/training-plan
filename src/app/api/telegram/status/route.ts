@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
 import {
-  telegramAccounts,
-  telegramLinkCodes,
-  telegramSubscriptions,
-  users,
-} from "@/server/db/schema";
+  getLatestTelegramLinkCodeSummary,
+  getTelegramAccountSummary,
+  getTelegramSubscriptionSummary,
+} from "@/server/telegram";
 
 export async function GET() {
   const session = await auth();
@@ -16,34 +13,9 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [account] = await db
-    .select({
-      username: telegramAccounts.username,
-      firstName: telegramAccounts.firstName,
-      linkedAt: telegramAccounts.linkedAt,
-    })
-    .from(telegramAccounts)
-    .where(eq(telegramAccounts.userId, userId));
-
-  const [subscription] = await db
-    .select({
-      enabled: telegramSubscriptions.enabled,
-      timezone: users.timezone,
-      sendTime: telegramSubscriptions.sendTime,
-    })
-    .from(telegramSubscriptions)
-    .innerJoin(users, eq(telegramSubscriptions.userId, users.id))
-    .where(eq(telegramSubscriptions.userId, userId));
-
-  const [codeRow] = await db
-    .select({
-      expiresAt: telegramLinkCodes.expiresAt,
-      consumedAt: telegramLinkCodes.consumedAt,
-    })
-    .from(telegramLinkCodes)
-    .where(eq(telegramLinkCodes.userId, userId))
-    .orderBy(desc(telegramLinkCodes.createdAt))
-    .limit(1);
+  const account = await getTelegramAccountSummary(userId);
+  const subscription = await getTelegramSubscriptionSummary(userId);
+  const codeRow = await getLatestTelegramLinkCodeSummary(userId);
 
   return NextResponse.json({
     linked: Boolean(account),

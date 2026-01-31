@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
 import {
-  planEntries,
-  workoutReportConditions,
-  workoutReportShoes,
-  workoutReports,
-} from "@/server/db/schema";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+  deletePlanEntriesForDate,
+  getPlanEntriesWithReportFlags,
+  upsertPlanEntriesForDate,
+} from "@/server/plans";
 
 export async function GET() {
   const session = await auth();
@@ -20,22 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const entries = await db
-    .select({
-      id: planEntries.id,
-      date: planEntries.date,
-      sessionOrder: planEntries.sessionOrder,
-      taskText: planEntries.taskText,
-      commentText: planEntries.commentText,
-      importId: planEntries.importId,
-      isWorkload: planEntries.isWorkload,
-      hasReport: sql<boolean>`(${workoutReports.id} is not null)`.as("hasReport"),
-    })
-    .from(planEntries)
-    .leftJoin(workoutReports, eq(workoutReports.planEntryId, planEntries.id))
-    .where(eq(planEntries.userId, userId))
-    .orderBy(desc(planEntries.date), asc(planEntries.sessionOrder))
-    .limit(500);
+  const entries = await getPlanEntriesWithReportFlags(userId, 500);
 
   return NextResponse.json({ entries });
 }
@@ -116,144 +98,13 @@ export async function POST(req: Request) {
   const isWorkload = Boolean(body?.isWorkload);
   const isEdit = hasOriginalDate;
 
-  const updated = await db.transaction(async (tx) => {
-    const datesToCheck = date === originalDate ? [date] : [date, originalDate];
-    const dateRows = await tx
-      .select({ id: planEntries.id, date: planEntries.date })
-      .from(planEntries)
-      .where(and(eq(planEntries.userId, userId), inArray(planEntries.date, datesToCheck)));
-
-    const hasOriginal = dateRows.some((row) => row.date === originalDate);
-    const hasDate = dateRows.some((row) => row.date === date);
-
-    if (isEdit) {
-      if (!hasOriginal) {
-        return { error: "not_found" as const };
-      }
-      if (date !== originalDate && hasDate) {
-        return { error: "date_exists" as const };
-      }
-    } else if (hasDate) {
-      return { error: "date_exists" as const };
-    }
-
-    if (!isEdit) {
-      for (const entry of normalized) {
-        if (entry.id) {
-          return { error: "invalid_entry_id" as const };
-        }
-      }
-    }
-
-    const existingRows = isEdit
-      ? await tx
-          .select({ id: planEntries.id })
-          .from(planEntries)
-          .where(and(eq(planEntries.userId, userId), eq(planEntries.date, originalDate)))
-      : [];
-
-    const existingIds = new Set(existingRows.map((row) => row.id));
-    if (isEdit) {
-      for (const entry of normalized) {
-        if (entry.id && !existingIds.has(entry.id)) {
-          return { error: "invalid_entry_id" as const };
-        }
-      }
-    }
-
-    const keepIds = new Set<number>();
-    if (isEdit) {
-      for (const entry of normalized) {
-        if (entry.id) {
-          keepIds.add(entry.id);
-        }
-      }
-    }
-
-    const removedIds = isEdit
-      ? existingRows.filter((row) => !keepIds.has(row.id)).map((row) => row.id)
-      : [];
-
-    if (removedIds.length > 0) {
-      const removedReportIds = await tx
-        .select({ id: workoutReports.id })
-        .from(workoutReports)
-        .where(
-          and(eq(workoutReports.userId, userId), inArray(workoutReports.planEntryId, removedIds))
-        );
-
-      const reportIds = removedReportIds.map((row) => row.id);
-      if (reportIds.length > 0) {
-        await tx
-          .delete(workoutReportConditions)
-          .where(inArray(workoutReportConditions.workoutReportId, reportIds));
-        await tx
-          .delete(workoutReportShoes)
-          .where(inArray(workoutReportShoes.workoutReportId, reportIds));
-        await tx.delete(workoutReports).where(inArray(workoutReports.id, reportIds));
-      }
-
-      await tx
-        .delete(planEntries)
-        .where(and(eq(planEntries.userId, userId), inArray(planEntries.id, removedIds)));
-    }
-
-    for (let index = 0; index < normalized.length; index += 1) {
-      const entry = normalized[index];
-      const sessionOrder = index + 1;
-      if (entry.id) {
-        await tx
-          .update(planEntries)
-          .set({
-            date,
-            sessionOrder,
-            taskText: entry.taskText,
-            commentText: entry.commentText ?? null,
-            isWorkload,
-          })
-          .where(and(eq(planEntries.userId, userId), eq(planEntries.id, entry.id)));
-      } else {
-        await tx.insert(planEntries).values({
-          userId,
-          date,
-          sessionOrder,
-          taskText: entry.taskText,
-          commentText: entry.commentText ?? null,
-          isWorkload,
-          importId: null,
-        });
-      }
-    }
-
-    if (isEdit && date !== originalDate && keepIds.size > 0) {
-      await tx
-        .update(workoutReports)
-        .set({ date })
-        .where(
-          and(
-            eq(workoutReports.userId, userId),
-            inArray(workoutReports.planEntryId, Array.from(keepIds))
-          )
-        );
-    }
-
-    const updatedEntries = await tx
-      .select({
-        id: planEntries.id,
-        date: planEntries.date,
-        sessionOrder: planEntries.sessionOrder,
-        taskText: planEntries.taskText,
-        commentText: planEntries.commentText,
-        importId: planEntries.importId,
-        isWorkload: planEntries.isWorkload,
-        hasReport: sql<boolean>`(${workoutReports.id} is not null)`.as("hasReport"),
-      })
-      .from(planEntries)
-      .leftJoin(workoutReports, eq(workoutReports.planEntryId, planEntries.id))
-      .where(and(eq(planEntries.userId, userId), eq(planEntries.date, date)))
-      .orderBy(asc(planEntries.sessionOrder));
-
-    return { entries: updatedEntries };
+  const updated = await upsertPlanEntriesForDate({
+    userId,
+    date,
+    originalDate,
+    isWorkload,
+    entries: normalized,
+    isEdit,
   });
 
   if ("error" in updated) {
@@ -288,39 +139,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "invalid_date" }, { status: 400 });
   }
 
-  const deleted = await db.transaction(async (tx) => {
-    const dayEntries = await tx
-      .select({ id: planEntries.id })
-      .from(planEntries)
-      .where(and(eq(planEntries.userId, userId), eq(planEntries.date, date)));
-
-    if (dayEntries.length === 0) {
-      return { error: "not_found" as const };
-    }
-
-    const entryIds = dayEntries.map((entry) => entry.id);
-    const reportIds = await tx
-      .select({ id: workoutReports.id })
-      .from(workoutReports)
-      .where(and(eq(workoutReports.userId, userId), inArray(workoutReports.planEntryId, entryIds)));
-
-    const reportIdList = reportIds.map((row) => row.id);
-    if (reportIdList.length > 0) {
-      await tx
-        .delete(workoutReportConditions)
-        .where(inArray(workoutReportConditions.workoutReportId, reportIdList));
-      await tx
-        .delete(workoutReportShoes)
-        .where(inArray(workoutReportShoes.workoutReportId, reportIdList));
-      await tx.delete(workoutReports).where(inArray(workoutReports.id, reportIdList));
-    }
-
-    await tx
-      .delete(planEntries)
-      .where(and(eq(planEntries.userId, userId), eq(planEntries.date, date)));
-
-    return { deleted: true };
-  });
+  const deleted = await deletePlanEntriesForDate({ userId, date });
 
   if ("error" in deleted) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
