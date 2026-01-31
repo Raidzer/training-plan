@@ -1,7 +1,7 @@
 import { createHash, randomInt } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
-import { db } from "@/db/client";
-import { telegramLinkCodes } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { telegramLinkCodes } from "@/server/db/schema";
 
 const LINK_CODE_TTL_MINUTES = 15;
 const MAX_ATTEMPTS = 5;

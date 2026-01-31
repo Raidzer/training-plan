@@ -1,8 +1,8 @@
 "use server";
 
 import { desc, eq, isNull, or } from "drizzle-orm";
-import { db } from "@/db/client";
-import { diaryResultTemplates } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { diaryResultTemplates } from "@/server/db/schema";
 import { revalidatePath } from "next/cache";
 import type { NewDiaryResultTemplate } from "@/types/diary-templates";
 

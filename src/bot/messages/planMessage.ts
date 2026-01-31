@@ -1,4 +1,4 @@
-﻿import { getPlanEntriesByDate } from "@/lib/planEntries";
+import { getPlanEntriesByDate } from "@/server/planEntries";
 import { formatDateForDisplay } from "@/bot/utils/dateTime";
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
@@ -13,12 +13,12 @@ export const formatPlanMessage = (params: {
   const displayDate = formatDateForDisplay(params.date);
   const sendTimeText = params.sendTime ? `Время рассылки: ${params.sendTime}.` : "";
   if (!params.entries.length) {
-    return [`На ${displayDate} нет тренировки.`, sendTimeText].filter(Boolean).join("\n");
+    return [`На ${displayDate} нет тренировок.`, sendTimeText].filter(Boolean).join("\n");
   }
 
   const lines = params.entries.map((entry) => {
     const flags = entry.isWorkload ? "нагрузка" : "";
-    const comment = entry.commentText ? `Комментарий: ${stripHtml(entry.commentText)}` : "";
+    const comment = entry.commentText ? `комментарий: ${stripHtml(entry.commentText)}` : "";
     const parts = [stripHtml(entry.taskText), flags].filter(Boolean).join(" ");
     return `${entry.sessionOrder}. ${parts}${comment ? `\n${comment}` : ""}`;
   });

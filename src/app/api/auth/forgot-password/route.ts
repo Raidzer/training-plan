@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
-import { generatePasswordResetToken } from "@/lib/tokens";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { generatePasswordResetToken } from "@/server/tokens";
+import { sendPasswordResetEmail } from "@/server/email";
 import { z } from "zod";
 
 const schema = z.object({

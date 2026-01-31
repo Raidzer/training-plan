@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db/client";
-import { users, verificationTokens } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { users, verificationTokens } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
-import { getVerificationTokenByToken } from "@/lib/tokens";
+import { getVerificationTokenByToken } from "@/server/tokens";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 

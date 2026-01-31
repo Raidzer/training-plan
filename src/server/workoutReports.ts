@@ -1,6 +1,11 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/client";
-import { shoes, workoutReportConditions, workoutReportShoes, workoutReports } from "@/db/schema";
+import { db } from "@/server/db/client";
+import {
+  shoes,
+  workoutReportConditions,
+  workoutReportShoes,
+  workoutReports,
+} from "@/server/db/schema";
 
 export type WorkoutReportShoe = {
   id: number;

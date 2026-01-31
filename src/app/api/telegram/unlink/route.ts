@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/server/db/schema";
 
 export async function POST() {
   const session = await auth();

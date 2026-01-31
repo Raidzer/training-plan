@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserIdByAliceId, linkAliceAccount, parseWeightCommand } from "@/lib/alice";
-import { upsertWeightEntry } from "@/lib/weightEntries";
+import { getUserIdByAliceId, linkAliceAccount, parseWeightCommand } from "@/server/alice";
+import { upsertWeightEntry } from "@/server/weightEntries";
 import { formatDateInTimeZone, formatDateLocal, isValidTimeZone } from "@/bot/utils/dateTime";
 
 type AliceRequest = {

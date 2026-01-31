@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { desc, eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { registrationInvites, users } from "@/db/schema";
-import { buildInviteExpiry, generateInviteToken, hashInviteToken } from "@/lib/registrationInvites";
+import { db } from "@/server/db/client";
+import { registrationInvites, users } from "@/server/db/schema";
+import {
+  buildInviteExpiry,
+  generateInviteToken,
+  hashInviteToken,
+} from "@/server/registrationInvites";
 
 const schema = z.object({
   role: z.enum(["athlete", "coach"]),

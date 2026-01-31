@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import {
   planEntries,
   workoutReportConditions,
   workoutReportShoes,
   workoutReports,
-} from "@/db/schema";
+} from "@/server/db/schema";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 export async function GET() {

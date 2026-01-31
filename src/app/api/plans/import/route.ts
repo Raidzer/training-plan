@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { planEntries, planImports } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { planEntries, planImports } from "@/server/db/schema";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
-// Helper to strip HTML tags for logic checks
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
 
 const escapeHtml = (text: string) =>
@@ -73,7 +72,6 @@ const richTextToHtml = (value: ExcelJS.CellRichTextValue): string => {
 
       lines[lines.length - 1] += fragment;
 
-      // If there are more parts, it means we had newlines
       if (index < textParts.length - 1) {
         lines.push("");
       }
@@ -111,7 +109,6 @@ const removeNumberedPrefix = (html: string): string => {
       prefixIndex++;
       htmlIndex++;
     } else {
-      // Tolerance for whitespace mismatch or simple skip
       htmlIndex++;
     }
   }
@@ -406,7 +403,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Нумерация сессий внутри дня по порядку строк.
   const dateSequenceError = validateSequentialDates(parsed.rows.map((row) => row.date));
   if (dateSequenceError) {
     return NextResponse.json({ error: dateSequenceError }, { status: 400 });

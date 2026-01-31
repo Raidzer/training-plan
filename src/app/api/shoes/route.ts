@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { shoes } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { shoes } from "@/server/db/schema";
 
 type ShoePayload = {
   name?: string;

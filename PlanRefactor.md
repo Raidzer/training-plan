@@ -52,9 +52,14 @@
 
 ## 4. Вариант B (умеренный)
 ### 4.1. Ввести src/server
-- Переместить src/db -> src/server/db.
-- Переместить src/services -> src/server/services.
-- Переместить серверные модули из src/lib в src/server/*.
+- ✅ Переместить src/db -> src/server/db.
+- ✅ Переместить src/services -> src/server/services.
+- ✅ Переместить серверные модули из src/lib в src/server/*.
+  - Инвентаризация:
+    - src/db: client.ts, schema.ts.
+    - src/services: users.ts.
+    - src/lib (кандидаты в server): alice.ts, diary.ts, email.ts, personalRecords.ts, planEntries.ts, recoveryEntries.ts, registrationInvites.ts, telegramLink.ts, tokens.ts, weightEntries.ts, workoutReports.ts.
+    - src/lib тесты: diary.test.ts, email.test.ts, tokens.test.ts.
 
 ### 4.2. Оставить src/shared
 - Создать src/shared и перенести туда src/utils, src/types, src/constants.
@@ -82,7 +87,7 @@
 
 ## 6. Миграция импортов
 - ✅ Утвердить алиасы: @/shared/*, @/server/*, @/features/*.
-- Массово обновить импорты (скриптом/regex).
+- ✅ Массово обновить импорты (скриптом/regex) — N/A для варианта A.
 - ✅ Проверить, что нет циклических импортов (madge: круговых зависимостей не найдено).
 
 ## 7. Тесты и валидация

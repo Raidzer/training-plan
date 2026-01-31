@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/auth";
-import { getDiaryExportRows, isValidDateString } from "@/lib/diary";
+import { getDiaryExportRows, isValidDateString } from "@/server/diary";
 
 export const runtime = "nodejs";
 

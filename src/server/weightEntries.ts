@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { weightEntries } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { weightEntries } from "@/server/db/schema";
 
 export type WeightEntryPeriod = "morning" | "evening";
 

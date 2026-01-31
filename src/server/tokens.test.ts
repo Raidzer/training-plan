@@ -4,9 +4,9 @@ import {
   generatePasswordResetToken,
   getVerificationTokenByToken,
 } from "./tokens";
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 
-vi.mock("@/db/client", () => ({
+vi.mock("@/server/db/client", () => ({
   db: {
     insert: vi.fn(() => ({
       values: vi.fn(),

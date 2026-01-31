@@ -1,4 +1,4 @@
-import type { ClubRecord } from "@/lib/personalRecords";
+import type { ClubRecord } from "@/server/personalRecords";
 import type { PersonalRecordDistanceKey } from "@/lib/personalRecords.constants";
 
 export type ResultsDistanceKey = "5k" | "10k" | "21k" | "42k";

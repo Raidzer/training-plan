@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { isValidDateString } from "@/lib/diary";
+import { isValidDateString } from "@/server/diary";
 import {
   MAX_PROTOCOL_URL_LENGTH,
   MAX_RACE_CITY_LENGTH,
@@ -13,7 +13,7 @@ import {
   getPersonalRecords,
   upsertPersonalRecords,
   type PersonalRecordInput,
-} from "@/lib/personalRecords";
+} from "@/server/personalRecords";
 
 type PersonalRecordPayload = {
   distanceKey?: string;

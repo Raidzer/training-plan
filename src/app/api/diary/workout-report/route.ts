@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { planEntries, shoes } from "@/db/schema";
-import { isValidDateString } from "@/lib/diary";
-import { upsertWorkoutReport } from "@/lib/workoutReports";
+import { db } from "@/server/db/client";
+import { planEntries, shoes } from "@/server/db/schema";
+import { isValidDateString } from "@/server/diary";
+import { upsertWorkoutReport } from "@/server/workoutReports";
 
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 

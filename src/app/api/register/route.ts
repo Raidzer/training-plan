@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { db } from "@/db/client";
-import { registrationInvites, users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { registrationInvites, users } from "@/server/db/schema";
 import { and, eq, gt, isNull, or } from "drizzle-orm";
-import { hashInviteToken } from "@/lib/registrationInvites";
+import { hashInviteToken } from "@/server/registrationInvites";
 
 const schema = z.object({
   login: z
@@ -142,8 +142,8 @@ export async function POST(req: Request) {
     });
 
     try {
-      const { generateVerificationToken } = await import("@/lib/tokens");
-      const { sendVerificationEmail } = await import("@/lib/email");
+      const { generateVerificationToken } = await import("@/server/tokens");
+      const { sendVerificationEmail } = await import("@/server/email");
 
       const token = await generateVerificationToken(result.user.email);
       await sendVerificationEmail(result.user.email, token);

@@ -5,8 +5,8 @@ import { Button } from "antd";
 import Link from "next/link";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 
 type Props = {

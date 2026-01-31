@@ -1,5 +1,5 @@
 import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
-import { db } from "@/db/client";
+import { db } from "@/server/db/client";
 import {
   planEntries,
   recoveryEntries,
@@ -8,7 +8,7 @@ import {
   workoutReportConditions,
   workoutReportShoes,
   workoutReports,
-} from "@/db/schema";
+} from "@/server/db/schema";
 import {
   buildDateRange,
   buildDayStatus,
@@ -26,7 +26,7 @@ import {
   surfaceLabels,
   weatherLabels,
   type DiaryDayStatus,
-} from "./diaryUtils";
+} from "@/lib/diaryUtils";
 
 export type DiaryPlanEntry = {
   id: number;

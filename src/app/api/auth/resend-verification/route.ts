@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { generateVerificationToken } from "@/lib/tokens";
-import { sendVerificationEmail } from "@/lib/email";
+import { generateVerificationToken } from "@/server/tokens";
+import { sendVerificationEmail } from "@/server/email";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);

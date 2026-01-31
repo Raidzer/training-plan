@@ -20,7 +20,7 @@ import {
   setPendingInput,
   setRecoveryDraft,
 } from "@/bot/menu/menuState";
-import { upsertRecoveryEntry } from "@/lib/recoveryEntries";
+import { upsertRecoveryEntry } from "@/server/recoveryEntries";
 import { parseSleepTimeInput } from "@/bot/utils/sleepTime";
 
 type RecoveryHandlerArgs = {

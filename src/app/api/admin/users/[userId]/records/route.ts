@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
-import { isValidDateString } from "@/lib/diary";
+import { db } from "@/server/db/client";
+import { users } from "@/server/db/schema";
+import { isValidDateString } from "@/server/diary";
 import {
   MAX_PROTOCOL_URL_LENGTH,
   MAX_RACE_CITY_LENGTH,
@@ -16,7 +16,7 @@ import {
   getPersonalRecords,
   upsertPersonalRecords,
   type PersonalRecordInput,
-} from "@/lib/personalRecords";
+} from "@/server/personalRecords";
 
 type PersonalRecordPayload = {
   distanceKey?: string;
