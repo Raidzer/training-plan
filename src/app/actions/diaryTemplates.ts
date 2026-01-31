@@ -4,9 +4,7 @@ import { desc, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { diaryResultTemplates } from "@/db/schema";
 import { revalidatePath } from "next/cache";
-
-export type DiaryResultTemplate = typeof diaryResultTemplates.$inferSelect;
-export type NewDiaryResultTemplate = typeof diaryResultTemplates.$inferInsert;
+import type { NewDiaryResultTemplate } from "@/types/diary-templates";
 
 export async function getTemplates(userId: number) {
   return await db

@@ -5,7 +5,7 @@ import { Alert, App, Button, Card, DatePicker, Input, Typography } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import styles from "./records.module.scss";
-import { TimeInput } from "./TimeInput";
+import { TimeInput } from "@/components/inputs/TimeInput";
 import {
   MAX_PROTOCOL_URL_LENGTH,
   MAX_RACE_CITY_LENGTH,

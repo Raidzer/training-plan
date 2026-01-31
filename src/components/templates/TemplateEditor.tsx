@@ -20,7 +20,7 @@ import {
   ArrowDownOutlined,
 } from "@ant-design/icons";
 
-import type { NewDiaryResultTemplate } from "@/app/actions/diaryTemplates";
+import type { NewDiaryResultTemplate } from "@/types/diary-templates";
 import styles from "./TemplateEditor.module.scss";
 const { Option } = Select;
 const { Text } = Typography;

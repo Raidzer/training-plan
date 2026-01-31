@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "antd";
-import { TimeInput } from "@/app/profile/records/TimeInput";
+import { TimeInput } from "@/components/inputs/TimeInput";
 import styles from "./speed-to-pace.module.scss";
 import { useSpeedToPace } from "./useSpeedToPace";
 

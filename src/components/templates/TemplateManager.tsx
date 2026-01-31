@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Table, Button, Space, Popconfirm, Tag, App } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { deleteTemplate } from "@/app/actions/diaryTemplates";
-import type { DiaryResultTemplate } from "@/app/actions/diaryTemplates";
+import type { DiaryResultTemplate } from "@/types/diary-templates";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 

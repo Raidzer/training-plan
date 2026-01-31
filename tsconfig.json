@@ -11,7 +11,10 @@
     "types": [],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/server/*": ["./src/server/*"],
+      "@/features/*": ["./src/features/*"]
     },
     // For nodejs:
     // "lib": ["esnext"],
