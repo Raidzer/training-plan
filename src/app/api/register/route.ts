@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       login,
       password,
       inviteToken,
-      timezone,
+      timezone: timezone ?? null,
     });
 
     try {
