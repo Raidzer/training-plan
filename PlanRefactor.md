@@ -64,6 +64,7 @@
 ### 4.2. Оставить src/shared
 - ✅ Создать src/shared и перенести туда src/utils, src/types, src/constants (импорты обновлены на @/shared/*).
 - ✅ Либо сохранить текущие каталоги, но запретить импорты server в клиентские компоненты — N/A (выбран src/shared).
+  - ✅ Перенесены shared-утилиты: personalRecords.constants.ts и diaryUtils.ts в src/shared/* (импорты обновлены).
 
 ### 4.3. Нормализовать доступ к данным
 - src/app/api/** должен обращаться к src/server/**, а не к db напрямую.
@@ -75,6 +76,12 @@
   - ✅ app/api/telegram/* переведён на src/server/telegram (без прямых импортов db).
   - ✅ app/api/register/route.ts переведён на src/server/register (без прямых импортов db).
   - ✅ app/api/plans/* переведён на src/server/plans и src/server/planImports (без прямых импортов db).
+  - ✅ app/api/admin/* переведён на src/server/adminInvites и src/server/adminUsers (без прямых импортов db).
+  - ✅ app/api/diary/workout-report переведён на src/server/workoutReports (без прямых импортов db).
+  - ✅ app/api/shoes/* переведён на src/server/shoes (без прямых импортов db).
+  - ✅ app/api/personal-records уже использует src/server/personalRecords (прямых импортов db нет).
+  - ✅ app/api/diary/{day,marks,period,period-export,recovery,weight} уже используют src/server/* (прямых импортов db нет).
+✅ Критерий готовности B: нет прямых импортов db из app/api, всё через server.
 
 Критерий готовности B: нет прямых импортов db из app/api, всё через server.
 

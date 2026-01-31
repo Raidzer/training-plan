@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
+  planEntries,
   shoes,
   workoutReportConditions,
   workoutReportShoes,
@@ -131,6 +132,38 @@ export const getWorkoutReportsByDate = async (params: {
     ...report,
     shoes: shoesMap.get(report.id) ?? [],
   }));
+};
+
+export const getPlanEntrySummaryForUser = async (params: {
+  userId: number;
+  planEntryId: number;
+}): Promise<{ id: number; date: string } | null> => {
+  const [entry] = await db
+    .select({ id: planEntries.id, date: planEntries.date })
+    .from(planEntries)
+    .where(and(eq(planEntries.id, params.planEntryId), eq(planEntries.userId, params.userId)));
+
+  if (!entry) {
+    return null;
+  }
+
+  return entry;
+};
+
+export const areShoesOwnedByUser = async (params: {
+  userId: number;
+  shoeIds: number[];
+}): Promise<boolean> => {
+  if (params.shoeIds.length === 0) {
+    return true;
+  }
+
+  const rows = await db
+    .select({ id: shoes.id })
+    .from(shoes)
+    .where(and(eq(shoes.userId, params.userId), inArray(shoes.id, params.shoeIds)));
+
+  return rows.length === params.shoeIds.length;
 };
 
 export const upsertWorkoutReport = async (params: {

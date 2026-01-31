@@ -26,7 +26,7 @@ import {
   surfaceLabels,
   weatherLabels,
   type DiaryDayStatus,
-} from "@/lib/diaryUtils";
+} from "@/shared/utils/diaryUtils";
 
 export type DiaryPlanEntry = {
   id: number;

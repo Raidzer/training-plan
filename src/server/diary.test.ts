@@ -4,7 +4,7 @@ import {
   parseDistanceKm,
   formatSleep,
   formatWeightValue,
-} from "@/lib/diaryUtils";
+} from "@/shared/utils/diaryUtils";
 
 describe("isValidDateString", () => {
   it("должен возвращать true для валидной даты в формате YYYY-MM-DD", () => {

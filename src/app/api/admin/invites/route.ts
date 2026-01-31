@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { desc, eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
-import { registrationInvites, users } from "@/server/db/schema";
 import {
   buildInviteExpiry,
   generateInviteToken,
   hashInviteToken,
 } from "@/server/registrationInvites";
+import {
+  createRegistrationInvite,
+  getRegistrationInvites,
+  getUserSummaryById,
+  getUsersByIds,
+} from "@/server/adminInvites";
 
 const schema = z.object({
   role: z.enum(["athlete", "coach"]),
@@ -44,19 +47,7 @@ export async function GET() {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const rows = await db
-    .select({
-      id: registrationInvites.id,
-      role: registrationInvites.role,
-      createdByUserId: registrationInvites.createdByUserId,
-      usedByUserId: registrationInvites.usedByUserId,
-      createdAt: registrationInvites.createdAt,
-      expiresAt: registrationInvites.expiresAt,
-      usedAt: registrationInvites.usedAt,
-    })
-    .from(registrationInvites)
-    .orderBy(desc(registrationInvites.createdAt))
-    .limit(200);
+  const rows = await getRegistrationInvites(200);
 
   const userIds = new Set<number>();
   for (const row of rows) {
@@ -66,13 +57,7 @@ export async function GET() {
     }
   }
 
-  let userRows: { id: number; name: string; email: string }[] = [];
-  if (userIds.size > 0) {
-    userRows = await db
-      .select({ id: users.id, name: users.name, email: users.email })
-      .from(users)
-      .where(inArray(users.id, Array.from(userIds)));
-  }
+  const userRows = await getUsersByIds(Array.from(userIds));
 
   const userMap = new Map(
     userRows.map((row) => [row.id, { id: row.id, name: row.name, email: row.email }])
@@ -126,29 +111,18 @@ export async function POST(req: Request) {
   const tokenHash = hashInviteToken(token);
   const expiresAt = buildInviteExpiry();
 
-  const [created] = await db
-    .insert(registrationInvites)
-    .values({
-      tokenHash,
-      role: parsed.data.role,
-      createdByUserId: sessionUserId,
-      expiresAt,
-    })
-    .returning({
-      id: registrationInvites.id,
-      role: registrationInvites.role,
-      createdAt: registrationInvites.createdAt,
-      expiresAt: registrationInvites.expiresAt,
-    });
+  const created = await createRegistrationInvite({
+    tokenHash,
+    role: parsed.data.role,
+    createdByUserId: sessionUserId,
+    expiresAt,
+  });
 
   if (!created) {
     return NextResponse.json({ error: "create_failed" }, { status: 500 });
   }
 
-  const [creator] = await db
-    .select({ id: users.id, name: users.name, email: users.email })
-    .from(users)
-    .where(eq(users.id, sessionUserId));
+  const creator = await getUserSummaryById(sessionUserId);
 
   const invite = {
     id: created.id,

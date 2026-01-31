@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
-import { users } from "@/server/db/schema";
+import { updateUserRoleById } from "@/server/adminUsers";
 
 const schema = z.object({
   role: z.enum(["admin", "coach", "athlete"]),
@@ -36,11 +34,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
   }
 
-  const [updated] = await db
-    .update(users)
-    .set({ role: parsed.data.role })
-    .where(eq(users.id, userId))
-    .returning({ id: users.id, role: users.role });
+  const updated = await updateUserRoleById(userId, parsed.data.role);
 
   if (!updated) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });

@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { personalRecords, users } from "@/server/db/schema";
-import type { PersonalRecordDistanceKey } from "@/lib/personalRecords.constants";
+import type { PersonalRecordDistanceKey } from "@/shared/constants/personalRecords.constants";
 
 export type PersonalRecord = {
   distanceKey: PersonalRecordDistanceKey;

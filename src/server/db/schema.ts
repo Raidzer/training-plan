@@ -14,7 +14,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import { ROLES } from "@/constants";
+import { ROLES } from "@/shared/constants";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

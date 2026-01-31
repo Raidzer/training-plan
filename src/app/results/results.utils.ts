@@ -1,5 +1,5 @@
 import type { ClubRecord } from "@/server/personalRecords";
-import type { PersonalRecordDistanceKey } from "@/lib/personalRecords.constants";
+import type { PersonalRecordDistanceKey } from "@/shared/constants/personalRecords.constants";
 
 export type ResultsDistanceKey = "5k" | "10k" | "21k" | "42k";
 export type ResultsGender = "male" | "female";

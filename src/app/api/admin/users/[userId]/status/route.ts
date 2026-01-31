@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
-import { users } from "@/server/db/schema";
+import { updateUserStatusById } from "@/server/adminUsers";
 
 const schema = z.object({
   isActive: z.boolean(),
@@ -45,11 +43,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     return NextResponse.json({ error: "cannot_disable_self" }, { status: 400 });
   }
 
-  const [updated] = await db
-    .update(users)
-    .set({ isActive: parsed.data.isActive })
-    .where(eq(users.id, userId))
-    .returning({ id: users.id, isActive: users.isActive });
+  const updated = await updateUserStatusById(userId, parsed.data.isActive);
 
   if (!updated) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });

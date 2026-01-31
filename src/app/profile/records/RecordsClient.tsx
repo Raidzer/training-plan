@@ -13,7 +13,7 @@ import {
   PERSONAL_RECORD_DISTANCES,
   PERSONAL_RECORD_TIME_REGEX,
   type PersonalRecordDistanceKey,
-} from "@/lib/personalRecords.constants";
+} from "@/shared/constants/personalRecords.constants";
 
 dayjs.extend(customParseFormat);
 

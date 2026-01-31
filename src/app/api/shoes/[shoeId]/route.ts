@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
-import { shoes } from "@/server/db/schema";
+import { deleteShoe, updateShoe } from "@/server/shoes";
 
 type Params = {
   shoeId: string;
@@ -46,17 +44,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     return NextResponse.json({ error: "invalid_name" }, { status: 400 });
   }
 
-  const now = new Date();
-  const [updated] = await db
-    .update(shoes)
-    .set({ name, updatedAt: now })
-    .where(and(eq(shoes.id, shoeId), eq(shoes.userId, userId)))
-    .returning({
-      id: shoes.id,
-      name: shoes.name,
-      createdAt: shoes.createdAt,
-      updatedAt: shoes.updatedAt,
-    });
+  const updated = await updateShoe({ userId, shoeId, name });
 
   if (!updated) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -82,11 +70,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     return NextResponse.json({ error: "invalid_shoe_id" }, { status: 400 });
   }
 
-  const [deleted] = await db
-    .delete(shoes)
-    .where(and(eq(shoes.id, shoeId), eq(shoes.userId, userId)))
-    .returning({ id: shoes.id });
-
+  const deleted = await deleteShoe({ userId, shoeId });
   if (!deleted) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
