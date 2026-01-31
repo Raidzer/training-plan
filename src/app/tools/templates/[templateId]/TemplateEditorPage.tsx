@@ -4,8 +4,8 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { TemplateEditor } from "@/components/templates/TemplateEditor";
 import { createTemplate, updateTemplate } from "@/app/actions/diaryTemplates";
-import type { DiaryResultTemplate, NewDiaryResultTemplate } from "@/types/diary-templates";
-import { Card, Typography } from "antd";
+import type { DiaryResultTemplate, NewDiaryResultTemplate } from "@/shared/types/diary-templates";
+import { Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;

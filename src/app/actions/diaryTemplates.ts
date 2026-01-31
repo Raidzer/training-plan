@@ -4,7 +4,8 @@ import { desc, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { diaryResultTemplates } from "@/server/db/schema";
 import { revalidatePath } from "next/cache";
-import type { NewDiaryResultTemplate } from "@/types/diary-templates";
+import type { NewDiaryResultTemplate } from "@/shared/types/diary-templates";
+import { matchTemplates } from "@/shared/utils/templateMatching";
 
 export async function getTemplates(userId: number) {
   return await db
@@ -55,8 +56,6 @@ export async function deleteTemplate(id: number) {
   await db.delete(diaryResultTemplates).where(eq(diaryResultTemplates.id, id));
   revalidatePath("/tools/templates");
 }
-
-import { matchTemplates } from "@/utils/templateMatching";
 
 export async function findMatchingTemplate(userId: number, taskText: string) {
   const templates = await getTemplates(userId);

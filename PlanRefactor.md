@@ -62,11 +62,14 @@
     - src/lib тесты: diary.test.ts, email.test.ts, tokens.test.ts.
 
 ### 4.2. Оставить src/shared
-- Создать src/shared и перенести туда src/utils, src/types, src/constants.
-- Либо сохранить текущие каталоги, но запретить импорты server в клиентские компоненты.
+- ✅ Создать src/shared и перенести туда src/utils, src/types, src/constants (импорты обновлены на @/shared/*).
+- ✅ Либо сохранить текущие каталоги, но запретить импорты server в клиентские компоненты — N/A (выбран src/shared).
 
 ### 4.3. Нормализовать доступ к данным
 - src/app/api/** должен обращаться к src/server/**, а не к db напрямую.
+  - Инвентаризация (прямые импорты db в app/api и app/actions):
+    - app/actions: src/app/actions/diaryTemplates.ts.
+    - app/api: admin/invites, admin/users/[userId]/{password,records,role,status}, auth/{forgot-password,reset-password,verify-email}, diary/workout-report, plans, plans/import, register, shoes, shoes/[shoeId], telegram/{link-code,status,unlink}.
 
 Критерий готовности B: нет прямых импортов db из app/api, всё через server.
 
