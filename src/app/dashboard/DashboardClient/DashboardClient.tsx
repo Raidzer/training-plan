@@ -4,6 +4,7 @@ import {
   CalendarOutlined,
   MessageOutlined,
   ShoppingOutlined,
+  SnippetsOutlined,
   TeamOutlined,
   TrophyOutlined,
 } from "@ant-design/icons";
@@ -18,7 +19,6 @@ type Props = { session: Session };
 
 export function DashboardClient({ session }: Props) {
   const isAdmin = session.user?.role === "admin";
-  console.log(isAdmin);
   const adminCard = isAdmin ? (
     <Link href="/admin/users" passHref>
       <Card
@@ -28,6 +28,20 @@ export function DashboardClient({ session }: Props) {
       >
         <Typography.Text type="secondary">
           Управление пользователями: роли, доступ и пароли.
+        </Typography.Text>
+      </Card>
+    </Link>
+  ) : null;
+
+  const templatesCard = isAdmin ? (
+    <Link href="/tools/templates" passHref>
+      <Card
+        hoverable
+        className={styles.card}
+        title={<CardTitle icon={<SnippetsOutlined />} title="Шаблоны" />}
+      >
+        <Typography.Text type="secondary">
+          Редактор шаблонов для дневника тренировок.
         </Typography.Text>
       </Card>
     </Link>
@@ -54,6 +68,7 @@ export function DashboardClient({ session }: Props) {
         </div>
         <div className={styles.cards}>
           {adminCard}
+          {templatesCard}
           <Link href="/plan" passHref>
             <Card
               hoverable

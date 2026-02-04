@@ -8,5 +8,5 @@ export default async function DiaryPage() {
     redirect("/login");
   }
 
-  return <DiaryClient />;
+  return <DiaryClient userId={Number(session.user.id)} />;
 }

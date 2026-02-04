@@ -68,7 +68,7 @@ const WIND_OPTIONS = [
 const getOptionLabel = (
   options: readonly { value: string; label: string }[],
   value?: string | null
-) => options.find((option) => option.value === value)?.label ?? "";
+) => options.find((option) => option.value === value)?.label ?? value ?? "";
 
 const formatTemperatureValue = (value?: string | null) => {
   if (value === null || value === undefined) {
@@ -279,7 +279,7 @@ const reportLabels = {
   closeLabel: "Закрыть",
 };
 
-export function DiaryClient() {
+export function DiaryClient({ userId }: { userId: number }) {
   const [messageApi, contextHolder] = message.useMessage();
   const {
     selectedDate,
@@ -364,7 +364,11 @@ export function DiaryClient() {
         next = { ...current, [field]: value as string | number | null };
         if (field === "surface") {
           const surfaceValue = typeof value === "string" ? value : "";
-          const isIndoorSurface = surfaceValue === "manezh" || surfaceValue === "treadmill";
+          const isIndoorSurface =
+            surfaceValue === "manezh" ||
+            surfaceValue === "treadmill" ||
+            surfaceValue === "Манеж" ||
+            surfaceValue === "Беговая дорожка";
           if (isIndoorSurface) {
             next.weather = "";
             next.hasWind = "";
@@ -456,6 +460,8 @@ export function DiaryClient() {
                     </div>
                     <div className={styles.workoutsBlock}>
                       <WorkoutsCard
+                        userId={userId}
+                        messageApi={messageApi}
                         title={workoutLabels.title}
                         emptyLabel={workoutLabels.emptyLabel}
                         completeLabel={workoutLabels.completeLabel}

@@ -28,7 +28,25 @@ export const users = pgTable("users", {
   lastName: varchar("last_name", { length: 255 }),
   gender: varchar("gender", { length: 16 }).notNull().default("male"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  emailVerified: timestamp("email_verified"),
 });
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    id: serial("id").primaryKey(),
+    identifier: varchar("identifier", { length: 255 }).notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires").notNull(),
+    type: varchar("type", { length: 32 }).notNull(), // 'verify-email', 'reset-password'
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    verificationTokensIdentifierTokenIdx: uniqueIndex(
+      "verification_tokens_identifier_token_idx"
+    ).on(table.identifier, table.token),
+  })
+);
 
 export const registrationInvites = pgTable(
   "registration_invites",
@@ -280,10 +298,10 @@ export const workoutReportConditions = pgTable(
     workoutReportId: integer("workout_report_id")
       .notNull()
       .references(() => workoutReports.id),
-    weather: varchar("weather", { length: 16 }),
+    weather: varchar("weather", { length: 255 }),
     hasWind: boolean("has_wind"),
     temperatureC: numeric("temperature_c", { precision: 5, scale: 1 }),
-    surface: varchar("surface", { length: 16 }),
+    surface: varchar("surface", { length: 255 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -315,3 +333,46 @@ export const workoutReportShoes = pgTable(
     ),
   })
 );
+
+export const aliceAccounts = pgTable("alice_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(),
+  aliceUserId: text("alice_user_id").notNull().unique(),
+  linkedAt: timestamp("linked_at").notNull().defaultNow(),
+});
+
+export const aliceLinkCodes = pgTable(
+  "alice_link_codes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    code: varchar("code", { length: 16 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    aliceLinkCodesCodeIdx: uniqueIndex("alice_link_codes_code_idx").on(table.code),
+  })
+);
+
+export const diaryResultTemplates = pgTable("diary_result_templates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 64 }),
+  matchPattern: text("match_pattern"),
+  schema: jsonb("schema").notNull(),
+  outputTemplate: text("output_template").notNull(),
+  isInline: boolean("is_inline").notNull().default(false),
+  calculations: jsonb("calculations"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  type: varchar("type", { length: 32 }).notNull().default("common"),
+  level: varchar("level", { length: 32 }).notNull().default("general"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

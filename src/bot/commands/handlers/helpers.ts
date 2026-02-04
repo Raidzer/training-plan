@@ -1,4 +1,5 @@
 import {
+  ALICE_LINK_BUTTON_TEXT,
   CANCEL_LINK_BUTTON_TEXT,
   DATE_BUTTON_TEXT,
   HELP_BUTTON_TEXT,
@@ -45,6 +46,8 @@ export const getMenuActionByText = (text: string) => {
       return "help";
     case WEIGHT_BUTTON_TEXT:
       return "weight";
+    case ALICE_LINK_BUTTON_TEXT:
+      return "aliceLink";
     default:
       return null;
   }

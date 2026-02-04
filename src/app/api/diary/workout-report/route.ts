@@ -161,12 +161,20 @@ export async function POST(req: Request) {
   const overallScore = parseOptionalScore(body?.overallScore);
   const functionalScore = parseOptionalScore(body?.functionalScore);
   const muscleScore = parseOptionalScore(body?.muscleScore);
-  const surface = parseOptionalEnum(body?.surface, SURFACE_OPTIONS);
+  const surface = typeof body?.surface === "string" ? body.surface.trim() : null;
   const shoeIds = parseOptionalIdList(body?.shoeIds);
-  const isIndoorSurface = surface.value === "manezh" || surface.value === "treadmill";
+  const isIndoorSurface =
+    surface === "manezh" ||
+    surface === "treadmill" ||
+    surface === "Манеж" ||
+    surface === "Беговая дорожка";
+
   const weather = isIndoorSurface
-    ? { value: null, valid: true }
-    : parseOptionalEnum(body?.weather, WEATHER_OPTIONS);
+    ? null
+    : typeof body?.weather === "string"
+      ? body.weather.trim()
+      : null;
+
   const hasWind = isIndoorSurface
     ? { value: null, valid: true }
     : parseOptionalBoolean(body?.hasWind);
@@ -186,17 +194,18 @@ export async function POST(req: Request) {
   if (!trimmedResultText) {
     return NextResponse.json({ error: "invalid_result" }, { status: 400 });
   }
+  if (weather && weather.length > 255) {
+    return NextResponse.json({ error: "invalid_weather" }, { status: 400 });
+  }
+
+  if (surface && surface.length > 255) {
+    return NextResponse.json({ error: "invalid_surface" }, { status: 400 });
+  }
   if (!distanceKm.valid) {
     return NextResponse.json({ error: "invalid_distance" }, { status: 400 });
   }
-  if (!surface.valid) {
-    return NextResponse.json({ error: "invalid_surface" }, { status: 400 });
-  }
   if (!shoeIds.valid) {
     return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
-  }
-  if (!weather.valid) {
-    return NextResponse.json({ error: "invalid_weather" }, { status: 400 });
   }
   if (!hasWind.valid) {
     return NextResponse.json({ error: "invalid_wind" }, { status: 400 });
@@ -249,11 +258,11 @@ export async function POST(req: Request) {
   if (muscleScore.value !== undefined) {
     upsertParams.muscleScore = muscleScore.value;
   }
-  if (surface.value !== undefined) {
-    upsertParams.surface = surface.value;
+  if (surface !== null) {
+    upsertParams.surface = surface;
   }
-  if (weather.value !== undefined) {
-    upsertParams.weather = weather.value;
+  if (isIndoorSurface || body?.weather !== undefined) {
+    upsertParams.weather = weather;
   }
   if (hasWind.value !== undefined) {
     upsertParams.hasWind = hasWind.value;

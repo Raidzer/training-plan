@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          emailVerified: user.emailVerified,
         };
       },
     }),
@@ -51,12 +52,22 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.sub!;
         session.user.role = token.role;
+        session.user.emailVerified = token.emailVerified;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.emailVerified = user.emailVerified;
+      }
+
+      if (token.sub) {
+        const freshUser = await getUserById(Number(token.sub));
+        if (freshUser) {
+          token.emailVerified = freshUser.emailVerified;
+          token.role = freshUser.role;
+        }
       }
       return token;
     },
@@ -86,6 +97,7 @@ export const auth = async () => {
       ...session.user,
       id: String(user.id),
       role: user.role,
+      emailVerified: user.emailVerified,
     },
   };
 };

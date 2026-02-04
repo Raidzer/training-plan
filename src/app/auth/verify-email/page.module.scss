@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding: 20px 0;
+}
+
+.card {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.icon {
+  font-size: 48px;
+  color: #ff4d4f;
+  margin-bottom: 16px;
+}
+
+.textBlock {
+  display: block;
+  margin-bottom: 24px;
+}
+
+.spinContainer {
+  margin-top: 20px;
+}

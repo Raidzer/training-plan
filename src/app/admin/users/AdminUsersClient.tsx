@@ -7,6 +7,7 @@ import {
   LockOutlined,
   StopOutlined,
   UserSwitchOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import { App, Button, Card, Form, Input, Modal, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -343,6 +344,11 @@ export function AdminUsersClient({ users }: Props) {
         const statusIcon = isActive ? <StopOutlined /> : <CheckCircleOutlined />;
         return (
           <Space size="small" wrap>
+            <Link href={`/admin/users/${record.id}/records`}>
+              <Button size="small" icon={<TrophyOutlined />}>
+                Рекорды
+              </Button>
+            </Link>
             <Button
               size="small"
               icon={<UserSwitchOutlined />}
