@@ -15,7 +15,9 @@ export const UserProfile = () => {
     email: "",
     password: "",
     name: "",
+    lastName: "",
     gender: "",
+    timezone: "",
   });
 
   useEffect(() => {
@@ -33,7 +35,9 @@ export const UserProfile = () => {
           email: data.user.email,
           password: data.user.password,
           name: data.user.name,
+          lastName: data.user.lastName,
           gender: data.user.gender,
+          timezone: data.user.timezone,
         });
       } catch (error) {
         console.log(`Ошибка: ${error}`);

@@ -1,9 +1,9 @@
 import { BackButton } from "@/components/BackButton/BackButton";
-import { Button, Form, Input, Modal, Select, Steps, Typography } from "antd";
+import { Button, Form, Input, Modal, Select, Steps, Typography, message } from "antd";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./ProfileForm.module.scss";
-import bcrypt from "bcryptjs";
+import { GlobalOutlined } from "@ant-design/icons";
 
 export const ProfileForm = ({ userData }: any) => {
   const [form] = Form.useForm();
@@ -22,8 +22,10 @@ export const ProfileForm = ({ userData }: any) => {
   const [isChangeDataUser, setIsChangeDataUser] = useState(true);
   const [formValues, setFormValues] = useState({
     name: userData.name,
+    lastName: userData.lastName,
     gender: userData.gender,
     email: userData.email,
+    timezone: userData.timezone,
   });
   const steps = ["Текущий пароль", "Новый пароль"];
 
@@ -49,11 +51,6 @@ export const ProfileForm = ({ userData }: any) => {
     setConfirmPasswordError("");
     setPasswordsMatchError("");
     setNewPasswordError("");
-    // modalForm.setFields([
-    //   { name: "password", errors: [] },
-    //   { name: "newPassword", errors: [] },
-    //   { name: "confirmPassword", errors: [] },
-    // ]);
     modalForm.setFieldsValue({
       password: "",
       newPassword: "",
@@ -62,18 +59,22 @@ export const ProfileForm = ({ userData }: any) => {
     modalForm.resetFields();
   };
 
-  const handleFormValuesChange = (allValues: any) => {
+  const handleFormValuesChange = (changedValues: any, allValues: any) => {
+    console.log("📝 Измененные поля:", changedValues);
     setFormValues(allValues);
 
-    // Проверяем, изменились ли поля name или gender
     const isNameChanged = allValues.name !== userData.name;
+    const isLastNameChanged = allValues.lastName !== userData.lastName;
     const isGenderChanged = allValues.gender !== userData.gender;
+    const isTimezoneChange = allValues.timezone !== userData.timezone;
 
     if (allValues.name === "") {
       setIsChangeDataUser(true);
       return;
     }
-    setIsChangeDataUser(!(isNameChanged || isGenderChanged));
+    setIsChangeDataUser(
+      !(isNameChanged || isGenderChanged || isTimezoneChange || isLastNameChanged)
+    );
   };
 
   const isFormValid = () => {
@@ -90,33 +91,36 @@ export const ProfileForm = ({ userData }: any) => {
     form.setFieldsValue({
       email: userData.email,
       name: userData.name,
+      lastName: userData.lastName,
       gender: userData.gender,
     });
   }, [userData]);
 
+  const showMessage = (type: "success" | "error" | "info" | "warning", content: string) => {
+    message[type](content);
+  };
+
   const handleFinishModal = async () => {
     if (newPasswordValue !== confirmPasswordValue) {
       setPasswordsMatchError("Пароли не совпадают");
+      showMessage("error", "Пароли не совпадают");
       return;
     }
     try {
       const userDataFromApi = await changePassword();
       if (!userDataFromApi.success) {
         setNewPasswordError("Ошибка изменения пароля");
-        console.log("Ошибка изменения пароля");
+        showMessage("error", "Не удалось изменить пароль. Попробуйте еще раз.");
       } else {
-        console.log("Пароль изменен");
         setNewPasswordError("");
+        showMessage("success", "Пароль успешно изменен!");
       }
     } catch (error) {
       setNewPasswordError("Произошла ошибка при изменении пароля");
-      console.log(`Ошибка: ${error}`);
+      showMessage("error", "Произошла ошибка при изменении пароля");
     }
-
     setShowModal(false);
     setCurrentStep(0);
-    // setFormData1({});
-    // setFormData2({});
   };
 
   const handleNextForm = async () => {
@@ -124,14 +128,16 @@ export const ProfileForm = ({ userData }: any) => {
       const userDataFromApi = await checkPassword();
       if (!userDataFromApi.success) {
         setPasswordError("Неверный пароль");
+        showMessage("error", "Неверный пароль");
       } else {
         setFormData1(userDataFromApi);
         setCurrentStep(currentStep + 1);
         setPasswordError("");
+        showMessage("success", "Пароль подтвержден");
       }
     } catch (error) {
       setPasswordError("Произошла ошибка при проверке пароля");
-      console.log(`Ошибка: ${error}`);
+      showMessage("error", "Произошла ошибка при проверке пароля");
     }
   };
 
@@ -151,7 +157,7 @@ export const ProfileForm = ({ userData }: any) => {
   };
 
   const changePassword = async () => {
-    const response = await fetch("/api/changePassword", {
+    const response = await fetch("/api/setUserPassword", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -164,6 +170,34 @@ export const ProfileForm = ({ userData }: any) => {
     });
     const data = await response.json();
     return data;
+  };
+
+  const changeDataUser = async () => {
+    try {
+      const response = await fetch("/api/setDataUser", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: userData.id,
+          name: formValues.name,
+          lastName: formValues.lastName,
+          gender: formValues.gender,
+          timezone: formValues.timezone,
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setIsChangeDataUser(true);
+        showMessage("success", "Данные профиля обновлены!");
+      } else {
+        showMessage("error", data.message || "Не удалось обновить данные профиля");
+      }
+      return data;
+    } catch (error) {
+      showMessage("error", "Произошла ошибка при обновлении данных");
+    }
   };
 
   const footerModalPassword = () => {
@@ -281,6 +315,41 @@ export const ProfileForm = ({ userData }: any) => {
     }
   };
 
+  const timezoneOptions = useMemo(() => {
+    try {
+      const timeZones = Intl.supportedValuesOf("timeZone");
+      const formatter = new Intl.DateTimeFormat("ru-RU", {
+        timeZoneName: "longOffset",
+        hour12: false,
+      });
+
+      return timeZones.map((tz) => {
+        try {
+          const parts = formatter.formatToParts(new Date());
+          const offsetPart = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+
+          const date = new Date();
+          const gmt =
+            new Intl.DateTimeFormat("en-US", {
+              timeZone: tz,
+              timeZoneName: "longOffset",
+            })
+              .formatToParts(date)
+              .find((p) => p.type === "timeZoneName")?.value ?? "";
+
+          return { value: tz, label: `${tz} (${gmt})` };
+        } catch {
+          return { value: tz, label: tz };
+        }
+      });
+    } catch {
+      return [
+        { value: "Europe/Moscow", label: "Europe/Moscow (GMT+3)" },
+        { value: "UTC", label: "UTC (GMT+0)" },
+      ];
+    }
+  }, []);
+
   return (
     <>
       <div className={styles.title}>
@@ -294,7 +363,9 @@ export const ProfileForm = ({ userData }: any) => {
         initialValues={{
           Email: userData.email,
           name: userData.name,
+          lastName: userData.lastName,
           gender: userData.gender,
+          timezone: userData.timezone,
         }}
         size="large"
         className={styles.form}
@@ -307,13 +378,21 @@ export const ProfileForm = ({ userData }: any) => {
         <Form.Item label="Имя" name="name">
           <Input />
         </Form.Item>
+        <Form.Item label="Фамилия" name="lastName">
+          <Input />
+        </Form.Item>
         <Form.Item label="Пол" name="gender">
           <Select>
             <Select.Option value="male">Мужской</Select.Option>
             <Select.Option value="female">Женский</Select.Option>
           </Select>
         </Form.Item>
-        <Button disabled={isChangeDataUser}>Сохранить</Button>
+        <Form.Item label="Часовой пояс" name="timezone">
+          <Select showSearch suffixIcon={<GlobalOutlined />} options={timezoneOptions}></Select>
+        </Form.Item>
+        <Button disabled={isChangeDataUser} onClick={() => changeDataUser()}>
+          Сохранить
+        </Button>
         <Button onClick={showModalPassword}>Изменить пароль</Button>
       </Form>
       <Modal

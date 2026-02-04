@@ -18,9 +18,11 @@ export async function GET() {
         id: users.id,
         email: users.email,
         name: users.name,
+        lastName: users.lastName,
         role: users.role,
         password: users.passwordHash,
         gender: users.gender,
+        timezone: users.timezone,
         // Добавьте другие поля, если есть
         // createdAt: users.createdAt,
         // updatedAt: users.updatedAt,
