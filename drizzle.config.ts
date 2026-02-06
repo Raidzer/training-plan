@@ -23,7 +23,7 @@ const getDbCredentials = () => {
   return { host, port, user, password, database } as const;
 };
 export default {
-  schema: "./src/db/schema.ts",
+  schema: "./src/server/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: getDbCredentials(),

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { and, eq, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { planEntries, shoes } from "@/db/schema";
-import { isValidDateString } from "@/lib/diary";
-import { upsertWorkoutReport } from "@/lib/workoutReports";
+import { isValidDateString } from "@/server/diary";
+import {
+  areShoesOwnedByUser,
+  getPlanEntrySummaryForUser,
+  upsertWorkoutReport,
+} from "@/server/workoutReports";
 
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
@@ -217,10 +218,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_score" }, { status: 400 });
   }
 
-  const [entry] = await db
-    .select({ id: planEntries.id, date: planEntries.date })
-    .from(planEntries)
-    .where(and(eq(planEntries.id, planEntryId), eq(planEntries.userId, userId)));
+  const entry = await getPlanEntrySummaryForUser({ userId, planEntryId });
   if (!entry) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
@@ -229,11 +227,8 @@ export async function POST(req: Request) {
   }
 
   if (shoeIds.value !== undefined && shoeIds.value.length > 0) {
-    const allowed = await db
-      .select({ id: shoes.id })
-      .from(shoes)
-      .where(and(eq(shoes.userId, userId), inArray(shoes.id, shoeIds.value)));
-    if (allowed.length !== shoeIds.value.length) {
+    const allowed = await areShoesOwnedByUser({ userId, shoeIds: shoeIds.value });
+    if (!allowed) {
       return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
     }
   }

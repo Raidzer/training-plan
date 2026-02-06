@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
-import { isValidDateString } from "@/lib/diary";
+import { isValidDateString } from "@/server/diary";
 import {
   MAX_PROTOCOL_URL_LENGTH,
   MAX_RACE_CITY_LENGTH,
@@ -11,12 +9,13 @@ import {
   PERSONAL_RECORD_DISTANCES,
   PERSONAL_RECORD_TIME_REGEX,
   type PersonalRecordDistanceKey,
-} from "@/lib/personalRecords.constants";
+} from "@/shared/constants/personalRecords.constants";
 import {
   getPersonalRecords,
   upsertPersonalRecords,
   type PersonalRecordInput,
-} from "@/lib/personalRecords";
+} from "@/server/personalRecords";
+import { getUserById } from "@/server/services/users";
 
 type PersonalRecordPayload = {
   distanceKey?: string;
@@ -70,7 +69,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ userId:
     return NextResponse.json({ error: "invalid_user_id" }, { status: 400 });
   }
 
-  const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId));
+  const existingUser = await getUserById(userId);
   if (!existingUser) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }

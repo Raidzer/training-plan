@@ -1,5 +1,5 @@
-import { db } from "@/db/client";
-import { aliceAccounts, aliceLinkCodes, users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { aliceAccounts, aliceLinkCodes, users } from "@/server/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { addMinutes } from "date-fns";
 
@@ -62,8 +62,7 @@ export function parseWeightCommand(
 ): { weight: number; period: "morning" | "evening" } | null {
   const lowerText = text.toLowerCase();
 
-  // Определение периода
-  let period: "morning" | "evening" = "morning"; // default
+  let period: "morning" | "evening" = "morning";
   if (lowerText.includes("вечер") || lowerText.includes("вечером")) {
     period = "evening";
   }

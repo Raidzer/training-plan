@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import { Modal, Select, Form, Input, Button, Typography, Space, Divider, Spin } from "antd";
 import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
-import type { DiaryResultTemplate } from "@/app/actions/diaryTemplates";
+import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
 import { findMatchingTemplate, getTemplates } from "@/app/actions/diaryTemplates";
-import { processTemplate } from "@/utils/templateEngine";
+import { processTemplate } from "@/shared/utils/templateEngine";
 import styles from "./TemplateConstructorModal.module.scss";
 
 const { Text } = Typography;

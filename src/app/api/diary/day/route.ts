@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getDiaryDayData, isValidDateString } from "@/lib/diary";
+import { getDiaryDayData, isValidDateString } from "@/server/diary";
 
 export async function GET(req: Request) {
   const session = await auth();

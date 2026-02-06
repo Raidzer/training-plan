@@ -1,7 +1,7 @@
-﻿import { and, asc, eq, gt, isNull } from "drizzle-orm";
-import { db } from "@/db/client";
-import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/db/schema";
-import { hashTelegramLinkCode } from "@/lib/telegramLink";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
+import { db } from "@/server/db/client";
+import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/server/db/schema";
+import { hashTelegramLinkCode } from "@/server/telegramLink";
 
 export type LinkAccountResult =
   | { ok: true }

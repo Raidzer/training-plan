@@ -1,4 +1,4 @@
-import { TimeInput } from "@/app/profile/records/TimeInput";
+import { TimeInput } from "@/components/inputs/TimeInput";
 import styles from "../pace-calculator.module.scss";
 
 type ResultSectionProps = {

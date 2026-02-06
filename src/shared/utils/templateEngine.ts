@@ -1,4 +1,4 @@
-import type { DiaryResultTemplate } from "@/app/actions/diaryTemplates";
+import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
 
 type BlockValues = Record<string, any>;
 
