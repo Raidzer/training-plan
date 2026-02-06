@@ -393,17 +393,13 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     }
 
     const totalSeconds = timeToSeconds(String(tRaw));
-    let dist = parseFloat(
+    const dist = parseFloat(
       String(dRaw)
         .replace(",", ".")
         .replace(/[^\d.]/g, "")
     );
 
     if (!dist || dist <= 0) return "";
-
-    if (dist >= 50) {
-      dist = dist / 1000;
-    }
 
     const secondsPerKm = totalSeconds / dist;
     return secondsToTime(secondsPerKm);
@@ -455,17 +451,13 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     };
 
     const height = parseNum(hRaw);
-    let dist = parseNum(dRaw);
+    const dist = parseNum(dRaw);
 
     if (isNaN(height)) {
       return "";
     }
     if (!dist || dist <= 0) {
       return "";
-    }
-
-    if (dist >= 50) {
-      dist = dist / 1000;
     }
 
     const avgHeight = height / dist;
