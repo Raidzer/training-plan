@@ -117,5 +117,18 @@ describe("templateMatching", () => {
       expect(matchTemplates([t1], "14x400 м-с.к")).toHaveLength(1);
       expect(matchTemplates([t1], "8x400 м-с.к")).toHaveLength(0);
     });
+    it("keeps following matches after wildcard template", () => {
+      const t1 = createTemplate(1, "15x400(*:*)");
+      const t2 = createTemplate(2, "2x400(150+250)");
+      const t3 = createTemplate(3, "#km(*:*-*:*)");
+
+      const text = "15x400(1:24)+2x400(150+250)+2km(4:05-4:10)";
+      const result = matchTemplates([t1, t2, t3], text);
+
+      expect(result).toHaveLength(3);
+      expect(result[0].id).toBe(1);
+      expect(result[1].id).toBe(2);
+      expect(result[2].id).toBe(3);
+    });
   });
 });

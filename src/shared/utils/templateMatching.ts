@@ -52,7 +52,7 @@ export function matchTemplates<T extends TemplateWithPattern>(
         );
 
         smartPattern = smartPattern.replace(/\\#/g, "\\d+");
-        smartPattern = smartPattern.replace(/\\\*/g, ".*");
+        smartPattern = smartPattern.replace(/\\\*/g, ".*?");
 
         if (isAnchored) {
           smartPattern = "^" + smartPattern;
