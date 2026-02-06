@@ -117,7 +117,7 @@ describe("templateMatching", () => {
       expect(matchTemplates([t1], "14x400 м-с.к")).toHaveLength(1);
       expect(matchTemplates([t1], "8x400 м-с.к")).toHaveLength(0);
     });
-    it("keeps following matches after wildcard template", () => {
+    it("должен сохранять последующие совпадения после шаблона с подстановкой *", () => {
       const t1 = createTemplate(1, "15x400(*:*)");
       const t2 = createTemplate(2, "2x400(150+250)");
       const t3 = createTemplate(3, "#km(*:*-*:*)");
@@ -129,6 +129,46 @@ describe("templateMatching", () => {
       expect(result[0].id).toBe(1);
       expect(result[1].id).toBe(2);
       expect(result[2].id).toBe(3);
+    });
+
+    it("должен матчить по второму паттерну, если первый в списке через ; не подошел", () => {
+      const t1 = createTemplate(1, "foo bar;hello # km");
+      const result = matchTemplates([t1], "warmup hello 5 km cool down");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it("не должен ломать подбор, когда у одного шаблона невалидный raw regex", () => {
+      const broken = createTemplate(1, "(");
+      const valid = createTemplate(2, "hello");
+      const result = matchTemplates([broken, valid], "say hello");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(2);
+    });
+
+    it("должен нормализовать пробелы в smart паттерне", () => {
+      const t1 = createTemplate(1, "Run    #   km");
+      const result = matchTemplates([t1], "Run 10 km");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it("должен дедуплицировать совпадение одного шаблона из smart и raw веток", () => {
+      const t1 = createTemplate(1, "Run # km;Run 10 km");
+      const result = matchTemplates([t1], "Run 10 km");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it("должен привязывать якорь ^ только к началу всей строки", () => {
+      const t1 = createTemplate(1, "^World");
+      const result = matchTemplates([t1], "Hello\nWorld");
+
+      expect(result).toHaveLength(0);
     });
   });
 });

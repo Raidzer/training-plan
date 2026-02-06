@@ -269,5 +269,51 @@ describe("templateEngine", () => {
         expect(result).toBe("Height: 10");
       });
     });
+
+    describe("Дополнительное покрытие", () => {
+      it("должен обрабатывать дробную дистанцию в км с запятой для PACE", () => {
+        const template = createTemplate("Pace: {{PACE(time, dist)}}");
+        const values = { time: "10:00", dist: "2,5" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 4:00");
+      });
+
+      it("должен обрабатывать дистанцию с суффиксом единицы в PACE", () => {
+        const template = createTemplate("Pace: {{PACE(time, dist)}}");
+        const values = { time: "45:00", dist: "10km" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 4:30");
+      });
+
+      it("должен возвращать пустой темп, когда отсутствуют dist и вес", () => {
+        const template = createTemplate("Pace: {{PACE(time)}}", [{ key: "time", type: "time" }]);
+        const values = { time: "10:00" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: ");
+      });
+
+      it("должен возвращать пустой AVG_HEIGHT для нечисловой высоты", () => {
+        const template = createTemplate("Avg: {{AVG_HEIGHT(height, dist)}}");
+        const values = { height: "abc", dist: "10" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Avg: ");
+      });
+
+      it("должен возвращать пустой AVG_HEIGHT для нулевой дистанции", () => {
+        const template = createTemplate("Avg: {{AVG_HEIGHT(height, dist)}}");
+        const values = { height: "100", dist: "0" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Avg: ");
+      });
+
+      it("должен разбивать значение списка по точкам с запятой и переводам строк", () => {
+        const template = createTemplate("{{#each items}}[{{this}}]{{/each}}", [
+          { key: "items", type: "list" },
+        ]);
+        const values = { items: "A; B\nC;\nD" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("[A][B][C][D]");
+      });
+    });
   });
 });
