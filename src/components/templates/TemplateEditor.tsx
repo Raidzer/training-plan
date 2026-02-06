@@ -30,6 +30,7 @@ export type TemplateField = {
   key: string;
   label: string;
   type: "text" | "number" | "time" | "list";
+  defaultValue?: string | number;
   listSize?: number;
   itemType?: "text" | "number" | "time";
 };
@@ -172,6 +173,16 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   >
                     <InputNumber placeholder="Км" min={0} step={0.1} style={{ width: "100%" }} />
                   </Form.Item>
+
+                  <Form.Item
+                    {...restField}
+                    name={[name, "defaultValue"]}
+                    style={{ width: 170, marginBottom: 0 }}
+                    tooltip="Необязательное значение по умолчанию. Для списка используйте разделитель ';'."
+                  >
+                    <Input placeholder="Значение по умолчанию" style={{ width: "100%" }} />
+                  </Form.Item>
+
                   <Form.Item
                     noStyle
                     shouldUpdate={(prev, curr) =>
