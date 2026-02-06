@@ -28,6 +28,107 @@ type Block = {
   repeatCount?: number;
 };
 
+type TemplateSchemaField = {
+  key: string;
+  label?: string;
+  type: "text" | "number" | "time" | "list";
+  itemType?: "text" | "number" | "time";
+  listSize?: number;
+  defaultValue?: string | number | null;
+};
+
+function parseListDefaultValue(defaultValue: unknown): string[] {
+  if (Array.isArray(defaultValue)) {
+    return defaultValue.map((item) => String(item).trim()).filter((item) => item.length > 0);
+  }
+
+  if (defaultValue === undefined || defaultValue === null) {
+    return [];
+  }
+
+  const raw = String(defaultValue).trim();
+  if (!raw) {
+    return [];
+  }
+
+  return raw
+    .split(/[;\n]+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function parseNumberDefaultValue(defaultValue: unknown): number | undefined {
+  if (defaultValue === undefined || defaultValue === null || defaultValue === "") {
+    return undefined;
+  }
+
+  if (typeof defaultValue === "number") {
+    if (Number.isNaN(defaultValue)) {
+      return undefined;
+    }
+    return defaultValue;
+  }
+
+  const parsed = Number(String(defaultValue).replace(",", "."));
+  if (Number.isNaN(parsed)) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+function normalizeFieldDefaultValue(field: TemplateSchemaField): any {
+  if (field.type === "list") {
+    const listValue = parseListDefaultValue(field.defaultValue);
+    if (field.listSize && field.listSize > 0) {
+      return listValue.slice(0, field.listSize);
+    }
+    return listValue;
+  }
+
+  if (field.type === "number") {
+    return parseNumberDefaultValue(field.defaultValue);
+  }
+
+  if (field.defaultValue === undefined || field.defaultValue === null) {
+    return undefined;
+  }
+
+  return String(field.defaultValue);
+}
+
+function buildDefaultValuesFromSchema(schema: TemplateSchemaField[]): Record<string, any> {
+  const defaultValues: Record<string, any> = {};
+
+  schema.forEach((field) => {
+    const defaultValue = normalizeFieldDefaultValue(field);
+    if (defaultValue === undefined) {
+      return;
+    }
+
+    if (Array.isArray(defaultValue) && defaultValue.length === 0) {
+      return;
+    }
+
+    defaultValues[field.key] = defaultValue;
+  });
+
+  return defaultValues;
+}
+
+function buildFormValuesForBlock(
+  blockId: string,
+  blockValues: Record<string, any>
+): Record<string, any> {
+  const formValues: Record<string, any> = {};
+
+  Object.entries(blockValues).forEach(([fieldKey, value]) => {
+    formValues[`${blockId}_${fieldKey}`] = value;
+  });
+
+  return formValues;
+}
+
 const TimeInput = ({ value, onChange, ...props }: any) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -90,9 +191,21 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
             const newBlocks = matches.map((t) => ({
               id: Math.random().toString(36).substr(2, 9),
               templateId: t.id,
-              values: {},
+              values: buildDefaultValuesFromSchema((t.schema as TemplateSchemaField[]) || []),
             }));
             setBlocks(newBlocks);
+
+            const defaultFormValues = newBlocks.reduce(
+              (acc, block) => ({
+                ...acc,
+                ...buildFormValuesForBlock(block.id, block.values),
+              }),
+              {} as Record<string, any>
+            );
+            if (Object.keys(defaultFormValues).length > 0) {
+              form.setFieldsValue(defaultFormValues);
+            }
+
             messageApi.success(`Найдено подходящих шаблонов: ${matches.length}`);
           } else {
             setBlocks([]);
@@ -107,14 +220,24 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   }, [visible, userId, taskText, messageApi, form]);
 
   const addBlock = (templateId: number) => {
+    const blockId = Math.random().toString(36).substr(2, 9);
+    const template = templates.find((item) => item.id === templateId);
+    const schema = (template?.schema as TemplateSchemaField[]) || [];
+    const defaultValues = buildDefaultValuesFromSchema(schema);
+
     setBlocks((prev) => [
       ...prev,
       {
-        id: Math.random().toString(36).substr(2, 9),
+        id: blockId,
         templateId,
-        values: {},
+        values: defaultValues,
       },
     ]);
+
+    const formValues = buildFormValuesForBlock(blockId, defaultValues);
+    if (Object.keys(formValues).length > 0) {
+      form.setFieldsValue(formValues);
+    }
   };
 
   const removeBlock = (blockId: string) => {
@@ -141,6 +264,10 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
   const changeBlockTemplate = (index: number, templateId: number) => {
     const blockId = blocks[index].id;
+    const template = templates.find((item) => item.id === templateId);
+    const schema = (template?.schema as TemplateSchemaField[]) || [];
+    const defaultValues = buildDefaultValuesFromSchema(schema);
+
     const currentValues = form.getFieldsValue();
     const keysToReset = Object.keys(currentValues).filter((key) => key.startsWith(`${blockId}_`));
 
@@ -160,10 +287,15 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
       newBlocks[index] = {
         ...newBlocks[index],
         templateId,
-        values: {},
+        values: defaultValues,
       };
       return newBlocks;
     });
+
+    const formValues = buildFormValuesForBlock(blockId, defaultValues);
+    if (Object.keys(formValues).length > 0) {
+      form.setFieldsValue(formValues);
+    }
   };
 
   const handleApply = () => {
@@ -193,28 +325,23 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           return parts.join(":");
         };
 
-        const schema = (template.schema as any[]) || [];
+        const schema = (template.schema as TemplateSchemaField[]) || [];
 
-        Object.keys(allValues).forEach((key) => {
-          if (key.startsWith(`${block.id}_`)) {
-            const fieldKey = key.replace(`${block.id}_`, "");
-            let val = allValues[key];
+        schema.forEach((field) => {
+          const formFieldKey = `${block.id}_${field.key}`;
+          let val = allValues[formFieldKey];
 
-            const field = schema.find((f) => f.key === fieldKey);
-            if (field) {
-              const isTime =
-                field.type === "time" || (field.type === "list" && field.itemType === "time");
-              if (isTime) {
-                if (Array.isArray(val)) {
-                  val = val.map(normalizeTime);
-                } else {
-                  val = normalizeTime(val);
-                }
-              }
+          const isTime =
+            field.type === "time" || (field.type === "list" && field.itemType === "time");
+          if (isTime) {
+            if (Array.isArray(val)) {
+              val = val.map(normalizeTime);
+            } else {
+              val = normalizeTime(val);
             }
-
-            formValues[fieldKey] = val;
           }
+
+          formValues[field.key] = val;
         });
 
         const result = processTemplate(template, formValues);
@@ -304,7 +431,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           <div className={styles.modalContent}>
             {blocks.map((block, index) => {
               const template = templates.find((t) => t.id === block.templateId);
-              const schema = (template?.schema as any[]) || [];
+              const schema = (template?.schema as TemplateSchemaField[]) || [];
 
               return (
                 <div key={block.id} className={styles.blockContainer}>
@@ -347,7 +474,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                     </Space>
                   </div>
 
-                  {schema.map((field: any) => {
+                  {schema.map((field) => {
                     const itemType = field.itemType || "text";
 
                     const renderTypedInput = (props: any) => {
