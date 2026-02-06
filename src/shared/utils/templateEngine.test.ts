@@ -210,6 +210,27 @@ describe("templateEngine", () => {
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 5:00");
       });
+
+      it("должен поддерживать вложенный вызов функции в PACE без внутренних {{}}", () => {
+        const template = createTemplate("Pace: {{PACE(SUM_TIME(t1, t2, t3), 10.5)}}");
+        const values = { t1: "10:00", t2: "20:00", t3: "22:30" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
+      });
+
+      it("должен поддерживать вложенный вызов функции в PACE с внутренними {{}}", () => {
+        const template = createTemplate("Pace: {{PACE({{SUM_TIME(t1, t2, t3)}}, 10.5)}}");
+        const values = { t1: "10:00", t2: "20:00", t3: "22:30" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
+      });
+
+      it("должен трактовать большое числовое расстояние как метры во вложенном PACE", () => {
+        const template = createTemplate("Pace: {{PACE({{SUM_TIME(t1, t2, t3)}}, 10500)}}");
+        const values = { t1: "10:00", t2: "20:00", t3: "22:30" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
+      });
     });
 
     describe("Расчет AVG_HEIGHT", () => {
@@ -283,6 +304,13 @@ describe("templateEngine", () => {
         const values = { time: "45:00", dist: "10km" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 4:30");
+      });
+
+      it("должен поддерживать суффикс метров в аргументе дистанции PACE", () => {
+        const template = createTemplate("Pace: {{PACE(time, dist)}}");
+        const values = { time: "52:30", dist: "10500m" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
       });
 
       it("должен возвращать пустой темп, когда отсутствуют dist и вес", () => {

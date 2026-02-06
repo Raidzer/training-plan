@@ -96,6 +96,35 @@ type ASTNode =
   | { type: "VAR"; name: string }
   | { type: "BLOCK"; tagType: "each" | "repeat" | "if"; arg: string; children: ASTNode[] };
 
+type IndexState = { index: number; total: number } | null;
+
+function findTagCloseIndex(template: string, startIndex: number): number {
+  let depth = 0;
+  let cursor = startIndex;
+
+  while (cursor < template.length - 1) {
+    const pair = template.slice(cursor, cursor + 2);
+    if (pair === "{{") {
+      depth += 1;
+      cursor += 2;
+      continue;
+    }
+
+    if (pair === "}}") {
+      depth -= 1;
+      if (depth === 0) {
+        return cursor;
+      }
+      cursor += 2;
+      continue;
+    }
+
+    cursor += 1;
+  }
+
+  return -1;
+}
+
 function betterTokenize(template: string): Token[] {
   const tokens: Token[] = [];
   let cursor = 0;
@@ -111,7 +140,7 @@ function betterTokenize(template: string): Token[] {
       tokens.push({ type: "TEXT", value: template.substring(cursor, openIndex) });
     }
 
-    const closeIndex = template.indexOf("}}", openIndex);
+    const closeIndex = findTagCloseIndex(template, openIndex);
     if (closeIndex === -1) {
       tokens.push({ type: "TEXT", value: template.substring(openIndex) });
       break;
@@ -187,11 +216,436 @@ function parse(tokens: Token[]): ASTNode {
   return root;
 }
 
+function unwrapMustacheExpression(expression: string): string {
+  let result = expression.trim();
+  while (result.startsWith("{{") && result.endsWith("}}")) {
+    result = result.slice(2, -2).trim();
+  }
+  return result;
+}
+
+function getContextValueByKey(key: string, context: any, globalContext: any): any {
+  if (!key) {
+    return undefined;
+  }
+
+  const contextValue = context?.[key];
+  if (contextValue !== undefined) {
+    return contextValue;
+  }
+
+  return globalContext[key];
+}
+
+function splitFunctionArgs(argsString: string): string[] {
+  if (!argsString.trim()) {
+    return [];
+  }
+
+  const args: string[] = [];
+  let currentArg = "";
+  let parenDepth = 0;
+  let mustacheDepth = 0;
+  let cursor = 0;
+
+  while (cursor < argsString.length) {
+    const pair = argsString.slice(cursor, cursor + 2);
+    if (pair === "{{") {
+      mustacheDepth += 1;
+      currentArg += pair;
+      cursor += 2;
+      continue;
+    }
+
+    if (pair === "}}") {
+      if (mustacheDepth > 0) {
+        mustacheDepth -= 1;
+      }
+      currentArg += pair;
+      cursor += 2;
+      continue;
+    }
+
+    const char = argsString[cursor];
+    if (char === "(") {
+      parenDepth += 1;
+      currentArg += char;
+      cursor += 1;
+      continue;
+    }
+
+    if (char === ")") {
+      if (parenDepth > 0) {
+        parenDepth -= 1;
+      }
+      currentArg += char;
+      cursor += 1;
+      continue;
+    }
+
+    if (char === "," && parenDepth === 0 && mustacheDepth === 0) {
+      args.push(currentArg.trim());
+      currentArg = "";
+      cursor += 1;
+      continue;
+    }
+
+    currentArg += char;
+    cursor += 1;
+  }
+
+  const trimmedArg = currentArg.trim();
+  if (trimmedArg) {
+    args.push(trimmedArg);
+  }
+
+  return args;
+}
+
+type ParsedFunctionCall = {
+  name: string;
+  args: string[];
+};
+
+function parseFunctionCall(expression: string): ParsedFunctionCall | null {
+  const normalizedExpression = unwrapMustacheExpression(expression);
+  if (!normalizedExpression.endsWith(")")) {
+    return null;
+  }
+
+  const openParenIndex = normalizedExpression.indexOf("(");
+  if (openParenIndex <= 0) {
+    return null;
+  }
+
+  const functionName = normalizedExpression.slice(0, openParenIndex).trim();
+  if (!/^[A-Z_]+$/.test(functionName)) {
+    return null;
+  }
+
+  const argsString = normalizedExpression.slice(openParenIndex + 1, -1);
+  return {
+    name: functionName,
+    args: splitFunctionArgs(argsString),
+  };
+}
+
+function parseNumericValue(value: any): number | null {
+  if (typeof value === "number") {
+    if (Number.isNaN(value)) {
+      return null;
+    }
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsedValue = parseFloat(value.replace(",", "."));
+    if (Number.isNaN(parsedValue)) {
+      return null;
+    }
+    return parsedValue;
+  }
+
+  return null;
+}
+
+function parseDistanceValue(value: any): number {
+  if (value === undefined || value === null) {
+    return Number.NaN;
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  const rawValue = String(value).trim().toLowerCase();
+  if (!rawValue) {
+    return Number.NaN;
+  }
+
+  const numericValue = parseFloat(rawValue.replace(",", ".").replace(/[^\d.]/g, ""));
+
+  if (Number.isNaN(numericValue)) {
+    return Number.NaN;
+  }
+
+  const hasKilometers = rawValue.includes("km") || rawValue.includes("км");
+  const hasMeters = rawValue.includes("m") || rawValue.includes("м");
+  if (hasMeters && !hasKilometers) {
+    return numericValue / 1000;
+  }
+
+  if (!hasMeters && !hasKilometers && numericValue >= 1000) {
+    return numericValue / 1000;
+  }
+
+  return numericValue;
+}
+
+function evaluateExpression(
+  expression: string,
+  context: any,
+  globalContext: any,
+  indexState: IndexState,
+  fallbackToLiteral: boolean
+): any {
+  const normalizedExpression = unwrapMustacheExpression(expression);
+  if (!normalizedExpression) {
+    return undefined;
+  }
+
+  if (normalizedExpression === "this") {
+    return context;
+  }
+
+  if (normalizedExpression === "@index") {
+    if (!indexState) {
+      return 0;
+    }
+    return indexState.index;
+  }
+
+  if (normalizedExpression === "@total") {
+    if (!indexState) {
+      return 0;
+    }
+    return indexState.total;
+  }
+
+  const functionCall = parseFunctionCall(normalizedExpression);
+  if (functionCall) {
+    return evaluateFunctionCall(functionCall, context, globalContext, indexState);
+  }
+
+  const indexedByIterationMatch = normalizedExpression.match(/^([a-zA-Z0-9_]+)\[i\]$/);
+  if (indexedByIterationMatch) {
+    const listKey = indexedByIterationMatch[1];
+    const listValue = getContextValueByKey(listKey, context, globalContext);
+    if (Array.isArray(listValue) && indexState) {
+      return listValue[indexState.index];
+    }
+    return "";
+  }
+
+  const indexedByNumberMatch = normalizedExpression.match(/^([a-zA-Z0-9_]+)\[(\d+)\]$/);
+  if (indexedByNumberMatch) {
+    const listKey = indexedByNumberMatch[1];
+    const itemIndex = parseInt(indexedByNumberMatch[2], 10);
+    const listValue = getContextValueByKey(listKey, context, globalContext);
+    if (Array.isArray(listValue)) {
+      return listValue[itemIndex - 1];
+    }
+    return "";
+  }
+
+  const contextValue = getContextValueByKey(normalizedExpression, context, globalContext);
+  if (contextValue !== undefined) {
+    return contextValue;
+  }
+
+  if (fallbackToLiteral) {
+    return normalizedExpression;
+  }
+
+  return undefined;
+}
+
+function collectTimeValuesFromArgs(
+  args: string[],
+  context: any,
+  globalContext: any,
+  indexState: IndexState
+): string[] {
+  const collectedValues: string[] = [];
+
+  args.forEach((arg) => {
+    const resolvedValue = evaluateExpression(arg, context, globalContext, indexState, true);
+
+    if (Array.isArray(resolvedValue)) {
+      resolvedValue.forEach((item) => {
+        if (item === undefined || item === null) {
+          return;
+        }
+
+        const normalizedItem = String(item).trim();
+        if (!normalizedItem) {
+          return;
+        }
+
+        collectedValues.push(normalizedItem);
+      });
+      return;
+    }
+
+    if (resolvedValue === undefined || resolvedValue === null) {
+      return;
+    }
+
+    const normalizedValue = String(resolvedValue).trim();
+    if (!normalizedValue) {
+      return;
+    }
+
+    collectedValues.push(normalizedValue);
+  });
+
+  return collectedValues;
+}
+
+function collectNumericValuesFromArgs(
+  args: string[],
+  context: any,
+  globalContext: any,
+  indexState: IndexState
+): number[] {
+  const collectedValues: number[] = [];
+
+  args.forEach((arg) => {
+    const resolvedValue = evaluateExpression(arg, context, globalContext, indexState, true);
+
+    if (Array.isArray(resolvedValue)) {
+      resolvedValue.forEach((item) => {
+        const numericValue = parseNumericValue(item);
+        if (numericValue === null) {
+          return;
+        }
+        collectedValues.push(numericValue);
+      });
+      return;
+    }
+
+    const numericValue = parseNumericValue(resolvedValue);
+    if (numericValue === null) {
+      return;
+    }
+    collectedValues.push(numericValue);
+  });
+
+  return collectedValues;
+}
+
+function evaluateFunctionCall(
+  functionCall: ParsedFunctionCall,
+  context: any,
+  globalContext: any,
+  indexState: IndexState
+): string {
+  const { name, args } = functionCall;
+
+  if (name === "AVG_TIME") {
+    const valuesList = collectTimeValuesFromArgs(args, context, globalContext, indexState);
+    return calculateAverage(valuesList);
+  }
+
+  if (name === "SUM_TIME") {
+    const valuesList = collectTimeValuesFromArgs(args, context, globalContext, indexState);
+    return calculateSum(valuesList);
+  }
+
+  if (name === "AVG_NUM") {
+    const numericValues = collectNumericValuesFromArgs(args, context, globalContext, indexState);
+    if (numericValues.length === 0) {
+      return "";
+    }
+
+    const sum = numericValues.reduce((accumulator, value) => accumulator + value, 0);
+    const avg = sum / numericValues.length;
+    return (Math.round(avg * 10) / 10).toString();
+  }
+
+  if (name === "SUM_NUM") {
+    const numericValues = collectNumericValuesFromArgs(args, context, globalContext, indexState);
+    if (numericValues.length === 0) {
+      return "";
+    }
+
+    const sum = numericValues.reduce((accumulator, value) => accumulator + value, 0);
+    return sum.toString();
+  }
+
+  if (name === "PACE") {
+    if (args.length === 0) {
+      return "";
+    }
+
+    const timeArgExpression = args[0];
+    const timeValue = evaluateExpression(
+      timeArgExpression,
+      context,
+      globalContext,
+      indexState,
+      true
+    );
+
+    let distanceValue: any;
+    if (args.length > 1) {
+      distanceValue = evaluateExpression(args[1], context, globalContext, indexState, true);
+    } else {
+      const timeArgKey = unwrapMustacheExpression(timeArgExpression);
+      const directTimeValue = getContextValueByKey(timeArgKey, context, globalContext);
+      if (directTimeValue !== undefined) {
+        distanceValue = getContextValueByKey(`${timeArgKey}_weight`, context, globalContext);
+      }
+    }
+
+    const totalSeconds = timeToSeconds(String(timeValue ?? ""));
+    const distance = parseDistanceValue(distanceValue);
+    if (!distance || distance <= 0) {
+      return "";
+    }
+
+    const secondsPerKm = totalSeconds / distance;
+    return secondsToTime(secondsPerKm);
+  }
+
+  if (name === "AVG_HEIGHT") {
+    if (args.length === 0) {
+      return "";
+    }
+
+    const heightArgExpression = args[0];
+    const heightValue = evaluateExpression(
+      heightArgExpression,
+      context,
+      globalContext,
+      indexState,
+      true
+    );
+
+    let distanceValue: any;
+    if (args.length > 1) {
+      distanceValue = evaluateExpression(args[1], context, globalContext, indexState, true);
+    } else {
+      const heightArgKey = unwrapMustacheExpression(heightArgExpression);
+      const directHeightValue = getContextValueByKey(heightArgKey, context, globalContext);
+      if (directHeightValue !== undefined) {
+        distanceValue = getContextValueByKey(`${heightArgKey}_weight`, context, globalContext);
+      }
+    }
+
+    const parsedHeight = parseNumericValue(heightValue);
+    const distance = parseDistanceValue(distanceValue);
+
+    if (parsedHeight === null) {
+      return "";
+    }
+
+    if (!distance || distance <= 0) {
+      return "";
+    }
+
+    const avgHeight = parsedHeight / distance;
+    return (Math.round(avgHeight * 10) / 10).toString().replace(".", ",");
+  }
+
+  return "";
+}
+
 function renderAST(
   node: ASTNode,
   context: any,
   globalContext: any,
-  indexState: { index: number; total: number } | null
+  indexState: IndexState
 ): string {
   if (node.type === "ROOT") {
     return node.children.map((c) => renderAST(c, context, globalContext, indexState)).join("");
@@ -202,48 +656,11 @@ function renderAST(
   }
 
   if (node.type === "VAR") {
-    const varName = node.name;
-
-    if (varName === "this") {
-      return String(context ?? "");
+    const resolvedValue = evaluateExpression(node.name, context, globalContext, indexState, false);
+    if (Array.isArray(resolvedValue)) {
+      return resolvedValue.join("; ");
     }
-    if (varName === "@index") {
-      return String(indexState?.index ?? 0);
-    }
-    if (varName === "@total") {
-      return String(indexState?.total ?? 0);
-    }
-
-    const arrMatch = varName.match(/^([a-zA-Z0-9_]+)\[i\]$/);
-    if (arrMatch) {
-      const key = arrMatch[1];
-      const list = globalContext[key];
-      if (Array.isArray(list) && indexState) {
-        return String(list[indexState.index] ?? "");
-      }
-      return "";
-    }
-
-    const explicitIndexMatch = varName.match(/^([a-zA-Z0-9_]+)\[(\d+)\]$/);
-    if (explicitIndexMatch) {
-      const key = explicitIndexMatch[1];
-      const idx = parseInt(explicitIndexMatch[2], 10);
-      const list = context?.[key] ?? globalContext[key];
-      if (Array.isArray(list)) {
-        return String(list[idx - 1] ?? "");
-      }
-      return "";
-    }
-
-    let val = context?.[varName];
-    if (val === undefined) {
-      val = globalContext[varName];
-    }
-
-    if (Array.isArray(val)) {
-      return val.join("; ");
-    }
-    return String(val ?? "");
+    return String(resolvedValue ?? "");
   }
 
   if (node.type === "BLOCK") {
@@ -323,157 +740,6 @@ export function processTemplate(template: DiaryResultTemplate, values: BlockValu
     if ((field as any).weight !== undefined && (field as any).weight !== null) {
       processedValues[`${key}_weight`] = (field as any).weight;
     }
-  });
-
-  const collectValues = (argsStr: string): string[] => {
-    const keys = argsStr.split(",").map((k) => k.trim());
-    const collected: string[] = [];
-
-    keys.forEach((key) => {
-      const val = processedValues[key];
-      if (Array.isArray(val)) {
-        val.forEach((v) => {
-          if (typeof v === "string") collected.push(v);
-        });
-      } else if (typeof val === "string") {
-        collected.push(val);
-      }
-    });
-
-    return collected;
-  };
-
-  const collectNumericValues = (argsStr: string): number[] => {
-    const keys = argsStr.split(",").map((k) => k.trim());
-    const collected: number[] = [];
-
-    keys.forEach((key) => {
-      const val = processedValues[key];
-      const parseVal = (v: any): number | null => {
-        if (typeof v === "number") return v;
-        if (typeof v === "string") {
-          const parsed = parseFloat(v.replace(",", "."));
-          return isNaN(parsed) ? null : parsed;
-        }
-        return null;
-      };
-
-      if (Array.isArray(val)) {
-        val.forEach((v) => {
-          const p = parseVal(v);
-          if (p !== null) collected.push(p);
-        });
-      } else {
-        const p = parseVal(val);
-        if (p !== null) collected.push(p);
-      }
-    });
-
-    return collected;
-  };
-
-  const paceRegex = /{{PACE\(([^)]+)\)}}/g;
-  result = result.replace(paceRegex, (_, args) => {
-    const parts = args.split(",").map((s: string) => s.trim());
-    const timeArg = parts[0];
-    const distArg = parts.length > 1 ? parts[1] : null;
-
-    const getVal = (k: string) => {
-      const v = processedValues[k];
-      return v !== undefined ? v : k;
-    };
-
-    const tRaw = getVal(timeArg);
-    let dRaw;
-
-    if (distArg) {
-      dRaw = getVal(distArg);
-    } else {
-      dRaw = processedValues[`${timeArg}_weight`];
-    }
-
-    const totalSeconds = timeToSeconds(String(tRaw));
-    const dist = parseFloat(
-      String(dRaw)
-        .replace(",", ".")
-        .replace(/[^\d.]/g, "")
-    );
-
-    if (!dist || dist <= 0) return "";
-
-    const secondsPerKm = totalSeconds / dist;
-    return secondsToTime(secondsPerKm);
-  });
-
-  const avgNumRegex = /{{AVG_NUM\(([^)]+)\)}}/g;
-  result = result.replace(avgNumRegex, (_, args) => {
-    const nums = collectNumericValues(args);
-    if (nums.length === 0) return "";
-    const sum = nums.reduce((a, b) => a + b, 0);
-    const avg = sum / nums.length;
-    return (Math.round(avg * 10) / 10).toString();
-  });
-
-  const sumNumRegex = /{{SUM_NUM\(([^)]+)\)}}/g;
-  result = result.replace(sumNumRegex, (_, args) => {
-    const nums = collectNumericValues(args);
-    if (nums.length === 0) return "";
-    const sum = nums.reduce((a, b) => a + b, 0);
-    return sum.toString(); // Integer or float? keep as is.
-  });
-
-  const avgHeightRegex = /{{AVG_HEIGHT\(([^)]+)\)}}/g;
-  result = result.replace(avgHeightRegex, (_, args) => {
-    const parts = args.split(",").map((s: string) => s.trim());
-    const heightArg = parts[0];
-    const distArg = parts.length > 1 ? parts[1] : null;
-
-    const getVal = (k: string) => {
-      const v = processedValues[k];
-      return v !== undefined ? v : k;
-    };
-
-    const hRaw = getVal(heightArg);
-    let dRaw;
-
-    if (distArg) {
-      dRaw = getVal(distArg);
-    } else {
-      dRaw = processedValues[`${heightArg}_weight`];
-    }
-
-    const parseNum = (val: any) => {
-      return parseFloat(
-        String(val)
-          .replace(",", ".")
-          .replace(/[^\d.]/g, "")
-      );
-    };
-
-    const height = parseNum(hRaw);
-    const dist = parseNum(dRaw);
-
-    if (isNaN(height)) {
-      return "";
-    }
-    if (!dist || dist <= 0) {
-      return "";
-    }
-
-    const avgHeight = height / dist;
-    return (Math.round(avgHeight * 10) / 10).toString().replace(".", ",");
-  });
-
-  const avgRegex = /{{AVG_TIME\(([^)]+)\)}}/g;
-  result = result.replace(avgRegex, (_, args) => {
-    const valuesList = collectValues(args);
-    return calculateAverage(valuesList);
-  });
-
-  const sumRegex = /{{SUM_TIME\(([^)]+)\)}}/g;
-  result = result.replace(sumRegex, (_, args) => {
-    const valuesList = collectValues(args);
-    return calculateSum(valuesList);
   });
 
   const tokens = betterTokenize(result);
