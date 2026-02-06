@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db/client";
-import { users, verificationTokens } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { getVerificationTokenByToken } from "@/lib/tokens";
+import { getVerificationTokenByToken } from "@/server/tokens";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { deleteVerificationTokenById, getUserByEmail, updateUserPasswordById } from "@/server/auth";
 
 const schema = z.object({
   token: z.string(),
@@ -28,10 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Token has expired" }, { status: 400 });
     }
 
-    const [existingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, existingToken.identifier));
+    const existingUser = await getUserByEmail(existingToken.identifier);
 
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 400 });
@@ -39,12 +34,8 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await db
-      .update(users)
-      .set({ passwordHash: hashedPassword })
-      .where(eq(users.id, existingUser.id));
-
-    await db.delete(verificationTokens).where(eq(verificationTokens.id, existingToken.id));
+    await updateUserPasswordById(existingUser.id, hashedPassword);
+    await deleteVerificationTokenById(existingToken.id);
 
     return NextResponse.json({ success: true });
   } catch {

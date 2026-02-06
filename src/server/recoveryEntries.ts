@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { recoveryEntries } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { recoveryEntries } from "@/server/db/schema";
 
 export const upsertRecoveryEntry = async (params: {
   userId: number;

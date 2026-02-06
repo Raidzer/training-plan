@@ -1,8 +1,8 @@
 import { desc, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { registrationInvites, users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { registrationInvites, users } from "@/server/db/schema";
 import { AdminInvitesClient, type AdminInviteRow } from "./AdminInvitesClient";
 
 type InviteStatus = "active" | "used" | "expired";

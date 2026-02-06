@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { planEntries } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { planEntries } from "@/server/db/schema";
 
 export type PlanEntrySummary = {
   id: number;

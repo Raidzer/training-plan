@@ -3,7 +3,7 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getUserById, getUserByIdentifier } from "./services/users";
+import { getUserById, getUserByIdentifier } from "@/server/services/users";
 
 const schema = z.object({
   email: z.string().trim().min(2).max(255),

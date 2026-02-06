@@ -1,6 +1,6 @@
 import { eq, or } from "drizzle-orm";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 
 export async function getUserByIdentifier(identifier: string) {
   const [user] = await db

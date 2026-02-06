@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { processTemplate } from "./templateEngine";
-import type { DiaryResultTemplate } from "@/app/actions/diaryTemplates";
+import type { DiaryResultTemplate } from "../types/diary-templates";
 
 const createTemplate = (outputTemplate: string, schema: any[] = []): DiaryResultTemplate => ({
   id: 1,
@@ -192,21 +192,42 @@ describe("templateEngine", () => {
     describe("Расчет PACE (темпа)", () => {
       it("должен рассчитывать PACE из времени и дистанции", () => {
         const template = createTemplate("Pace: {{PACE(time, dist)}}");
-        const values = { time: "45:00", dist: "10000" };
+        const values = { time: "45:00", dist: "10" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 4:30");
       });
 
       it("должен обрабатывать запятые в дистанции", () => {
         const template = createTemplate("Pace: {{PACE(time, dist)}}");
-        const values = { time: "22:30", dist: "5000" };
+        const values = { time: "22:30", dist: "5" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 4:30");
       });
 
       it("должен обрабатывать сырые строки в PACE (fallback логика)", () => {
-        const template = createTemplate("Pace: {{PACE(time, 10000)}}");
+        const template = createTemplate("Pace: {{PACE(time, 10)}}");
         const values = { time: "50:00" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
+      });
+
+      it("должен поддерживать вложенный вызов функции в PACE без внутренних {{}}", () => {
+        const template = createTemplate("Pace: {{PACE(SUM_TIME(t1, t2, t3), 10.5)}}");
+        const values = { t1: "10:00", t2: "20:00", t3: "22:30" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
+      });
+
+      it("должен поддерживать вложенный вызов функции в PACE с внутренними {{}}", () => {
+        const template = createTemplate("Pace: {{PACE({{SUM_TIME(t1, t2, t3)}}, 10.5)}}");
+        const values = { t1: "10:00", t2: "20:00", t3: "22:30" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
+      });
+
+      it("должен трактовать большое числовое расстояние как метры во вложенном PACE", () => {
+        const template = createTemplate("Pace: {{PACE({{SUM_TIME(t1, t2, t3)}}, 10500)}}");
+        const values = { t1: "10:00", t2: "20:00", t3: "22:30" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 5:00");
       });
@@ -215,13 +236,13 @@ describe("templateEngine", () => {
     describe("Расчет AVG_HEIGHT", () => {
       it("должен рассчитывать среднюю высоту", () => {
         const template = createTemplate("Avg Height: {{AVG_HEIGHT(height, dist)}}");
-        const values = { height: 100, dist: 10000 };
+        const values = { height: 100, dist: 10 };
         const result = processTemplate(template, values);
         expect(result).toBe("Avg Height: 10");
       });
 
       it("должен округлять до десятых", () => {
-        const template = createTemplate("Avg: {{AVG_HEIGHT(500, 12000)}}");
+        const template = createTemplate("Avg: {{AVG_HEIGHT(500, 12)}}");
         const values = {};
         const result = processTemplate(template, values);
         expect(result).toBe("Avg: 41,7");
@@ -229,7 +250,7 @@ describe("templateEngine", () => {
 
       it("должен обрабатывать строковые значения с запятой", () => {
         const template = createTemplate("Avg: {{AVG_HEIGHT(height, dist)}}");
-        const values = { height: "100,5", dist: "10000" };
+        const values = { height: "100,5", dist: "10" };
         const result = processTemplate(template, values);
         expect(result).toBe("Avg: 10,1");
       });
@@ -237,36 +258,89 @@ describe("templateEngine", () => {
     describe("Умный вес и дистанция", () => {
       it("должен использовать вес поля для расчета PACE, если дистанция не указана", () => {
         const template = createTemplate("Pace: {{PACE(time)}}", [
-          { key: "time", type: "time", weight: 2000 } as any,
+          { key: "time", type: "time", weight: 2 } as any,
         ]);
         const values = { time: "08:00" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 4:00");
       });
 
-      it("должен конвертировать метры в км для PACE (явная дистанция > 50)", () => {
+      it("должен использовать километры для PACE (явная дистанция)", () => {
         const template = createTemplate("Pace: {{PACE(time, dist)}}");
-        const values = { time: "04:00", dist: "2000" };
+        const values = { time: "04:00", dist: "2" };
         const result = processTemplate(template, values);
         expect(result).toBe("Pace: 2:00");
       });
 
       it("должен предоставлять доступ к переменной веса {{key_weight}}", () => {
         const template = createTemplate("Weight: {{t_weight}}", [
-          { key: "t", type: "time", weight: 500 } as any,
+          { key: "t", type: "time", weight: 0.5 } as any,
         ]);
         const values = { t: "01:30" };
         const result = processTemplate(template, values);
-        expect(result).toBe("Weight: 500");
+        expect(result).toBe("Weight: 0.5");
       });
 
-      it("должен использовать вес для AVG_HEIGHT и конвертировать метры в км", () => {
+      it("должен использовать вес для AVG_HEIGHT в километрах", () => {
         const template = createTemplate("Height: {{AVG_HEIGHT(h)}}", [
-          { key: "h", type: "text", weight: 10000 } as any,
+          { key: "h", type: "text", weight: 10 } as any,
         ]);
         const values = { h: "100" };
         const result = processTemplate(template, values);
         expect(result).toBe("Height: 10");
+      });
+    });
+
+    describe("Дополнительное покрытие", () => {
+      it("должен обрабатывать дробную дистанцию в км с запятой для PACE", () => {
+        const template = createTemplate("Pace: {{PACE(time, dist)}}");
+        const values = { time: "10:00", dist: "2,5" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 4:00");
+      });
+
+      it("должен обрабатывать дистанцию с суффиксом единицы в PACE", () => {
+        const template = createTemplate("Pace: {{PACE(time, dist)}}");
+        const values = { time: "45:00", dist: "10km" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 4:30");
+      });
+
+      it("должен поддерживать суффикс метров в аргументе дистанции PACE", () => {
+        const template = createTemplate("Pace: {{PACE(time, dist)}}");
+        const values = { time: "52:30", dist: "10500m" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: 5:00");
+      });
+
+      it("должен возвращать пустой темп, когда отсутствуют dist и вес", () => {
+        const template = createTemplate("Pace: {{PACE(time)}}", [{ key: "time", type: "time" }]);
+        const values = { time: "10:00" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Pace: ");
+      });
+
+      it("должен возвращать пустой AVG_HEIGHT для нечисловой высоты", () => {
+        const template = createTemplate("Avg: {{AVG_HEIGHT(height, dist)}}");
+        const values = { height: "abc", dist: "10" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Avg: ");
+      });
+
+      it("должен возвращать пустой AVG_HEIGHT для нулевой дистанции", () => {
+        const template = createTemplate("Avg: {{AVG_HEIGHT(height, dist)}}");
+        const values = { height: "100", dist: "0" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("Avg: ");
+      });
+
+      it("должен разбивать значение списка по точкам с запятой и переводам строк", () => {
+        const template = createTemplate("{{#each items}}[{{this}}]{{/each}}", [
+          { key: "items", type: "list" },
+        ]);
+        const values = { items: "A; B\nC;\nD" };
+        const result = processTemplate(template, values);
+        expect(result).toBe("[A][B][C][D]");
       });
     });
   });

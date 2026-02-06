@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { shoes } from "@/db/schema";
+import { createShoe, listShoesByUser } from "@/server/shoes";
 
 type ShoePayload = {
   name?: string;
@@ -30,16 +28,7 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const items = await db
-    .select({
-      id: shoes.id,
-      name: shoes.name,
-      createdAt: shoes.createdAt,
-      updatedAt: shoes.updatedAt,
-    })
-    .from(shoes)
-    .where(eq(shoes.userId, userId))
-    .orderBy(desc(shoes.updatedAt), desc(shoes.id));
+  const items = await listShoesByUser(userId);
 
   return NextResponse.json({ shoes: items });
 }
@@ -61,21 +50,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_name" }, { status: 400 });
   }
 
-  const now = new Date();
-  const [created] = await db
-    .insert(shoes)
-    .values({
-      userId,
-      name,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning({
-      id: shoes.id,
-      name: shoes.name,
-      createdAt: shoes.createdAt,
-      updatedAt: shoes.updatedAt,
-    });
+  const created = await createShoe({ userId, name });
 
   return NextResponse.json({ shoe: created }, { status: 201 });
 }

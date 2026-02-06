@@ -7,7 +7,7 @@ import {
   DATE_BACK_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, setPendingInput } from "@/bot/menu/menuState";
-import { getPlanEntriesByDate } from "@/lib/planEntries";
+import { getPlanEntriesByDate } from "@/server/planEntries";
 
 type DateHandlerArgs = {
   ctx: any;

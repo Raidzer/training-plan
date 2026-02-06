@@ -1,6 +1,6 @@
-﻿export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 
-import { getClubRecords } from "@/lib/personalRecords";
+import { getClubRecords } from "@/server/personalRecords";
 import { ResultsClient } from "./ResultsClient/ResultsClient";
 import { mapClubRecordsToResults } from "./results.utils";
 
