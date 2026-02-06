@@ -168,9 +168,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     {...restField}
                     name={[name, "weight"]}
                     style={{ width: 100, marginBottom: 0 }}
-                    tooltip="Вес/Дистанция (в метрах) для расчетов"
+                    tooltip="Вес/Дистанция (в км) для расчетов"
                   >
-                    <InputNumber placeholder="Метры" style={{ width: "100%" }} />
+                    <InputNumber placeholder="Км" min={0} step={0.1} style={{ width: "100%" }} />
                   </Form.Item>
                   <Form.Item
                     noStyle
@@ -253,7 +253,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <b>Доступные функции:</b>
           <br />
           <code>{"{{PACE(time, [dist])}}"}</code> - темп (мин/км). Если дист. не указана, берется из
-          настройки &quot;Вес&quot;.
+          настройки &quot;Дистанция (км)&quot;.
           <br />
           <code>{"{{AVG_TIME(list_key, ...)}}"}</code> - среднее время
           <br />
@@ -270,7 +270,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <br />
           <code>{"{{code}}"}</code> - значение поля
           <br />
-          <code>{"{{code_weight}}"}</code> - вес поля (из настроек)
+          <code>{"{{code_weight}}"}</code> - дистанция поля в км (из настроек)
           <br />
           <br />
           <b>Конструкции:</b>
