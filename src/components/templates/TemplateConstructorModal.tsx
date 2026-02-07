@@ -26,6 +26,7 @@ type Block = {
   templateId: number;
   values: Record<string, any>;
   repeatCount?: number;
+  autoListSize?: number;
 };
 
 type TemplateSchemaField = {
@@ -161,9 +162,9 @@ function sanitizeListValues(values: unknown[]): unknown[] {
   return normalizedValues;
 }
 
-function detectRepeatCountFromTaskText(taskText: string): number | null {
+function detectRepeatCountsFromTaskText(taskText: string): number[] {
   if (!taskText || typeof taskText !== "string") {
-    return null;
+    return [];
   }
 
   const repeatCounts: number[] = [];
@@ -178,11 +179,7 @@ function detectRepeatCountFromTaskText(taskText: string): number | null {
     repeatCounts.push(parsedCount);
   }
 
-  if (repeatCounts.length === 0) {
-    return null;
-  }
-
-  return Math.max(...repeatCounts);
+  return repeatCounts;
 }
 
 const TimeInput = ({ value, onChange, ...props }: any) => {
@@ -231,7 +228,17 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const autoDetectedListSize = useMemo(() => detectRepeatCountFromTaskText(taskText), [taskText]);
+  const autoDetectedRepeatCounts = useMemo(
+    () => detectRepeatCountsFromTaskText(taskText),
+    [taskText]
+  );
+  const autoDetectedListSize = useMemo(() => {
+    if (autoDetectedRepeatCounts.length === 0) {
+      return null;
+    }
+
+    return Math.max(...autoDetectedRepeatCounts);
+  }, [autoDetectedRepeatCounts]);
 
   const [templateToAdd, setTemplateToAdd] = useState<number | null>(null);
 
@@ -245,10 +252,11 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           setTemplates(allTemplates);
 
           if (matches.length > 0) {
-            const newBlocks = matches.map((t) => ({
+            const newBlocks = matches.map((t, index) => ({
               id: Math.random().toString(36).substr(2, 9),
               templateId: t.id,
               values: buildDefaultValuesFromSchema((t.schema as TemplateSchemaField[]) || []),
+              autoListSize: autoDetectedRepeatCounts[index],
             }));
             setBlocks(newBlocks);
 
@@ -274,7 +282,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
     } else {
       setBlocks([]);
     }
-  }, [visible, userId, taskText, messageApi, form]);
+  }, [visible, userId, taskText, messageApi, form, autoDetectedRepeatCounts]);
 
   const addBlock = (templateId: number) => {
     const blockId = Math.random().toString(36).substr(2, 9);
@@ -288,6 +296,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         id: blockId,
         templateId,
         values: defaultValues,
+        autoListSize: autoDetectedRepeatCounts[prev.length],
       },
     ]);
 
@@ -364,6 +373,8 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         if (!template) return;
 
         const formValues: Record<string, any> = {};
+        const blockAutoListSize =
+          block.autoListSize && block.autoListSize > 0 ? block.autoListSize : autoDetectedListSize;
 
         const normalizeTime = (val: any) => {
           if (typeof val !== "string") return val;
@@ -401,7 +412,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
             const normalizedListValues = sanitizeListValues(listValues);
 
             const fixedListSize =
-              field.listSize && field.listSize > 0 ? field.listSize : (autoDetectedListSize ?? 1);
+              field.listSize && field.listSize > 0 ? field.listSize : (blockAutoListSize ?? 1);
 
             if (fixedListSize > 0) {
               formValues[field.key] = normalizedListValues.slice(0, fixedListSize);
@@ -552,10 +563,14 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                     const itemType = field.itemType || "text";
                     const fieldFormKey = `${block.id}_${field.key}`;
                     const listItemRules = itemType === "time" ? getTimeValidationRules() : [];
+                    const blockAutoListSize =
+                      block.autoListSize && block.autoListSize > 0
+                        ? block.autoListSize
+                        : autoDetectedListSize;
                     const fixedListSize =
                       field.listSize && field.listSize > 0
                         ? field.listSize
-                        : (autoDetectedListSize ?? 1);
+                        : (blockAutoListSize ?? 1);
 
                     const renderTypedInput = (props: any) => {
                       if (itemType === "number") {
