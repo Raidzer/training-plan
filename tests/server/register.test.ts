@@ -257,15 +257,13 @@ describe("server/register", () => {
     });
     expect(hashInviteTokenMock).toHaveBeenCalledWith("invite-token-123");
     expect(bcryptHashMock).toHaveBeenCalledWith("password123", 10);
-
-    const insertPayload = insertValuesMock.mock.calls[0][0] as {
-      timezone: string;
-      passwordHash: string;
-      role: string;
-    };
-    expect(insertPayload.timezone).toBe("Europe/Moscow");
-    expect(insertPayload.passwordHash).toBe("hashed-password");
-    expect(insertPayload.role).toBe("athlete");
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timezone: "Europe/Moscow",
+        passwordHash: "hashed-password",
+        role: "athlete",
+      })
+    );
   });
 
   it("should preserve explicit timezone from input", async () => {
@@ -279,11 +277,11 @@ describe("server/register", () => {
         timezone: "Europe/Berlin",
       })
     );
-
-    const insertPayload = insertValuesMock.mock.calls[0][0] as {
-      timezone: string;
-    };
-    expect(insertPayload.timezone).toBe("Europe/Berlin");
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timezone: "Europe/Berlin",
+      })
+    );
   });
 
   it("should expose RegisterError class for typed handling", () => {

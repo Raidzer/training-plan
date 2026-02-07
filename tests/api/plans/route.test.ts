@@ -50,10 +50,7 @@ describe("API /api/plans route", () => {
     it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
 
-      const request = createRequestWithQuery({
-        path: "/api/plans",
-      });
-      const response = await GET(request);
+      const response = await GET();
 
       await expectJsonError(response, 401, "unauthorized");
     });
@@ -61,10 +58,7 @@ describe("API /api/plans route", () => {
     it("должен возвращать 401 при некорректном user id", async () => {
       authMock.mockResolvedValue(createSession({ id: "0" }));
 
-      const request = createRequestWithQuery({
-        path: "/api/plans",
-      });
-      const response = await GET(request);
+      const response = await GET();
 
       await expectJsonError(response, 401, "unauthorized");
     });
@@ -83,10 +77,7 @@ describe("API /api/plans route", () => {
         },
       ]);
 
-      const request = createRequestWithQuery({
-        path: "/api/plans",
-      });
-      const response = await GET(request);
+      const response = await GET();
 
       const payload = await expectJsonSuccess<{
         entries: Array<{ id: number; date: string }>;

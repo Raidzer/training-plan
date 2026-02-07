@@ -431,7 +431,7 @@ describe("useDiaryData (extended)", () => {
       weightMorning: "70",
     });
 
-    let savedWorkoutBody: Record<string, unknown> | null = null;
+    let savedWorkoutBody: Record<string, unknown> = {};
 
     setFetchHandler(async (url, init) => {
       if (url.startsWith("/api/shoes")) {
@@ -483,12 +483,11 @@ describe("useDiaryData (extended)", () => {
       await result.current.handleSaveWorkout(1);
     });
 
-    expect(savedWorkoutBody).not.toBeNull();
-    expect(savedWorkoutBody?.weather).toBeNull();
-    expect(savedWorkoutBody?.hasWind).toBeNull();
-    expect(savedWorkoutBody?.temperatureC).toBeNull();
-    expect(savedWorkoutBody?.distanceKm).toBe(12.5);
-    expect(savedWorkoutBody?.shoeIds).toEqual([1, 2]);
+    expect(savedWorkoutBody.weather).toBeNull();
+    expect(savedWorkoutBody.hasWind).toBeNull();
+    expect(savedWorkoutBody.temperatureC).toBeNull();
+    expect(savedWorkoutBody.distanceKm).toBe(12.5);
+    expect(savedWorkoutBody.shoeIds).toEqual([1, 2]);
     expect(messageApi.success).toHaveBeenCalledWith(messages.workoutSaved);
   });
 
@@ -579,7 +578,7 @@ describe("useDiaryData (extended)", () => {
       weightMorning: "70",
     });
 
-    let recoveryBody: Record<string, unknown> | null = null;
+    let recoveryBody: Record<string, unknown> = {};
 
     setFetchHandler(async (url, init) => {
       if (url.startsWith("/api/shoes")) {
@@ -619,10 +618,9 @@ describe("useDiaryData (extended)", () => {
       await result.current.handleSaveRecovery();
     });
 
-    expect(recoveryBody).not.toBeNull();
-    expect(recoveryBody?.sleepHours).toBe(7.5);
-    expect(recoveryBody?.hasBath).toBe(true);
-    expect(recoveryBody?.hasMfr).toBe(true);
+    expect(recoveryBody.sleepHours).toBe(7.5);
+    expect(recoveryBody.hasBath).toBe(true);
+    expect(recoveryBody.hasMfr).toBe(true);
     expect(messageApi.success).toHaveBeenCalledWith(messages.recoverySaved);
   });
 
@@ -644,7 +642,9 @@ describe("useDiaryData (extended)", () => {
       weightMorning: "71",
     });
 
-    let firstDayResolver: ((value: Response) => void) | null = null;
+    let firstDayResolver: (value: Response) => void = () => {
+      throw new Error("firstDayResolver is not set");
+    };
     let dayRequestIndex = 0;
 
     setFetchHandler(async (url) => {
@@ -680,10 +680,6 @@ describe("useDiaryData (extended)", () => {
     await waitFor(() => {
       expect(result.current.dayData?.status.totalDistanceKm).toBe(22);
     });
-
-    if (!firstDayResolver) {
-      throw new Error("firstDayResolver is not set");
-    }
 
     act(() => {
       firstDayResolver(createJsonResponse(firstDay));

@@ -45,13 +45,15 @@ export function createJsonRequest(options: CreateJsonRequestOptions): Request {
     headers.set("content-type", "application/json");
   }
 
-  const serializedBody = options.body === undefined ? undefined : JSON.stringify(options.body);
-
-  return new Request(options.url, {
+  const requestOptions: RequestInit = {
     method: options.method ?? "POST",
     headers,
-    body: serializedBody,
-  });
+  };
+  if (options.body !== undefined) {
+    requestOptions.body = JSON.stringify(options.body);
+  }
+
+  return new Request(options.url, requestOptions);
 }
 
 export function createRequestWithQuery(options: CreateRequestWithQueryOptions): Request {

@@ -99,8 +99,11 @@ describe("server/auth", () => {
     await markEmailVerifiedById(7);
 
     expect(dbUpdateMock).toHaveBeenCalledTimes(1);
-    const payload = setMock.mock.calls[0][0] as { emailVerified: unknown };
-    expect(payload.emailVerified).toBeInstanceOf(Date);
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailVerified: expect.any(Date),
+      })
+    );
     expect(whereMock).toHaveBeenCalledTimes(1);
   });
 
