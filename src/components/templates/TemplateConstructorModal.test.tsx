@@ -151,6 +151,26 @@ function getListInputsByFieldLabel(label: string): HTMLInputElement[] {
   return inputs;
 }
 
+function getListInputsByFieldLabelAndIndex(label: string, labelIndex: number): HTMLInputElement[] {
+  const fieldLabels = screen.getAllByText(label);
+  const targetLabel = fieldLabels[labelIndex];
+  if (!targetLabel) {
+    throw new Error(`Field label "${label}" with index ${labelIndex} not found`);
+  }
+
+  const formItem = targetLabel.closest(".ant-form-item");
+  if (!formItem) {
+    throw new Error(`Form item for label "${label}" with index ${labelIndex} not found`);
+  }
+
+  const inputs = Array.from(formItem.querySelectorAll("input")) as HTMLInputElement[];
+  if (inputs.length === 0) {
+    throw new Error(`List inputs for label "${label}" with index ${labelIndex} not found`);
+  }
+
+  return inputs;
+}
+
 async function selectOptionInSelect(selectIndex: number, optionLabel: string) {
   const selectItems = Array.from(document.querySelectorAll(".ant-select"));
   const targetSelect = selectItems[selectIndex];
@@ -272,6 +292,87 @@ describe("TemplateConstructorModal", () => {
       expect(screen.getAllByDisplayValue("split-A").length).toBeGreaterThan(0);
       expect(screen.getAllByDisplayValue("split-B").length).toBeGreaterThan(0);
       expect(screen.queryAllByDisplayValue("split-C").length).toBe(0);
+    });
+  });
+
+  it("должен строить одно фиксированное поле списка без listSize", async () => {
+    const template = createTemplate({
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const { onApply } = renderModal({ templates: [template], matches: [template] });
+    mockedProcessTemplate.mockReturnValue("Fixed list output");
+
+    await waitForInitialLoad();
+
+    await waitFor(() => {
+      const initialInputs = getListInputsByFieldLabel("Splits");
+      expect(initialInputs.length).toBe(1);
+    });
+
+    const initialInputs = getListInputsByFieldLabel("Splits");
+    fireEvent.change(initialInputs[0], { target: { value: "00:01:02" } });
+    expect(screen.queryByRole("button", { name: /Add value/i })).toBeNull();
+
+    fireEvent.click(getApplyButton());
+
+    await waitFor(() => {
+      expect(mockedProcessTemplate).toHaveBeenCalledTimes(1);
+    });
+
+    const processTemplateArgs = mockedProcessTemplate.mock.calls[0];
+    const formValues = processTemplateArgs[1] as Record<string, unknown>;
+
+    expect(formValues.splits).toEqual(["1:02"]);
+    expect(onApply).toHaveBeenCalledWith("Fixed list output");
+  });
+
+  it("должен автоматически строить фиксированное количество полей по taskText", async () => {
+    const template = createTemplate({
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    renderModal({
+      templates: [template],
+      matches: [template],
+      taskText: "Тренировка: 12x400 м-с.к",
+    });
+
+    await waitForInitialLoad(1, "Тренировка: 12x400 м-с.к");
+
+    await waitFor(() => {
+      const listInputs = getListInputsByFieldLabel("Splits");
+      expect(listInputs.length).toBe(12);
+      expect(screen.queryByRole("button", { name: /Add value/i })).toBeNull();
+    });
+  });
+
+  it("должен применять авторазмер списка отдельно для каждого блока по taskText", async () => {
+    const templateA = createTemplate({
+      id: 1,
+      name: "Template A",
+      code: "TA",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const templateB = createTemplate({
+      id: 2,
+      name: "Template B",
+      code: "TB",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    renderModal({
+      templates: [templateA, templateB],
+      matches: [templateA, templateB],
+      taskText: "Тренировка: 6x400 м-с.к + 5x200 м-с.к",
+    });
+
+    await waitForInitialLoad(1, "Тренировка: 6x400 м-с.к + 5x200 м-с.к");
+
+    await waitFor(() => {
+      const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
+      const secondBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 1);
+      expect(firstBlockInputs.length).toBe(6);
+      expect(secondBlockInputs.length).toBe(5);
     });
   });
 
@@ -457,7 +558,7 @@ describe("TemplateConstructorModal", () => {
     fireEvent.blur(timeInput);
 
     await waitFor(() => {
-      const invalidMessage = screen.queryAllByText(/Формат/);
+      const invalidMessage = document.querySelectorAll(".ant-form-item-explain-error");
       expect(invalidMessage.length).toBeGreaterThan(0);
     });
 
