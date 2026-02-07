@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Modal, Select, Form, Input, Button, Typography, Space, Divider, Spin } from "antd";
 import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
@@ -161,6 +161,30 @@ function sanitizeListValues(values: unknown[]): unknown[] {
   return normalizedValues;
 }
 
+function detectRepeatCountFromTaskText(taskText: string): number | null {
+  if (!taskText || typeof taskText !== "string") {
+    return null;
+  }
+
+  const repeatCounts: number[] = [];
+  const pattern = /(\d{1,2})\s*[xх×]\s*\d+/giu;
+  let match: RegExpExecArray | null = null;
+
+  while ((match = pattern.exec(taskText)) !== null) {
+    const parsedCount = Number(match[1]);
+    if (Number.isNaN(parsedCount) || parsedCount <= 0) {
+      continue;
+    }
+    repeatCounts.push(parsedCount);
+  }
+
+  if (repeatCounts.length === 0) {
+    return null;
+  }
+
+  return Math.max(...repeatCounts);
+}
+
 const TimeInput = ({ value, onChange, ...props }: any) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -195,100 +219,6 @@ const TimeInput = ({ value, onChange, ...props }: any) => {
   return <Input {...props} value={value} onChange={handleChange} placeholder="мм:сс" />;
 };
 
-type DynamicListInputProps = {
-  value?: unknown[];
-  onChange?: (nextValue: unknown[]) => void;
-  itemType: "text" | "number" | "time";
-};
-
-const DynamicListInput = ({ value, onChange, itemType }: DynamicListInputProps) => {
-  const listValues = Array.isArray(value) && value.length > 0 ? value : [""];
-
-  const updateItem = (index: number, nextItemValue: unknown) => {
-    const nextValues = [...listValues];
-    nextValues[index] = nextItemValue;
-    onChange?.(nextValues);
-  };
-
-  const addItem = () => {
-    onChange?.([...listValues, ""]);
-  };
-
-  const removeItem = (index: number) => {
-    if (listValues.length <= 1) {
-      return;
-    }
-
-    const nextValues = listValues.filter((_, itemIndex) => itemIndex !== index);
-    onChange?.(nextValues);
-  };
-
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr",
-        gap: 8,
-      }}
-    >
-      {listValues.map((itemValue, index) => (
-        <div key={index} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {itemType === "time" ? (
-            <TimeInput
-              size="small"
-              style={{ width: "100%" }}
-              value={itemValue}
-              onChange={(nextValue: unknown) => {
-                updateItem(index, nextValue);
-              }}
-            />
-          ) : itemType === "number" ? (
-            <Input
-              type="number"
-              size="small"
-              style={{ width: "100%" }}
-              value={itemValue as any}
-              onWheel={(e) => e.currentTarget.blur()}
-              onChange={(e) => {
-                updateItem(index, e.target.value);
-              }}
-            />
-          ) : (
-            <Input
-              size="small"
-              style={{ width: "100%" }}
-              value={itemValue as any}
-              onChange={(e) => {
-                updateItem(index, e.target.value);
-              }}
-            />
-          )}
-          <Button
-            type="text"
-            danger
-            size="small"
-            disabled={listValues.length <= 1}
-            onClick={() => {
-              removeItem(index);
-            }}
-          >
-            -
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="dashed"
-        size="small"
-        onClick={() => {
-          addItem();
-        }}
-      >
-        + Add value
-      </Button>
-    </div>
-  );
-};
-
 export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> = ({
   visible,
   onCancel,
@@ -301,6 +231,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const autoDetectedListSize = useMemo(() => detectRepeatCountFromTaskText(taskText), [taskText]);
 
   const [templateToAdd, setTemplateToAdd] = useState<number | null>(null);
 
@@ -469,8 +400,11 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
             const normalizedListValues = sanitizeListValues(listValues);
 
-            if (field.listSize && field.listSize > 0) {
-              formValues[field.key] = normalizedListValues.slice(0, field.listSize);
+            const fixedListSize =
+              field.listSize && field.listSize > 0 ? field.listSize : (autoDetectedListSize ?? 1);
+
+            if (fixedListSize > 0) {
+              formValues[field.key] = normalizedListValues.slice(0, fixedListSize);
             } else {
               formValues[field.key] = normalizedListValues;
             }
@@ -618,6 +552,10 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                     const itemType = field.itemType || "text";
                     const fieldFormKey = `${block.id}_${field.key}`;
                     const listItemRules = itemType === "time" ? getTimeValidationRules() : [];
+                    const fixedListSize =
+                      field.listSize && field.listSize > 0
+                        ? field.listSize
+                        : (autoDetectedListSize ?? 1);
 
                     const renderTypedInput = (props: any) => {
                       if (itemType === "number") {
@@ -638,7 +576,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
                     return (
                       <div key={field.key} className={styles.formItemContainer}>
-                        {field.type === "list" && field.listSize && field.listSize > 0 ? (
+                        {field.type === "list" ? (
                           <Form.Item label={field.label}>
                             <div
                               style={{
@@ -647,7 +585,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                                 gap: 16,
                               }}
                             >
-                              {Array.from({ length: field.listSize }).map((_, idx) => (
+                              {Array.from({ length: fixedListSize }).map((_, idx) => (
                                 <Form.Item
                                   key={idx}
                                   name={[fieldFormKey, idx]}
@@ -669,9 +607,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                             className={styles.formItem}
                             rules={field.type === "time" ? getTimeValidationRules() : []}
                           >
-                            {field.type === "list" ? (
-                              <DynamicListInput itemType={itemType} />
-                            ) : field.type === "time" ? (
+                            {field.type === "time" ? (
                               <TimeInput size="small" />
                             ) : field.type === "number" ? (
                               <Input

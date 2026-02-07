@@ -275,12 +275,12 @@ describe("TemplateConstructorModal", () => {
     });
   });
 
-  it("должен показывать динамический список без listSize и фильтровать пустые элементы", async () => {
+  it("должен строить одно фиксированное поле списка без listSize", async () => {
     const template = createTemplate({
       schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
     });
     const { onApply } = renderModal({ templates: [template], matches: [template] });
-    mockedProcessTemplate.mockReturnValue("Dynamic list output");
+    mockedProcessTemplate.mockReturnValue("Fixed list output");
 
     await waitForInitialLoad();
 
@@ -291,12 +291,7 @@ describe("TemplateConstructorModal", () => {
 
     const initialInputs = getListInputsByFieldLabel("Splits");
     fireEvent.change(initialInputs[0], { target: { value: "00:01:02" } });
-    fireEvent.click(screen.getByRole("button", { name: /Add value/i }));
-
-    await waitFor(() => {
-      const expandedInputs = getListInputsByFieldLabel("Splits");
-      expect(expandedInputs.length).toBe(2);
-    });
+    expect(screen.queryByRole("button", { name: /Add value/i })).toBeNull();
 
     fireEvent.click(getApplyButton());
 
@@ -308,7 +303,27 @@ describe("TemplateConstructorModal", () => {
     const formValues = processTemplateArgs[1] as Record<string, unknown>;
 
     expect(formValues.splits).toEqual(["1:02"]);
-    expect(onApply).toHaveBeenCalledWith("Dynamic list output");
+    expect(onApply).toHaveBeenCalledWith("Fixed list output");
+  });
+
+  it("должен автоматически строить фиксированное количество полей по taskText", async () => {
+    const template = createTemplate({
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    renderModal({
+      templates: [template],
+      matches: [template],
+      taskText: "Тренировка: 12x400 м-с.к",
+    });
+
+    await waitForInitialLoad(1, "Тренировка: 12x400 м-с.к");
+
+    await waitFor(() => {
+      const listInputs = getListInputsByFieldLabel("Splits");
+      expect(listInputs.length).toBe(12);
+      expect(screen.queryByRole("button", { name: /Add value/i })).toBeNull();
+    });
   });
 
   it("не должен запрашивать шаблоны, если модалка скрыта", () => {
