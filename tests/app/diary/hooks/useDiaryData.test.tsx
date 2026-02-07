@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { DayPayload } from "../types/diaryTypes";
-import type { DiaryMessages } from "./useDiaryData";
-import { useDiaryData } from "./useDiaryData";
+import type { DayPayload } from "@/app/diary/DiaryClient/types/diaryTypes";
+import type { DiaryMessages } from "@/app/diary/DiaryClient/hooks/useDiaryData";
+import { useDiaryData } from "@/app/diary/DiaryClient/hooks/useDiaryData";
 
 vi.mock("next/navigation", () => {
   return {

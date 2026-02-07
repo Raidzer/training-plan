@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { sendVerificationEmail, sendPasswordResetEmail } from "./email";
+import { sendVerificationEmail, sendPasswordResetEmail } from "@/server/email";
 
 const { sendMailMock } = vi.hoisted(() => {
   return { sendMailMock: vi.fn() };

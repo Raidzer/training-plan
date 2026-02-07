@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDateWithWeekday, buildPlanDays, type PlanEntry } from "./planUtils";
+import { formatDateWithWeekday, buildPlanDays, type PlanEntry } from "@/app/plan/planUtils";
 
 describe("formatDateWithWeekday", () => {
   it("должен возвращать дату с днем недели на русском", () => {

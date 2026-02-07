@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeAll } from "vitest";
-import { PlanEntriesTable } from "./PlanEntriesTable";
-import type { PlanDayEntry } from "../planUtils";
+import { PlanEntriesTable } from "@/app/plan/components/PlanEntriesTable";
+import type { PlanDayEntry } from "@/app/plan/planUtils";
 
 beforeAll(() => {
   Object.defineProperty(window, "matchMedia", {
