@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TemplateConstructorModal } from "./TemplateConstructorModal";
+import { TemplateConstructorModal } from "@/components/templates/TemplateConstructorModal";
 import { findMatchingTemplate, getTemplates } from "@/app/actions/diaryTemplates";
 import { processTemplate } from "@/shared/utils/templateEngine";
 import type { DiaryResultTemplate } from "@/shared/types/diary-templates";

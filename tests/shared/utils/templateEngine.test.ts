@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { processTemplate } from "./templateEngine";
-import type { DiaryResultTemplate } from "../types/diary-templates";
+import { processTemplate } from "@/shared/utils/templateEngine";
+import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
 
 const createTemplate = (outputTemplate: string, schema: any[] = []): DiaryResultTemplate => ({
   id: 1,

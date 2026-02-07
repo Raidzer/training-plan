@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { matchTemplates } from "./templateMatching";
-import type { TemplateWithPattern } from "./templateMatching";
+import { matchTemplates } from "@/shared/utils/templateMatching";
+import type { TemplateWithPattern } from "@/shared/utils/templateMatching";
 
 const createTemplate = (id: number, pattern: string, sortOrder = 0): TemplateWithPattern => ({
   id,

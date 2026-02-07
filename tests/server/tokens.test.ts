@@ -3,7 +3,7 @@ import {
   generateVerificationToken,
   generatePasswordResetToken,
   getVerificationTokenByToken,
-} from "./tokens";
+} from "@/server/tokens";
 import { db } from "@/server/db/client";
 
 vi.mock("@/server/db/client", () => ({
