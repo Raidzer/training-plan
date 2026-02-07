@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Modal, Select, Form, Input, Button, Typography, Space, Divider, Spin } from "antd";
 import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
@@ -26,6 +26,7 @@ type Block = {
   templateId: number;
   values: Record<string, any>;
   repeatCount?: number;
+  autoListSize?: number;
 };
 
 type TemplateSchemaField = {
@@ -129,6 +130,58 @@ function buildFormValuesForBlock(
   return formValues;
 }
 
+function getTimeValidationRules() {
+  return [
+    {
+      pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
+      message: "Формат чч:мм:сс или мм:сс,м",
+    },
+  ];
+}
+
+function sanitizeListValues(values: unknown[]): unknown[] {
+  const normalizedValues = values
+    .map((item) => {
+      if (typeof item === "string") {
+        return item.trim();
+      }
+      return item;
+    })
+    .filter((item) => {
+      if (item === undefined || item === null) {
+        return false;
+      }
+
+      if (typeof item === "string" && item.length === 0) {
+        return false;
+      }
+
+      return true;
+    });
+
+  return normalizedValues;
+}
+
+function detectRepeatCountsFromTaskText(taskText: string): number[] {
+  if (!taskText || typeof taskText !== "string") {
+    return [];
+  }
+
+  const repeatCounts: number[] = [];
+  const pattern = /(\d{1,2})\s*[xх×]\s*\d+/giu;
+  let match: RegExpExecArray | null = null;
+
+  while ((match = pattern.exec(taskText)) !== null) {
+    const parsedCount = Number(match[1]);
+    if (Number.isNaN(parsedCount) || parsedCount <= 0) {
+      continue;
+    }
+    repeatCounts.push(parsedCount);
+  }
+
+  return repeatCounts;
+}
+
 const TimeInput = ({ value, onChange, ...props }: any) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -175,6 +228,17 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const autoDetectedRepeatCounts = useMemo(
+    () => detectRepeatCountsFromTaskText(taskText),
+    [taskText]
+  );
+  const autoDetectedListSize = useMemo(() => {
+    if (autoDetectedRepeatCounts.length === 0) {
+      return null;
+    }
+
+    return Math.max(...autoDetectedRepeatCounts);
+  }, [autoDetectedRepeatCounts]);
 
   const [templateToAdd, setTemplateToAdd] = useState<number | null>(null);
 
@@ -188,10 +252,11 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           setTemplates(allTemplates);
 
           if (matches.length > 0) {
-            const newBlocks = matches.map((t) => ({
+            const newBlocks = matches.map((t, index) => ({
               id: Math.random().toString(36).substr(2, 9),
               templateId: t.id,
               values: buildDefaultValuesFromSchema((t.schema as TemplateSchemaField[]) || []),
+              autoListSize: autoDetectedRepeatCounts[index],
             }));
             setBlocks(newBlocks);
 
@@ -217,7 +282,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
     } else {
       setBlocks([]);
     }
-  }, [visible, userId, taskText, messageApi, form]);
+  }, [visible, userId, taskText, messageApi, form, autoDetectedRepeatCounts]);
 
   const addBlock = (templateId: number) => {
     const blockId = Math.random().toString(36).substr(2, 9);
@@ -231,6 +296,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         id: blockId,
         templateId,
         values: defaultValues,
+        autoListSize: autoDetectedRepeatCounts[prev.length],
       },
     ]);
 
@@ -307,6 +373,8 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         if (!template) return;
 
         const formValues: Record<string, any> = {};
+        const blockAutoListSize =
+          block.autoListSize && block.autoListSize > 0 ? block.autoListSize : autoDetectedListSize;
 
         const normalizeTime = (val: any) => {
           if (typeof val !== "string") return val;
@@ -331,14 +399,31 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           const formFieldKey = `${block.id}_${field.key}`;
           let val = allValues[formFieldKey];
 
-          const isTime =
-            field.type === "time" || (field.type === "list" && field.itemType === "time");
-          if (isTime) {
+          if (field.type === "list") {
+            let listValues: unknown[] = [];
             if (Array.isArray(val)) {
-              val = val.map(normalizeTime);
-            } else {
-              val = normalizeTime(val);
+              listValues = val;
             }
+
+            if (field.itemType === "time") {
+              listValues = listValues.map((item) => normalizeTime(item));
+            }
+
+            const normalizedListValues = sanitizeListValues(listValues);
+
+            const fixedListSize =
+              field.listSize && field.listSize > 0 ? field.listSize : (blockAutoListSize ?? 1);
+
+            if (fixedListSize > 0) {
+              formValues[field.key] = normalizedListValues.slice(0, fixedListSize);
+            } else {
+              formValues[field.key] = normalizedListValues;
+            }
+            return;
+          }
+
+          if (field.type === "time") {
+            val = normalizeTime(val);
           }
 
           formValues[field.key] = val;
@@ -476,6 +561,16 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
                   {schema.map((field) => {
                     const itemType = field.itemType || "text";
+                    const fieldFormKey = `${block.id}_${field.key}`;
+                    const listItemRules = itemType === "time" ? getTimeValidationRules() : [];
+                    const blockAutoListSize =
+                      block.autoListSize && block.autoListSize > 0
+                        ? block.autoListSize
+                        : autoDetectedListSize;
+                    const fixedListSize =
+                      field.listSize && field.listSize > 0
+                        ? field.listSize
+                        : (blockAutoListSize ?? 1);
 
                     const renderTypedInput = (props: any) => {
                       if (itemType === "number") {
@@ -496,7 +591,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
                     return (
                       <div key={field.key} className={styles.formItemContainer}>
-                        {field.type === "list" && field.listSize && field.listSize > 0 ? (
+                        {field.type === "list" ? (
                           <Form.Item label={field.label}>
                             <div
                               style={{
@@ -505,21 +600,12 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                                 gap: 16,
                               }}
                             >
-                              {Array.from({ length: field.listSize }).map((_, idx) => (
+                              {Array.from({ length: fixedListSize }).map((_, idx) => (
                                 <Form.Item
                                   key={idx}
-                                  name={[`${block.id}_${field.key}`, idx]}
+                                  name={[fieldFormKey, idx]}
                                   noStyle
-                                  rules={
-                                    itemType === "time"
-                                      ? [
-                                          {
-                                            pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
-                                            message: "Формат чч:мм:сс или мм:сс,м",
-                                          },
-                                        ]
-                                      : []
-                                  }
+                                  rules={listItemRules}
                                 >
                                   {renderTypedInput({
                                     size: "small",
@@ -531,29 +617,12 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                           </Form.Item>
                         ) : (
                           <Form.Item
-                            name={`${block.id}_${field.key}`}
+                            name={fieldFormKey}
                             label={field.label}
                             className={styles.formItem}
-                            rules={
-                              field.type === "time"
-                                ? [
-                                    {
-                                      pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
-                                      message: "Формат чч:мм:сс или мм:сс,м",
-                                    },
-                                  ]
-                                : []
-                            }
+                            rules={field.type === "time" ? getTimeValidationRules() : []}
                           >
-                            {field.type === "list" ? (
-                              <Select
-                                mode="tags"
-                                style={{ width: "100%" }}
-                                placeholder="Введите значения (Enter)"
-                                tokenSeparators={[",", ";", "\n", " "]}
-                                size="small"
-                              />
-                            ) : field.type === "time" ? (
+                            {field.type === "time" ? (
                               <TimeInput size="small" />
                             ) : field.type === "number" ? (
                               <Input

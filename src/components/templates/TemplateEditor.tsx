@@ -266,6 +266,11 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <code>{"{{PACE(time, [dist])}}"}</code> - темп (мин/км). Если дист. не указана, берется из
           настройки &quot;Дистанция (км)&quot;.
           <br />
+          <code>
+            {"{{PACE(SUM_TIME(3_km, 5_km, 7_km), SUM_NUM(3_km_weight, 5_km_weight, 7_km_weight))}}"}
+          </code>{" "}
+          - суммарный темп по 3/5/7 км
+          <br />
           <code>{"{{AVG_TIME(list_key, ...)}}"}</code> - среднее время
           <br />
           <code>{"{{SUM_TIME(list_key, ...)}}"}</code> - сумма времени
