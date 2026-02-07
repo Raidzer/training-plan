@@ -275,6 +275,42 @@ describe("TemplateConstructorModal", () => {
     });
   });
 
+  it("должен показывать динамический список без listSize и фильтровать пустые элементы", async () => {
+    const template = createTemplate({
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const { onApply } = renderModal({ templates: [template], matches: [template] });
+    mockedProcessTemplate.mockReturnValue("Dynamic list output");
+
+    await waitForInitialLoad();
+
+    await waitFor(() => {
+      const initialInputs = getListInputsByFieldLabel("Splits");
+      expect(initialInputs.length).toBe(1);
+    });
+
+    const initialInputs = getListInputsByFieldLabel("Splits");
+    fireEvent.change(initialInputs[0], { target: { value: "00:01:02" } });
+    fireEvent.click(screen.getByRole("button", { name: /Add value/i }));
+
+    await waitFor(() => {
+      const expandedInputs = getListInputsByFieldLabel("Splits");
+      expect(expandedInputs.length).toBe(2);
+    });
+
+    fireEvent.click(getApplyButton());
+
+    await waitFor(() => {
+      expect(mockedProcessTemplate).toHaveBeenCalledTimes(1);
+    });
+
+    const processTemplateArgs = mockedProcessTemplate.mock.calls[0];
+    const formValues = processTemplateArgs[1] as Record<string, unknown>;
+
+    expect(formValues.splits).toEqual(["1:02"]);
+    expect(onApply).toHaveBeenCalledWith("Dynamic list output");
+  });
+
   it("не должен запрашивать шаблоны, если модалка скрыта", () => {
     renderModal({ visible: false, templates: [createTemplate()], matches: [createTemplate()] });
 
@@ -457,7 +493,7 @@ describe("TemplateConstructorModal", () => {
     fireEvent.blur(timeInput);
 
     await waitFor(() => {
-      const invalidMessage = screen.queryAllByText(/Формат/);
+      const invalidMessage = document.querySelectorAll(".ant-form-item-explain-error");
       expect(invalidMessage.length).toBeGreaterThan(0);
     });
 
