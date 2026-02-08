@@ -2,14 +2,14 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TemplateConstructorModal } from "@/components/templates/TemplateConstructorModal";
-import { findMatchingTemplate, getTemplates } from "@/app/actions/diaryTemplates";
+import { findMatchingTemplateWithDetails, getTemplates } from "@/app/actions/diaryTemplates";
 import { processTemplate } from "@/shared/utils/templateEngine";
 import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
 
 vi.mock("@/app/actions/diaryTemplates", () => {
   return {
     getTemplates: vi.fn(),
-    findMatchingTemplate: vi.fn(),
+    findMatchingTemplateWithDetails: vi.fn(),
   };
 });
 
@@ -20,8 +20,15 @@ vi.mock("@/shared/utils/templateEngine", () => {
 });
 
 const mockedGetTemplates = vi.mocked(getTemplates);
-const mockedFindMatchingTemplate = vi.mocked(findMatchingTemplate);
+const mockedFindMatchingTemplateWithDetails = vi.mocked(findMatchingTemplateWithDetails);
 const mockedProcessTemplate = vi.mocked(processTemplate);
+
+type MatchedTemplateWithDetails = {
+  template: DiaryResultTemplate;
+  index: number;
+  length: number;
+  matchedText: string;
+};
 
 function createTemplate(overrides: Partial<DiaryResultTemplate> = {}): DiaryResultTemplate {
   return {
@@ -58,16 +65,33 @@ function createMessageApiMock() {
 type RenderModalOptions = {
   templates?: DiaryResultTemplate[];
   matches?: DiaryResultTemplate[];
+  matchesWithDetails?: MatchedTemplateWithDetails[];
   visible?: boolean;
   taskText?: string;
   userId?: number;
 };
 
 function renderModal(options: RenderModalOptions = {}) {
-  const { templates = [], matches = [], visible = true, taskText = "run", userId = 1 } = options;
+  const {
+    templates = [],
+    matches = [],
+    matchesWithDetails,
+    visible = true,
+    taskText = "run",
+    userId = 1,
+  } = options;
+
+  const resolvedMatchesWithDetails =
+    matchesWithDetails ??
+    matches.map((template, index) => ({
+      template,
+      index,
+      length: taskText.length,
+      matchedText: taskText,
+    }));
 
   mockedGetTemplates.mockResolvedValue(templates);
-  mockedFindMatchingTemplate.mockResolvedValue(matches);
+  mockedFindMatchingTemplateWithDetails.mockResolvedValue(resolvedMatchesWithDetails);
 
   const onCancel = vi.fn();
   const onApply = vi.fn();
@@ -94,7 +118,7 @@ function renderModal(options: RenderModalOptions = {}) {
 async function waitForInitialLoad(userId = 1, taskText = "run") {
   await waitFor(() => {
     expect(mockedGetTemplates).toHaveBeenCalledWith(userId);
-    expect(mockedFindMatchingTemplate).toHaveBeenCalledWith(userId, taskText);
+    expect(mockedFindMatchingTemplateWithDetails).toHaveBeenCalledWith(userId, taskText);
   });
 
   await waitFor(() => {
@@ -363,6 +387,20 @@ describe("TemplateConstructorModal", () => {
     renderModal({
       templates: [templateA, templateB],
       matches: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: 0,
+          length: 6,
+          matchedText: "6x400 м-с.к",
+        },
+        {
+          template: templateB,
+          index: 12,
+          length: 6,
+          matchedText: "5x200 м-с.к",
+        },
+      ],
       taskText: "Тренировка: 6x400 м-с.к + 5x200 м-с.к",
     });
 
@@ -376,18 +414,61 @@ describe("TemplateConstructorModal", () => {
     });
   });
 
+  it("должен ставить размер списка 1 для блока без xN и не сдвигать следующий блок", async () => {
+    const templateA = createTemplate({
+      id: 1,
+      name: "Template A",
+      code: "TA",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const templateB = createTemplate({
+      id: 2,
+      name: "Template B",
+      code: "TB",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    renderModal({
+      templates: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: 0,
+          length: 16,
+          matchedText: "1км(200+200+600)",
+        },
+        {
+          template: templateB,
+          index: 17,
+          length: 5,
+          matchedText: "5x400",
+        },
+      ],
+      taskText: "1км(200+200+600)+5x400",
+    });
+
+    await waitForInitialLoad(1, "1км(200+200+600)+5x400");
+
+    await waitFor(() => {
+      const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
+      const secondBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 1);
+      expect(firstBlockInputs.length).toBe(1);
+      expect(secondBlockInputs.length).toBe(5);
+    });
+  });
+
   it("не должен запрашивать шаблоны, если модалка скрыта", () => {
     renderModal({ visible: false, templates: [createTemplate()], matches: [createTemplate()] });
 
     expect(mockedGetTemplates).not.toHaveBeenCalled();
-    expect(mockedFindMatchingTemplate).not.toHaveBeenCalled();
+    expect(mockedFindMatchingTemplateWithDetails).not.toHaveBeenCalled();
   });
 
   it("не должен запрашивать шаблоны, если userId отсутствует", () => {
     renderModal({ userId: 0, templates: [createTemplate()], matches: [createTemplate()] });
 
     expect(mockedGetTemplates).not.toHaveBeenCalled();
-    expect(mockedFindMatchingTemplate).not.toHaveBeenCalled();
+    expect(mockedFindMatchingTemplateWithDetails).not.toHaveBeenCalled();
   });
 
   it("должен оставлять только селект ручного добавления, если совпадений нет", async () => {
