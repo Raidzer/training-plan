@@ -70,7 +70,7 @@ describe("GET /api/auth/verify-email", () => {
     getServerSessionMock.mockResolvedValue(null);
   });
 
-  it("should redirect with missing_token when token query is missing", async () => {
+  it("должен редиректить с missing_token когда токен запрашивать является отсутствующий", async () => {
     const response = await GET(
       createVerifyEmailRequest("http://localhost/api/auth/verify-email") as any
     );
@@ -79,7 +79,7 @@ describe("GET /api/auth/verify-email", () => {
     expect(getVerificationTokenByTokenMock).not.toHaveBeenCalled();
   });
 
-  it("should redirect with invalid_token when token is unknown", async () => {
+  it("должен редиректить с invalid_token когда токен является неизвестный", async () => {
     getVerificationTokenByTokenMock.mockResolvedValue(null);
 
     const response = await GET(
@@ -90,7 +90,7 @@ describe("GET /api/auth/verify-email", () => {
     expect(getUserByEmailMock).not.toHaveBeenCalled();
   });
 
-  it("should redirect with expired when token is expired", async () => {
+  it("должен редиректить с просроченный когда токен является просроченный", async () => {
     getVerificationTokenByTokenMock.mockResolvedValue({
       id: 5,
       identifier: "user@example.com",
@@ -105,7 +105,7 @@ describe("GET /api/auth/verify-email", () => {
     expect(getUserByEmailMock).not.toHaveBeenCalled();
   });
 
-  it("should redirect with email_not_found when user does not exist", async () => {
+  it("должен редиректить с email_not_found когда пользователь отсутствует", async () => {
     getUserByEmailMock.mockResolvedValue(null);
 
     const response = await GET(
@@ -117,7 +117,7 @@ describe("GET /api/auth/verify-email", () => {
     expect(deleteVerificationTokenByIdMock).not.toHaveBeenCalled();
   });
 
-  it("should verify email and redirect to dashboard for authenticated session", async () => {
+  it("должен подтверждать email и редиректить в dashboard при authenticated сессия", async () => {
     getServerSessionMock.mockResolvedValue(createSession({ id: "11" }));
 
     const response = await GET(
@@ -129,7 +129,7 @@ describe("GET /api/auth/verify-email", () => {
     expectRedirectTo(response, "/dashboard?verified=true");
   });
 
-  it("should verify email and redirect to login for anonymous session", async () => {
+  it("должен подтверждать email и редиректить в login при анонимной сессия", async () => {
     const response = await GET(
       createVerifyEmailRequest("http://localhost/api/auth/verify-email?token=valid-token") as any
     );

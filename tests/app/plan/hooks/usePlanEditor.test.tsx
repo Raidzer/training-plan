@@ -54,7 +54,7 @@ describe("usePlanEditor", () => {
     global.fetch = vi.fn() as unknown as typeof fetch;
   });
 
-  it("должен открывать модалку создания с пустым draft", () => {
+  it("должен открывать модалку создания с пустым черновик", () => {
     const { hook } = createHookHarness({ entries: [] });
 
     act(() => {
@@ -187,7 +187,7 @@ describe("usePlanEditor", () => {
     expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.saveFailed);
   });
 
-  it("должен сохранять draft, обновлять список и закрывать редактор", async () => {
+  it("должен сохранять черновик, обновлять список и закрывать редактор", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -254,7 +254,7 @@ describe("usePlanEditor", () => {
     });
   });
 
-  it("должен открывать confirm при удалении тренировки и удалять элемент по onOk", () => {
+  it("должен открывать подтверждение при удалении тренировки и удалять элемент по onOk", () => {
     const entries = [
       createPlanEntry({
         id: 1,
@@ -292,7 +292,7 @@ describe("usePlanEditor", () => {
     expect(hook.result.current.draft?.entries[0].taskText).toBe("B");
   });
 
-  it("должен вызывать удаление дня и обновлять entries", async () => {
+  it("должен вызывать удаление дня и обновлять элементы", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ deleted: true }), {
         status: 200,

@@ -585,7 +585,7 @@ describe("TemplateConstructorModal", () => {
     expect(document.querySelectorAll(".ant-select").length).toBe(1);
   });
 
-  it("должен показывать количество найденных шаблонов в success-сообщении", async () => {
+  it("должен показывать количество найденных шаблонов в успех-сообщении", async () => {
     const templateA = createTemplate({ id: 1, name: "A" });
     const templateB = createTemplate({ id: 2, name: "B", code: "TB" });
     const { messageApi } = renderModal({
@@ -700,7 +700,7 @@ describe("TemplateConstructorModal", () => {
     });
   });
 
-  it("должен подставлять {{CODE}} из следующего блока и скрывать использованный блок", async () => {
+  it("должен подставлять {{код}} из следующего блока и скрывать использованный блок", async () => {
     const templateA = createTemplate({ id: 1, name: "A", code: "A" });
     const templateB = createTemplate({ id: 2, name: "B", code: "B" });
     const templateC = createTemplate({ id: 3, name: "C", code: "C" });
@@ -751,7 +751,7 @@ describe("TemplateConstructorModal", () => {
     expect(mockedProcessTemplate).not.toHaveBeenCalled();
   });
 
-  it("должен нормализовать time-поля перед передачей в processTemplate", async () => {
+  it("должен нормализовать время-поля перед передачей в processTemplate", async () => {
     const template = createTemplate({
       schema: [
         { key: "time", label: "Time", type: "time" },

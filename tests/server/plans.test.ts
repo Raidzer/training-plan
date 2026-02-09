@@ -181,7 +181,7 @@ describe("server/plans", () => {
     expect(result).toEqual({ error: "not_found" });
   });
 
-  it("upsertPlanEntriesForDate должен возвращать invalid_entry_id при id в create режиме", async () => {
+  it("upsertPlanEntriesForDate должен возвращать invalid_entry_id при id в создавать режиме", async () => {
     const { tx } = createTx([[]]);
     dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
       return await callback(tx);
@@ -217,7 +217,7 @@ describe("server/plans", () => {
     expect(result).toEqual({ error: "invalid_entry_id" });
   });
 
-  it("upsertPlanEntriesForDate должен возвращать entries при успешном создании", async () => {
+  it("upsertPlanEntriesForDate должен возвращать элементы при успешном создании", async () => {
     const updatedEntries = [
       {
         id: 10,
@@ -262,7 +262,7 @@ describe("server/plans", () => {
     expect(result).toEqual({ error: "not_found" });
   });
 
-  it("deletePlanEntriesForDate должен удалять день и возвращать deleted", async () => {
+  it("deletePlanEntriesForDate должен удалять день и возвращать удаленный", async () => {
     const { tx, deleteWhereMock } = createTx([[{ id: 1 }, { id: 2 }], [{ id: 20 }]]);
     dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
       return await callback(tx);

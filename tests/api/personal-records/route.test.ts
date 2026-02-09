@@ -69,7 +69,7 @@ describe("API /api/personal-records route", () => {
   });
 
   describe("GET", () => {
-    it("should return 401 without session", async () => {
+    it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
 
       const response = await GET();
@@ -78,7 +78,7 @@ describe("API /api/personal-records route", () => {
       expect(getPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return 401 for invalid user id", async () => {
+    it("должен возвращать 401 при невалидном id пользователя", async () => {
       authMock.mockResolvedValue(createSession({ id: "bad-id" }));
 
       const response = await GET();
@@ -87,7 +87,7 @@ describe("API /api/personal-records route", () => {
       expect(getPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return records sorted by distance order", async () => {
+    it("должен возвращать записи отсортированные по порядку дистанции", async () => {
       const response = await GET();
       const payload = await expectJsonSuccess<{
         records: Array<{ distanceKey: string; timeText: string }>;
@@ -99,7 +99,7 @@ describe("API /api/personal-records route", () => {
   });
 
   describe("POST", () => {
-    it("should return 401 without session", async () => {
+    it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
 
       const response = await POST(
@@ -112,7 +112,7 @@ describe("API /api/personal-records route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 401 for invalid user id", async () => {
+    it("должен возвращать 401 при невалидном id пользователя", async () => {
       authMock.mockResolvedValue(createSession({ id: "bad-id" }));
 
       const response = await POST(
@@ -125,7 +125,7 @@ describe("API /api/personal-records route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 400 for empty records payload", async () => {
+    it("должен возвращать 400 при пустом пейлоаде записей", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -137,7 +137,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return 400 for invalid distance key", async () => {
+    it("должен возвращать 400 при невалидном ключе distance", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -151,7 +151,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return 400 for duplicate distance keys", async () => {
+    it("должен возвращать 400 при дублирующихся ключах distance", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -168,7 +168,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should normalize empty time as delete operation", async () => {
+    it("должен нормализовать пустое время как операцию удаления", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -203,7 +203,7 @@ describe("API /api/personal-records route", () => {
       });
     });
 
-    it("should return 400 for invalid time format", async () => {
+    it("должен возвращать 400 при невалидном формате времени", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -217,7 +217,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return 400 for invalid date", async () => {
+    it("должен возвращать 400 при невалидной дате", async () => {
       isValidDateStringMock.mockReturnValue(false);
 
       const response = await POST(
@@ -233,7 +233,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return 400 for too long protocol url", async () => {
+    it("должен возвращать 400 при слишком длинном protocol URL", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -254,7 +254,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return 400 for too long race name", async () => {
+    it("должен возвращать 400 при слишком длинном названии забега", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -275,7 +275,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should return 400 for too long race city", async () => {
+    it("должен возвращать 400 при слишком длинном городе забега", async () => {
       const response = await POST(
         createJsonRequest({
           url: "http://localhost/api/personal-records",
@@ -296,7 +296,7 @@ describe("API /api/personal-records route", () => {
       expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
     });
 
-    it("should normalize payload, persist and return sorted records", async () => {
+    it("должен нормализовать пейлоад, сохранять и возвращать отсортированные записи", async () => {
       getPersonalRecordsMock.mockResolvedValue([
         {
           distanceKey: "5k",

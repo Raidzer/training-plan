@@ -84,7 +84,7 @@ describe("POST /api/register", () => {
     sendVerificationEmailMock.mockResolvedValue(undefined);
   });
 
-  it("должен возвращать 400 для невалидного payload", async () => {
+  it("должен возвращать 400 для невалидного пейлоад", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/register",
       body: {
@@ -99,7 +99,7 @@ describe("POST /api/register", () => {
     expect(payload.error).toBeTruthy();
   });
 
-  it("должен регистрировать пользователя и отправлять verification email", async () => {
+  it("должен регистрировать пользователя и отправлять подтверждение email", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/register",
       body: createValidRegisterBody({

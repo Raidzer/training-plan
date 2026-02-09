@@ -61,7 +61,7 @@ describe("POST /api/auth/resend-verification", () => {
     sendVerificationEmailMock.mockResolvedValue(undefined);
   });
 
-  it("should return 401 when session is missing", async () => {
+  it("должен возвращать 401, когда сессия отсутствует", async () => {
     getServerSessionMock.mockResolvedValue(null);
 
     const response = await POST(createResendVerificationRequest() as any);
@@ -70,7 +70,7 @@ describe("POST /api/auth/resend-verification", () => {
     expect(generateVerificationTokenMock).not.toHaveBeenCalled();
   });
 
-  it("should return 401 when session has no email", async () => {
+  it("должен возвращать 401, когда в сессии нет email", async () => {
     getServerSessionMock.mockResolvedValue(
       createSession({
         email: "",
@@ -83,7 +83,7 @@ describe("POST /api/auth/resend-verification", () => {
     expect(generateVerificationTokenMock).not.toHaveBeenCalled();
   });
 
-  it("should return 400 for already verified email", async () => {
+  it("должен возвращать 400 при уже подтвержденном email", async () => {
     getServerSessionMock.mockResolvedValue(
       createSession({
         email: "runner@example.com",
@@ -97,7 +97,7 @@ describe("POST /api/auth/resend-verification", () => {
     expect(generateVerificationTokenMock).not.toHaveBeenCalled();
   });
 
-  it("should send verification email for unverified user", async () => {
+  it("должен отправлять письмо подтверждения для неподтвержденного пользователя", async () => {
     const response = await POST(createResendVerificationRequest() as any);
     const payload = await expectJsonSuccess<{ success: boolean }>(response, 200);
 
@@ -106,7 +106,7 @@ describe("POST /api/auth/resend-verification", () => {
     expect(sendVerificationEmailMock).toHaveBeenCalledWith("runner@example.com", "verify-token");
   });
 
-  it("should return 500 when token generation fails", async () => {
+  it("должен возвращать 500, когда генерация токена завершается ошибкой", async () => {
     generateVerificationTokenMock.mockRejectedValue(new Error("token-failed"));
 
     const response = await POST(createResendVerificationRequest() as any);
@@ -114,7 +114,7 @@ describe("POST /api/auth/resend-verification", () => {
     await expectJsonError(response, 500, "Failed to send email");
   });
 
-  it("should return 500 when email sending fails", async () => {
+  it("должен возвращать 500, когда отправка email завершается ошибкой", async () => {
     sendVerificationEmailMock.mockRejectedValue(new Error("smtp-failed"));
 
     const response = await POST(createResendVerificationRequest() as any);
