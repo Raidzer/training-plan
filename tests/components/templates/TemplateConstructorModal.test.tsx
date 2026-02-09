@@ -2,14 +2,14 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TemplateConstructorModal } from "@/components/templates/TemplateConstructorModal";
-import { findMatchingTemplate, getTemplates } from "@/app/actions/diaryTemplates";
+import { findMatchingTemplateWithDetails, getTemplates } from "@/app/actions/diaryTemplates";
 import { processTemplate } from "@/shared/utils/templateEngine";
 import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
 
 vi.mock("@/app/actions/diaryTemplates", () => {
   return {
     getTemplates: vi.fn(),
-    findMatchingTemplate: vi.fn(),
+    findMatchingTemplateWithDetails: vi.fn(),
   };
 });
 
@@ -20,8 +20,15 @@ vi.mock("@/shared/utils/templateEngine", () => {
 });
 
 const mockedGetTemplates = vi.mocked(getTemplates);
-const mockedFindMatchingTemplate = vi.mocked(findMatchingTemplate);
+const mockedFindMatchingTemplateWithDetails = vi.mocked(findMatchingTemplateWithDetails);
 const mockedProcessTemplate = vi.mocked(processTemplate);
+
+type MatchedTemplateWithDetails = {
+  template: DiaryResultTemplate;
+  index: number;
+  length: number;
+  matchedText: string;
+};
 
 function createTemplate(overrides: Partial<DiaryResultTemplate> = {}): DiaryResultTemplate {
   return {
@@ -58,16 +65,33 @@ function createMessageApiMock() {
 type RenderModalOptions = {
   templates?: DiaryResultTemplate[];
   matches?: DiaryResultTemplate[];
+  matchesWithDetails?: MatchedTemplateWithDetails[];
   visible?: boolean;
   taskText?: string;
   userId?: number;
 };
 
 function renderModal(options: RenderModalOptions = {}) {
-  const { templates = [], matches = [], visible = true, taskText = "run", userId = 1 } = options;
+  const {
+    templates = [],
+    matches = [],
+    matchesWithDetails,
+    visible = true,
+    taskText = "run",
+    userId = 1,
+  } = options;
+
+  const resolvedMatchesWithDetails =
+    matchesWithDetails ??
+    matches.map((template, index) => ({
+      template,
+      index,
+      length: taskText.length,
+      matchedText: taskText,
+    }));
 
   mockedGetTemplates.mockResolvedValue(templates);
-  mockedFindMatchingTemplate.mockResolvedValue(matches);
+  mockedFindMatchingTemplateWithDetails.mockResolvedValue(resolvedMatchesWithDetails);
 
   const onCancel = vi.fn();
   const onApply = vi.fn();
@@ -94,7 +118,7 @@ function renderModal(options: RenderModalOptions = {}) {
 async function waitForInitialLoad(userId = 1, taskText = "run") {
   await waitFor(() => {
     expect(mockedGetTemplates).toHaveBeenCalledWith(userId);
-    expect(mockedFindMatchingTemplate).toHaveBeenCalledWith(userId, taskText);
+    expect(mockedFindMatchingTemplateWithDetails).toHaveBeenCalledWith(userId, taskText);
   });
 
   await waitFor(() => {
@@ -363,6 +387,20 @@ describe("TemplateConstructorModal", () => {
     renderModal({
       templates: [templateA, templateB],
       matches: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: 0,
+          length: 6,
+          matchedText: "6x400 м-с.к",
+        },
+        {
+          template: templateB,
+          index: 12,
+          length: 6,
+          matchedText: "5x200 м-с.к",
+        },
+      ],
       taskText: "Тренировка: 6x400 м-с.к + 5x200 м-с.к",
     });
 
@@ -376,18 +414,165 @@ describe("TemplateConstructorModal", () => {
     });
   });
 
+  it("должен брать repeatCount из контекста taskText, если matchedText не содержит префикс", async () => {
+    const templateA = createTemplate({
+      id: 1,
+      name: "Template A",
+      code: "TA",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const templateB = createTemplate({
+      id: 2,
+      name: "Template B",
+      code: "TB",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    const taskText = "1км(200+200+600)+5x400 м-с.к";
+    const firstMatchedText = "1км(200+200+600)";
+    const secondMatchedText = "м-с.к";
+    const firstIndex = taskText.indexOf(firstMatchedText);
+    const secondIndex = taskText.indexOf(secondMatchedText);
+
+    expect(firstIndex).toBeGreaterThanOrEqual(0);
+    expect(secondIndex).toBeGreaterThanOrEqual(0);
+
+    renderModal({
+      templates: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: firstIndex,
+          length: firstMatchedText.length,
+          matchedText: firstMatchedText,
+        },
+        {
+          template: templateB,
+          index: secondIndex,
+          length: secondMatchedText.length,
+          matchedText: secondMatchedText,
+        },
+      ],
+      taskText,
+    });
+
+    await waitForInitialLoad(1, taskText);
+
+    await waitFor(() => {
+      const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
+      const secondBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 1);
+      expect(firstBlockInputs.length).toBe(1);
+      expect(secondBlockInputs.length).toBe(5);
+    });
+  });
+
+  it("не должен переносить repeatCount из предыдущего блока при контекстном парсинге", async () => {
+    const templateA = createTemplate({
+      id: 1,
+      name: "Template A",
+      code: "TA",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const templateB = createTemplate({
+      id: 2,
+      name: "Template B",
+      code: "TB",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    const taskText = "5x400 м-с.к+1км(200+200+600)";
+    const firstMatchedText = "м-с.к";
+    const secondMatchedText = "1км(200+200+600)";
+    const firstIndex = taskText.indexOf(firstMatchedText);
+    const secondIndex = taskText.indexOf(secondMatchedText);
+
+    expect(firstIndex).toBeGreaterThanOrEqual(0);
+    expect(secondIndex).toBeGreaterThanOrEqual(0);
+
+    renderModal({
+      templates: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: firstIndex,
+          length: firstMatchedText.length,
+          matchedText: firstMatchedText,
+        },
+        {
+          template: templateB,
+          index: secondIndex,
+          length: secondMatchedText.length,
+          matchedText: secondMatchedText,
+        },
+      ],
+      taskText,
+    });
+
+    await waitForInitialLoad(1, taskText);
+
+    await waitFor(() => {
+      const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
+      const secondBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 1);
+      expect(firstBlockInputs.length).toBe(5);
+      expect(secondBlockInputs.length).toBe(1);
+    });
+  });
+
+  it("должен ставить размер списка 1 для блока без xN и не сдвигать следующий блок", async () => {
+    const templateA = createTemplate({
+      id: 1,
+      name: "Template A",
+      code: "TA",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const templateB = createTemplate({
+      id: 2,
+      name: "Template B",
+      code: "TB",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    renderModal({
+      templates: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: 0,
+          length: 16,
+          matchedText: "1км(200+200+600)",
+        },
+        {
+          template: templateB,
+          index: 17,
+          length: 5,
+          matchedText: "5x400",
+        },
+      ],
+      taskText: "1км(200+200+600)+5x400",
+    });
+
+    await waitForInitialLoad(1, "1км(200+200+600)+5x400");
+
+    await waitFor(() => {
+      const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
+      const secondBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 1);
+      expect(firstBlockInputs.length).toBe(1);
+      expect(secondBlockInputs.length).toBe(5);
+    });
+  });
+
   it("не должен запрашивать шаблоны, если модалка скрыта", () => {
     renderModal({ visible: false, templates: [createTemplate()], matches: [createTemplate()] });
 
     expect(mockedGetTemplates).not.toHaveBeenCalled();
-    expect(mockedFindMatchingTemplate).not.toHaveBeenCalled();
+    expect(mockedFindMatchingTemplateWithDetails).not.toHaveBeenCalled();
   });
 
   it("не должен запрашивать шаблоны, если userId отсутствует", () => {
     renderModal({ userId: 0, templates: [createTemplate()], matches: [createTemplate()] });
 
     expect(mockedGetTemplates).not.toHaveBeenCalled();
-    expect(mockedFindMatchingTemplate).not.toHaveBeenCalled();
+    expect(mockedFindMatchingTemplateWithDetails).not.toHaveBeenCalled();
   });
 
   it("должен оставлять только селект ручного добавления, если совпадений нет", async () => {
@@ -400,7 +585,7 @@ describe("TemplateConstructorModal", () => {
     expect(document.querySelectorAll(".ant-select").length).toBe(1);
   });
 
-  it("должен показывать количество найденных шаблонов в success-сообщении", async () => {
+  it("должен показывать количество найденных шаблонов в успех-сообщении", async () => {
     const templateA = createTemplate({ id: 1, name: "A" });
     const templateB = createTemplate({ id: 2, name: "B", code: "TB" });
     const { messageApi } = renderModal({
@@ -515,7 +700,7 @@ describe("TemplateConstructorModal", () => {
     });
   });
 
-  it("должен подставлять {{CODE}} из следующего блока и скрывать использованный блок", async () => {
+  it("должен подставлять {{код}} из следующего блока и скрывать использованный блок", async () => {
     const templateA = createTemplate({ id: 1, name: "A", code: "A" });
     const templateB = createTemplate({ id: 2, name: "B", code: "B" });
     const templateC = createTemplate({ id: 3, name: "C", code: "C" });
@@ -566,7 +751,7 @@ describe("TemplateConstructorModal", () => {
     expect(mockedProcessTemplate).not.toHaveBeenCalled();
   });
 
-  it("должен нормализовать time-поля перед передачей в processTemplate", async () => {
+  it("должен нормализовать время-поля перед передачей в processTemplate", async () => {
     const template = createTemplate({
       schema: [
         { key: "time", label: "Time", type: "time" },
@@ -660,6 +845,93 @@ describe("TemplateConstructorModal", () => {
 
     await waitFor(() => {
       expect(onApply).toHaveBeenCalledWith("Second");
+    });
+  });
+
+  it("должен автодобавлять блоки для комбинированной тренировки с темповым, 200 и 100", async () => {
+    const tempoTemplate = createTemplate({
+      id: 1,
+      name: "Темповый бег до 27",
+      matchPattern: "# км(до 27)(*:*)",
+    });
+    const force200Template = createTemplate({
+      id: 2,
+      name: "200 метров силовым бегом",
+      matchPattern: "#x200 м-с.у. в гору силовым бегом",
+    });
+    const hill100Template = createTemplate({
+      id: 3,
+      name: "100 метров близко к max в гору",
+      matchPattern: "#x100 м-близко к max в гору",
+    });
+    const tempoPulseTemplate = createTemplate({
+      id: 4,
+      name: "Темповый бег до 27 с пульсом",
+      matchPattern: "# км(до 27)(*:*)(пульс)",
+    });
+
+    const taskText =
+      "4 км(до 27)(4:05)+3 мин. отдыха+12x200 м-с.у. в гору силовым бегом(через 200 м(до 22)(1:20-1:40))+3 мин. отдыха+4x100 м-близко к max в гору(через 2 мин. отдыха)+3 мин. отдыха+3 км(до 27)(4:05)(пульс)";
+    const tempoMatchText = "4 км(до 27)(4:05)";
+    const force200MatchText = "12x200 м-с.у. в гору силовым бегом";
+    const hill100MatchText = "4x100 м-близко к max в гору";
+    const tempoPulseMatchText = "3 км(до 27)(4:05)(пульс)";
+
+    renderModal({
+      templates: [tempoTemplate, force200Template, hill100Template, tempoPulseTemplate],
+      taskText,
+      matchesWithDetails: [
+        {
+          template: tempoTemplate,
+          index: taskText.indexOf(tempoMatchText),
+          length: tempoMatchText.length,
+          matchedText: tempoMatchText,
+        },
+        {
+          template: force200Template,
+          index: taskText.indexOf(force200MatchText),
+          length: force200MatchText.length,
+          matchedText: force200MatchText,
+        },
+        {
+          template: hill100Template,
+          index: taskText.indexOf(hill100MatchText),
+          length: hill100MatchText.length,
+          matchedText: hill100MatchText,
+        },
+        {
+          template: tempoPulseTemplate,
+          index: taskText.indexOf(tempoPulseMatchText),
+          length: tempoPulseMatchText.length,
+          matchedText: tempoPulseMatchText,
+        },
+      ],
+    });
+
+    await waitForInitialLoad(1, taskText);
+
+    await waitFor(() => {
+      const valueNodes = Array.from(
+        document.querySelectorAll(
+          ".ant-select-content-value[title], .ant-select-selection-item[title]"
+        )
+      );
+      const expectedNames = [
+        "Темповый бег до 27",
+        "200 метров силовым бегом",
+        "100 метров близко к max в гору",
+        "Темповый бег до 27 с пульсом",
+      ];
+      const selectedBlockNames = valueNodes
+        .map((node) => node.getAttribute("title") ?? "")
+        .filter((value) => expectedNames.includes(value));
+      const uniqueSelectedNames = new Set(selectedBlockNames);
+
+      expect(uniqueSelectedNames.has("Темповый бег до 27")).toBe(true);
+      expect(uniqueSelectedNames.has("200 метров силовым бегом")).toBe(true);
+      expect(uniqueSelectedNames.has("100 метров близко к max в гору")).toBe(true);
+      expect(uniqueSelectedNames.has("Темповый бег до 27 с пульсом")).toBe(true);
+      expect(uniqueSelectedNames.size).toBe(4);
     });
   });
 });

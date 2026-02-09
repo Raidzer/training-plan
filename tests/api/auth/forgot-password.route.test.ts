@@ -41,7 +41,7 @@ describe("POST /api/auth/forgot-password", () => {
     sendPasswordResetEmailMock.mockResolvedValue(undefined);
   });
 
-  it("должен возвращать 500 при невалидном payload", async () => {
+  it("должен возвращать 500 при невалидном пейлоад", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/auth/forgot-password",
       body: {
@@ -53,7 +53,7 @@ describe("POST /api/auth/forgot-password", () => {
     await expectJsonError(response, 500, "Something went wrong");
   });
 
-  it("должен возвращать success=true и не отправлять письмо, если пользователь не найден", async () => {
+  it("должен возвращать успех=true и не отправлять письмо, если пользователь не найден", async () => {
     getUserByEmailMock.mockResolvedValue(null);
 
     const request = createJsonRequest({

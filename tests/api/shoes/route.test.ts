@@ -50,7 +50,7 @@ describe("API /api/shoes route", () => {
   });
 
   describe("GET", () => {
-    it("should return 401 without session", async () => {
+    it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
 
       const response = await GET();
@@ -59,7 +59,7 @@ describe("API /api/shoes route", () => {
       expect(listShoesByUserMock).not.toHaveBeenCalled();
     });
 
-    it("should return 401 for invalid user id", async () => {
+    it("должен возвращать 401 при невалидном id пользователя", async () => {
       authMock.mockResolvedValue(createSession({ id: "bad-id" }));
 
       const response = await GET();
@@ -68,7 +68,7 @@ describe("API /api/shoes route", () => {
       expect(listShoesByUserMock).not.toHaveBeenCalled();
     });
 
-    it("should return shoes list for authorized user", async () => {
+    it("должен возвращать кроссовки список при авторизованном пользователь", async () => {
       const response = await GET();
       const payload = await expectJsonSuccess<{
         shoes: Array<{ id: number; name: string }>;
@@ -81,7 +81,7 @@ describe("API /api/shoes route", () => {
   });
 
   describe("POST", () => {
-    it("should return 401 without session", async () => {
+    it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
       const request = createJsonRequest({
         url: "http://localhost/api/shoes",
@@ -92,7 +92,7 @@ describe("API /api/shoes route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 401 for invalid user id", async () => {
+    it("должен возвращать 401 при невалидном id пользователя", async () => {
       authMock.mockResolvedValue(createSession({ id: "bad-id" }));
       const request = createJsonRequest({
         url: "http://localhost/api/shoes",
@@ -103,7 +103,7 @@ describe("API /api/shoes route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 400 for invalid body", async () => {
+    it("должен возвращать 400 при невалидном body", async () => {
       const request = createJsonRequest({
         url: "http://localhost/api/shoes",
         body: {},
@@ -114,7 +114,7 @@ describe("API /api/shoes route", () => {
       expect(createShoeMock).not.toHaveBeenCalled();
     });
 
-    it("should return 400 for too long name", async () => {
+    it("должен возвращать 400 при слишком длинном название", async () => {
       const request = createJsonRequest({
         url: "http://localhost/api/shoes",
         body: { name: "x".repeat(256) },
@@ -125,7 +125,7 @@ describe("API /api/shoes route", () => {
       expect(createShoeMock).not.toHaveBeenCalled();
     });
 
-    it("should create shoe with trimmed name", async () => {
+    it("должен создавать кроссовок с обрезанным названием", async () => {
       const request = createJsonRequest({
         url: "http://localhost/api/shoes",
         body: { name: "  Vaporfly  " },

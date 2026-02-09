@@ -71,7 +71,7 @@ describe("GET /api/diary/marks", () => {
     await expectJsonError(response, 400, "invalid_range");
   });
 
-  it("должен возвращать 400, если from больше to", async () => {
+  it("должен возвращать 400, если из больше в", async () => {
     const request = createRequestWithQuery({
       path: "/api/diary/marks",
       query: { from: "2026-02-01", to: "2026-01-01" },
@@ -82,7 +82,7 @@ describe("GET /api/diary/marks", () => {
     expect(getDiaryDaysInRangeMock).not.toHaveBeenCalled();
   });
 
-  it("должен возвращать days при валидном запросе", async () => {
+  it("должен возвращать дни при валидном запросе", async () => {
     const request = createRequestWithQuery({
       path: "/api/diary/marks",
       query: { from: "2026-01-01", to: "2026-01-31" },

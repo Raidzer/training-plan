@@ -1,11 +1,11 @@
 ﻿"use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Select, Form, Input, Button, Typography, Space, Divider, Spin } from "antd";
 import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
-import { findMatchingTemplate, getTemplates } from "@/app/actions/diaryTemplates";
+import { findMatchingTemplateWithDetails, getTemplates } from "@/app/actions/diaryTemplates";
 import { processTemplate } from "@/shared/utils/templateEngine";
 import styles from "./TemplateConstructorModal.module.scss";
 
@@ -27,6 +27,13 @@ type Block = {
   values: Record<string, any>;
   repeatCount?: number;
   autoListSize?: number;
+};
+
+type MatchedTemplateWithDetails = {
+  template: DiaryResultTemplate;
+  index: number;
+  length: number;
+  matchedText: string;
 };
 
 type TemplateSchemaField = {
@@ -162,24 +169,64 @@ function sanitizeListValues(values: unknown[]): unknown[] {
   return normalizedValues;
 }
 
-function detectRepeatCountsFromTaskText(taskText: string): number[] {
-  if (!taskText || typeof taskText !== "string") {
-    return [];
+function parseRepeatCountFromText(text: string): number | null {
+  if (!text || typeof text !== "string") {
+    return null;
   }
 
-  const repeatCounts: number[] = [];
-  const pattern = /(\d{1,2})\s*[xх×]\s*\d+/giu;
+  const match = text.match(/(\d{1,2})\s*[xх×]\s*\d+/iu);
+  if (!match) {
+    return null;
+  }
+
+  const parsedCount = Number(match[1]);
+  if (Number.isNaN(parsedCount) || parsedCount <= 0) {
+    return null;
+  }
+
+  return parsedCount;
+}
+
+function detectRepeatCountForMatch(
+  taskText: string,
+  matchDetails: Pick<MatchedTemplateWithDetails, "matchedText" | "index" | "length">,
+  previousMatchEnd: number
+): number {
+  const directCount = parseRepeatCountFromText(matchDetails.matchedText);
+  if (directCount !== null) {
+    return directCount;
+  }
+
+  if (!taskText || typeof taskText !== "string") {
+    return 1;
+  }
+
+  const safeIndex = Math.max(0, Math.min(matchDetails.index, taskText.length));
+  const safeLength = Math.max(0, matchDetails.length);
+  // matchPattern can be shorter than the real phrase (e.g. omit "5x"), so we inspect local context
+  // but never cross into already consumed previous match range.
+  const contextStart = Math.max(0, Math.max(previousMatchEnd, safeIndex - 32));
+  const contextEnd = Math.min(taskText.length, safeIndex + safeLength);
+
+  if (contextStart >= contextEnd) {
+    return 1;
+  }
+
+  const contextText = taskText.slice(contextStart, contextEnd);
+  const repeatPattern = /(\d{1,2})\s*[xх×]\s*\d+/giu;
+  let fallbackCount: number | null = null;
   let match: RegExpExecArray | null = null;
 
-  while ((match = pattern.exec(taskText)) !== null) {
+  while ((match = repeatPattern.exec(contextText)) !== null) {
     const parsedCount = Number(match[1]);
     if (Number.isNaN(parsedCount) || parsedCount <= 0) {
       continue;
     }
-    repeatCounts.push(parsedCount);
+
+    fallbackCount = parsedCount;
   }
 
-  return repeatCounts;
+  return fallbackCount ?? 1;
 }
 
 const TimeInput = ({ value, onChange, ...props }: any) => {
@@ -228,17 +275,6 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const autoDetectedRepeatCounts = useMemo(
-    () => detectRepeatCountsFromTaskText(taskText),
-    [taskText]
-  );
-  const autoDetectedListSize = useMemo(() => {
-    if (autoDetectedRepeatCounts.length === 0) {
-      return null;
-    }
-
-    return Math.max(...autoDetectedRepeatCounts);
-  }, [autoDetectedRepeatCounts]);
 
   const [templateToAdd, setTemplateToAdd] = useState<number | null>(null);
 
@@ -247,17 +283,29 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
       setLoading(true);
       form.resetFields();
 
-      Promise.all([getTemplates(userId), findMatchingTemplate(userId, taskText)])
-        .then(([allTemplates, matches]) => {
+      Promise.all([getTemplates(userId), findMatchingTemplateWithDetails(userId, taskText)])
+        .then(([allTemplates, matchesWithDetails]) => {
           setTemplates(allTemplates);
 
-          if (matches.length > 0) {
-            const newBlocks = matches.map((t, index) => ({
-              id: Math.random().toString(36).substr(2, 9),
-              templateId: t.id,
-              values: buildDefaultValuesFromSchema((t.schema as TemplateSchemaField[]) || []),
-              autoListSize: autoDetectedRepeatCounts[index],
-            }));
+          if (matchesWithDetails.length > 0) {
+            const sortedMatchesWithDetails = [...matchesWithDetails].sort(
+              (a, b) => a.index - b.index
+            );
+            let previousMatchEnd = 0;
+            const newBlocks = sortedMatchesWithDetails.map((match: MatchedTemplateWithDetails) => {
+              const repeatCount = detectRepeatCountForMatch(taskText, match, previousMatchEnd);
+              previousMatchEnd = Math.max(previousMatchEnd, match.index + match.length);
+
+              return {
+                id: Math.random().toString(36).substr(2, 9),
+                templateId: match.template.id,
+                values: buildDefaultValuesFromSchema(
+                  (match.template.schema as TemplateSchemaField[]) || []
+                ),
+                autoListSize: repeatCount,
+                repeatCount,
+              };
+            });
             setBlocks(newBlocks);
 
             const defaultFormValues = newBlocks.reduce(
@@ -271,7 +319,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
               form.setFieldsValue(defaultFormValues);
             }
 
-            messageApi.success(`Найдено подходящих шаблонов: ${matches.length}`);
+            messageApi.success(`Найдено подходящих шаблонов: ${sortedMatchesWithDetails.length}`);
           } else {
             setBlocks([]);
           }
@@ -282,7 +330,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
     } else {
       setBlocks([]);
     }
-  }, [visible, userId, taskText, messageApi, form, autoDetectedRepeatCounts]);
+  }, [visible, userId, taskText, messageApi, form]);
 
   const addBlock = (templateId: number) => {
     const blockId = Math.random().toString(36).substr(2, 9);
@@ -296,7 +344,8 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         id: blockId,
         templateId,
         values: defaultValues,
-        autoListSize: autoDetectedRepeatCounts[prev.length],
+        autoListSize: 1,
+        repeatCount: 1,
       },
     ]);
 
@@ -370,11 +419,13 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
       blocks.forEach((block) => {
         const template = templates.find((t) => t.id === block.templateId);
-        if (!template) return;
+        if (!template) {
+          return;
+        }
 
         const formValues: Record<string, any> = {};
         const blockAutoListSize =
-          block.autoListSize && block.autoListSize > 0 ? block.autoListSize : autoDetectedListSize;
+          block.autoListSize && block.autoListSize > 0 ? block.autoListSize : 1;
 
         const normalizeTime = (val: any) => {
           if (typeof val !== "string") return val;
@@ -412,7 +463,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
             const normalizedListValues = sanitizeListValues(listValues);
 
             const fixedListSize =
-              field.listSize && field.listSize > 0 ? field.listSize : (blockAutoListSize ?? 1);
+              field.listSize && field.listSize > 0 ? field.listSize : blockAutoListSize;
 
             if (fixedListSize > 0) {
               formValues[field.key] = normalizedListValues.slice(0, fixedListSize);
@@ -564,13 +615,9 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                     const fieldFormKey = `${block.id}_${field.key}`;
                     const listItemRules = itemType === "time" ? getTimeValidationRules() : [];
                     const blockAutoListSize =
-                      block.autoListSize && block.autoListSize > 0
-                        ? block.autoListSize
-                        : autoDetectedListSize;
+                      block.autoListSize && block.autoListSize > 0 ? block.autoListSize : 1;
                     const fixedListSize =
-                      field.listSize && field.listSize > 0
-                        ? field.listSize
-                        : (blockAutoListSize ?? 1);
+                      field.listSize && field.listSize > 0 ? field.listSize : blockAutoListSize;
 
                     const renderTypedInput = (props: any) => {
                       if (itemType === "number") {

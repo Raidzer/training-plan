@@ -170,5 +170,23 @@ describe("templateMatching", () => {
 
       expect(result).toHaveLength(0);
     });
+
+    it("должен находить несколько шаблонов в комбинированной тренировке с темповыми и ускорениями", () => {
+      const t100 = createTemplate(1, "#x100 м-близко к max в гору");
+      const t200 = createTemplate(2, "#x200 м-с.у. в гору силовым бегом");
+      const tTempo = createTemplate(3, "# км(до 27)(*:*)");
+      const tTempoPulse = createTemplate(4, "# км(до 27)(*:*-*:*)(пульс)");
+
+      const text =
+        "4 км(до 27)(4:05)+3 мин. отдыха+12x200 м-с.у. в гору силовым бегом(через 200 м(до 22)(1:20-1:40))+3 мин. отдыха+4x100 м-близко к max в гору(через 2 мин. отдыха)+3 мин. отдыха+3 км(до 27)(4:05)(пульс)";
+
+      const result = matchTemplates([t100, t200, tTempo, tTempoPulse], text);
+      const ids = result.map((item) => item.id);
+
+      expect(ids).toContain(1);
+      expect(ids).toContain(2);
+      expect(ids).toContain(3);
+      expect(result.length).toBeGreaterThanOrEqual(3);
+    });
   });
 });

@@ -148,7 +148,7 @@ describe("server/register", () => {
     bcryptHashMock.mockResolvedValue("hashed-password");
   });
 
-  it("should throw invite_invalid when invite was not found", async () => {
+  it("должен выбрасывать invite_invalid, когда инвайт не найден", async () => {
     const { tx } = createTx({ inviteRows: [] });
     dbTransactionMock.mockImplementation(async (callback: (innerTx: unknown) => unknown) => {
       return await callback(tx);
@@ -159,7 +159,7 @@ describe("server/register", () => {
     });
   });
 
-  it("should throw invite_used when invite is already used", async () => {
+  it("должен выбрасывать invite_used, когда инвайт уже использован", async () => {
     const { tx } = createTx({
       inviteRows: [
         {
@@ -180,7 +180,7 @@ describe("server/register", () => {
     });
   });
 
-  it("should throw invite_expired when invite has expired", async () => {
+  it("должен выбрасывать invite_expired, когда инвайт просрочен", async () => {
     const { tx } = createTx({
       inviteRows: [
         {
@@ -201,7 +201,7 @@ describe("server/register", () => {
     });
   });
 
-  it("should throw user_exists when email or login is already in use", async () => {
+  it("должен выбрасывать user_exists, когда email или login уже заняты", async () => {
     const { tx } = createTx({
       existingUserRows: [{ id: 777 }],
     });
@@ -214,7 +214,7 @@ describe("server/register", () => {
     });
   });
 
-  it("should throw create_failed when insert returned empty result", async () => {
+  it("должен выбрасывать create_failed, когда вставка вернула пустой результат", async () => {
     const { tx } = createTx({
       createdUserRows: [],
     });
@@ -227,7 +227,7 @@ describe("server/register", () => {
     });
   });
 
-  it("should throw invite_used when invite update race happened", async () => {
+  it("должен выбрасывать invite_used, когда обновление инвайта не удалось из-за гонки", async () => {
     const { tx } = createTx({
       updatedInviteRows: [],
     });
@@ -240,7 +240,7 @@ describe("server/register", () => {
     });
   });
 
-  it("should create user and consume invite with default timezone", async () => {
+  it("должен создавать пользователя и использовать инвайт с часовым поясом по умолчанию", async () => {
     const { tx, insertValuesMock } = createTx();
     dbTransactionMock.mockImplementation(async (callback: (innerTx: unknown) => unknown) => {
       return await callback(tx);
@@ -266,7 +266,7 @@ describe("server/register", () => {
     );
   });
 
-  it("should preserve explicit timezone from input", async () => {
+  it("должен сохранять явный часовой пояс из ввода", async () => {
     const { tx, insertValuesMock } = createTx();
     dbTransactionMock.mockImplementation(async (callback: (innerTx: unknown) => unknown) => {
       return await callback(tx);
@@ -284,7 +284,7 @@ describe("server/register", () => {
     );
   });
 
-  it("should expose RegisterError class for typed handling", () => {
+  it("должен предоставлять класс RegisterError для типизированной обработки", () => {
     const error = new RegisterError("invite_invalid");
     expect(error).toBeInstanceOf(Error);
     expect(error.code).toBe("invite_invalid");

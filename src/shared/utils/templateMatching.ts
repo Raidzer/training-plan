@@ -3,14 +3,23 @@ export interface TemplateWithPattern {
   [key: string]: any;
 }
 
-export function matchTemplates<T extends TemplateWithPattern>(
+export type TemplateMatchWithDetails<T extends TemplateWithPattern> = {
+  template: T;
+  index: number;
+  length: number;
+  matchedText: string;
+};
+
+export function matchTemplatesWithDetails<T extends TemplateWithPattern>(
   templates: T[],
   taskText: string
-): T[] {
-  const allMatches: { template: T; index: number; length: number }[] = [];
+): TemplateMatchWithDetails<T>[] {
+  const allMatches: TemplateMatchWithDetails<T>[] = [];
 
   templates.forEach((t) => {
-    if (!t.matchPattern) return;
+    if (!t.matchPattern) {
+      return;
+    }
 
     const patterns = t.matchPattern
       .split(";")
@@ -22,7 +31,12 @@ export function matchTemplates<T extends TemplateWithPattern>(
     patterns.forEach((pattern) => {
       const addMatch = (index: number, length: number) => {
         if (!foundIndicesForTemplate.has(index)) {
-          allMatches.push({ template: t, index, length });
+          allMatches.push({
+            template: t,
+            index,
+            length,
+            matchedText: taskText.slice(index, index + length),
+          });
           foundIndicesForTemplate.add(index);
         }
       };
@@ -52,7 +66,7 @@ export function matchTemplates<T extends TemplateWithPattern>(
         );
 
         smartPattern = smartPattern.replace(/\\#/g, "\\d+");
-        smartPattern = smartPattern.replace(/\\\*/g, ".*?");
+        smartPattern = smartPattern.replace(/\\\*/g, "[^+\\n\\r]*?");
 
         if (isAnchored) {
           smartPattern = "^" + smartPattern;
@@ -77,7 +91,7 @@ export function matchTemplates<T extends TemplateWithPattern>(
 
       try {
         const regex = new RegExp(pattern, "gi");
-        let match;
+        let match: RegExpExecArray | null = null;
         while ((match = regex.exec(taskText)) !== null) {
           addMatch(match.index, match[0].length);
         }
@@ -92,15 +106,22 @@ export function matchTemplates<T extends TemplateWithPattern>(
     return b.length - a.length;
   });
 
-  const uniqueMatches: T[] = [];
+  const uniqueMatches: TemplateMatchWithDetails<T>[] = [];
   let lastMatchEnd = -1;
 
-  allMatches.forEach((m) => {
-    if (m.index >= lastMatchEnd) {
-      uniqueMatches.push(m.template);
-      lastMatchEnd = m.index + m.length;
+  allMatches.forEach((match) => {
+    if (match.index >= lastMatchEnd) {
+      uniqueMatches.push(match);
+      lastMatchEnd = match.index + match.length;
     }
   });
 
   return uniqueMatches;
+}
+
+export function matchTemplates<T extends TemplateWithPattern>(
+  templates: T[],
+  taskText: string
+): T[] {
+  return matchTemplatesWithDetails(templates, taskText).map((match) => match.template);
 }

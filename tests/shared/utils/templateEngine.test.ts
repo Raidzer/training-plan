@@ -78,7 +78,7 @@ describe("templateEngine", () => {
         expect(result).toBe("Rep: xxx");
       });
 
-      it("должен обрабатывать {{#each list}}...{{/each}}", () => {
+      it("должен обрабатывать {{#each список}}...{{/each}}", () => {
         const template = createTemplate("Items: {{#each items}}[{{this}}]{{/each}}");
         const values = { items: ["A", "B"] };
         const result = processTemplate(template, values);
@@ -112,7 +112,7 @@ describe("templateEngine", () => {
     });
 
     describe("Обработка схемы", () => {
-      it("должен разбивать строковый ввод на массив для полей типа list", () => {
+      it("должен разбивать строковый ввод на массив для полей типа список", () => {
         const template = createTemplate("{{items}}", [{ key: "items", type: "list" }]);
         const values = { items: "A; B; C" };
         const result = processTemplate(template, values);
@@ -204,7 +204,7 @@ describe("templateEngine", () => {
         expect(result).toBe("Pace: 4:30");
       });
 
-      it("должен обрабатывать сырые строки в PACE (fallback логика)", () => {
+      it("должен обрабатывать сырые строки в PACE (резервный логика)", () => {
         const template = createTemplate("Pace: {{PACE(time, 10)}}");
         const values = { time: "50:00" };
         const result = processTemplate(template, values);

@@ -55,7 +55,7 @@ describe("API /api/plans route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("должен возвращать 401 при некорректном user id", async () => {
+    it("должен возвращать 401 при некорректном id пользователя", async () => {
       authMock.mockResolvedValue(createSession({ id: "0" }));
 
       const response = await GET();
@@ -63,7 +63,7 @@ describe("API /api/plans route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("должен отдавать entries при валидной сессии", async () => {
+    it("должен отдавать элементы при валидной сессии", async () => {
       getPlanEntriesWithReportFlagsMock.mockResolvedValue([
         {
           id: 1,
@@ -130,7 +130,7 @@ describe("API /api/plans route", () => {
       await expectJsonError(response, 400, "invalid_original_date");
     });
 
-    it("должен валидировать пустой список entries", async () => {
+    it("должен валидировать пустой список элементы", async () => {
       const request = createJsonRequest({
         url: "http://localhost/api/plans",
         body: {
@@ -172,7 +172,7 @@ describe("API /api/plans route", () => {
       await expectJsonError(response, 400, "empty_entries");
     });
 
-    it("должен маппить ошибки server слоя", async () => {
+    it("должен маппить ошибки серверного слоя", async () => {
       upsertPlanEntriesForDateMock.mockResolvedValueOnce({ error: "date_exists" });
       upsertPlanEntriesForDateMock.mockResolvedValueOnce({ error: "not_found" });
       upsertPlanEntriesForDateMock.mockResolvedValueOnce({ error: "invalid_entry_id" });
@@ -195,7 +195,7 @@ describe("API /api/plans route", () => {
       await expectJsonError(responseInvalidEntry, 400, "invalid_entry_id");
     });
 
-    it("должен нормализовать payload и вызывать upsertPlanEntriesForDate", async () => {
+    it("должен нормализовать пейлоад и вызывать upsertPlanEntriesForDate", async () => {
       upsertPlanEntriesForDateMock.mockResolvedValue({
         entries: [
           {
@@ -257,7 +257,7 @@ describe("API /api/plans route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("должен валидировать date query", async () => {
+    it("должен валидировать дата запрашивать", async () => {
       const request = createRequestWithQuery({
         path: "/api/plans",
         method: "DELETE",
@@ -268,7 +268,7 @@ describe("API /api/plans route", () => {
       await expectJsonError(response, 400, "invalid_date");
     });
 
-    it("должен маппить not_found и отдавать deleted при успехе", async () => {
+    it("должен маппить not_found и отдавать удаленный при успехе", async () => {
       deletePlanEntriesForDateMock.mockResolvedValueOnce({ error: "not_found" });
       deletePlanEntriesForDateMock.mockResolvedValueOnce({ deleted: true });
 
