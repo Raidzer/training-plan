@@ -45,7 +45,7 @@ async function createWorkbookBuffer(params: {
     comment?: string;
     taskHasFill?: boolean;
   }>;
-}): Promise<ArrayBuffer> {
+}): Promise<ArrayBuffer | Uint8Array> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Plan");
   sheet.addRow(params.headers ?? ["Дата", "Задание", "Комментарий"]);
@@ -62,22 +62,26 @@ async function createWorkbookBuffer(params: {
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
-  if (buffer instanceof ArrayBuffer) {
-    return buffer;
-  }
-
-  const view = buffer as Uint8Array;
-  return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength) as ArrayBuffer;
+  return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer as ArrayLike<number>);
 }
 
-function createImportRequest(fileBuffer?: ArrayBuffer, filename = "plan-import.xlsx"): Request {
+function createImportRequest(
+  fileBuffer?: ArrayBuffer | Uint8Array,
+  filename = "plan-import.xlsx"
+): Request {
   let file: (Blob & { name?: string; arrayBuffer?: () => Promise<ArrayBuffer> }) | null = null;
   if (fileBuffer) {
-    file = new Blob([fileBuffer], {
+    file = new Blob([fileBuffer as unknown as BlobPart], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }) as Blob & { name?: string; arrayBuffer?: () => Promise<ArrayBuffer> };
     file.name = filename;
-    file.arrayBuffer = async () => fileBuffer;
+    file.arrayBuffer = async () =>
+      fileBuffer instanceof ArrayBuffer
+        ? fileBuffer
+        : (fileBuffer.buffer.slice(
+            fileBuffer.byteOffset,
+            fileBuffer.byteOffset + fileBuffer.byteLength
+          ) as ArrayBuffer);
   }
 
   const requestStub = {
