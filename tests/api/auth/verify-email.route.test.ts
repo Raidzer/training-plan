@@ -139,4 +139,3 @@ describe("GET /api/auth/verify-email", () => {
     expectRedirectTo(response, "/login?verified=true");
   });
 });
-
