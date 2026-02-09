@@ -414,6 +414,110 @@ describe("TemplateConstructorModal", () => {
     });
   });
 
+  it("должен брать repeatCount из контекста taskText, если matchedText не содержит префикс", async () => {
+    const templateA = createTemplate({
+      id: 1,
+      name: "Template A",
+      code: "TA",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const templateB = createTemplate({
+      id: 2,
+      name: "Template B",
+      code: "TB",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    const taskText = "1км(200+200+600)+5x400 м-с.к";
+    const firstMatchedText = "1км(200+200+600)";
+    const secondMatchedText = "м-с.к";
+    const firstIndex = taskText.indexOf(firstMatchedText);
+    const secondIndex = taskText.indexOf(secondMatchedText);
+
+    expect(firstIndex).toBeGreaterThanOrEqual(0);
+    expect(secondIndex).toBeGreaterThanOrEqual(0);
+
+    renderModal({
+      templates: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: firstIndex,
+          length: firstMatchedText.length,
+          matchedText: firstMatchedText,
+        },
+        {
+          template: templateB,
+          index: secondIndex,
+          length: secondMatchedText.length,
+          matchedText: secondMatchedText,
+        },
+      ],
+      taskText,
+    });
+
+    await waitForInitialLoad(1, taskText);
+
+    await waitFor(() => {
+      const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
+      const secondBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 1);
+      expect(firstBlockInputs.length).toBe(1);
+      expect(secondBlockInputs.length).toBe(5);
+    });
+  });
+
+  it("не должен переносить repeatCount из предыдущего блока при контекстном парсинге", async () => {
+    const templateA = createTemplate({
+      id: 1,
+      name: "Template A",
+      code: "TA",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const templateB = createTemplate({
+      id: 2,
+      name: "Template B",
+      code: "TB",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+
+    const taskText = "5x400 м-с.к+1км(200+200+600)";
+    const firstMatchedText = "м-с.к";
+    const secondMatchedText = "1км(200+200+600)";
+    const firstIndex = taskText.indexOf(firstMatchedText);
+    const secondIndex = taskText.indexOf(secondMatchedText);
+
+    expect(firstIndex).toBeGreaterThanOrEqual(0);
+    expect(secondIndex).toBeGreaterThanOrEqual(0);
+
+    renderModal({
+      templates: [templateA, templateB],
+      matchesWithDetails: [
+        {
+          template: templateA,
+          index: firstIndex,
+          length: firstMatchedText.length,
+          matchedText: firstMatchedText,
+        },
+        {
+          template: templateB,
+          index: secondIndex,
+          length: secondMatchedText.length,
+          matchedText: secondMatchedText,
+        },
+      ],
+      taskText,
+    });
+
+    await waitForInitialLoad(1, taskText);
+
+    await waitFor(() => {
+      const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
+      const secondBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 1);
+      expect(firstBlockInputs.length).toBe(5);
+      expect(secondBlockInputs.length).toBe(1);
+    });
+  });
+
   it("должен ставить размер списка 1 для блока без xN и не сдвигать следующий блок", async () => {
     const templateA = createTemplate({
       id: 1,

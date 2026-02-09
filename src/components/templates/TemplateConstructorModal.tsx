@@ -169,22 +169,64 @@ function sanitizeListValues(values: unknown[]): unknown[] {
   return normalizedValues;
 }
 
-function detectRepeatCountFromMatchedText(matchedText: string): number {
-  if (!matchedText || typeof matchedText !== "string") {
-    return 1;
+function parseRepeatCountFromText(text: string): number | null {
+  if (!text || typeof text !== "string") {
+    return null;
   }
 
-  const match = matchedText.match(/(\d{1,2})\s*[xх×]\s*\d+/iu);
+  const match = text.match(/(\d{1,2})\s*[xх×]\s*\d+/iu);
   if (!match) {
-    return 1;
+    return null;
   }
 
   const parsedCount = Number(match[1]);
   if (Number.isNaN(parsedCount) || parsedCount <= 0) {
-    return 1;
+    return null;
   }
 
   return parsedCount;
+}
+
+function detectRepeatCountForMatch(
+  taskText: string,
+  matchDetails: Pick<MatchedTemplateWithDetails, "matchedText" | "index" | "length">,
+  previousMatchEnd: number
+): number {
+  const directCount = parseRepeatCountFromText(matchDetails.matchedText);
+  if (directCount !== null) {
+    return directCount;
+  }
+
+  if (!taskText || typeof taskText !== "string") {
+    return 1;
+  }
+
+  const safeIndex = Math.max(0, Math.min(matchDetails.index, taskText.length));
+  const safeLength = Math.max(0, matchDetails.length);
+  // matchPattern can be shorter than the real phrase (e.g. omit "5x"), so we inspect local context
+  // but never cross into already consumed previous match range.
+  const contextStart = Math.max(0, Math.max(previousMatchEnd, safeIndex - 32));
+  const contextEnd = Math.min(taskText.length, safeIndex + safeLength);
+
+  if (contextStart >= contextEnd) {
+    return 1;
+  }
+
+  const contextText = taskText.slice(contextStart, contextEnd);
+  const repeatPattern = /(\d{1,2})\s*[xх×]\s*\d+/giu;
+  let fallbackCount: number | null = null;
+  let match: RegExpExecArray | null = null;
+
+  while ((match = repeatPattern.exec(contextText)) !== null) {
+    const parsedCount = Number(match[1]);
+    if (Number.isNaN(parsedCount) || parsedCount <= 0) {
+      continue;
+    }
+
+    fallbackCount = parsedCount;
+  }
+
+  return fallbackCount ?? 1;
 }
 
 const TimeInput = ({ value, onChange, ...props }: any) => {
@@ -246,8 +288,14 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           setTemplates(allTemplates);
 
           if (matchesWithDetails.length > 0) {
-            const newBlocks = matchesWithDetails.map((match: MatchedTemplateWithDetails) => {
-              const repeatCount = detectRepeatCountFromMatchedText(match.matchedText);
+            const sortedMatchesWithDetails = [...matchesWithDetails].sort(
+              (a, b) => a.index - b.index
+            );
+            let previousMatchEnd = 0;
+            const newBlocks = sortedMatchesWithDetails.map((match: MatchedTemplateWithDetails) => {
+              const repeatCount = detectRepeatCountForMatch(taskText, match, previousMatchEnd);
+              previousMatchEnd = Math.max(previousMatchEnd, match.index + match.length);
+
               return {
                 id: Math.random().toString(36).substr(2, 9),
                 templateId: match.template.id,
@@ -271,7 +319,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
               form.setFieldsValue(defaultFormValues);
             }
 
-            messageApi.success(`Найдено подходящих шаблонов: ${matchesWithDetails.length}`);
+            messageApi.success(`Найдено подходящих шаблонов: ${sortedMatchesWithDetails.length}`);
           } else {
             setBlocks([]);
           }
