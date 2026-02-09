@@ -25,7 +25,6 @@ type Block = {
   id: string;
   templateId: number;
   values: Record<string, any>;
-  repeatCount?: number;
   autoListSize?: number;
 };
 
@@ -293,7 +292,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
             );
             let previousMatchEnd = 0;
             const newBlocks = sortedMatchesWithDetails.map((match: MatchedTemplateWithDetails) => {
-              const repeatCount = detectRepeatCountForMatch(taskText, match, previousMatchEnd);
+              const autoListSize = detectRepeatCountForMatch(taskText, match, previousMatchEnd);
               previousMatchEnd = Math.max(previousMatchEnd, match.index + match.length);
 
               return {
@@ -302,8 +301,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                 values: buildDefaultValuesFromSchema(
                   (match.template.schema as TemplateSchemaField[]) || []
                 ),
-                autoListSize: repeatCount,
-                repeatCount,
+                autoListSize,
               };
             });
             setBlocks(newBlocks);
@@ -345,7 +343,6 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         templateId,
         values: defaultValues,
         autoListSize: 1,
-        repeatCount: 1,
       },
     ]);
 
@@ -481,16 +478,12 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
         });
 
         const result = processTemplate(template, formValues);
-        const count = block.repeatCount || 1;
-
-        for (let i = 0; i < count; i++) {
-          blockOutputs.push({
-            id: `${block.id}_rep_${i}`,
-            code: template.code || "",
-            text: result.trim(),
-            isInline: template.isInline || false,
-          });
-        }
+        blockOutputs.push({
+          id: block.id,
+          code: template.code || "",
+          text: result.trim(),
+          isInline: template.isInline || false,
+        });
       });
 
       const consumedBlockIds = new Set<string>();
