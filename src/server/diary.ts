@@ -98,6 +98,26 @@ type DayAggregation = {
   hasMassage: boolean;
   totalDistanceKm: number;
 };
+
+const getWeekStartMonday = (value: string) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  const dayOfWeek = date.getUTCDay();
+  let deltaToMonday = 1 - dayOfWeek;
+  if (dayOfWeek === 0) {
+    deltaToMonday = -6;
+  }
+  date.setUTCDate(date.getUTCDate() + deltaToMonday);
+  return date.toISOString().slice(0, 10);
+};
+
+const getWeekEndSunday = (value: string) => {
+  const monday = getWeekStartMonday(value);
+  const sunday = shiftDate(monday, 6);
+  if (!sunday) {
+    throw new Error("Invalid week boundary date");
+  }
+  return sunday;
+};
 export { type DiaryDayStatus, isValidDateString };
 
 export const getDiaryDayData = async (params: { userId: number; date: string }) => {
@@ -722,4 +742,65 @@ export const getDiaryExportRows = async (params: {
   }
 
   return rows;
+};
+
+export const getDiaryWeeklyVolumesBySunday = async (params: {
+  userId: number;
+  from: string;
+  to: string;
+}): Promise<Map<string, number>> => {
+  const weekFrom = getWeekStartMonday(params.from);
+  const weekTo = getWeekEndSunday(params.to);
+
+  const planRows = await db
+    .select({
+      id: planEntries.id,
+      date: planEntries.date,
+    })
+    .from(planEntries)
+    .where(
+      and(
+        eq(planEntries.userId, params.userId),
+        gte(planEntries.date, weekFrom),
+        lte(planEntries.date, weekTo)
+      )
+    );
+
+  if (planRows.length === 0) {
+    return new Map<string, number>();
+  }
+
+  const planEntryDateById = new Map<number, string>();
+  const planEntryIds: number[] = [];
+  for (const planRow of planRows) {
+    planEntryDateById.set(planRow.id, planRow.date);
+    planEntryIds.push(planRow.id);
+  }
+
+  const reportRows = await db
+    .select({
+      planEntryId: workoutReports.planEntryId,
+      distanceKm: workoutReports.distanceKm,
+    })
+    .from(workoutReports)
+    .where(
+      and(
+        eq(workoutReports.userId, params.userId),
+        inArray(workoutReports.planEntryId, planEntryIds)
+      )
+    );
+
+  const weeklyVolumeBySunday = new Map<string, number>();
+  for (const reportRow of reportRows) {
+    const date = planEntryDateById.get(reportRow.planEntryId);
+    if (!date) {
+      continue;
+    }
+    const weekSunday = getWeekEndSunday(date);
+    const currentVolume = weeklyVolumeBySunday.get(weekSunday) ?? 0;
+    const nextVolume = currentVolume + parseDistanceKm(reportRow.distanceKm);
+    weeklyVolumeBySunday.set(weekSunday, nextVolume);
+  }
+
+  return weeklyVolumeBySunday;
 };
