@@ -956,4 +956,137 @@ describe("TemplateConstructorModal", () => {
 
     expect(mockedProcessTemplate).toHaveBeenCalledTimes(1);
   });
+
+  it("должен быть идемпотентным при повторном применении без изменений формы", async () => {
+    const template = createTemplate({
+      id: 11,
+      name: "Single block",
+      code: "SINGLE",
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const { onApply } = renderModal({
+      templates: [template],
+      matches: [template],
+      taskText: "6x200",
+    });
+    mockedProcessTemplate.mockReturnValue("Один блок");
+
+    await waitForInitialLoad(1, "6x200");
+
+    fireEvent.click(getApplyButton());
+    await waitFor(() => {
+      expect(onApply).toHaveBeenNthCalledWith(1, "Один блок");
+    });
+
+    fireEvent.click(getApplyButton());
+    await waitFor(() => {
+      expect(onApply).toHaveBeenNthCalledWith(2, "Один блок");
+    });
+
+    expect(onApply).toHaveBeenCalledTimes(2);
+  });
+
+  it("не должен увеличивать количество блоков после повторного открытия модалки", async () => {
+    const tempoTemplate = createTemplate({ id: 21, name: "Tempo", code: "T1" });
+    const force200Template = createTemplate({ id: 22, name: "200", code: "T2" });
+    const force100Template = createTemplate({ id: 23, name: "100", code: "T3" });
+
+    const templates = [tempoTemplate, force200Template, force100Template];
+    const taskText = "4км темповый + 12x200 + 4x100";
+    const matchesWithDetails = [
+      {
+        template: tempoTemplate,
+        index: taskText.indexOf("4км"),
+        length: "4км темповый".length,
+        matchedText: "4км темповый",
+      },
+      {
+        template: force200Template,
+        index: taskText.indexOf("12x200"),
+        length: "12x200".length,
+        matchedText: "12x200",
+      },
+      {
+        template: force100Template,
+        index: taskText.indexOf("4x100"),
+        length: "4x100".length,
+        matchedText: "4x100",
+      },
+    ];
+
+    mockedProcessTemplate.mockImplementation((template) => {
+      if (template.id === 21) {
+        return "Темповый";
+      }
+      if (template.id === 22) {
+        return "200м";
+      }
+      if (template.id === 23) {
+        return "100м";
+      }
+      return "";
+    });
+
+    const first = renderModal({
+      templates,
+      matchesWithDetails,
+      taskText,
+    });
+
+    await waitForInitialLoad(1, taskText);
+    fireEvent.click(getApplyButton());
+
+    await waitFor(() => {
+      expect(first.onApply).toHaveBeenCalledWith("Темповый\n\n200м\n\n100м");
+    });
+
+    cleanup();
+
+    const second = renderModal({
+      templates,
+      matchesWithDetails,
+      taskText,
+    });
+
+    await waitForInitialLoad(1, taskText);
+    fireEvent.click(getApplyButton());
+
+    await waitFor(() => {
+      expect(second.onApply).toHaveBeenCalledWith("Темповый\n\n200м\n\n100м");
+    });
+  });
+
+  it("не должен каскадно размножать блоки при нескольких {{CODE}} и одинаковых кодах", async () => {
+    const headTemplate = createTemplate({ id: 31, name: "Head", code: "HEAD" });
+    const blockB1Template = createTemplate({ id: 32, name: "B1", code: "B" });
+    const blockB2Template = createTemplate({ id: 33, name: "B2", code: "B" });
+    const tailTemplate = createTemplate({ id: 34, name: "Tail", code: "TAIL" });
+    const { onApply } = renderModal({
+      templates: [headTemplate, blockB1Template, blockB2Template, tailTemplate],
+      matches: [headTemplate, blockB1Template, blockB2Template, tailTemplate],
+    });
+
+    mockedProcessTemplate.mockImplementation((template) => {
+      if (template.id === 31) {
+        return "Head {{B}} {{B}}";
+      }
+      if (template.id === 32) {
+        return "B1";
+      }
+      if (template.id === 33) {
+        return "B2";
+      }
+      if (template.id === 34) {
+        return "Tail";
+      }
+      return "";
+    });
+
+    await waitForInitialLoad();
+    fireEvent.click(getApplyButton());
+
+    await waitFor(() => {
+      expect(onApply).toHaveBeenCalledWith("Head B1 B2\n\nTail");
+    });
+  });
 });
