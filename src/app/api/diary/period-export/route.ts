@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/auth";
-import { getDiaryExportRows, isValidDateString } from "@/server/diary";
+import { buildDateRange } from "@/shared/utils/diaryUtils";
+import {
+  getDiaryExportRows,
+  getDiaryWeeklyVolumesBySunday,
+  isValidDateString,
+} from "@/server/diary";
 
 export const runtime = "nodejs";
 
@@ -78,6 +83,14 @@ const htmlToRichText = (html: string | null | undefined): ExcelJS.RichText[] | s
   return parts;
 };
 
+const isSundayDate = (value: string) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+  return date.getUTCDay() === 0;
+};
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session) {
@@ -96,7 +109,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "invalid_range" }, { status: 400 });
   }
 
-  const rows = await getDiaryExportRows({ userId, from, to });
+  const [rows, weeklyVolumeBySunday] = await Promise.all([
+    getDiaryExportRows({ userId, from, to }),
+    getDiaryWeeklyVolumesBySunday({ userId, from, to }),
+  ]);
+  const exportDates = buildDateRange(from, to);
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Дневник");
@@ -117,14 +134,7 @@ export async function GET(req: Request) {
     { header: "Объём", key: "volume", width: 12 },
   ];
 
-  let weeklyVolume = 0;
-
-  rows.forEach((row) => {
-    const vol = parseFloat(row.volume);
-    if (!Number.isNaN(vol)) {
-      weeklyVolume += vol;
-    }
-
+  rows.forEach((row, index) => {
     const taskRichText = htmlToRichText(row.task);
     const commentRichText = htmlToRichText(row.comment);
 
@@ -153,7 +163,9 @@ export async function GET(req: Request) {
       }
     });
 
-    if (row.dateTime.includes("(Вс)")) {
+    const rowDate = exportDates[index];
+    if (rowDate && isSundayDate(rowDate)) {
+      const weeklyVolume = weeklyVolumeBySunday.get(rowDate) ?? 0;
       const summaryRowValues = {
         dateTime: "",
         task: "",
@@ -191,8 +203,6 @@ export async function GET(req: Request) {
           };
         }
       });
-
-      weeklyVolume = 0;
     }
   });
   sheet.getRow(1).font = { bold: true };

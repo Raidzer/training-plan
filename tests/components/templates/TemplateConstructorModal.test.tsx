@@ -847,4 +847,91 @@ describe("TemplateConstructorModal", () => {
       expect(onApply).toHaveBeenCalledWith("Second");
     });
   });
+
+  it("должен автодобавлять блоки для комбинированной тренировки с темповым, 200 и 100", async () => {
+    const tempoTemplate = createTemplate({
+      id: 1,
+      name: "Темповый бег до 27",
+      matchPattern: "# км(до 27)(*:*)",
+    });
+    const force200Template = createTemplate({
+      id: 2,
+      name: "200 метров силовым бегом",
+      matchPattern: "#x200 м-с.у. в гору силовым бегом",
+    });
+    const hill100Template = createTemplate({
+      id: 3,
+      name: "100 метров близко к max в гору",
+      matchPattern: "#x100 м-близко к max в гору",
+    });
+    const tempoPulseTemplate = createTemplate({
+      id: 4,
+      name: "Темповый бег до 27 с пульсом",
+      matchPattern: "# км(до 27)(*:*)(пульс)",
+    });
+
+    const taskText =
+      "4 км(до 27)(4:05)+3 мин. отдыха+12x200 м-с.у. в гору силовым бегом(через 200 м(до 22)(1:20-1:40))+3 мин. отдыха+4x100 м-близко к max в гору(через 2 мин. отдыха)+3 мин. отдыха+3 км(до 27)(4:05)(пульс)";
+    const tempoMatchText = "4 км(до 27)(4:05)";
+    const force200MatchText = "12x200 м-с.у. в гору силовым бегом";
+    const hill100MatchText = "4x100 м-близко к max в гору";
+    const tempoPulseMatchText = "3 км(до 27)(4:05)(пульс)";
+
+    renderModal({
+      templates: [tempoTemplate, force200Template, hill100Template, tempoPulseTemplate],
+      taskText,
+      matchesWithDetails: [
+        {
+          template: tempoTemplate,
+          index: taskText.indexOf(tempoMatchText),
+          length: tempoMatchText.length,
+          matchedText: tempoMatchText,
+        },
+        {
+          template: force200Template,
+          index: taskText.indexOf(force200MatchText),
+          length: force200MatchText.length,
+          matchedText: force200MatchText,
+        },
+        {
+          template: hill100Template,
+          index: taskText.indexOf(hill100MatchText),
+          length: hill100MatchText.length,
+          matchedText: hill100MatchText,
+        },
+        {
+          template: tempoPulseTemplate,
+          index: taskText.indexOf(tempoPulseMatchText),
+          length: tempoPulseMatchText.length,
+          matchedText: tempoPulseMatchText,
+        },
+      ],
+    });
+
+    await waitForInitialLoad(1, taskText);
+
+    await waitFor(() => {
+      const valueNodes = Array.from(
+        document.querySelectorAll(
+          ".ant-select-content-value[title], .ant-select-selection-item[title]"
+        )
+      );
+      const expectedNames = [
+        "Темповый бег до 27",
+        "200 метров силовым бегом",
+        "100 метров близко к max в гору",
+        "Темповый бег до 27 с пульсом",
+      ];
+      const selectedBlockNames = valueNodes
+        .map((node) => node.getAttribute("title") ?? "")
+        .filter((value) => expectedNames.includes(value));
+      const uniqueSelectedNames = new Set(selectedBlockNames);
+
+      expect(uniqueSelectedNames.has("Темповый бег до 27")).toBe(true);
+      expect(uniqueSelectedNames.has("200 метров силовым бегом")).toBe(true);
+      expect(uniqueSelectedNames.has("100 метров близко к max в гору")).toBe(true);
+      expect(uniqueSelectedNames.has("Темповый бег до 27 с пульсом")).toBe(true);
+      expect(uniqueSelectedNames.size).toBe(4);
+    });
+  });
 });
