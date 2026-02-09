@@ -30,7 +30,7 @@ describe("server/auth", () => {
     vi.clearAllMocks();
   });
 
-  it("getUserByEmail should return user when found", async () => {
+  it("getUserByEmail должен возвращать пользователь когда найден", async () => {
     const user = {
       id: 1,
       email: "user@example.com",
@@ -51,7 +51,7 @@ describe("server/auth", () => {
     expect(dbSelectMock).toHaveBeenCalledTimes(1);
   });
 
-  it("getUserByEmail should return null when user is absent", async () => {
+  it("getUserByEmail должен возвращать null когда пользователь отсутствует", async () => {
     const whereMock = vi.fn().mockResolvedValue([]);
     const fromMock = vi.fn(() => {
       return {
@@ -67,7 +67,7 @@ describe("server/auth", () => {
     expect(result).toBeNull();
   });
 
-  it("updateUserPasswordById should update password hash", async () => {
+  it("updateUserPasswordById должен обновлять пароль хешировать", async () => {
     const whereMock = vi.fn().mockResolvedValue(undefined);
     const setMock = vi.fn(() => {
       return {
@@ -85,7 +85,7 @@ describe("server/auth", () => {
     expect(whereMock).toHaveBeenCalledTimes(1);
   });
 
-  it("markEmailVerifiedById should set emailVerified date", async () => {
+  it("markEmailVerifiedById должен устанавливать emailVerified дата", async () => {
     const whereMock = vi.fn().mockResolvedValue(undefined);
     const setMock = vi.fn(() => {
       return {
@@ -107,7 +107,7 @@ describe("server/auth", () => {
     expect(whereMock).toHaveBeenCalledTimes(1);
   });
 
-  it("deleteVerificationTokenById should delete token by id", async () => {
+  it("deleteVerificationTokenById должен удалять токен по id", async () => {
     const whereMock = vi.fn().mockResolvedValue(undefined);
     dbDeleteMock.mockReturnValue({
       where: whereMock,

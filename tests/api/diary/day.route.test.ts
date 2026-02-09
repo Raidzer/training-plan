@@ -75,7 +75,7 @@ describe("GET /api/diary/day", () => {
     await expectJsonError(response, 401, "unauthorized");
   });
 
-  it("должен возвращать 401 при невалидном user id", async () => {
+  it("должен возвращать 401 при невалидном id пользователя", async () => {
     authMock.mockResolvedValue(createSession({ id: "0" }));
 
     const request = createRequestWithQuery({

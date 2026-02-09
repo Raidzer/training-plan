@@ -170,7 +170,7 @@ describe("POST /api/diary/workout-report", () => {
     await expectJsonError(response, 400, "invalid_score");
   });
 
-  it("должен возвращать 404, если plan entry не найден", async () => {
+  it("должен возвращать 404, если plan элемент не найден", async () => {
     getPlanEntrySummaryForUserMock.mockResolvedValue(null);
     const request = createJsonRequest({
       url: "http://localhost/api/diary/workout-report",
@@ -206,7 +206,7 @@ describe("POST /api/diary/workout-report", () => {
     await expectJsonError(response, 400, "invalid_shoes");
   });
 
-  it("должен отклонять слишком длинные weather и surface", async () => {
+  it("должен отклонять слишком длинные погодные поля и поверхности", async () => {
     const longText = "x".repeat(256);
     const weatherRequest = createJsonRequest({
       url: "http://localhost/api/diary/workout-report",
@@ -225,7 +225,7 @@ describe("POST /api/diary/workout-report", () => {
     await expectJsonError(surfaceResponse, 400, "invalid_surface");
   });
 
-  it("должен сохранять outdoor отчет с нормализацией полей", async () => {
+  it("должен сохранять уличный отчет с нормализацией полей", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/diary/workout-report",
       body: createValidPayload({
@@ -274,7 +274,7 @@ describe("POST /api/diary/workout-report", () => {
     });
   });
 
-  it("должен сбрасывать погодные поля для indoor поверхности", async () => {
+  it("должен сбрасывать погодные поля для поверхности в помещении", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/diary/workout-report",
       body: createValidPayload({

@@ -49,7 +49,7 @@ describe("API /api/shoes/[shoeId] route", () => {
   });
 
   describe("PATCH", () => {
-    it("should return 401 without session", async () => {
+    it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
       const request = createJsonRequest({
         url: "http://localhost/api/shoes/7",
@@ -61,7 +61,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 401 for invalid user id", async () => {
+    it("должен возвращать 401 при невалидном id пользователя", async () => {
       authMock.mockResolvedValue(createSession({ id: "bad-id" }));
       const request = createJsonRequest({
         url: "http://localhost/api/shoes/7",
@@ -73,7 +73,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 400 for invalid shoe id", async () => {
+    it("должен возвращать 400 при невалидном id кроссовка", async () => {
       const request = createJsonRequest({
         url: "http://localhost/api/shoes/bad-id",
         method: "PATCH",
@@ -84,7 +84,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 400, "invalid_shoe_id");
     });
 
-    it("should return 400 for invalid shoe name", async () => {
+    it("должен возвращать 400 при невалидном название кроссовка", async () => {
       const request = createJsonRequest({
         url: "http://localhost/api/shoes/7",
         method: "PATCH",
@@ -96,7 +96,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       expect(updateShoeMock).not.toHaveBeenCalled();
     });
 
-    it("should return 404 when shoe is absent", async () => {
+    it("должен возвращать 404 когда кроссовок отсутствует", async () => {
       updateShoeMock.mockResolvedValue(null);
       const request = createJsonRequest({
         url: "http://localhost/api/shoes/7",
@@ -108,7 +108,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 404, "not_found");
     });
 
-    it("should update shoe with trimmed name", async () => {
+    it("должен обновлять кроссовок с обрезанным названием", async () => {
       const request = createJsonRequest({
         url: "http://localhost/api/shoes/7",
         method: "PATCH",
@@ -131,7 +131,7 @@ describe("API /api/shoes/[shoeId] route", () => {
   });
 
   describe("DELETE", () => {
-    it("should return 401 without session", async () => {
+    it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
 
       const response = await DELETE(
@@ -146,7 +146,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 401 for invalid user id", async () => {
+    it("должен возвращать 401 при невалидном id пользователя", async () => {
       authMock.mockResolvedValue(createSession({ id: "bad-id" }));
 
       const response = await DELETE(
@@ -161,7 +161,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 401, "unauthorized");
     });
 
-    it("should return 400 for invalid shoe id", async () => {
+    it("должен возвращать 400 при невалидном id кроссовка", async () => {
       const response = await DELETE(
         createJsonRequest({
           url: "http://localhost/api/shoes/bad-id",
@@ -174,7 +174,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 400, "invalid_shoe_id");
     });
 
-    it("should return 404 when shoe does not exist", async () => {
+    it("должен возвращать 404 когда кроссовок отсутствует", async () => {
       deleteShoeMock.mockResolvedValue(false);
 
       const response = await DELETE(
@@ -189,7 +189,7 @@ describe("API /api/shoes/[shoeId] route", () => {
       await expectJsonError(response, 404, "not_found");
     });
 
-    it("should delete shoe for valid request", async () => {
+    it("должен удалять кроссовок при валидном запрос", async () => {
       const response = await DELETE(
         createJsonRequest({
           url: "http://localhost/api/shoes/7",

@@ -65,7 +65,7 @@ describe("POST /api/auth/reset-password", () => {
     deleteVerificationTokenByIdMock.mockResolvedValue(undefined);
   });
 
-  it("should return 500 for invalid payload", async () => {
+  it("должен возвращать 500 при невалидном payload", async () => {
     const response = await POST(
       createResetPasswordRequest({
         token: "token-1",
@@ -77,7 +77,7 @@ describe("POST /api/auth/reset-password", () => {
     expect(getVerificationTokenByTokenMock).not.toHaveBeenCalled();
   });
 
-  it("should return 400 when token does not exist", async () => {
+  it("должен возвращать 400, когда токен отсутствует", async () => {
     getVerificationTokenByTokenMock.mockResolvedValue(null);
 
     const response = await POST(
@@ -91,7 +91,7 @@ describe("POST /api/auth/reset-password", () => {
     expect(getUserByEmailMock).not.toHaveBeenCalled();
   });
 
-  it("should return 400 when token has expired", async () => {
+  it("должен возвращать 400, когда токен просрочен", async () => {
     getVerificationTokenByTokenMock.mockResolvedValue({
       id: 7,
       identifier: "user@example.com",
@@ -109,7 +109,7 @@ describe("POST /api/auth/reset-password", () => {
     expect(getUserByEmailMock).not.toHaveBeenCalled();
   });
 
-  it("should return 400 when user was not found", async () => {
+  it("должен возвращать 400, когда пользователь не найден", async () => {
     getUserByEmailMock.mockResolvedValue(null);
 
     const response = await POST(
@@ -123,7 +123,7 @@ describe("POST /api/auth/reset-password", () => {
     expect(updateUserPasswordByIdMock).not.toHaveBeenCalled();
   });
 
-  it("should update password and remove token for valid request", async () => {
+  it("должен обновлять пароль и удалять токен при валидном запросе", async () => {
     const response = await POST(
       createResetPasswordRequest({
         token: "valid-token",
@@ -138,7 +138,7 @@ describe("POST /api/auth/reset-password", () => {
     expect(deleteVerificationTokenByIdMock).toHaveBeenCalledWith(7);
   });
 
-  it("should return 500 when password update fails", async () => {
+  it("должен возвращать 500, когда обновление пароля завершается ошибкой", async () => {
     updateUserPasswordByIdMock.mockRejectedValue(new Error("db-failed"));
 
     const response = await POST(

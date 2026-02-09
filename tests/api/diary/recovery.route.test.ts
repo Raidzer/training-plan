@@ -74,7 +74,7 @@ describe("POST /api/diary/recovery", () => {
     await expectJsonError(response, 400, "invalid_date");
   });
 
-  it("должен возвращать 400 при невалидном payload", async () => {
+  it("должен возвращать 400 при невалидном пейлоад", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/diary/recovery",
       body: {
@@ -89,7 +89,7 @@ describe("POST /api/diary/recovery", () => {
     await expectJsonError(response, 400, "invalid_payload");
   });
 
-  it("должен валидировать границы optional значений", async () => {
+  it("должен валидировать границы опциональных значений", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/diary/recovery",
       body: {
@@ -105,7 +105,7 @@ describe("POST /api/diary/recovery", () => {
     await expectJsonError(response, 400, "invalid_payload");
   });
 
-  it("должен сохранять восстановление и прокидывать нормализованные optional поля", async () => {
+  it("должен сохранять восстановление и прокидывать нормализованные опциональных поля", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/diary/recovery",
       body: {
