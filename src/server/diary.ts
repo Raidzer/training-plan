@@ -100,7 +100,18 @@ type DayAggregation = {
 };
 
 const getWeekStartMonday = (value: string) => {
+  if (!isValidDateString(value)) {
+    return null;
+  }
+
   const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  if (date.toISOString().slice(0, 10) !== value) {
+    return null;
+  }
+
   const dayOfWeek = date.getUTCDay();
   let deltaToMonday = 1 - dayOfWeek;
   if (dayOfWeek === 0) {
@@ -112,9 +123,12 @@ const getWeekStartMonday = (value: string) => {
 
 const getWeekEndSunday = (value: string) => {
   const monday = getWeekStartMonday(value);
+  if (!monday) {
+    return null;
+  }
   const sunday = shiftDate(monday, 6);
   if (!sunday) {
-    throw new Error("Invalid week boundary date");
+    return null;
   }
   return sunday;
 };
@@ -751,6 +765,9 @@ export const getDiaryWeeklyVolumesBySunday = async (params: {
 }): Promise<Map<string, number>> => {
   const weekFrom = getWeekStartMonday(params.from);
   const weekTo = getWeekEndSunday(params.to);
+  if (!weekFrom || !weekTo) {
+    return new Map<string, number>();
+  }
 
   const planRows = await db
     .select({
@@ -797,6 +814,9 @@ export const getDiaryWeeklyVolumesBySunday = async (params: {
       continue;
     }
     const weekSunday = getWeekEndSunday(date);
+    if (!weekSunday) {
+      continue;
+    }
     const currentVolume = weeklyVolumeBySunday.get(weekSunday) ?? 0;
     const nextVolume = currentVolume + parseDistanceKm(reportRow.distanceKm);
     weeklyVolumeBySunday.set(weekSunday, nextVolume);
