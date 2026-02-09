@@ -934,4 +934,26 @@ describe("TemplateConstructorModal", () => {
       expect(uniqueSelectedNames.size).toBe(4);
     });
   });
+
+  it("no duplicate block for xN repeats in taskText", async () => {
+    const template = createTemplate({
+      schema: [{ key: "splits", label: "Splits", type: "list", itemType: "time" }],
+    });
+    const { onApply } = renderModal({
+      templates: [template],
+      matches: [template],
+      taskText: "Training: 12x200",
+    });
+    mockedProcessTemplate.mockReturnValue("200 block");
+
+    await waitForInitialLoad(1, "Training: 12x200");
+
+    fireEvent.click(getApplyButton());
+
+    await waitFor(() => {
+      expect(onApply).toHaveBeenCalledWith("200 block");
+    });
+
+    expect(mockedProcessTemplate).toHaveBeenCalledTimes(1);
+  });
 });
