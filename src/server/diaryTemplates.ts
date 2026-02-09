@@ -1,8 +1,14 @@
 import { desc, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { diaryResultTemplates } from "@/server/db/schema";
-import { matchTemplates } from "@/shared/utils/templateMatching";
+import {
+  matchTemplates,
+  matchTemplatesWithDetails,
+  type TemplateMatchWithDetails,
+} from "@/shared/utils/templateMatching";
 import type { DiaryResultTemplate, NewDiaryResultTemplate } from "@/shared/types/diary-templates";
+
+export type DiaryTemplateMatchWithDetails = TemplateMatchWithDetails<DiaryResultTemplate>;
 
 export async function getTemplatesForUser(userId: number): Promise<DiaryResultTemplate[]> {
   return await db
@@ -51,4 +57,12 @@ export async function findMatchingTemplates(
 ): Promise<DiaryResultTemplate[]> {
   const templates = await getTemplatesForUser(userId);
   return matchTemplates(templates, taskText);
+}
+
+export async function findMatchingTemplatesWithDetails(
+  userId: number,
+  taskText: string
+): Promise<DiaryTemplateMatchWithDetails[]> {
+  const templates = await getTemplatesForUser(userId);
+  return matchTemplatesWithDetails(templates, taskText);
 }

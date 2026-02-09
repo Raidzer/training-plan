@@ -6,6 +6,7 @@ import {
   createTemplateInDb,
   deleteTemplateInDb,
   findMatchingTemplates,
+  findMatchingTemplatesWithDetails,
   getTemplateByIdFromDb,
   getTemplatesForUser,
   updateTemplateInDb,
@@ -50,4 +51,8 @@ export async function deleteTemplate(id: number) {
 
 export async function findMatchingTemplate(userId: number, taskText: string) {
   return await findMatchingTemplates(userId, taskText);
+}
+
+export async function findMatchingTemplateWithDetails(userId: number, taskText: string) {
+  return await findMatchingTemplatesWithDetails(userId, taskText);
 }
