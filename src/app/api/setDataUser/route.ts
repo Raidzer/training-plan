@@ -1,5 +1,5 @@
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import z from "zod";
