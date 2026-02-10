@@ -19,7 +19,6 @@ const schema = z
 
 export async function PATCH(req: NextRequest) {
   try {
-    console.log("Получен запрос на изменение пароля");
     const parsed = schema.safeParse(await req.json());
 
     if (!parsed.success) {
@@ -35,8 +34,6 @@ export async function PATCH(req: NextRequest) {
         .select({
           id: users.id,
           passwordHash: users.passwordHash,
-          // email: users.email,
-          // name: users.name,
         })
         .from(users)
         .where(eq(users.id, userId))

@@ -23,9 +23,6 @@ export async function GET() {
         password: users.passwordHash,
         gender: users.gender,
         timezone: users.timezone,
-        // Добавьте другие поля, если есть
-        // createdAt: users.createdAt,
-        // updatedAt: users.updatedAt,
       })
       .from(users)
       .where(eq(users.id, parseInt(session.user.id))) // ID хранится как string в сессии

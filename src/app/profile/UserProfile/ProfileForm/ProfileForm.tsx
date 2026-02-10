@@ -9,9 +9,7 @@ export const ProfileForm = ({ userData }: any) => {
   const [form] = Form.useForm();
   const [modalForm] = Form.useForm();
   const [showModal, setShowModal] = useState(false);
-  const [openNewPassword, setOpenNewPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData1, setFormData1] = useState({});
   const [inputPasswordValue, setInputPasswordValue] = useState("");
   const [newPasswordValue, setNewPasswordValue] = useState("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
@@ -27,7 +25,6 @@ export const ProfileForm = ({ userData }: any) => {
     email: userData.email,
     timezone: userData.timezone,
   });
-  const steps = ["Текущий пароль", "Новый пароль"];
 
   const showModalPassword = () => {
     setShowModal(true);
@@ -60,7 +57,6 @@ export const ProfileForm = ({ userData }: any) => {
   };
 
   const handleFormValuesChange = (changedValues: any, allValues: any) => {
-    console.log("📝 Измененные поля:", changedValues);
     setFormValues(allValues);
 
     const isNameChanged = allValues.name !== userData.name;
@@ -130,7 +126,6 @@ export const ProfileForm = ({ userData }: any) => {
         setPasswordError("Неверный пароль");
         showMessage("error", "Неверный пароль");
       } else {
-        setFormData1(userDataFromApi);
         setCurrentStep(currentStep + 1);
         setPasswordError("");
         showMessage("success", "Пароль подтвержден");

@@ -14,27 +14,16 @@ const schema = z.object({
 
 export async function PATCH(req: NextRequest) {
   try {
-    console.log("========== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ==========");
-
     // Получаем тело запроса
     const body = await req.json();
-    console.log("Тело запроса:", body);
 
     // Парсим и валидируем
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      console.log("❌ Ошибка валидации:", JSON.stringify(parsed.error.format(), null, 2));
       return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
     }
 
     const { name, lastName, gender, timezone, userId } = parsed.data;
-    console.log("✅ Распарсенные данные:", {
-      userId,
-      name: name !== undefined ? `"${name}"` : "undefined",
-      lastName: lastName !== undefined ? `"${lastName}"` : "undefined",
-      gender: gender !== undefined ? `"${gender}"` : "undefined",
-      timezone: timezone !== undefined ? `"${timezone}"` : "undefined",
-    });
 
     // Проверяем существование пользователя
     const [existingUser] = await db
@@ -49,10 +38,7 @@ export async function PATCH(req: NextRequest) {
       .where(eq(users.id, userId))
       .limit(1);
 
-    console.log("👤 Текущие данные пользователя:", existingUser);
-
     if (!existingUser) {
-      console.log("❌ Пользователь не найден");
       return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
     }
 
@@ -60,38 +46,29 @@ export async function PATCH(req: NextRequest) {
     const updateData: {
       name?: string;
       lastName?: string;
-      gender?: string | null;
-      timezone?: string | null;
+      gender?: string;
+      timezone?: string;
     } = {};
 
     // Добавляем только те поля, которые были переданы
     if (name !== undefined) {
       updateData.name = name;
-      console.log(`✅ Добавляем name: "${name}"`);
     }
     if (lastName !== undefined) {
       updateData.lastName = lastName;
-      console.log(`✅ Добавляем lastName: "${lastName}"`);
     }
 
     if (gender !== undefined) {
-      updateData.gender = gender || null;
-      console.log(`✅ Добавляем gender: ${gender || "null"}`);
+      updateData.gender = gender;
     }
 
     if (timezone !== undefined) {
-      updateData.timezone = timezone || null;
+      updateData.timezone = timezone;
     }
-    console.log("📝 Объект для обновления:", updateData);
-    console.log("🔢 Количество полей для обновления:", Object.keys(updateData).length);
 
     // Выполняем обновление, если есть что обновлять
     if (Object.keys(updateData).length > 0) {
-      console.log("🔄 Выполняем обновление в базе данных...");
-      const result = await db.update(users).set(updateData).where(eq(users.id, userId));
-      console.log("✅ Обновление выполнено");
-    } else {
-      console.log("⚠️ Нет данных для обновления");
+      await db.update(users).set(updateData).where(eq(users.id, userId));
     }
 
     // Получаем обновленные данные
@@ -108,9 +85,6 @@ export async function PATCH(req: NextRequest) {
       .where(eq(users.id, userId))
       .limit(1);
 
-    console.log("🆕 Обновленные данные пользователя:", updatedUser);
-    console.log("========== КОНЕЦ ОБРАБОТКИ ЗАПРОСА ==========");
-
     return NextResponse.json(
       {
         success: true,
@@ -120,7 +94,6 @@ export async function PATCH(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("❌ Ошибка при обновлении профиля:", error);
     return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
   }
 }

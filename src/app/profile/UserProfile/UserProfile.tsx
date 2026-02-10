@@ -1,10 +1,6 @@
 "use client";
-import styles from "./UserProfile.module.scss";
-import { BackButton } from "@/components/BackButton/BackButton";
-import { Form, Input, Typography, Spin, Flex, Button, Modal } from "antd";
+import { Spin, Flex } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import Password from "antd/es/input/Password";
-import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { ProfileForm } from "./ProfileForm";
 
@@ -29,7 +25,6 @@ export const UserProfile = () => {
         }).then((result) => {
           return result.json();
         });
-        console.log(data);
         setUserData({
           id: data.user.id,
           email: data.user.email,
