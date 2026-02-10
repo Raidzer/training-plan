@@ -1,5 +1,5 @@
-﻿import type { Bot } from "grammy";
-import { getPlanEntriesByDate } from "@/lib/planEntries";
+import type { Bot } from "grammy";
+import { getPlanEntriesByDate } from "@/server/planEntries";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
 import { normalizeDateValue, getZonedDateTime } from "@/bot/utils/dateTime";
 import {
@@ -33,7 +33,7 @@ const dispatchDueSubscriptions = async (bot: Bot) => {
       try {
         zoned = getZonedDateTime(now, subscription.timezone);
       } catch (error) {
-        console.error("Ошибка таймзоны", subscription.timezone, error);
+        console.error("Ошибка парсинга таймзоны", subscription.timezone, error);
         continue;
       }
 
@@ -60,7 +60,7 @@ const dispatchDueSubscriptions = async (bot: Bot) => {
         await bot.api.sendMessage(subscription.chatId, message);
         await markSubscriptionSent({ id: subscription.id, sentOn: zoned.date });
       } catch (error) {
-        console.error("Ошибка рассылки", subscription.chatId, error);
+        console.error("Ошибка отправки", subscription.chatId, error);
       }
     }
   } finally {
@@ -71,7 +71,7 @@ const dispatchDueSubscriptions = async (bot: Bot) => {
 export const startDispatchScheduler = (bot: Bot) => {
   const run = () =>
     dispatchDueSubscriptions(bot).catch((error) => {
-      console.error("Ошибка фоновой рассылки", error);
+      console.error("Ошибка запуска диспетчера рассылки", error);
     });
 
   run();

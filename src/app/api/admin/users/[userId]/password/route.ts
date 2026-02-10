@@ -1,10 +1,8 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { updateUserPasswordHashById } from "@/server/adminUsers";
 
 const schema = z.object({
   password: z.string().min(6),
@@ -39,11 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
-  const [updated] = await db
-    .update(users)
-    .set({ passwordHash })
-    .where(eq(users.id, userId))
-    .returning({ id: users.id });
+  const updated = await updateUserPasswordHashById(userId, passwordHash);
 
   if (!updated) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });

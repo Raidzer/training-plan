@@ -1,5 +1,5 @@
-﻿import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 import { hash } from "bcryptjs";
 
 const SEED_EMAIL = "testNikita@example.com";

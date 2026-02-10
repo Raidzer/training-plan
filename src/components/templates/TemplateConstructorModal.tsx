@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
 import { Modal, Select, Form, Input, Button, Typography, Space, Divider, Spin } from "antd";
 import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
-import type { DiaryResultTemplate } from "@/app/actions/diaryTemplates";
-import { findMatchingTemplate, getTemplates } from "@/app/actions/diaryTemplates";
-import { processTemplate } from "@/utils/templateEngine";
+import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
+import { findMatchingTemplateWithDetails, getTemplates } from "@/app/actions/diaryTemplates";
+import { processTemplate } from "@/shared/utils/templateEngine";
 import styles from "./TemplateConstructorModal.module.scss";
 
 const { Text } = Typography;
@@ -25,8 +25,208 @@ type Block = {
   id: string;
   templateId: number;
   values: Record<string, any>;
-  repeatCount?: number;
+  autoListSize?: number;
 };
+
+type MatchedTemplateWithDetails = {
+  template: DiaryResultTemplate;
+  index: number;
+  length: number;
+  matchedText: string;
+};
+
+type TemplateSchemaField = {
+  key: string;
+  label?: string;
+  type: "text" | "number" | "time" | "list";
+  itemType?: "text" | "number" | "time";
+  listSize?: number;
+  defaultValue?: string | number | null;
+};
+
+function parseListDefaultValue(defaultValue: unknown): string[] {
+  if (Array.isArray(defaultValue)) {
+    return defaultValue.map((item) => String(item).trim()).filter((item) => item.length > 0);
+  }
+
+  if (defaultValue === undefined || defaultValue === null) {
+    return [];
+  }
+
+  const raw = String(defaultValue).trim();
+  if (!raw) {
+    return [];
+  }
+
+  return raw
+    .split(/[;\n]+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function parseNumberDefaultValue(defaultValue: unknown): number | undefined {
+  if (defaultValue === undefined || defaultValue === null || defaultValue === "") {
+    return undefined;
+  }
+
+  if (typeof defaultValue === "number") {
+    if (Number.isNaN(defaultValue)) {
+      return undefined;
+    }
+    return defaultValue;
+  }
+
+  const parsed = Number(String(defaultValue).replace(",", "."));
+  if (Number.isNaN(parsed)) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+function normalizeFieldDefaultValue(field: TemplateSchemaField): any {
+  if (field.type === "list") {
+    const listValue = parseListDefaultValue(field.defaultValue);
+    if (field.listSize && field.listSize > 0) {
+      return listValue.slice(0, field.listSize);
+    }
+    return listValue;
+  }
+
+  if (field.type === "number") {
+    return parseNumberDefaultValue(field.defaultValue);
+  }
+
+  if (field.defaultValue === undefined || field.defaultValue === null) {
+    return undefined;
+  }
+
+  return String(field.defaultValue);
+}
+
+function buildDefaultValuesFromSchema(schema: TemplateSchemaField[]): Record<string, any> {
+  const defaultValues: Record<string, any> = {};
+
+  schema.forEach((field) => {
+    const defaultValue = normalizeFieldDefaultValue(field);
+    if (defaultValue === undefined) {
+      return;
+    }
+
+    if (Array.isArray(defaultValue) && defaultValue.length === 0) {
+      return;
+    }
+
+    defaultValues[field.key] = defaultValue;
+  });
+
+  return defaultValues;
+}
+
+function buildFormValuesForBlock(
+  blockId: string,
+  blockValues: Record<string, any>
+): Record<string, any> {
+  const formValues: Record<string, any> = {};
+
+  Object.entries(blockValues).forEach(([fieldKey, value]) => {
+    formValues[`${blockId}_${fieldKey}`] = value;
+  });
+
+  return formValues;
+}
+
+function getTimeValidationRules() {
+  return [
+    {
+      pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
+      message: "Формат чч:мм:сс или мм:сс,м",
+    },
+  ];
+}
+
+function sanitizeListValues(values: unknown[]): unknown[] {
+  const normalizedValues = values
+    .map((item) => {
+      if (typeof item === "string") {
+        return item.trim();
+      }
+      return item;
+    })
+    .filter((item) => {
+      if (item === undefined || item === null) {
+        return false;
+      }
+
+      if (typeof item === "string" && item.length === 0) {
+        return false;
+      }
+
+      return true;
+    });
+
+  return normalizedValues;
+}
+
+function parseRepeatCountFromText(text: string): number | null {
+  if (!text || typeof text !== "string") {
+    return null;
+  }
+
+  const match = text.match(/(\d{1,2})\s*[xх×]\s*\d+/iu);
+  if (!match) {
+    return null;
+  }
+
+  const parsedCount = Number(match[1]);
+  if (Number.isNaN(parsedCount) || parsedCount <= 0) {
+    return null;
+  }
+
+  return parsedCount;
+}
+
+function detectRepeatCountForMatch(
+  taskText: string,
+  matchDetails: Pick<MatchedTemplateWithDetails, "matchedText" | "index" | "length">,
+  previousMatchEnd: number
+): number {
+  const directCount = parseRepeatCountFromText(matchDetails.matchedText);
+  if (directCount !== null) {
+    return directCount;
+  }
+
+  if (!taskText || typeof taskText !== "string") {
+    return 1;
+  }
+
+  const safeIndex = Math.max(0, Math.min(matchDetails.index, taskText.length));
+  const safeLength = Math.max(0, matchDetails.length);
+  // matchPattern can be shorter than the real phrase (e.g. omit "5x"), so we inspect local context
+  // but never cross into already consumed previous match range.
+  const contextStart = Math.max(0, Math.max(previousMatchEnd, safeIndex - 32));
+  const contextEnd = Math.min(taskText.length, safeIndex + safeLength);
+
+  if (contextStart >= contextEnd) {
+    return 1;
+  }
+
+  const contextText = taskText.slice(contextStart, contextEnd);
+  const repeatPattern = /(\d{1,2})\s*[xх×]\s*\d+/giu;
+  let fallbackCount: number | null = null;
+  let match: RegExpExecArray | null = null;
+
+  while ((match = repeatPattern.exec(contextText)) !== null) {
+    const parsedCount = Number(match[1]);
+    if (Number.isNaN(parsedCount) || parsedCount <= 0) {
+      continue;
+    }
+
+    fallbackCount = parsedCount;
+  }
+
+  return fallbackCount ?? 1;
+}
 
 const TimeInput = ({ value, onChange, ...props }: any) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,18 +282,42 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
       setLoading(true);
       form.resetFields();
 
-      Promise.all([getTemplates(userId), findMatchingTemplate(userId, taskText)])
-        .then(([allTemplates, matches]) => {
+      Promise.all([getTemplates(userId), findMatchingTemplateWithDetails(userId, taskText)])
+        .then(([allTemplates, matchesWithDetails]) => {
           setTemplates(allTemplates);
 
-          if (matches.length > 0) {
-            const newBlocks = matches.map((t) => ({
-              id: Math.random().toString(36).substr(2, 9),
-              templateId: t.id,
-              values: {},
-            }));
+          if (matchesWithDetails.length > 0) {
+            const sortedMatchesWithDetails = [...matchesWithDetails].sort(
+              (a, b) => a.index - b.index
+            );
+            let previousMatchEnd = 0;
+            const newBlocks = sortedMatchesWithDetails.map((match: MatchedTemplateWithDetails) => {
+              const autoListSize = detectRepeatCountForMatch(taskText, match, previousMatchEnd);
+              previousMatchEnd = Math.max(previousMatchEnd, match.index + match.length);
+
+              return {
+                id: Math.random().toString(36).substr(2, 9),
+                templateId: match.template.id,
+                values: buildDefaultValuesFromSchema(
+                  (match.template.schema as TemplateSchemaField[]) || []
+                ),
+                autoListSize,
+              };
+            });
             setBlocks(newBlocks);
-            messageApi.success(`Найдено подходящих шаблонов: ${matches.length}`);
+
+            const defaultFormValues = newBlocks.reduce(
+              (acc, block) => ({
+                ...acc,
+                ...buildFormValuesForBlock(block.id, block.values),
+              }),
+              {} as Record<string, any>
+            );
+            if (Object.keys(defaultFormValues).length > 0) {
+              form.setFieldsValue(defaultFormValues);
+            }
+
+            messageApi.success(`Найдено подходящих шаблонов: ${sortedMatchesWithDetails.length}`);
           } else {
             setBlocks([]);
           }
@@ -107,14 +331,25 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   }, [visible, userId, taskText, messageApi, form]);
 
   const addBlock = (templateId: number) => {
+    const blockId = Math.random().toString(36).substr(2, 9);
+    const template = templates.find((item) => item.id === templateId);
+    const schema = (template?.schema as TemplateSchemaField[]) || [];
+    const defaultValues = buildDefaultValuesFromSchema(schema);
+
     setBlocks((prev) => [
       ...prev,
       {
-        id: Math.random().toString(36).substr(2, 9),
+        id: blockId,
         templateId,
-        values: {},
+        values: defaultValues,
+        autoListSize: 1,
       },
     ]);
+
+    const formValues = buildFormValuesForBlock(blockId, defaultValues);
+    if (Object.keys(formValues).length > 0) {
+      form.setFieldsValue(formValues);
+    }
   };
 
   const removeBlock = (blockId: string) => {
@@ -141,6 +376,10 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
   const changeBlockTemplate = (index: number, templateId: number) => {
     const blockId = blocks[index].id;
+    const template = templates.find((item) => item.id === templateId);
+    const schema = (template?.schema as TemplateSchemaField[]) || [];
+    const defaultValues = buildDefaultValuesFromSchema(schema);
+
     const currentValues = form.getFieldsValue();
     const keysToReset = Object.keys(currentValues).filter((key) => key.startsWith(`${blockId}_`));
 
@@ -160,10 +399,15 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
       newBlocks[index] = {
         ...newBlocks[index],
         templateId,
-        values: {},
+        values: defaultValues,
       };
       return newBlocks;
     });
+
+    const formValues = buildFormValuesForBlock(blockId, defaultValues);
+    if (Object.keys(formValues).length > 0) {
+      form.setFieldsValue(formValues);
+    }
   };
 
   const handleApply = () => {
@@ -172,9 +416,13 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
       blocks.forEach((block) => {
         const template = templates.find((t) => t.id === block.templateId);
-        if (!template) return;
+        if (!template) {
+          return;
+        }
 
         const formValues: Record<string, any> = {};
+        const blockAutoListSize =
+          block.autoListSize && block.autoListSize > 0 ? block.autoListSize : 1;
 
         const normalizeTime = (val: any) => {
           if (typeof val !== "string") return val;
@@ -193,41 +441,49 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           return parts.join(":");
         };
 
-        const schema = (template.schema as any[]) || [];
+        const schema = (template.schema as TemplateSchemaField[]) || [];
 
-        Object.keys(allValues).forEach((key) => {
-          if (key.startsWith(`${block.id}_`)) {
-            const fieldKey = key.replace(`${block.id}_`, "");
-            let val = allValues[key];
+        schema.forEach((field) => {
+          const formFieldKey = `${block.id}_${field.key}`;
+          let val = allValues[formFieldKey];
 
-            const field = schema.find((f) => f.key === fieldKey);
-            if (field) {
-              const isTime =
-                field.type === "time" || (field.type === "list" && field.itemType === "time");
-              if (isTime) {
-                if (Array.isArray(val)) {
-                  val = val.map(normalizeTime);
-                } else {
-                  val = normalizeTime(val);
-                }
-              }
+          if (field.type === "list") {
+            let listValues: unknown[] = [];
+            if (Array.isArray(val)) {
+              listValues = val;
             }
 
-            formValues[fieldKey] = val;
+            if (field.itemType === "time") {
+              listValues = listValues.map((item) => normalizeTime(item));
+            }
+
+            const normalizedListValues = sanitizeListValues(listValues);
+
+            const fixedListSize =
+              field.listSize && field.listSize > 0 ? field.listSize : blockAutoListSize;
+
+            if (fixedListSize > 0) {
+              formValues[field.key] = normalizedListValues.slice(0, fixedListSize);
+            } else {
+              formValues[field.key] = normalizedListValues;
+            }
+            return;
           }
+
+          if (field.type === "time") {
+            val = normalizeTime(val);
+          }
+
+          formValues[field.key] = val;
         });
 
         const result = processTemplate(template, formValues);
-        const count = block.repeatCount || 1;
-
-        for (let i = 0; i < count; i++) {
-          blockOutputs.push({
-            id: `${block.id}_rep_${i}`,
-            code: template.code || "",
-            text: result.trim(),
-            isInline: template.isInline || false,
-          });
-        }
+        blockOutputs.push({
+          id: block.id,
+          code: template.code || "",
+          text: result.trim(),
+          isInline: template.isInline || false,
+        });
       });
 
       const consumedBlockIds = new Set<string>();
@@ -304,7 +560,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
           <div className={styles.modalContent}>
             {blocks.map((block, index) => {
               const template = templates.find((t) => t.id === block.templateId);
-              const schema = (template?.schema as any[]) || [];
+              const schema = (template?.schema as TemplateSchemaField[]) || [];
 
               return (
                 <div key={block.id} className={styles.blockContainer}>
@@ -347,8 +603,14 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                     </Space>
                   </div>
 
-                  {schema.map((field: any) => {
+                  {schema.map((field) => {
                     const itemType = field.itemType || "text";
+                    const fieldFormKey = `${block.id}_${field.key}`;
+                    const listItemRules = itemType === "time" ? getTimeValidationRules() : [];
+                    const blockAutoListSize =
+                      block.autoListSize && block.autoListSize > 0 ? block.autoListSize : 1;
+                    const fixedListSize =
+                      field.listSize && field.listSize > 0 ? field.listSize : blockAutoListSize;
 
                     const renderTypedInput = (props: any) => {
                       if (itemType === "number") {
@@ -369,7 +631,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
 
                     return (
                       <div key={field.key} className={styles.formItemContainer}>
-                        {field.type === "list" && field.listSize && field.listSize > 0 ? (
+                        {field.type === "list" ? (
                           <Form.Item label={field.label}>
                             <div
                               style={{
@@ -378,21 +640,12 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                                 gap: 16,
                               }}
                             >
-                              {Array.from({ length: field.listSize }).map((_, idx) => (
+                              {Array.from({ length: fixedListSize }).map((_, idx) => (
                                 <Form.Item
                                   key={idx}
-                                  name={[`${block.id}_${field.key}`, idx]}
+                                  name={[fieldFormKey, idx]}
                                   noStyle
-                                  rules={
-                                    itemType === "time"
-                                      ? [
-                                          {
-                                            pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
-                                            message: "Формат чч:мм:сс или мм:сс,м",
-                                          },
-                                        ]
-                                      : []
-                                  }
+                                  rules={listItemRules}
                                 >
                                   {renderTypedInput({
                                     size: "small",
@@ -404,29 +657,12 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
                           </Form.Item>
                         ) : (
                           <Form.Item
-                            name={`${block.id}_${field.key}`}
+                            name={fieldFormKey}
                             label={field.label}
                             className={styles.formItem}
-                            rules={
-                              field.type === "time"
-                                ? [
-                                    {
-                                      pattern: /^(\d{1,2}:)?\d{1,2}:\d{1,2}(,\d)?$/,
-                                      message: "Формат чч:мм:сс или мм:сс,м",
-                                    },
-                                  ]
-                                : []
-                            }
+                            rules={field.type === "time" ? getTimeValidationRules() : []}
                           >
-                            {field.type === "list" ? (
-                              <Select
-                                mode="tags"
-                                style={{ width: "100%" }}
-                                placeholder="Введите значения (Enter)"
-                                tokenSeparators={[",", ";", "\n", " "]}
-                                size="small"
-                              />
-                            ) : field.type === "time" ? (
+                            {field.type === "time" ? (
                               <TimeInput size="small" />
                             ) : field.type === "number" ? (
                               <Input

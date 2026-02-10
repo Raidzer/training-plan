@@ -49,6 +49,10 @@ type DiaryDataParams = {
   messages: DiaryMessages;
 };
 
+type LoadDayOptions = {
+  preserveForms?: boolean;
+};
+
 type ShoeItem = {
   id: number;
   name: string;
@@ -185,7 +189,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   );
 
   const loadDay = useCallback(
-    async (value: Dayjs) => {
+    async (value: Dayjs, options?: LoadDayOptions) => {
       const date = formatDate(value);
       const requestId = ++dayRequestIdRef.current;
       setLoadingDay(true);
@@ -202,6 +206,9 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           return;
         }
         setDayData(data);
+        if (options?.preserveForms) {
+          return;
+        }
         const nextWeight = { morning: "", evening: "" };
         data.weightEntries.forEach((entry) => {
           if (entry.period === "morning") {
@@ -290,8 +297,8 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           return;
         }
         messageApi.success(messages.weightSaved);
-        loadDay(selectedDate);
-        loadMarks(panelDate);
+        await loadDay(selectedDate, { preserveForms: true });
+        await loadMarks(panelDate);
       } catch (err) {
         console.error(err);
         messageApi.error(messages.weightSaveFailed);
@@ -371,8 +378,8 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           return;
         }
         messageApi.success(messages.workoutSaved);
-        loadDay(selectedDate);
-        loadMarks(panelDate);
+        await loadDay(selectedDate, { preserveForms: true });
+        await loadMarks(panelDate);
       } catch (err) {
         console.error(err);
         messageApi.error(messages.workoutSaveFailed);
@@ -410,7 +417,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         return;
       }
       messageApi.success(messages.recoverySaved);
-      loadDay(selectedDate);
+      await loadDay(selectedDate, { preserveForms: true });
     } catch (err) {
       console.error(err);
       messageApi.error(messages.recoverySaveFailed);

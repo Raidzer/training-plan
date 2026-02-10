@@ -2,7 +2,7 @@ import type { Bot } from "grammy";
 import { formatDateInTimeZone, formatDateLocal, parseDisplayDate } from "@/bot/utils/dateTime";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
-import { getPlanEntriesByDate } from "@/lib/planEntries";
+import { getPlanEntriesByDate } from "@/server/planEntries";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
 import { resetPendingInput } from "@/bot/commands/handlers/helpers";
 

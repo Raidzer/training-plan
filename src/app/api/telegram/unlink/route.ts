@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { telegramAccounts, telegramLinkCodes, telegramSubscriptions } from "@/db/schema";
+import { unlinkTelegramAccount } from "@/server/telegram";
 
 export async function POST() {
   const session = await auth();
@@ -12,26 +10,7 @@ export async function POST() {
   }
 
   try {
-    const result = await db.transaction(async (tx) => {
-      const accounts = await tx
-        .delete(telegramAccounts)
-        .where(eq(telegramAccounts.userId, userId))
-        .returning({ id: telegramAccounts.id });
-      const subscriptions = await tx
-        .delete(telegramSubscriptions)
-        .where(eq(telegramSubscriptions.userId, userId))
-        .returning({ id: telegramSubscriptions.id });
-      const codes = await tx
-        .delete(telegramLinkCodes)
-        .where(eq(telegramLinkCodes.userId, userId))
-        .returning({ id: telegramLinkCodes.id });
-
-      return {
-        accounts: accounts.length,
-        subscriptions: subscriptions.length,
-        codes: codes.length,
-      };
-    });
+    const result = await unlinkTelegramAccount(userId);
 
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {

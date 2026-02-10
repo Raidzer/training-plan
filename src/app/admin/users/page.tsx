@@ -1,8 +1,8 @@
 import { desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { db } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 import { AdminUsersClient, type AdminUserRow } from "./AdminUsersClient";
 
 export default async function AdminUsersPage() {

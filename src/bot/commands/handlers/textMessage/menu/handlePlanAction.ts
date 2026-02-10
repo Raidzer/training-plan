@@ -9,7 +9,7 @@ import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
 import { buildDateMenuReplyKeyboard, buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import { setPendingInput } from "@/bot/menu/menuState";
-import { getPlanEntriesByDate } from "@/lib/planEntries";
+import { getPlanEntriesByDate } from "@/server/planEntries";
 
 type PlanMenuActionArgs = {
   ctx: any;

@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
-import { db } from "@/db/client";
-import { registrationInvites, users } from "@/db/schema";
-import { and, eq, gt, isNull, or } from "drizzle-orm";
-import { hashInviteToken } from "@/lib/registrationInvites";
+import { RegisterError, registerUserWithInvite } from "@/server/register";
 
 const schema = z.object({
   login: z
@@ -23,26 +19,6 @@ const schema = z.object({
   timezone: z.string().min(1, "Выберите часовой пояс").optional(),
 });
 
-type RegisterErrorCode =
-  | "invite_invalid"
-  | "invite_used"
-  | "invite_expired"
-  | "user_exists"
-  | "create_failed";
-
-class RegisterError extends Error {
-  code: RegisterErrorCode;
-
-  constructor(code: RegisterErrorCode) {
-    super(code);
-    this.code = code;
-  }
-}
-
-const throwRegisterError = (code: RegisterErrorCode): never => {
-  throw new RegisterError(code);
-};
-
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
@@ -55,95 +31,20 @@ export async function POST(req: Request) {
   const lastNameValue = normalizedLastName.length > 0 ? normalizedLastName : null;
 
   try {
-    const result = await db.transaction(async (tx) => {
-      const now = new Date();
-      const inviteHash = hashInviteToken(inviteToken);
-      const [invite] = await tx
-        .select({
-          id: registrationInvites.id,
-          role: registrationInvites.role,
-          usedAt: registrationInvites.usedAt,
-          usedByUserId: registrationInvites.usedByUserId,
-          expiresAt: registrationInvites.expiresAt,
-        })
-        .from(registrationInvites)
-        .where(eq(registrationInvites.tokenHash, inviteHash))
-        .limit(1);
-
-      if (!invite) {
-        throwRegisterError("invite_invalid");
-      }
-
-      if (invite.usedAt || invite.usedByUserId) {
-        throwRegisterError("invite_used");
-      }
-
-      if (invite.expiresAt <= now) {
-        throwRegisterError("invite_expired");
-      }
-
-      const [existing] = await tx
-        .select({ id: users.id })
-        .from(users)
-        .where(
-          or(
-            eq(users.email, email),
-            eq(users.login, login),
-            eq(users.email, login),
-            eq(users.login, email)
-          )
-        );
-
-      if (existing) {
-        throwRegisterError("user_exists");
-      }
-
-      const passwordHash = await bcrypt.hash(password, 10);
-
-      const [created] = await tx
-        .insert(users)
-        .values({
-          email,
-          login,
-          passwordHash,
-          name,
-          lastName: lastNameValue,
-          gender,
-          role: invite.role,
-          timezone: timezone ?? "Europe/Moscow",
-        })
-        .returning({ id: users.id, email: users.email, name: users.name });
-
-      if (!created) {
-        throwRegisterError("create_failed");
-      }
-
-      const [updatedInvite] = await tx
-        .update(registrationInvites)
-        .set({
-          usedAt: now,
-          usedByUserId: created.id,
-        })
-        .where(
-          and(
-            eq(registrationInvites.id, invite.id),
-            isNull(registrationInvites.usedAt),
-            isNull(registrationInvites.usedByUserId),
-            gt(registrationInvites.expiresAt, now)
-          )
-        )
-        .returning({ id: registrationInvites.id });
-
-      if (!updatedInvite) {
-        throwRegisterError("invite_used");
-      }
-
-      return { user: created };
+    const result = await registerUserWithInvite({
+      name,
+      lastName: lastNameValue,
+      gender,
+      email,
+      login,
+      password,
+      inviteToken,
+      timezone: timezone ?? null,
     });
 
     try {
-      const { generateVerificationToken } = await import("@/lib/tokens");
-      const { sendVerificationEmail } = await import("@/lib/email");
+      const { generateVerificationToken } = await import("@/server/tokens");
+      const { sendVerificationEmail } = await import("@/server/email");
 
       const token = await generateVerificationToken(result.user.email);
       await sendVerificationEmail(result.user.email, token);

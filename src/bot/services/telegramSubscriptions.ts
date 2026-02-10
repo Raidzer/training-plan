@@ -1,6 +1,6 @@
-﻿import { eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { telegramSubscriptions, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { db } from "@/server/db/client";
+import { telegramSubscriptions, users } from "@/server/db/schema";
 
 export const getSubscription = async (userId: number) => {
   const [subscription] = await db

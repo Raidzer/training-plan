@@ -29,8 +29,8 @@ import {
   setRecoveryDraft,
   setWeightDraft,
 } from "@/bot/menu/menuState";
-import { upsertWeightEntry } from "@/lib/weightEntries";
-import { getRecoveryEntryByDate } from "@/lib/recoveryEntries";
+import { upsertWeightEntry } from "@/server/weightEntries";
+import { getRecoveryEntryByDate } from "@/server/recoveryEntries";
 import { formatSleepTimeValue } from "@/bot/utils/sleepTime";
 
 type WeightHandlerArgs = {

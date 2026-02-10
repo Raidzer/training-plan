@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { isValidDateString } from "@/lib/diary";
-import { upsertRecoveryEntry } from "@/lib/recoveryEntries";
+import { isValidDateString } from "@/server/diary";
+import { upsertRecoveryEntry } from "@/server/recoveryEntries";
 
 const parseBoolean = (value: unknown) => {
   if (typeof value === "boolean") {

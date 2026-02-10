@@ -1,6 +1,6 @@
-﻿import { eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { telegramAccounts, telegramSubscriptions } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { db } from "@/server/db/client";
+import { telegramAccounts, telegramSubscriptions } from "@/server/db/schema";
 
 export const getLinkedAccount = async (chatId: number) => {
   const [account] = await db
