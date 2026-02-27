@@ -32,6 +32,7 @@ export const handleMenuAction = async ({ ctx, chatId, action }: MenuActionHandle
   switch (action) {
     case "today":
     case "date":
+    case "dailyReport":
       await handlePlanMenuAction({ ctx, chatId, userId, action });
       return;
     case "weight":

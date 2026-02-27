@@ -1,16 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import dayjs from "dayjs";
 import { Card, message, Space } from "antd";
 import styles from "./diary.module.scss";
-import type { DayPayload, RecoveryEntry } from "./types/diaryTypes";
-import {
-  formatDate,
-  formatSleepTimeValue,
-  formatWeightValue,
-  joinValues,
-} from "./utils/diaryUtils";
+import { buildDailyReportText } from "@/shared/utils/dailyReport";
+import { formatDate } from "./utils/diaryUtils";
 import { useDiaryData } from "./hooks/useDiaryData";
 import { DiaryHeader } from "./components/DiaryHeader";
 import { DiaryCalendar } from "./components/DiaryCalendar";
@@ -19,31 +13,6 @@ import { WeightCard } from "./components/WeightCard";
 import { RecoveryCard } from "./components/RecoveryCard";
 import { WorkoutsCard } from "./components/WorkoutsCard";
 import { DailyReportModal } from "./components/DailyReportModal";
-
-const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
-
-const formatRecoveryFlags = (entry?: RecoveryEntry | null) => {
-  if (!entry) {
-    return "";
-  }
-  const flags = [
-    entry.hasBath ? "Баня" : null,
-    entry.hasMfr ? "МФР" : null,
-    entry.hasMassage ? "Массаж" : null,
-  ].filter(Boolean);
-  return flags.length ? flags.join(", ") : "";
-};
-
-const formatReportDate = (value: string) => {
-  const weekdays = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-  const parsed = dayjs(value, "YYYY-MM-DD", true);
-  if (!parsed.isValid()) {
-    return value;
-  }
-  const dayIndex = parsed.day();
-  const dayLabel = weekdays[dayIndex] ?? "";
-  return `${parsed.format("DD.MM.YYYY")}(${dayLabel})`;
-};
 
 const WEATHER_OPTIONS = [
   { value: "cloudy", label: "Пасмурно" },
@@ -64,135 +33,6 @@ const WIND_OPTIONS = [
   { value: "true", label: "Есть" },
   { value: "false", label: "Нет" },
 ] as const;
-
-const getOptionLabel = (
-  options: readonly { value: string; label: string }[],
-  value?: string | null
-) => options.find((option) => option.value === value)?.label ?? value ?? "";
-
-const formatTemperatureValue = (value?: string | null) => {
-  if (value === null || value === undefined) {
-    return "";
-  }
-  const trimmed = String(value).trim();
-  if (!trimmed) {
-    return "";
-  }
-  const parsed = Number(trimmed);
-  const temperatureText = Number.isFinite(parsed)
-    ? (Math.round(parsed * 10) / 10).toFixed(1)
-    : trimmed;
-  return `${temperatureText}°C`;
-};
-
-const formatWorkoutScore = (report?: DayPayload["workoutReports"][number] | null) => {
-  if (!report) {
-    return "-";
-  }
-  const parts = [
-    report.overallScore ?? "-",
-    report.functionalScore ?? "-",
-    report.muscleScore ?? "-",
-  ];
-  if (parts.every((value) => value === "-")) {
-    return "-";
-  }
-  return parts.join("-");
-};
-
-const buildDailyReportText = (params: { date: string; day: DayPayload | null }) => {
-  if (!params.day) {
-    return "";
-  }
-  const reportByPlan = new Map(
-    params.day.workoutReports.map((report) => [report.planEntryId, report])
-  );
-  const lines: string[] = [formatReportDate(params.date), ""];
-
-  const pushWithSpacer = (value: string) => {
-    lines.push(value);
-    lines.push("");
-  };
-
-  for (const [index, entry] of params.day.planEntries.entries()) {
-    const report = reportByPlan.get(entry.id);
-    const taskText = entry.taskText?.trim() ? stripHtml(entry.taskText) : "-";
-    const resultText = report?.resultText?.trim() ? report.resultText : "-";
-    const commentParts: string[] = [];
-    if (report?.commentText?.trim()) {
-      commentParts.push(report.commentText.trim());
-    }
-    const temperatureText = formatTemperatureValue(report?.temperatureC);
-
-    if (temperatureText) {
-      commentParts.push(temperatureText);
-    }
-    const weatherText = getOptionLabel(WEATHER_OPTIONS, report?.weather);
-
-    if (weatherText) {
-      commentParts.push(weatherText);
-    }
-    const windText = report?.hasWind ? "Ветер" : "";
-
-    if (windText) {
-      commentParts.push(windText);
-    }
-
-    const surfaceText = getOptionLabel(SURFACE_OPTIONS, report?.surface);
-    if (surfaceText) {
-      commentParts.push(surfaceText);
-    }
-    const shoeText =
-      report?.shoes && report.shoes.length > 0
-        ? report.shoes.map((shoe) => shoe.name).join(", ")
-        : "";
-    if (shoeText) {
-      commentParts.push(shoeText);
-    }
-    const commentLines = commentParts.length ? commentParts : ["-"];
-    const scoreText = formatWorkoutScore(report);
-
-    pushWithSpacer(`${taskText}`);
-    if (report?.startTime?.trim()) {
-      pushWithSpacer(report.startTime);
-    }
-    pushWithSpacer(resultText);
-    pushWithSpacer(commentLines.join(". "));
-    pushWithSpacer(scoreText);
-  }
-
-  const morningWeight = params.day.weightEntries.find(
-    (entry) => entry.period === "morning"
-  )?.weightKg;
-  const sleepText = formatSleepTimeValue(params.day.recoveryEntry.sleepHours);
-  const weightText = joinValues([
-    formatWeightValue(params.day.previousEveningWeightKg),
-    formatWeightValue(morningWeight),
-  ]);
-  const recoveryText = formatRecoveryFlags(params.day.recoveryEntry);
-  const volumeKm =
-    params.day.status.totalDistanceKm > 0 ? params.day.status.totalDistanceKm.toFixed(2) : "";
-
-  const recoveryBlock = [
-    sleepText || "-",
-    weightText || "-",
-    recoveryText || "",
-    volumeKm ? `${volumeKm} \u043a\u043c` : "-",
-  ];
-
-  for (const item of recoveryBlock) {
-    if (!item) {
-      continue;
-    }
-    pushWithSpacer(item);
-  }
-
-  while (lines.length > 0 && lines[lines.length - 1] === "") {
-    lines.pop();
-  }
-
-  return lines.join("\n");
-};
 
 const diaryMessages = {
   marksLoadFailed: "Не удалось загрузить отметки календаря.",

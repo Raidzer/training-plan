@@ -2,6 +2,7 @@ export const LINK_BUTTON_TEXT = "Привязать аккаунт";
 export const CANCEL_LINK_BUTTON_TEXT = "Отменить привязку";
 export const TODAY_BUTTON_TEXT = "Сегодня";
 export const DATE_BUTTON_TEXT = "Другая дата";
+export const DAILY_REPORT_BUTTON_TEXT = "Ежедневный отчет";
 export const CUSTOM_DATE_BUTTON_TEXT = "Указать дату";
 export const DATE_BACK_BUTTON_TEXT = "Назад";
 export const SUBSCRIBE_ON_BUTTON_TEXT = "Подписка: ВКЛ";
@@ -31,6 +32,7 @@ export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) =>
   return {
     keyboard: [
       [{ text: TODAY_BUTTON_TEXT }, { text: DATE_BUTTON_TEXT }],
+      [{ text: DAILY_REPORT_BUTTON_TEXT }],
       [{ text: WEIGHT_BUTTON_TEXT }],
       [
         {
