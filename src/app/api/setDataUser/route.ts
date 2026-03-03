@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
     }
 
-    const { name, lastName, gender, timezone, userId } = parsed.data;
+    const { name, lastName, gender, timezone } = parsed.data;
 
     // Проверяем существование пользователя
     const [existingUser] = await db

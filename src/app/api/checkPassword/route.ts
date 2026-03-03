@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
     }
 
-    const { userId, password } = parsed.data;
+    const { password } = parsed.data;
 
     let user;
 

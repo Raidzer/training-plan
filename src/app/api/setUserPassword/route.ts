@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
     }
 
-    const { newPassword, userId } = parsed.data;
+    const { newPassword } = parsed.data;
 
     let user;
 
