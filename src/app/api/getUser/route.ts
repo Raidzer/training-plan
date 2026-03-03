@@ -20,7 +20,6 @@ export async function GET() {
         name: users.name,
         lastName: users.lastName,
         role: users.role,
-        password: users.passwordHash,
         gender: users.gender,
         timezone: users.timezone,
       })

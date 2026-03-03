@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
@@ -13,6 +14,15 @@ const schema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const userId = Number((session.user as { id?: string } | undefined)?.id);
+  if (!Number.isFinite(userId)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   try {
     // Получаем тело запроса
     const body = await req.json();
@@ -68,6 +78,9 @@ export async function PATCH(req: NextRequest) {
 
     // Выполняем обновление, если есть что обновлять
     if (Object.keys(updateData).length > 0) {
+      if (!session) {
+        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      }
       await db.update(users).set(updateData).where(eq(users.id, userId));
     }
 

@@ -5,6 +5,7 @@ import { users } from "@/server/db/schema";
 
 import z from "zod";
 import bcrypt from "bcryptjs";
+import { auth } from "@/auth";
 
 const schema = z
   .object({
@@ -18,6 +19,15 @@ const schema = z
   });
 
 export async function PATCH(req: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const userId = Number((session.user as { id?: string } | undefined)?.id);
+  if (!Number.isFinite(userId)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   try {
     const parsed = schema.safeParse(await req.json());
 

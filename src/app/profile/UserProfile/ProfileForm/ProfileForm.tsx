@@ -1,11 +1,14 @@
+"use client";
+
 import { BackButton } from "@/components/BackButton/BackButton";
-import { Button, Form, Input, Modal, Select, Steps, Typography, message } from "antd";
+import { Button, Form, Input, Modal, Select, Steps, Typography, message, App } from "antd";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import styles from "./ProfileForm.module.scss";
 import { GlobalOutlined } from "@ant-design/icons";
 
 export const ProfileForm = ({ userData }: any) => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [modalForm] = Form.useForm();
   const [showModal, setShowModal] = useState(false);
@@ -92,28 +95,24 @@ export const ProfileForm = ({ userData }: any) => {
     });
   }, [userData]);
 
-  const showMessage = (type: "success" | "error" | "info" | "warning", content: string) => {
-    message[type](content);
-  };
-
   const handleFinishModal = async () => {
     if (newPasswordValue !== confirmPasswordValue) {
       setPasswordsMatchError("Пароли не совпадают");
-      showMessage("error", "Пароли не совпадают");
+      message.error("Пароли не совпадают");
       return;
     }
     try {
       const userDataFromApi = await changePassword();
       if (!userDataFromApi.success) {
         setNewPasswordError("Ошибка изменения пароля");
-        showMessage("error", "Не удалось изменить пароль. Попробуйте еще раз.");
+        message.error("Не удалось изменить пароль. Попробуйте еще раз.");
       } else {
         setNewPasswordError("");
-        showMessage("success", "Пароль успешно изменен!");
+        message.success("Пароль успешно изменен!");
       }
     } catch (error) {
       setNewPasswordError("Произошла ошибка при изменении пароля");
-      showMessage("error", "Произошла ошибка при изменении пароля");
+      message.error("Произошла ошибка при изменении пароля");
     }
     setShowModal(false);
     setCurrentStep(0);
@@ -124,15 +123,15 @@ export const ProfileForm = ({ userData }: any) => {
       const userDataFromApi = await checkPassword();
       if (!userDataFromApi.success) {
         setPasswordError("Неверный пароль");
-        showMessage("error", "Неверный пароль");
+        message.error("Неверный пароль");
       } else {
         setCurrentStep(currentStep + 1);
         setPasswordError("");
-        showMessage("success", "Пароль подтвержден");
+        message.success("Пароль подтвержден");
       }
     } catch (error) {
       setPasswordError("Произошла ошибка при проверке пароля");
-      showMessage("error", "Произошла ошибка при проверке пароля");
+      message.error("Произошла ошибка при проверке пароля");
     }
   };
 
@@ -185,13 +184,13 @@ export const ProfileForm = ({ userData }: any) => {
       const data = await response.json();
       if (data.success) {
         setIsChangeDataUser(true);
-        showMessage("success", "Данные профиля обновлены!");
+        message.success("Данные профиля обновлены!");
       } else {
-        showMessage("error", data.message || "Не удалось обновить данные профиля");
+        message.error(data.message || "Не удалось обновить данные профиля");
       }
       return data;
     } catch (error) {
-      showMessage("error", "Произошла ошибка при обновлении данных");
+      message.error("Произошла ошибка при обновлении данных");
     }
   };
 

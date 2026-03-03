@@ -4,6 +4,7 @@ import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { auth } from "@/auth";
 
 const schema = z.object({
   userId: z.number(),
@@ -11,6 +12,15 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const userId = Number((session.user as { id?: string } | undefined)?.id);
+  if (!Number.isFinite(userId)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   try {
     const parsed = schema.safeParse(await req.json());
 
