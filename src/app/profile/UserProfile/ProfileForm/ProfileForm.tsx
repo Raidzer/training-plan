@@ -104,18 +104,35 @@ export const ProfileForm = ({ userData }: any) => {
     try {
       const userDataFromApi = await changePassword();
       if (!userDataFromApi.success) {
-        setNewPasswordError("Ошибка изменения пароля");
-        message.error("Не удалось изменить пароль. Попробуйте еще раз.");
+        // Обработка различных ошибок
+        if (userDataFromApi.error === "Неверный текущий пароль") {
+          setPasswordError("Неверный текущий пароль");
+          message.error("Неверный текущий пароль");
+          // Возвращаемся на первый шаг
+          setCurrentStep(0);
+          setInputPasswordValue("");
+          setNewPasswordValue("");
+          setConfirmPasswordValue("");
+          modalForm.setFieldsValue({
+            password: "",
+            newPassword: "",
+            confirmPassword: "",
+          });
+          return;
+        } else {
+          setNewPasswordError("Ошибка изменения пароля");
+          message.error(userDataFromApi.error || "Не удалось изменить пароль. Попробуйте еще раз.");
+        }
       } else {
         setNewPasswordError("");
         message.success("Пароль успешно изменен!");
+        setShowModal(false);
+        setCurrentStep(0);
       }
     } catch (error) {
       setNewPasswordError("Произошла ошибка при изменении пароля");
       message.error("Произошла ошибка при изменении пароля");
     }
-    setShowModal(false);
-    setCurrentStep(0);
   };
 
   const handleNextForm = async () => {
@@ -158,6 +175,7 @@ export const ProfileForm = ({ userData }: any) => {
       },
       body: JSON.stringify({
         userId: userData.id,
+        currentPassword: inputPasswordValue,
         newPassword: newPasswordValue,
         confirmPassword: confirmPasswordValue,
       }),
