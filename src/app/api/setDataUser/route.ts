@@ -8,7 +8,7 @@ import z from "zod";
 const schema = z.object({
   userId: z.number(),
   name: z.string().min(1, "Имя обязательно для заполнения").optional(),
-  lastName: z.string().optional(),
+  lastName: z.string().optional().nullable(),
   gender: z.string().optional(),
   timezone: z.string().min(1, "Выберите часовой пояс").optional(),
 });
@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest) {
     // Создаем объект для обновления
     const updateData: {
       name?: string;
-      lastName?: string;
+      lastName?: string | null;
       gender?: string;
       timezone?: string;
     } = {};

@@ -12,6 +12,7 @@ const schema = z
     userId: z.number(),
     newPassword: z.string().min(6, "Минимум 6 символов"),
     confirmPassword: z.string().min(6, "Минимум 6 символов"),
+    currentPassword: z.string().min(1, "Текущий пароль обязателен"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Новые пароли не совпадают",
@@ -35,23 +36,25 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
     }
 
-    const { newPassword } = parsed.data;
+    const { currentPassword, newPassword } = parsed.data;
 
-    let user;
-
-    if (userId) {
-      [user] = await db
-        .select({
-          id: users.id,
-          passwordHash: users.passwordHash,
-        })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-    }
+    const [user] = await db
+      .select({
+        id: users.id,
+        passwordHash: users.passwordHash,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (!user) {
       return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+
+    if (!isCurrentPasswordValid) {
+      return NextResponse.json({ error: "Неверный текущий пароль" }, { status: 403 });
     }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
