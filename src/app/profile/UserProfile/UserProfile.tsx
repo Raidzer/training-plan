@@ -4,6 +4,7 @@ import { LoadingOutlined } from "@ant-design/icons";
 import React, { useCallback, useEffect, useState } from "react";
 import { ProfileForm } from "./ProfileForm";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 export const UserProfile = () => {
   const router = useRouter();
@@ -33,6 +34,7 @@ export const UserProfile = () => {
       if (!response.ok) {
         if (response.status === 401) {
           // Неавторизован - перенаправляем на логин
+          await signOut({ redirect: false });
           router.push("/login");
           return;
         }
@@ -83,7 +85,7 @@ export const UserProfile = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/signout", { method: "POST" });
+      await signOut({ redirect: false });
     } finally {
       router.push("/login");
     }

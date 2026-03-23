@@ -6,9 +6,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import styles from "./ProfileForm.module.scss";
 import { GlobalOutlined } from "@ant-design/icons";
+import { useSession } from "next-auth/react";
 
 export const ProfileForm = ({ userData: initialUserData }: any) => {
   const [messageApi, contextHolder] = message.useMessage();
+  const { data: session, update } = useSession();
   const [form] = Form.useForm();
   const [modalForm] = Form.useForm();
   const [showModal, setShowModal] = useState(false);
@@ -210,14 +212,24 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
           timezone: formValues.timezone,
         };
         setUserData(updatedUserData);
+
+        // Обновляем сессию NextAuth
+        if (session && update) {
+          await update({
+            ...session.user,
+            name: formValues.name,
+            lastName: formValues.lastName,
+          });
+        }
+
         setIsChangeDataUser(true);
         messageApi.success("Данные профиля обновлены!");
       } else {
-        message.error(data.message || "Не удалось обновить данные профиля");
+        messageApi.error(data.message || "Не удалось обновить данные профиля");
       }
       return data;
     } catch (error) {
-      message.error("Произошла ошибка при обновлении данных");
+      messageApi.error("Произошла ошибка при обновлении данных");
     }
   };
 
@@ -266,7 +278,7 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
                 (inputPasswordValue && inputPasswordValue.length < 6 ? "Минимум 6 символов" : "")
               }
             >
-              <Input
+              <Input.Password
                 value={inputPasswordValue}
                 onChange={(e) => {
                   setInputPasswordValue(e.target.value);
@@ -291,7 +303,7 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
                 (newPasswordValue && newPasswordValue.length < 6 ? "Минимум 6 символов" : "")
               }
             >
-              <Input onChange={(e) => setNewPasswordValue(e.target.value)} />
+              <Input.Password onChange={(e) => setNewPasswordValue(e.target.value)} />
             </Form.Item>
             <Form.Item
               label="Повторите пароль"
@@ -315,7 +327,7 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
                   : ""
               }
             >
-              <Input
+              <Input.Password
                 onChange={(e) => {
                   const value = e.target.value;
                   setConfirmPasswordValue(value);
