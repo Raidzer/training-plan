@@ -7,8 +7,8 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./ProfileForm.module.scss";
 import { GlobalOutlined } from "@ant-design/icons";
 
-export const ProfileForm = ({ userData }: any) => {
-  const { message } = App.useApp();
+export const ProfileForm = ({ userData: initialUserData }: any) => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [modalForm] = Form.useForm();
   const [showModal, setShowModal] = useState(false);
@@ -21,12 +21,13 @@ export const ProfileForm = ({ userData }: any) => {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [passwordsMatchError, setPasswordsMatchError] = useState("");
   const [isChangeDataUser, setIsChangeDataUser] = useState(true);
+  const [userData, setUserData] = useState(initialUserData);
   const [formValues, setFormValues] = useState({
-    name: userData.name,
-    lastName: userData.lastName,
-    gender: userData.gender,
-    email: userData.email,
-    timezone: userData.timezone,
+    name: initialUserData.name,
+    lastName: initialUserData.lastName,
+    gender: initialUserData.gender,
+    email: initialUserData.email,
+    timezone: initialUserData.timezone,
   });
 
   const showModalPassword = () => {
@@ -93,7 +94,7 @@ export const ProfileForm = ({ userData }: any) => {
       lastName: userData.lastName,
       gender: userData.gender,
     });
-  }, [userData]);
+  }, [userData, form]);
 
   const handleFinishModal = async () => {
     if (newPasswordValue !== confirmPasswordValue) {
@@ -201,8 +202,16 @@ export const ProfileForm = ({ userData }: any) => {
       });
       const data = await response.json();
       if (data.success) {
+        const updatedUserData = {
+          ...userData,
+          name: formValues.name,
+          lastName: formValues.lastName,
+          gender: formValues.gender,
+          timezone: formValues.timezone,
+        };
+        setUserData(updatedUserData);
         setIsChangeDataUser(true);
-        message.success("Данные профиля обновлены!");
+        messageApi.success("Данные профиля обновлены!");
       } else {
         message.error(data.message || "Не удалось обновить данные профиля");
       }
@@ -364,6 +373,7 @@ export const ProfileForm = ({ userData }: any) => {
 
   return (
     <>
+      {contextHolder}
       <div className={styles.title}>
         <Typography.Title>Профиль</Typography.Title>
         <Link href="/dashboard">

@@ -3,7 +3,7 @@ import { Spin, Flex, Result, Button } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import React, { useCallback, useEffect, useState } from "react";
 import { ProfileForm } from "./ProfileForm";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export const UserProfile = () => {
   const router = useRouter();
@@ -65,11 +65,7 @@ export const UserProfile = () => {
     } catch (error) {
       console.error("Ошибка при загрузке данных пользователя:", error);
 
-      // Устанавливаем понятное сообщение об ошибке
       setError(error instanceof Error ? error.message : "Не удалось загрузить данные профиля");
-
-      // НЕ устанавливаем пустые данные! Это предотвратит случайную перезапись
-      // Оставляем userData в начальном состоянии или с предыдущими данными
     } finally {
       setIsLoading(false);
     }
