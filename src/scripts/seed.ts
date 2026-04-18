@@ -2,7 +2,7 @@ import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { hash } from "bcryptjs";
 
-const SEED_EMAIL = "test@example.com";
+const SEED_EMAIL = "testNikita@example.com";
 
 async function main() {
   await db
@@ -12,7 +12,7 @@ async function main() {
       lastName: "",
       gender: "male",
       email: SEED_EMAIL,
-      login: "test",
+      login: "testNikita",
       passwordHash: await hash("password", 10),
     })
     .onConflictDoNothing();

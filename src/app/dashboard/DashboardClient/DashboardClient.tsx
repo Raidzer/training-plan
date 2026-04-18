@@ -13,6 +13,7 @@ import Link from "next/link";
 import type { Session } from "next-auth";
 import styles from "./dashboard.module.scss";
 import { SignOutButton } from "@/components/SingOutButton/SignOutButton";
+import { ProfileButton } from "@/components/ProfileButton/ProfileButton";
 
 type Props = { session: Session };
 
@@ -58,7 +59,12 @@ export function DashboardClient({ session }: Props) {
               Что планируем сегодня?
             </Typography.Paragraph>
           </div>
-          <SignOutButton />
+          <div className={styles.buttonGroup}>
+            <Link href="/profile">
+              <ProfileButton />
+            </Link>
+            <SignOutButton />
+          </div>
         </div>
         <div className={styles.cards}>
           {adminCard}
