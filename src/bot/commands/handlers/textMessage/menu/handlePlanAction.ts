@@ -7,10 +7,13 @@ import {
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
-import { buildDateMenuReplyKeyboard, buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildDailyReportMenuReplyKeyboard,
+  buildDateMenuReplyKeyboard,
+  buildMainMenuReplyKeyboard,
+} from "@/bot/menu/menuKeyboard";
 import { setPendingInput } from "@/bot/menu/menuState";
 import { getPlanEntriesByDate } from "@/server/planEntries";
-import { getDailyReportTextByDate } from "@/server/diary";
 
 type PlanMenuActionArgs = {
   ctx: any;
@@ -49,24 +52,9 @@ export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: Plan
   }
 
   if (action === "dailyReport") {
-    const today = timeZone
-      ? formatDateInTimeZone(new Date(), timeZone)
-      : formatDateLocal(new Date());
-    const message = await getDailyReportTextByDate({ userId, date: today });
-
-    if (!timeZone) {
-      await ctx.reply(`${message}\n\nТаймзона не задана, использую время сервера.`, {
-        reply_markup: buildMainMenuReplyKeyboard({
-          subscribed: subscription?.enabled ?? false,
-        }),
-      });
-      return;
-    }
-
-    await ctx.reply(message, {
-      reply_markup: buildMainMenuReplyKeyboard({
-        subscribed: subscription?.enabled ?? false,
-      }),
+    setPendingInput(chatId, "dailyReportMenu");
+    await ctx.reply("Выбери дату для ежедневного отчета.", {
+      reply_markup: buildDailyReportMenuReplyKeyboard(),
     });
     return;
   }
