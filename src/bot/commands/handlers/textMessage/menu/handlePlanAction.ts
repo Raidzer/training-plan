@@ -7,7 +7,11 @@ import {
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
-import { buildDateMenuReplyKeyboard, buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildDailyReportMenuReplyKeyboard,
+  buildDateMenuReplyKeyboard,
+  buildMainMenuReplyKeyboard,
+} from "@/bot/menu/menuKeyboard";
 import { setPendingInput } from "@/bot/menu/menuState";
 import { getPlanEntriesByDate } from "@/server/planEntries";
 
@@ -15,7 +19,7 @@ type PlanMenuActionArgs = {
   ctx: any;
   chatId: number;
   userId: number;
-  action: "today" | "date";
+  action: "today" | "date" | "dailyReport";
 };
 
 export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: PlanMenuActionArgs) => {
@@ -43,6 +47,14 @@ export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: Plan
       reply_markup: buildMainMenuReplyKeyboard({
         subscribed: subscription?.enabled ?? false,
       }),
+    });
+    return;
+  }
+
+  if (action === "dailyReport") {
+    setPendingInput(chatId, "dailyReportMenu");
+    await ctx.reply("Выбери дату для ежедневного отчета.", {
+      reply_markup: buildDailyReportMenuReplyKeyboard(),
     });
     return;
   }
