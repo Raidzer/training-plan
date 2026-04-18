@@ -2,6 +2,7 @@ import type { PendingInput } from "@/bot/menu/menuState";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { clearPendingInput } from "@/bot/menu/menuState";
 import { handleCancelIfRequested } from "@/bot/commands/handlers/textMessage/pending/handleCancel";
+import { handleDailyReportPending } from "@/bot/commands/handlers/textMessage/pending/handleDailyReport";
 import { handleDatePending } from "@/bot/commands/handlers/textMessage/pending/handleDate";
 import { handleLinkPending } from "@/bot/commands/handlers/textMessage/pending/handleLink";
 import { handleRecoveryPending } from "@/bot/commands/handlers/textMessage/pending/handleRecovery";
@@ -47,6 +48,10 @@ export const handlePendingInput = async ({
     case "dateMenu":
     case "date":
       await handleDatePending({ ctx, chatId, text, pending, userId });
+      return;
+    case "dailyReportMenu":
+    case "dailyReportDate":
+      await handleDailyReportPending({ ctx, chatId, text, pending, userId });
       return;
     case "weightDateMenu":
     case "weightDate":
