@@ -21,10 +21,15 @@ const {
   };
 });
 
-vi.mock("@/server/alice", () => {
+vi.mock("@/alice/accounts", () => {
   return {
     getUserIdByAliceId: getUserIdByAliceIdMock,
     linkAliceAccount: linkAliceAccountMock,
+  };
+});
+
+vi.mock("@/alice/parser", () => {
+  return {
     parseWeightCommand: parseWeightCommandMock,
   };
 });

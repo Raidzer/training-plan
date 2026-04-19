@@ -1,7 +1,8 @@
+import { addMinutes } from "date-fns";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { aliceAccounts, aliceLinkCodes, users } from "@/server/db/schema";
-import { eq, and, gt } from "drizzle-orm";
-import { addMinutes } from "date-fns";
+import type { AliceLinkedUser } from "./types";
 
 export async function createLinkCode(userId: number): Promise<string> {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -41,9 +42,7 @@ export async function linkAliceAccount(aliceUserId: string, code: string): Promi
   return true;
 }
 
-export async function getUserIdByAliceId(
-  aliceUserId: string
-): Promise<{ userId: number; timezone: string } | null> {
+export async function getUserIdByAliceId(aliceUserId: string): Promise<AliceLinkedUser | null> {
   const result = await db
     .select({
       userId: aliceAccounts.userId,
@@ -55,33 +54,4 @@ export async function getUserIdByAliceId(
     .limit(1);
 
   return result[0] ?? null;
-}
-
-export function parseWeightCommand(
-  text: string
-): { weight: number; period: "morning" | "evening" } | null {
-  const lowerText = text.toLowerCase();
-
-  let period: "morning" | "evening" = "morning";
-  if (lowerText.includes("вечер") || lowerText.includes("вечером")) {
-    period = "evening";
-  }
-
-  const cleanText = lowerText
-    .replace("с половиной", ".5")
-    .replace(" с ", ".")
-    .replace(" и ", ".")
-    .replace(/,/g, ".");
-
-  const weightMatch = cleanText.match(/(\d{2,3}(?:\.\d{1,2})?)/);
-  if (!weightMatch) {
-    return null;
-  }
-
-  const weight = parseFloat(weightMatch[1]);
-  if (isNaN(weight) || weight < 30 || weight > 200) {
-    return null;
-  }
-
-  return { weight, period };
 }
