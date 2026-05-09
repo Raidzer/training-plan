@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdByAliceId, linkAliceAccount } from "@/alice/accounts";
-import { parseWeightCommand } from "@/alice/parser";
+import { parseSleepCommand, parseWeightCommand } from "@/alice/parser";
+import { getRecoveryEntryByDate, upsertRecoveryEntry } from "@/server/recoveryEntries";
 import { upsertWeightEntry } from "@/server/weightEntries";
 import { formatDateInTimeZone, formatDateLocal, isValidTimeZone } from "@/bot/utils/dateTime";
 import type { AliceRequest, AliceResponse, AliceSessionData } from "./types";
@@ -9,6 +10,47 @@ if (!(globalThis as any).sessionStore) {
   (globalThis as any).sessionStore = new Map<string, AliceSessionData>();
 }
 const sessionStore = (globalThis as any).sessionStore as Map<string, AliceSessionData>;
+
+const getDiaryDate = (timezone: string) => {
+  if (timezone && isValidTimeZone(timezone)) {
+    return formatDateInTimeZone(new Date(), timezone);
+  }
+
+  return formatDateLocal(new Date());
+};
+
+const saveSleepEntry = async (params: { userId: number; date: string; sleepHours: number }) => {
+  const recoveryEntry = await getRecoveryEntryByDate({
+    userId: params.userId,
+    date: params.date,
+  });
+
+  await upsertRecoveryEntry({
+    userId: params.userId,
+    date: params.date,
+    hasBath: Boolean(recoveryEntry?.hasBath),
+    hasMfr: Boolean(recoveryEntry?.hasMfr),
+    hasMassage: Boolean(recoveryEntry?.hasMassage),
+    sleepHours: params.sleepHours,
+  });
+};
+
+const formatSleepHours = (sleepHours: number) => {
+  const clampedSleepHours = Math.min(Math.max(sleepHours, 0), 24);
+  let hours = Math.floor(clampedSleepHours);
+  let minutes = Math.round((clampedSleepHours - hours) * 60);
+
+  if (minutes === 60) {
+    hours = Math.min(hours + 1, 24);
+    minutes = 0;
+  }
+
+  if (hours === 24) {
+    minutes = 0;
+  }
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+};
 
 export async function handleAliceWebhook(req: NextRequest) {
   try {
@@ -32,6 +74,7 @@ export async function handleAliceWebhook(req: NextRequest) {
 
     const memoryState = sessionStore.get(sessionId);
     const expectedPeriod = body.state?.session?.expected_period || memoryState?.expectedPeriod;
+    const expectedEntry = body.state?.session?.expected_entry || memoryState?.expectedEntry;
 
     const response: AliceResponse = {
       version: body.version,
@@ -49,10 +92,10 @@ export async function handleAliceWebhook(req: NextRequest) {
       command.toLowerCase().includes("справка")
     ) {
       response.response.text =
-        "Я умею записывать ваш утренний и вечерний вес в дневник тренировок. \n\n" +
-        "Просто скажите: 'Вес утро 75.5' или 'Запиши вечерний вес 76'. \n\n" +
+        "Я умею записывать ваш утренний и вечерний вес, а также сегодняшний сон в дневник тренировок. \n\n" +
+        "Просто скажите: 'Вес утро 75.5', 'Запиши вечерний вес 76' или 'Запиши сон 7.5'. \n\n" +
         (userData
-          ? "Вы уже привязали аккаунт и можете диктовать вес."
+          ? "Вы уже привязали аккаунт и можете диктовать вес и сон."
           : "Сначала нужно связать аккаунт с Telegram-ботом. Скажите 'Связать аккаунт' и назовите код из бота.");
       return NextResponse.json(response);
     }
@@ -92,6 +135,44 @@ export async function handleAliceWebhook(req: NextRequest) {
     }
 
     const { userId, timezone } = userData;
+    const normalizedCommand = command.toLowerCase();
+
+    if (expectedEntry === "sleep") {
+      const sleepData = parseSleepCommand(command, { allowNumericOnly: true });
+      if (!sleepData) {
+        response.response.text = "Не поняла сон. Скажите, например: '7 и 30' или '8 часов'.";
+        response.session_state = { ...response.session_state, expected_entry: "sleep" };
+        sessionStore.set(sessionId, { expectedEntry: "sleep" });
+        return NextResponse.json(response);
+      }
+
+      const today = getDiaryDate(timezone);
+      await saveSleepEntry({
+        userId,
+        date: today,
+        sleepHours: sleepData.sleepHours,
+      });
+
+      response.response.text = `Записала сегодняшний сон: ${formatSleepHours(sleepData.sleepHours)}.`;
+      response.response.end_session = true;
+      sessionStore.delete(sessionId);
+      return NextResponse.json(response);
+    }
+
+    const sleepData = parseSleepCommand(command);
+    if (sleepData) {
+      const today = getDiaryDate(timezone);
+      await saveSleepEntry({
+        userId,
+        date: today,
+        sleepHours: sleepData.sleepHours,
+      });
+
+      response.response.text = `Записала сегодняшний сон: ${formatSleepHours(sleepData.sleepHours)}.`;
+      response.response.end_session = true;
+      sessionStore.delete(sessionId);
+      return NextResponse.json(response);
+    }
 
     const weightData = parseWeightCommand(command);
     if (weightData) {
@@ -102,10 +183,7 @@ export async function handleAliceWebhook(req: NextRequest) {
         weightData.period = "evening";
       }
 
-      const today =
-        timezone && isValidTimeZone(timezone)
-          ? formatDateInTimeZone(new Date(), timezone)
-          : formatDateLocal(new Date());
+      const today = getDiaryDate(timezone);
 
       await upsertWeightEntry({
         userId,
@@ -122,8 +200,6 @@ export async function handleAliceWebhook(req: NextRequest) {
       return NextResponse.json(response);
     }
 
-    const normalizedCommand = command.toLowerCase();
-
     if (
       (body.session.new && !command) ||
       normalizedCommand === "привет" ||
@@ -131,9 +207,14 @@ export async function handleAliceWebhook(req: NextRequest) {
       normalizedCommand.includes("записать") ||
       normalizedCommand.includes("старт") ||
       normalizedCommand.includes("меню") ||
-      normalizedCommand.includes("вес")
+      normalizedCommand.includes("вес") ||
+      normalizedCommand.includes("сон")
     ) {
-      if (normalizedCommand.includes("утренний") || normalizedCommand.includes("утро")) {
+      if (normalizedCommand.includes("сон")) {
+        response.response.text = "Привет! Диктуйте сегодняшний сон.";
+        response.session_state = { ...response.session_state, expected_entry: "sleep" };
+        sessionStore.set(sessionId, { expectedEntry: "sleep" });
+      } else if (normalizedCommand.includes("утренний") || normalizedCommand.includes("утро")) {
         response.response.text = "Привет! Диктуйте утренний вес.";
         response.session_state = { ...response.session_state, expected_period: "morning" };
         sessionStore.set(sessionId, { expectedPeriod: "morning" });

@@ -10,6 +10,12 @@ export type AliceWeightCommand = {
   period: AliceWeightPeriod;
 };
 
+export type AliceSleepCommand = {
+  sleepHours: number;
+};
+
+export type AliceExpectedEntry = "sleep";
+
 export type AliceRequest = {
   meta: {
     client_id: string;
@@ -36,6 +42,7 @@ export type AliceRequest = {
   };
   state?: {
     session?: {
+      expected_entry?: AliceExpectedEntry;
       expected_period?: AliceWeightPeriod;
     };
   };
@@ -49,10 +56,12 @@ export type AliceResponse = {
     end_session: boolean;
   };
   session_state?: {
+    expected_entry?: AliceExpectedEntry;
     expected_period?: AliceWeightPeriod;
   };
 };
 
 export type AliceSessionData = {
+  expectedEntry?: AliceExpectedEntry;
   expectedPeriod?: AliceWeightPeriod;
 };

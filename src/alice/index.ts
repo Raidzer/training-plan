@@ -1,11 +1,13 @@
 export { createLinkCode, getUserIdByAliceId, linkAliceAccount } from "./accounts";
-export { parseWeightCommand } from "./parser";
+export { parseSleepCommand, parseWeightCommand } from "./parser";
 export { handleAliceWebhook } from "./webhook";
 export type {
+  AliceExpectedEntry,
   AliceLinkedUser,
   AliceRequest,
   AliceResponse,
   AliceSessionData,
+  AliceSleepCommand,
   AliceWeightCommand,
   AliceWeightPeriod,
 } from "./types";
