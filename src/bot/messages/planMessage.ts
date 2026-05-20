@@ -13,15 +13,38 @@ export const formatPlanMessage = (params: {
   const displayDate = formatDateForDisplay(params.date);
   const sendTimeText = params.sendTime ? `Время рассылки: ${params.sendTime}.` : "";
   if (!params.entries.length) {
-    return [`На ${displayDate} нет тренировок.`, sendTimeText].filter(Boolean).join("\n");
+    const lines = [`На ${displayDate} нет тренировок.`];
+    if (sendTimeText) {
+      lines.push("", sendTimeText);
+    }
+    return lines.join("\n");
   }
 
   const lines = params.entries.map((entry) => {
-    const flags = entry.isWorkload ? "нагрузка" : "";
-    const comment = entry.commentText ? `комментарий: ${stripHtml(entry.commentText)}` : "";
-    const parts = [stripHtml(entry.taskText), flags].filter(Boolean).join(" ");
-    return `${entry.sessionOrder}. ${parts}${comment ? `\n${comment}` : ""}`;
+    const taskText = stripHtml(entry.taskText);
+    const commentText = entry.commentText ? stripHtml(entry.commentText) : "";
+    const parts = [String(entry.sessionOrder), "."];
+    const linesByEntry = [`${parts[0]}${parts[1]}`];
+
+    if (entry.isWorkload) {
+      linesByEntry.push("🔥🔥🔥");
+    }
+
+    linesByEntry.push(taskText);
+
+    if (commentText) {
+      linesByEntry.push("");
+      linesByEntry.push("Комментарий:");
+      linesByEntry.push(commentText);
+      linesByEntry.push("");
+    }
+
+    return linesByEntry.join("\n");
   });
 
-  return [`План на ${displayDate}:`, ...lines, sendTimeText].filter(Boolean).join("\n");
+  const messageLines = [`План на ${displayDate}:`, ...lines];
+  if (sendTimeText) {
+    messageLines.push("", sendTimeText);
+  }
+  return messageLines.join("\n");
 };

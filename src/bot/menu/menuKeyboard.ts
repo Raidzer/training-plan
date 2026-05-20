@@ -2,8 +2,11 @@ export const LINK_BUTTON_TEXT = "Привязать аккаунт";
 export const CANCEL_LINK_BUTTON_TEXT = "Отменить привязку";
 export const TODAY_BUTTON_TEXT = "Сегодня";
 export const DATE_BUTTON_TEXT = "Другая дата";
+export const DAILY_REPORT_BUTTON_TEXT = "Ежедневный отчет";
+export const DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
 export const CUSTOM_DATE_BUTTON_TEXT = "Указать дату";
 export const DATE_BACK_BUTTON_TEXT = "Назад";
+export const CANCEL_BUTTON_TEXT = "Отмена";
 export const SUBSCRIBE_ON_BUTTON_TEXT = "Подписка: ВКЛ";
 export const SUBSCRIBE_OFF_BUTTON_TEXT = "Подписка: ВЫКЛ";
 export const TIME_BUTTON_TEXT = "Время рассылки";
@@ -31,6 +34,7 @@ export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) =>
   return {
     keyboard: [
       [{ text: TODAY_BUTTON_TEXT }, { text: DATE_BUTTON_TEXT }],
+      [{ text: DAILY_REPORT_BUTTON_TEXT }],
       [{ text: WEIGHT_BUTTON_TEXT }],
       [
         {
@@ -74,6 +78,25 @@ export const buildDateMenuReplyKeyboard = (params: { dateButtons: string[] }) =>
   rows.push([{ text: CUSTOM_DATE_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }]);
   return {
     keyboard: rows,
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+export const buildDailyReportMenuReplyKeyboard = () => {
+  return {
+    keyboard: [
+      [{ text: TODAY_BUTTON_TEXT }, { text: DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT }],
+      [{ text: DATE_BACK_BUTTON_TEXT }],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+};
+
+export const buildCancelReplyKeyboard = () => {
+  return {
+    keyboard: [[{ text: CANCEL_BUTTON_TEXT }]],
     resize_keyboard: true,
     is_persistent: true,
   };

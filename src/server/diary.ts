@@ -27,6 +27,7 @@ import {
   weatherLabels,
   type DiaryDayStatus,
 } from "@/shared/utils/diaryUtils";
+import { buildDailyReportText } from "@/shared/utils/dailyReport";
 
 export type DiaryPlanEntry = {
   id: number;
@@ -288,6 +289,14 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
     status,
     previousEveningWeightKg: previousEveningWeight ? String(previousEveningWeight.weightKg) : null,
   };
+};
+
+export const getDailyReportTextByDate = async (params: { userId: number; date: string }) => {
+  const dayData = await getDiaryDayData(params);
+  return buildDailyReportText({
+    date: params.date,
+    day: dayData,
+  });
 };
 
 export const getDiaryDaysInRange = async (params: {

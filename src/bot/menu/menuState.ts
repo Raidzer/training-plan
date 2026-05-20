@@ -1,6 +1,8 @@
 export type PendingInput =
   | "date"
   | "dateMenu"
+  | "dailyReportMenu"
+  | "dailyReportDate"
   | "time"
   | "timezone"
   | "link"

@@ -1,4 +1,5 @@
 import {
+  DAILY_REPORT_BUTTON_TEXT,
   ALICE_LINK_BUTTON_TEXT,
   CANCEL_LINK_BUTTON_TEXT,
   DATE_BUTTON_TEXT,
@@ -32,6 +33,8 @@ export const getMenuActionByText = (text: string) => {
       return "today";
     case DATE_BUTTON_TEXT:
       return "date";
+    case DAILY_REPORT_BUTTON_TEXT:
+      return "dailyReport";
     case SUBSCRIBE_ON_BUTTON_TEXT:
       return "unsubscribe";
     case SUBSCRIBE_OFF_BUTTON_TEXT:
