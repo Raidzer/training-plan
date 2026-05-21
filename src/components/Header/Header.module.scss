@@ -45,7 +45,9 @@
   border: 1px solid var(--nav-border);
   color: var(--brand-color);
   background: var(--nav-bg);
-  transition: transform 0.15s ease, background-color 0.2s ease,
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
     box-shadow 0.2s ease;
 }
 

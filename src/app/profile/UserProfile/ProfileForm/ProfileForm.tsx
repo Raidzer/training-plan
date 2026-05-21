@@ -1,14 +1,25 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton/BackButton";
-import { Button, Form, Input, Modal, Select, Steps, Typography, message, App } from "antd";
+import { Button, Form, Input, Modal, Select, Typography, message } from "antd";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import styles from "./ProfileForm.module.scss";
 import { GlobalOutlined } from "@ant-design/icons";
 import { useSession } from "next-auth/react";
 
-export const ProfileForm = ({ userData: initialUserData }: any) => {
+interface ProfileFormProps {
+  userData: {
+    id: string;
+    email: string;
+    name: string;
+    lastName: string;
+    gender: string;
+    timezone: string;
+  };
+}
+
+export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => {
   const [messageApi, contextHolder] = message.useMessage();
   const { data: session, update } = useSession();
   const [form] = Form.useForm();
@@ -62,8 +73,11 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
     modalForm.resetFields();
   };
 
-  const handleFormValuesChange = (changedValues: any, allValues: any) => {
-    setFormValues(allValues);
+  const handleFormValuesChange = (
+    _changedValues: Record<string, unknown>,
+    allValues: Record<string, unknown>
+  ) => {
+    setFormValues(allValues as typeof formValues);
 
     const isNameChanged = allValues.name !== userData.name;
     const isLastNameChanged = allValues.lastName !== userData.lastName;
@@ -132,7 +146,7 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
         setShowModal(false);
         setCurrentStep(0);
       }
-    } catch (error) {
+    } catch {
       setNewPasswordError("Произошла ошибка при изменении пароля");
       message.error("Произошла ошибка при изменении пароля");
     }
@@ -216,9 +230,11 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
         // Обновляем сессию NextAuth
         if (session && update) {
           await update({
-            ...session.user,
-            name: formValues.name,
-            lastName: formValues.lastName,
+            user: {
+              ...session.user,
+              name: formValues.name,
+              lastName: formValues.lastName,
+            },
           });
         }
 
@@ -358,8 +374,7 @@ export const ProfileForm = ({ userData: initialUserData }: any) => {
 
       return timeZones.map((tz) => {
         try {
-          const parts = formatter.formatToParts(new Date());
-          const offsetPart = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+          formatter.formatToParts(new Date());
 
           const date = new Date();
           const gmt =

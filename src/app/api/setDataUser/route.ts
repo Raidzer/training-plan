@@ -5,12 +5,29 @@ import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import z from "zod";
 
+const isValidTimeZone = (timezone: string): boolean => {
+  try {
+    return Intl.supportedValuesOf("timeZone").includes(timezone);
+  } catch {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: timezone });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
+
 const schema = z.object({
   userId: z.number(),
   name: z.string().min(1, "Имя обязательно для заполнения").optional(),
   lastName: z.string().optional().nullable(),
   gender: z.string().optional(),
-  timezone: z.string().min(1, "Выберите часовой пояс").optional(),
+  timezone: z
+    .string()
+    .min(1, "Выберите часовой пояс")
+    .refine((val) => isValidTimeZone(val), { message: "Неверный часовой пояс" })
+    .optional(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -30,7 +47,11 @@ export async function PATCH(req: NextRequest) {
     // Парсим и валидируем
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+      const errors = parsed.error.issues.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      }));
+      return NextResponse.json({ error: "Некорректные данные", errors }, { status: 400 });
     }
 
     const { name, lastName, gender, timezone } = parsed.data;
@@ -73,6 +94,9 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (timezone !== undefined) {
+      if (!isValidTimeZone(timezone)) {
+        return NextResponse.json({ error: "Неверный часовой пояс" }, { status: 400 });
+      }
       updateData.timezone = timezone;
     }
 

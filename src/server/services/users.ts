@@ -17,6 +17,7 @@ export async function getUserById(id: number) {
       id: users.id,
       email: users.email,
       name: users.name,
+      lastName: users.lastName,
       role: users.role,
       isActive: users.isActive,
       passwordHash: users.passwordHash,
