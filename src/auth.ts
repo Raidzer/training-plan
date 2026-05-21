@@ -73,12 +73,13 @@ export const authOptions: NextAuthOptions = {
 
       if (trigger === "update" && session) {
         if (session.user) {
-          if (session.user.name !== undefined) token.name = session.user.name;
-          if (session.user.lastName !== undefined) token.lastName = session.user.lastName;
-          if (session.user.email !== undefined) token.email = session.user.email;
-          if (session.user.role !== undefined) token.role = session.user.role;
-          if (session.user.emailVerified !== undefined)
-            token.emailVerified = session.user.emailVerifie;
+          // if (session.user.name !== undefined) token.name = session.user.name;
+          // if (session.user.lastName !== undefined) token.lastName = session.user.lastName;
+          // if (session.user.email !== undefined) token.email = session.user.email;
+          // if (session.user.role !== undefined) token.role = session.user.role;
+          // if (session.user.emailVerified !== undefined)
+          //   token.emailVerified = session.user.emailVerified;
+          token = { ...token, ...session.user };
         }
       }
       return token;
