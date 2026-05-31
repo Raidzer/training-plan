@@ -49,8 +49,8 @@ describe("server/diary getDiaryWeeklyVolumesBySunday", () => {
     dbSelectMock
       .mockReturnValueOnce(
         createSelectWhereBuilder([
-          { id: 101, date: "2026-01-27" },
-          { id: 102, date: "2026-01-31" },
+          { id: 101, date: "2026-01-27", taskText: "Кросс 12 км" },
+          { id: 102, date: "2026-01-31", taskText: "Разминка" },
         ])
       )
       .mockReturnValueOnce(
@@ -68,5 +68,25 @@ describe("server/diary getDiaryWeeklyVolumesBySunday", () => {
 
     expect(dbSelectMock).toHaveBeenCalledTimes(2);
     expect(result.get("2026-02-01")).toBe(16);
+  });
+
+  it("не должен учитывать плейсхолдер '-' в недельном объеме", async () => {
+    dbSelectMock
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          { id: 101, date: "2026-01-27", taskText: "-" },
+          { id: 102, date: "2026-01-31", taskText: "Кросс 8 км" },
+        ])
+      )
+      .mockReturnValueOnce(createSelectWhereBuilder([{ planEntryId: 102, distanceKm: "8.00" }]));
+
+    const result = await getDiaryWeeklyVolumesBySunday({
+      userId: 1,
+      from: "2026-01-27",
+      to: "2026-01-31",
+    });
+
+    expect(dbSelectMock).toHaveBeenCalledTimes(2);
+    expect(result.get("2026-02-01")).toBe(8);
   });
 });

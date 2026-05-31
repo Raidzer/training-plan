@@ -18,6 +18,11 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 const STORAGE_KEY = "ui-theme";
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
+const GIT_SHA = process.env.NEXT_PUBLIC_GIT_SHA;
+const APP_VERSION_TITLE =
+  GIT_SHA && GIT_SHA !== "local" ? `Версия ${APP_VERSION}, сборка ${GIT_SHA}` : undefined;
+
 dayjs.locale("ru");
 
 export function ThemeProvider({
@@ -78,6 +83,9 @@ export function ThemeProvider({
             >
               {children}
             </main>
+            <footer className={styles.footer} title={APP_VERSION_TITLE}>
+              v{APP_VERSION}
+            </footer>
           </div>
         </App>
       </ConfigProvider>

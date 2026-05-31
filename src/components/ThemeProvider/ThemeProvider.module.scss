@@ -24,3 +24,14 @@
   padding-left: 24px;
   padding-right: 24px;
 }
+
+.footer {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 16px 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}

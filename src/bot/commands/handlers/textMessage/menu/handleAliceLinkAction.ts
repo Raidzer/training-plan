@@ -1,4 +1,4 @@
-import { createLinkCode } from "@/server/alice";
+import { createLinkCode } from "@/alice/accounts";
 import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
 
 type LinkActionHandlerArgs = {

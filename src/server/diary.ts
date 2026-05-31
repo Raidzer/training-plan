@@ -19,6 +19,7 @@ import {
   formatTemperatureValue,
   formatWeight,
   formatWorkoutScore,
+  hasReportableWorkoutTask,
   isNonEmptyText,
   isValidDateString,
   parseDistanceKm,
@@ -149,6 +150,9 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
     .from(planEntries)
     .where(and(eq(planEntries.userId, params.userId), eq(planEntries.date, params.date)))
     .orderBy(asc(planEntries.sessionOrder));
+  const reportablePlanEntriesRows = planEntriesRows.filter((entry) =>
+    hasReportableWorkoutTask(entry.taskText)
+  );
 
   const weightEntriesRows = await db
     .select({
@@ -185,7 +189,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
     .from(recoveryEntries)
     .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));
 
-  const planEntryIds = planEntriesRows.map((entry) => entry.id);
+  const planEntryIds = reportablePlanEntriesRows.map((entry) => entry.id);
   const workoutReportsRows = planEntryIds.length
     ? await db
         .select({
@@ -282,7 +286,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
   };
 
   return {
-    planEntries: planEntriesRows as DiaryPlanEntry[],
+    planEntries: reportablePlanEntriesRows as DiaryPlanEntry[],
     weightEntries: weightEntriesRows as DiaryWeightEntry[],
     workoutReports: workoutReportsWithShoes as DiaryWorkoutReport[],
     recoveryEntry: recoveryEntry ?? fallbackRecoveryEntry,
@@ -309,6 +313,7 @@ export const getDiaryDaysInRange = async (params: {
     .select({
       id: planEntries.id,
       date: planEntries.date,
+      taskText: planEntries.taskText,
     })
     .from(planEntries)
     .where(
@@ -349,7 +354,8 @@ export const getDiaryDaysInRange = async (params: {
       )
     );
 
-  const planEntryIds = planRows.map((entry) => entry.id);
+  const reportablePlanRows = planRows.filter((entry) => hasReportableWorkoutTask(entry.taskText));
+  const planEntryIds = reportablePlanRows.map((entry) => entry.id);
   const reportRows = planEntryIds.length
     ? await db
         .select({
@@ -370,7 +376,7 @@ export const getDiaryDaysInRange = async (params: {
   const dayMap = new Map<string, DayAggregation>();
   const planEntryDateMap = new Map<number, string>();
 
-  for (const entry of planRows) {
+  for (const entry of reportablePlanRows) {
     planEntryDateMap.set(entry.id, entry.date);
     const existing = dayMap.get(entry.date);
     if (existing) {
@@ -512,8 +518,9 @@ export const getDiaryExportRows = async (params: {
       )
     )
     .orderBy(asc(planEntries.date), asc(planEntries.sessionOrder));
+  const reportablePlanRows = planRows.filter((entry) => hasReportableWorkoutTask(entry.taskText));
 
-  const planEntryIds = planRows.map((entry) => entry.id);
+  const planEntryIds = reportablePlanRows.map((entry) => entry.id);
   const reportRows = planEntryIds.length
     ? await db
         .select({
@@ -601,7 +608,7 @@ export const getDiaryExportRows = async (params: {
     );
 
   const planByDate = new Map<string, { id: number; taskText: string; isWorkload: boolean }[]>();
-  for (const entry of planRows) {
+  for (const entry of reportablePlanRows) {
     const existing = planByDate.get(entry.date) ?? [];
     existing.push({
       id: entry.id,
@@ -782,6 +789,7 @@ export const getDiaryWeeklyVolumesBySunday = async (params: {
     .select({
       id: planEntries.id,
       date: planEntries.date,
+      taskText: planEntries.taskText,
     })
     .from(planEntries)
     .where(
@@ -792,13 +800,15 @@ export const getDiaryWeeklyVolumesBySunday = async (params: {
       )
     );
 
-  if (planRows.length === 0) {
+  const reportablePlanRows = planRows.filter((entry) => hasReportableWorkoutTask(entry.taskText));
+
+  if (reportablePlanRows.length === 0) {
     return new Map<string, number>();
   }
 
   const planEntryDateById = new Map<number, string>();
   const planEntryIds: number[] = [];
-  for (const planRow of planRows) {
+  for (const planRow of reportablePlanRows) {
     planEntryDateById.set(planRow.id, planRow.date);
     planEntryIds.push(planRow.id);
   }
