@@ -4,7 +4,10 @@ import { createJsonRequest, expectJsonSuccess, readJsonResponse } from "@tests/h
 const {
   getUserIdByAliceIdMock,
   linkAliceAccountMock,
+  getRecoveryEntryByDateMock,
+  parseSleepCommandMock,
   parseWeightCommandMock,
+  upsertRecoveryEntryMock,
   upsertWeightEntryMock,
   formatDateInTimeZoneMock,
   formatDateLocalMock,
@@ -13,7 +16,10 @@ const {
   return {
     getUserIdByAliceIdMock: vi.fn(),
     linkAliceAccountMock: vi.fn(),
+    getRecoveryEntryByDateMock: vi.fn(),
+    parseSleepCommandMock: vi.fn(),
     parseWeightCommandMock: vi.fn(),
+    upsertRecoveryEntryMock: vi.fn(),
     upsertWeightEntryMock: vi.fn(),
     formatDateInTimeZoneMock: vi.fn(),
     formatDateLocalMock: vi.fn(),
@@ -21,11 +27,27 @@ const {
   };
 });
 
-vi.mock("@/server/alice", () => {
+vi.mock("@/alice/accounts", () => {
   return {
     getUserIdByAliceId: getUserIdByAliceIdMock,
     linkAliceAccount: linkAliceAccountMock,
+  };
+});
+
+vi.mock("@/alice/parser", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/alice/parser")>();
+
+  return {
+    ...actual,
+    parseSleepCommand: parseSleepCommandMock,
     parseWeightCommand: parseWeightCommandMock,
+  };
+});
+
+vi.mock("@/server/recoveryEntries", () => {
+  return {
+    getRecoveryEntryByDate: getRecoveryEntryByDateMock,
+    upsertRecoveryEntry: upsertRecoveryEntryMock,
   };
 });
 
@@ -50,10 +72,24 @@ type AliceRequestOverrides = {
   originalUtterance?: string;
   sessionId?: string;
   isNewSession?: boolean;
+  stateExpectedEntry?: "sleep";
   stateExpectedPeriod?: "morning" | "evening";
 };
 
 function createAliceRequestBody(overrides: AliceRequestOverrides = {}) {
+  const sessionState = {
+    ...(overrides.stateExpectedEntry
+      ? {
+          expected_entry: overrides.stateExpectedEntry,
+        }
+      : {}),
+    ...(overrides.stateExpectedPeriod
+      ? {
+          expected_period: overrides.stateExpectedPeriod,
+        }
+      : {}),
+  };
+
   return {
     meta: {
       client_id: "client",
@@ -78,12 +114,10 @@ function createAliceRequestBody(overrides: AliceRequestOverrides = {}) {
         intents: {},
       },
     },
-    ...(overrides.stateExpectedPeriod
+    ...(Object.keys(sessionState).length > 0
       ? {
           state: {
-            session: {
-              expected_period: overrides.stateExpectedPeriod,
-            },
+            session: sessionState,
           },
         }
       : {}),
@@ -99,7 +133,10 @@ describe("POST /api/alice/webhook", () => {
 
     getUserIdByAliceIdMock.mockResolvedValue(null);
     linkAliceAccountMock.mockResolvedValue(false);
+    getRecoveryEntryByDateMock.mockResolvedValue(null);
+    parseSleepCommandMock.mockReturnValue(null);
     parseWeightCommandMock.mockReturnValue(null);
+    upsertRecoveryEntryMock.mockResolvedValue(undefined);
     upsertWeightEntryMock.mockResolvedValue(undefined);
     formatDateInTimeZoneMock.mockReturnValue("2026-02-09");
     formatDateLocalMock.mockReturnValue("2026-02-09");
@@ -150,6 +187,7 @@ describe("POST /api/alice/webhook", () => {
 
     expect(payload.response.end_session).toBe(true);
     expect(payload.response.text).toContain("Аккаунт успешно привязан");
+    expect(payload.response.text).toContain("вес и сон");
     expect(linkAliceAccountMock).toHaveBeenCalledWith("alice-user-1", "123456");
   });
 
@@ -276,6 +314,163 @@ describe("POST /api/alice/webhook", () => {
     expect(payload.response.text).toContain("Диктуйте вечерний вес");
     expect(payload.response.end_session).toBe(false);
     expect(payload.session_state?.expected_period).toBe("evening");
+  });
+
+  it("должен устанавливать ожидание ввода сна при команде записи сна", async () => {
+    getUserIdByAliceIdMock.mockResolvedValue({
+      userId: 9,
+      timezone: "Europe/Moscow",
+    });
+    const request = createJsonRequest({
+      url: "http://localhost/api/alice/webhook",
+      body: createAliceRequestBody({
+        command: "запиши сон",
+        isNewSession: true,
+      }),
+    });
+
+    const response = await POST(request as any);
+    const payload = await expectJsonSuccess<{
+      response: { text: string; end_session: boolean };
+      session_state?: { expected_entry?: string };
+    }>(response, 200);
+
+    expect(payload.response.text).toContain("Диктуйте сегодняшний сон");
+    expect(payload.response.end_session).toBe(false);
+    expect(payload.session_state?.expected_entry).toBe("sleep");
+  });
+
+  it("должен устанавливать ожидание ввода сна при команде записи количества сна", async () => {
+    getUserIdByAliceIdMock.mockResolvedValue({
+      userId: 9,
+      timezone: "Europe/Moscow",
+    });
+    const request = createJsonRequest({
+      url: "http://localhost/api/alice/webhook",
+      body: createAliceRequestBody({
+        command: "запиши количество сна",
+        isNewSession: true,
+      }),
+    });
+
+    const response = await POST(request as any);
+    const payload = await expectJsonSuccess<{
+      response: { text: string; end_session: boolean };
+      session_state?: { expected_entry?: string };
+    }>(response, 200);
+
+    expect(payload.response.text).toContain("Диктуйте сегодняшний сон");
+    expect(payload.response.end_session).toBe(false);
+    expect(payload.session_state?.expected_entry).toBe("sleep");
+  });
+
+  it("должен сразу сохранять сон, когда значение передано в одной команде", async () => {
+    getUserIdByAliceIdMock.mockResolvedValue({
+      userId: 9,
+      timezone: "Europe/Moscow",
+    });
+    parseSleepCommandMock.mockReturnValue({ sleepHours: 8.53 });
+    formatDateInTimeZoneMock.mockReturnValue("2026-02-09");
+    const request = createJsonRequest({
+      url: "http://localhost/api/alice/webhook",
+      body: createAliceRequestBody({
+        command: "запиши сон 8 и 32",
+      }),
+    });
+
+    const response = await POST(request as any);
+    const payload = await expectJsonSuccess<{ response: { text: string; end_session: boolean } }>(
+      response,
+      200
+    );
+
+    expect(payload.response.text).toContain("Записала сегодняшний сон: 08:32");
+    expect(payload.response.end_session).toBe(true);
+    expect(parseSleepCommandMock).toHaveBeenCalledWith("запиши сон 8 и 32");
+    expect(upsertRecoveryEntryMock).toHaveBeenCalledWith({
+      userId: 9,
+      date: "2026-02-09",
+      hasBath: false,
+      hasMfr: false,
+      hasMassage: false,
+      sleepHours: 8.53,
+    });
+    expect(upsertWeightEntryMock).not.toHaveBeenCalled();
+  });
+
+  it("должен сохранять сон из ожидаемой реплики с часами и минутами и не затирать восстановление", async () => {
+    getUserIdByAliceIdMock.mockResolvedValue({
+      userId: 9,
+      timezone: "Europe/Moscow",
+    });
+    parseSleepCommandMock.mockReturnValue({ sleepHours: 7.63 });
+    getRecoveryEntryByDateMock.mockResolvedValue({
+      id: 3,
+      date: "2026-02-09",
+      hasBath: true,
+      hasMfr: false,
+      hasMassage: true,
+      sleepHours: "8",
+    });
+    formatDateInTimeZoneMock.mockReturnValue("2026-02-09");
+    const request = createJsonRequest({
+      url: "http://localhost/api/alice/webhook",
+      body: createAliceRequestBody({
+        command: "7 часов 38 минут",
+        stateExpectedEntry: "sleep",
+      }),
+    });
+
+    const response = await POST(request as any);
+    const payload = await expectJsonSuccess<{ response: { text: string; end_session: boolean } }>(
+      response,
+      200
+    );
+
+    expect(payload.response.text).toContain("Записала сегодняшний сон: 07:38");
+    expect(payload.response.end_session).toBe(true);
+    expect(parseSleepCommandMock).toHaveBeenCalledWith("7 часов 38 минут", {
+      allowNumericOnly: true,
+    });
+    expect(getRecoveryEntryByDateMock).toHaveBeenCalledWith({
+      userId: 9,
+      date: "2026-02-09",
+    });
+    expect(upsertRecoveryEntryMock).toHaveBeenCalledWith({
+      userId: 9,
+      date: "2026-02-09",
+      hasBath: true,
+      hasMfr: false,
+      hasMassage: true,
+      sleepHours: 7.63,
+    });
+    expect(upsertWeightEntryMock).not.toHaveBeenCalled();
+  });
+
+  it("должен сохранять ожидание сна, когда числовая реплика не распознана", async () => {
+    getUserIdByAliceIdMock.mockResolvedValue({
+      userId: 9,
+      timezone: "Europe/Moscow",
+    });
+    parseSleepCommandMock.mockReturnValue(null);
+    const request = createJsonRequest({
+      url: "http://localhost/api/alice/webhook",
+      body: createAliceRequestBody({
+        command: "много",
+        stateExpectedEntry: "sleep",
+      }),
+    });
+
+    const response = await POST(request as any);
+    const payload = await expectJsonSuccess<{
+      response: { text: string; end_session: boolean };
+      session_state?: { expected_entry?: string };
+    }>(response, 200);
+
+    expect(payload.response.text).toContain("Не поняла сон");
+    expect(payload.response.end_session).toBe(false);
+    expect(payload.session_state?.expected_entry).toBe("sleep");
+    expect(upsertRecoveryEntryMock).not.toHaveBeenCalled();
   });
 
   it("должен возвращать резервное сообщение для неизвестной команды", async () => {
