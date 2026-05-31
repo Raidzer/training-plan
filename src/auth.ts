@@ -77,8 +77,12 @@ export const authOptions: NextAuthOptions = {
         if (freshUser) {
           token.emailVerified = freshUser.emailVerified;
           token.role = freshUser.role;
-          token.name = freshUser.name;
-          token.email = freshUser.email;
+          if (freshUser.name !== undefined) {
+            token.name = freshUser.name;
+          }
+          if (freshUser.email !== undefined) {
+            token.email = freshUser.email;
+          }
         }
       }
       return token;
@@ -108,10 +112,10 @@ export const auth = async () => {
     user: {
       ...session.user,
       id: String(user.id),
-      name: user.name,
-      email: user.email,
       role: user.role,
       emailVerified: user.emailVerified,
+      ...(user.name !== undefined ? { name: user.name } : {}),
+      ...(user.email !== undefined ? { email: user.email } : {}),
     },
   };
 };
