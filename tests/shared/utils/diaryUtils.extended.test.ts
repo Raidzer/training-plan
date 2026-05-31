@@ -8,10 +8,18 @@ import {
   formatTemperatureValue,
   formatWeight,
   formatWorkoutScore,
+  hasReportableWorkoutTask,
   shiftDate,
 } from "@/shared/utils/diaryUtils";
 
 describe("shared/utils/diaryUtils (extended)", () => {
+  it("должен отличать реальное задание тренировки от пустого плейсхолдера", () => {
+    expect(hasReportableWorkoutTask("-")).toBe(false);
+    expect(hasReportableWorkoutTask(" — ")).toBe(false);
+    expect(hasReportableWorkoutTask("<span>-</span>")).toBe(false);
+    expect(hasReportableWorkoutTask("Кросс 8 км")).toBe(true);
+  });
+
   it("должен формировать inclusive дата ranges и shift даты", () => {
     expect(buildDateRange("2026-02-09", "2026-02-11")).toEqual([
       "2026-02-09",
