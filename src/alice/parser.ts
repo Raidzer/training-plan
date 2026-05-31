@@ -8,6 +8,13 @@ const normalizeNumericText = (text: string) => {
     .replace(/,/g, ".");
 };
 
+const SLEEP_MARKER_PATTERN =
+  /(^|[^\p{L}\p{N}])(сон|сна|сном|спал|спала|поспал|поспала)(?=$|[^\p{L}\p{N}])/u;
+
+export const hasSleepMarker = (text: string) => {
+  return SLEEP_MARKER_PATTERN.test(text.toLowerCase());
+};
+
 export function parseWeightCommand(text: string): AliceWeightCommand | null {
   const lowerText = text.toLowerCase();
 
@@ -36,14 +43,8 @@ export function parseSleepCommand(
   options: { allowNumericOnly?: boolean } = {}
 ): AliceSleepCommand | null {
   const lowerText = text.toLowerCase();
-  const hasSleepMarker =
-    lowerText.includes("сон") ||
-    lowerText.includes("спал") ||
-    lowerText.includes("спала") ||
-    lowerText.includes("поспал") ||
-    lowerText.includes("поспала");
 
-  if (!hasSleepMarker && !options.allowNumericOnly) {
+  if (!hasSleepMarker(lowerText) && !options.allowNumericOnly) {
     return null;
   }
 

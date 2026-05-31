@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdByAliceId, linkAliceAccount } from "@/alice/accounts";
-import { parseSleepCommand, parseWeightCommand } from "@/alice/parser";
+import { hasSleepMarker, parseSleepCommand, parseWeightCommand } from "@/alice/parser";
 import { getRecoveryEntryByDate, upsertRecoveryEntry } from "@/server/recoveryEntries";
 import { upsertWeightEntry } from "@/server/weightEntries";
 import { formatDateInTimeZone, formatDateLocal, isValidTimeZone } from "@/bot/utils/dateTime";
@@ -112,7 +112,7 @@ export async function handleAliceWebhook(req: NextRequest) {
         const success = await linkAliceAccount(aliceUserId, code);
         if (success) {
           response.response.text =
-            "Аккаунт успешно привязан! Теперь вы можете диктовать мне свой вес.";
+            "Аккаунт успешно привязан! Теперь вы можете диктовать мне свой вес и сон.";
           response.response.end_session = true;
           return NextResponse.json(response);
         } else {
@@ -208,9 +208,9 @@ export async function handleAliceWebhook(req: NextRequest) {
       normalizedCommand.includes("старт") ||
       normalizedCommand.includes("меню") ||
       normalizedCommand.includes("вес") ||
-      normalizedCommand.includes("сон")
+      hasSleepMarker(normalizedCommand)
     ) {
-      if (normalizedCommand.includes("сон")) {
+      if (hasSleepMarker(normalizedCommand)) {
         response.response.text = "Привет! Диктуйте сегодняшний сон.";
         response.session_state = { ...response.session_state, expected_entry: "sleep" };
         sessionStore.set(sessionId, { expectedEntry: "sleep" });
