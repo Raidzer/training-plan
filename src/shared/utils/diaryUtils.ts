@@ -13,6 +13,16 @@ export type DiaryDayStatus = {
 
 export const isNonEmptyText = (value?: string | null) => Boolean(value && value.trim().length > 0);
 
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, "");
+
+export const hasReportableWorkoutTask = (value?: string | null) => {
+  const normalized = stripHtml(value ?? "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+
+  return normalized.length > 0 && !/^[-–—]+$/.test(normalized);
+};
+
 export const parseDistanceKm = (value?: string | number | null) => {
   if (value === null || value === undefined || value === "") {
     return 0;
