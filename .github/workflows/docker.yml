@@ -30,6 +30,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve app version
+        id: app-version
+        shell: bash
+        run: |
+          package_version=$(node -p "require('./package.json').version")
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag_version="${GITHUB_REF_NAME#v}"
+
+            if [[ "${package_version}" != "${tag_version}" ]]; then
+              echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${package_version}"
+              exit 1
+            fi
+
+            version="${tag_version}"
+          else
+            version="${package_version}-${GITHUB_SHA::7}"
+          fi
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "sha=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -50,5 +72,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+            NEXT_PUBLIC_APP_VERSION=${{ steps.app-version.outputs.version }}
+            NEXT_PUBLIC_GIT_SHA=${{ steps.app-version.outputs.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
