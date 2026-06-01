@@ -2,7 +2,8 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getTemplates } from "@/app/actions/diaryTemplates";
 import { TemplateManager } from "@/components/templates/TemplateManager";
-import Title from "antd/es/typography/Title";
+import { PageHeader } from "@/components/PageHeader";
+import styles from "./templates.module.scss";
 
 export default async function TemplatesPage() {
   const session = await auth();
@@ -18,12 +19,12 @@ export default async function TemplatesPage() {
   const templates = await getTemplates(userId);
 
   return (
-    <div style={{ padding: "24px" }}>
-      <Title level={2}>Менеджер шаблонов</Title>
-      <p style={{ marginBottom: "24px", color: "#888" }}>
-        Настройте шаблоны для быстрого заполнения отчетов о результатах тренировок.
-      </p>
+    <main className={styles.page}>
+      <PageHeader
+        title="Менеджер шаблонов"
+        subtitle="Настройте шаблоны для быстрого заполнения отчетов о результатах тренировок."
+      />
       <TemplateManager initialTemplates={templates} userId={userId} />
-    </div>
+    </main>
   );
 }

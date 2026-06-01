@@ -13,6 +13,7 @@ import { App, Button, Card, Form, Input, Modal, Select, Space, Table, Tag, Typog
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import { useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
 import styles from "./admin-users.module.scss";
 
 export type AdminUserRow = {
@@ -208,7 +209,7 @@ export function AdminUsersClient({ users }: Props) {
       updateRow(activeUser.id, { role: values.role });
       messageApi.success("Роль обновлена.");
       closeRoleModal();
-    } catch (error) {
+    } catch {
       return;
     } finally {
       setSavingRole(false);
@@ -235,7 +236,7 @@ export function AdminUsersClient({ users }: Props) {
       }
       messageApi.success("Пароль обновлен.");
       closePasswordModal();
-    } catch (error) {
+    } catch {
       return;
     } finally {
       setSavingPassword(false);
@@ -257,7 +258,7 @@ export function AdminUsersClient({ users }: Props) {
       }
       updateRow(user.id, { isActive });
       messageApi.success(isActive ? "Пользователь включен." : "Пользователь отключен.");
-    } catch (error) {
+    } catch {
       messageApi.error("Не удалось обновить статус.");
     } finally {
       setSavingStatusId(null);
@@ -292,8 +293,9 @@ export function AdminUsersClient({ users }: Props) {
     {
       title: "Пользователь",
       key: "user",
+      width: 280,
       render: (_, record) => (
-        <Space orientation="vertical" size={0}>
+        <Space orientation="vertical" size={0} className={styles.userCell}>
           <Typography.Text strong>
             {record.name} {record.lastName}
           </Typography.Text>
@@ -305,17 +307,24 @@ export function AdminUsersClient({ users }: Props) {
       title: "Пол",
       dataIndex: "gender",
       key: "gender",
+      width: 110,
+      responsive: ["lg"],
       render: (value) => getGenderLabel(String(value ?? "")),
     },
     {
       title: "Логин",
       dataIndex: "login",
       key: "login",
+      width: 140,
+      render: (value) => (
+        <Typography.Text className={styles.nowrap}>{String(value ?? "-")}</Typography.Text>
+      ),
     },
     {
       title: "Роль",
       dataIndex: "role",
       key: "role",
+      width: 150,
       render: (value) => {
         const meta = getRoleMeta(String(value ?? ""));
         return meta.color ? <Tag color={meta.color}>{meta.label}</Tag> : <Tag>{meta.label}</Tag>;
@@ -325,12 +334,15 @@ export function AdminUsersClient({ users }: Props) {
       title: "Создан",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 180,
+      responsive: ["xl"],
       render: (value) => formatDate(String(value ?? "")),
     },
     {
       title: "Статус",
       dataIndex: "isActive",
       key: "isActive",
+      width: 130,
       render: (value) => (
         <Tag color={value ? "green" : "red"}>{value ? "Активен" : "Отключен"}</Tag>
       ),
@@ -338,6 +350,7 @@ export function AdminUsersClient({ users }: Props) {
     {
       title: "Действия",
       key: "actions",
+      width: 360,
       render: (_, record) => {
         const isActive = record.isActive;
         const statusLabel = isActive ? "Отключить" : "Включить";
@@ -377,33 +390,33 @@ export function AdminUsersClient({ users }: Props) {
   return (
     <div className={styles.page}>
       <Card className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.headerText}>
-            <Typography.Title level={3} className={styles.title}>
-              Пользователи
-            </Typography.Title>
-            <Typography.Paragraph type="secondary" className={styles.subtitle}>
-              Список зарегистрированных пользователей и их текущих ролей.
-            </Typography.Paragraph>
-          </div>
-          <Space size="small">
-            <Link href="/admin/invites" passHref>
-              <Button icon={<LinkOutlined />}>Приглашения</Button>
-            </Link>
-            <Link href="/dashboard" passHref>
-              <Button icon={<HomeOutlined />}>В кабинет</Button>
-            </Link>
-          </Space>
-        </div>
+        <PageHeader
+          className={styles.pageHeader}
+          title="Пользователи"
+          subtitle="Список зарегистрированных пользователей и их текущих ролей."
+          actions={
+            <>
+              <Link href="/admin/invites" passHref>
+                <Button icon={<LinkOutlined />}>Приглашения</Button>
+              </Link>
+              <Link href="/dashboard" passHref>
+                <Button icon={<HomeOutlined />}>В кабинет</Button>
+              </Link>
+            </>
+          }
+        />
         <Table
+          className={styles.table}
           rowKey={(record) => record.id}
           columns={columns}
           dataSource={rows}
           pagination={{ pageSize: 10 }}
+          scroll={{ x: 1040 }}
         />
         <Modal
           title={`Сменить роль: ${activeUserLabel}`}
           open={roleModalOpen}
+          width="min(520px, calc(100vw - 24px))"
           onOk={handleRoleSubmit}
           onCancel={closeRoleModal}
           okText="Сохранить"
@@ -424,6 +437,7 @@ export function AdminUsersClient({ users }: Props) {
         <Modal
           title={`Сменить пароль: ${activeUserLabel}`}
           open={passwordModalOpen}
+          width="min(520px, calc(100vw - 24px))"
           onOk={handlePasswordSubmit}
           onCancel={closePasswordModal}
           okText="Сохранить"

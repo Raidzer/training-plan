@@ -6,30 +6,31 @@
 }
 
 .main {
-  max-width: 980px;
+  max-width: var(--content-width-default);
   margin: 0 auto;
-  padding: 0 16px 48px;
+  padding: 0 var(--page-gutter) var(--page-bottom-gap);
   flex: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
 }
 
 .mainWide {
-  max-width: 1400px;
+  max-width: var(--content-width-wide);
 }
 
 .mainFull {
   max-width: 100% !important;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
 }
 
 .footer {
   width: 100%;
-  max-width: 980px;
+  max-width: var(--content-width-default);
   margin: 0 auto;
-  padding: 0 16px 18px;
+  padding: 0 var(--page-gutter) var(--page-footer-gap);
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.4;

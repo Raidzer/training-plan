@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Input } from "antd";
+import { Button, Input } from "antd";
 import type { SavingWeightState, WeightFormState } from "../types/diaryTypes";
 import styles from "../diary.module.scss";
 
@@ -26,7 +26,10 @@ export function WeightCard({
   onSave,
 }: WeightCardProps) {
   return (
-    <Card type="inner" title={title}>
+    <section className={styles.sectionPanel}>
+      <div className={styles.sectionHeader}>
+        <h3 className={styles.sectionTitle}>{title}</h3>
+      </div>
       <div className={styles.weightGrid}>
         <div className={styles.weightRow}>
           <Input
@@ -49,6 +52,6 @@ export function WeightCard({
           </Button>
         </div>
       </div>
-    </Card>
+    </section>
   );
 }

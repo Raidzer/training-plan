@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   AutoComplete,
   Button,
-  Card,
   Input,
   InputNumber,
   Select,
@@ -151,7 +150,10 @@ export function WorkoutsCard({
   };
 
   return (
-    <Card type="inner" title={title}>
+    <section className={`${styles.sectionPanel} ${styles.workoutsPanel}`}>
+      <div className={styles.sectionHeader}>
+        <h3 className={styles.sectionTitle}>{title}</h3>
+      </div>
       {entries.length ? (
         <Space orientation="vertical" size="middle" className={styles.workoutList}>
           {entries.map((entry) => {
@@ -353,6 +355,6 @@ export function WorkoutsCard({
         userId={userId}
         messageApi={messageApi}
       />
-    </Card>
+    </section>
   );
 }

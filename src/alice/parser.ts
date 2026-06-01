@@ -11,6 +11,18 @@ const normalizeNumericText = (text: string) => {
 const SLEEP_MARKER_PATTERN =
   /(^|[^\p{L}\p{N}])(сон|сна|сном|спал|спала|поспал|поспала)(?=$|[^\p{L}\p{N}])/u;
 
+const parseCompactSleepTime = (value: string) => {
+  const hours = Number(value.slice(0, -2));
+  const minutes = Number(value.slice(-2));
+  const sleepHours = hours + minutes / 60;
+
+  if (!Number.isFinite(sleepHours) || minutes > 59 || sleepHours < 0 || sleepHours > 24) {
+    return null;
+  }
+
+  return { sleepHours: Math.round(sleepHours * 100) / 100 };
+};
+
 export const hasSleepMarker = (text: string) => {
   return SLEEP_MARKER_PATTERN.test(text.toLowerCase());
 };
@@ -75,6 +87,11 @@ export function parseSleepCommand(
     }
 
     return { sleepHours: Math.round(sleepHours * 100) / 100 };
+  }
+
+  const compactTimeMatch = lowerText.match(/(^|[^\p{L}\p{N}])(\d{3,4})(?=$|[^\p{L}\p{N}])/u);
+  if (compactTimeMatch) {
+    return parseCompactSleepTime(compactTimeMatch[2]);
   }
 
   const cleanText = normalizeNumericText(lowerText);

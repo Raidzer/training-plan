@@ -1,22 +1,24 @@
 .page {
   display: grid;
-  place-items: center;
+  justify-items: center;
+  align-items: start;
   min-height: 70vh;
-  padding: 24px;
+  width: 100%;
+  min-width: 0;
 }
 
 .card {
   width: 100%;
   max-width: 520px;
+  min-width: 0;
 }
 
 .title {
-  margin-top: 0;
-  margin-bottom: 8px;
+  margin: 0 0 8px !important;
 }
 
 .subtitle {
-  margin-bottom: 12px;
+  margin-bottom: 12px !important;
 }
 
 .alert {
@@ -33,10 +35,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .formInput {
   flex: 1 1 240px;
+  min-width: 0;
 }
 
 .listTitle {
@@ -51,6 +55,13 @@
 .listItem {
   display: grid;
   gap: 8px;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.listItem:last-child {
+  border-bottom: 0;
 }
 
 .itemRow {
@@ -58,16 +69,20 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
 .itemName {
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .itemActions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 0 0 auto;
 }
 
 .editRow {
@@ -75,9 +90,45 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .editInput {
   flex: 1 1 240px;
-  min-width: 220px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
+
+  .formRow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .formRow :global(.ant-btn),
+  .editRow :global(.ant-btn) {
+    width: 100%;
+  }
+
+  .itemRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .itemActions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .itemActions :global(.ant-btn) {
+    padding-inline: 0;
+  }
+
+  .editRow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 }
