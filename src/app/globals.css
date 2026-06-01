@@ -5,6 +5,11 @@
 }
 
 :root {
+  --content-width-default: 980px;
+  --content-width-wide: 1400px;
+  --page-gutter: clamp(12px, 3vw, 24px);
+  --page-bottom-gap: 48px;
+  --page-footer-gap: 18px;
   --brand-color: #0f172a;
   --text-muted: rgba(15, 23, 42, 0.72);
   --surface-bg: #ffffff;
@@ -39,6 +44,7 @@
 }
 
 body {
+  min-width: 0;
   margin: 0;
   background-color: var(--bg-color);
   color: var(--brand-color);

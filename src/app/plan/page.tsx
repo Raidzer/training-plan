@@ -5,6 +5,7 @@ import { App, Button, Card, Space, Switch, Typography } from "antd";
 import dayjs from "dayjs";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
 import styles from "./plan.module.scss";
 import type { PlanEntry } from "./planUtils";
 import { PlanEditorModal } from "./components/PlanEditorModal";
@@ -92,11 +93,15 @@ function PlanPageContent() {
     if (!todayEntryId || scrolledToTodayRef.current) {
       return;
     }
-    const row = document.querySelector(`[data-row-key="${todayEntryId}"]`);
-    if (!row) {
+    const entryTargets = Array.from(
+      document.querySelectorAll<HTMLElement>(`[data-plan-entry-key="${todayEntryId}"]`)
+    );
+    const visibleTarget =
+      entryTargets.find((target) => target.getClientRects().length > 0) ?? entryTargets[0];
+    if (!visibleTarget) {
       return;
     }
-    row.scrollIntoView({ block: "center", behavior: "smooth" });
+    visibleTarget.scrollIntoView({ block: "center", behavior: "smooth" });
     scrolledToTodayRef.current = true;
   }, [todayEntryId, currentPage]);
 
@@ -104,27 +109,23 @@ function PlanPageContent() {
     <main className={styles.mainContainer}>
       <Card className={styles.cardStyle}>
         <Space orientation="vertical" size="large" className={styles.spaceStyle}>
-          <div className={styles.headerRow}>
-            <div className={styles.headerText}>
-              <Typography.Title level={3} className={styles.typographyTitle}>
-                {PLAN_TEXT.header.title}
-              </Typography.Title>
-              <Typography.Paragraph type="secondary" className={styles.typographyParagraph}>
-                {PLAN_TEXT.header.description}
-              </Typography.Paragraph>
-            </div>
-            <Space size="small" className={styles.headerActions}>
-              <Link href="/dashboard" passHref>
-                <Button icon={<HomeOutlined />}>{PLAN_TEXT.actions.dashboard}</Button>
-              </Link>
-              <Button icon={<PlusOutlined />} onClick={openCreateModal}>
-                {PLAN_TEXT.actions.addDay}
-              </Button>
-              <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
-                {PLAN_TEXT.actions.reload}
-              </Button>
-            </Space>
-          </div>
+          <PageHeader
+            title={PLAN_TEXT.header.title}
+            subtitle={PLAN_TEXT.header.description}
+            actions={
+              <>
+                <Link href="/dashboard" passHref>
+                  <Button icon={<HomeOutlined />}>{PLAN_TEXT.actions.dashboard}</Button>
+                </Link>
+                <Button icon={<PlusOutlined />} onClick={openCreateModal}>
+                  {PLAN_TEXT.actions.addDay}
+                </Button>
+                <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
+                  {PLAN_TEXT.actions.reload}
+                </Button>
+              </>
+            }
+          />
           <Link href="/plan/import" passHref>
             <Button type="primary" block>
               {PLAN_TEXT.actions.importExcel}

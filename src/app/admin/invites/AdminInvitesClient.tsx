@@ -8,7 +8,6 @@ import {
   Form,
   Input,
   Select,
-  Space,
   Table,
   Tag,
   Typography,
@@ -17,6 +16,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
 import styles from "./admin-invites.module.scss";
 
 export type InviteUser = {
@@ -166,7 +166,7 @@ export function AdminInvitesClient({ invites }: Props) {
       }
       await navigator.clipboard.writeText(value);
       messageApi.success("Ссылка скопирована.");
-    } catch (error) {
+    } catch {
       messageApi.error("Не удалось скопировать ссылку.");
     }
   };
@@ -202,7 +202,7 @@ export function AdminInvitesClient({ invites }: Props) {
       setLastCreatedId(invite.id);
       form.resetFields();
       messageApi.success("Ссылка создана.");
-    } catch (error) {
+    } catch {
       messageApi.error("Не удалось создать ссылку.");
     } finally {
       setCreating(false);
@@ -232,6 +232,7 @@ export function AdminInvitesClient({ invites }: Props) {
       title: "Статус",
       dataIndex: "status",
       key: "status",
+      width: 130,
       render: (value: InviteStatus) => {
         const meta = STATUS_META[value];
         return <Tag color={meta.color}>{meta.label}</Tag>;
@@ -241,6 +242,7 @@ export function AdminInvitesClient({ invites }: Props) {
       title: "Роль",
       dataIndex: "role",
       key: "role",
+      width: 120,
       render: (value) => {
         const meta = ROLE_META[String(value)] ?? { label: String(value) };
         return meta.color ? <Tag color={meta.color}>{meta.label}</Tag> : <Tag>{meta.label}</Tag>;
@@ -250,56 +252,63 @@ export function AdminInvitesClient({ invites }: Props) {
       title: "Создана",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 180,
       render: (value) => formatDate(String(value ?? "")),
     },
     {
       title: "Истекает",
       dataIndex: "expiresAt",
       key: "expiresAt",
+      width: 180,
       render: (value) => formatDate(String(value ?? "")),
     },
     {
       title: "Создал",
       dataIndex: "createdBy",
       key: "createdBy",
-      render: (value: InviteUser | null) => getUserLabel(value),
+      width: 180,
+      render: (value: InviteUser | null) => (
+        <Typography.Text className={styles.userCell}>{getUserLabel(value)}</Typography.Text>
+      ),
     },
     {
       title: "Использована",
       dataIndex: "usedAt",
       key: "usedAt",
+      width: 180,
+      responsive: ["lg"],
       render: (value) => formatDate(value ?? null),
     },
     {
       title: "Использовал",
       dataIndex: "usedBy",
       key: "usedBy",
-      render: (value: InviteUser | null) => getUserLabel(value),
+      width: 180,
+      responsive: ["lg"],
+      render: (value: InviteUser | null) => (
+        <Typography.Text className={styles.userCell}>{getUserLabel(value)}</Typography.Text>
+      ),
     },
   ];
 
   return (
     <div className={styles.page}>
       <Card className={styles.card}>
-        <div className={styles.header}>
-          <div className={styles.headerText}>
-            <Typography.Title level={3} className={styles.title}>
-              Приглашения
-            </Typography.Title>
-            <Typography.Paragraph type="secondary" className={styles.subtitle}>
-              Ссылки одноразовые и действуют 24 часа. Полный URL доступен только сразу после
-              создания.
-            </Typography.Paragraph>
-          </div>
-          <Space size="small" className={styles.headerActions}>
-            <Link href="/admin/users" passHref>
-              <Button icon={<TeamOutlined />}>Пользователи</Button>
-            </Link>
-            <Link href="/dashboard" passHref>
-              <Button icon={<HomeOutlined />}>В кабинет</Button>
-            </Link>
-          </Space>
-        </div>
+        <PageHeader
+          className={styles.pageHeader}
+          title="Приглашения"
+          subtitle="Ссылки одноразовые и действуют 24 часа. Полный URL доступен только сразу после создания."
+          actions={
+            <>
+              <Link href="/admin/users" passHref>
+                <Button icon={<TeamOutlined />}>Пользователи</Button>
+              </Link>
+              <Link href="/dashboard" passHref>
+                <Button icon={<HomeOutlined />}>В кабинет</Button>
+              </Link>
+            </>
+          }
+        />
 
         <Form<InviteFormValues>
           form={form}
@@ -337,10 +346,12 @@ export function AdminInvitesClient({ invites }: Props) {
         ) : null}
 
         <Table
+          className={styles.table}
           rowKey={(record) => record.id}
           columns={columns}
           dataSource={rows}
           pagination={{ pageSize: 10 }}
+          scroll={{ x: 950 }}
         />
       </Card>
     </div>

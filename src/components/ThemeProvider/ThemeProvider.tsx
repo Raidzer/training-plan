@@ -38,6 +38,8 @@ export function ThemeProvider({
   const isWideRoute =
     pathname.startsWith("/plan") ||
     pathname.startsWith("/diary") ||
+    pathname.startsWith("/profile/records") ||
+    pathname.startsWith("/admin") ||
     pathname === "/tools/templates";
 
   const handleSetMode = (next: Mode) => {

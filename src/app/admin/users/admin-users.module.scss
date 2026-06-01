@@ -1,28 +1,48 @@
 .page {
   width: 100%;
+  min-width: 0;
 }
 
 .card {
   width: 100%;
+  min-width: 0;
 }
 
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+.pageHeader {
   margin-bottom: 16px;
 }
 
-.headerText {
-  max-width: 640px;
+.table {
+  min-width: 0;
 }
 
-.title {
-  margin: 0;
+.table :global(.ant-table) {
+  min-width: 0;
 }
 
-.subtitle {
-  margin: 0;
+.table :global(.ant-table-cell) {
+  vertical-align: top;
+}
+
+.userCell {
+  min-width: 0;
+  max-width: 240px;
+}
+
+.userCell :global(.ant-typography) {
+  overflow-wrap: anywhere;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
+
+  .pageHeader :global(.ant-btn) {
+    width: 100%;
+  }
 }
