@@ -30,7 +30,7 @@ export function DiaryStatusBlock({
   onOpenReport,
 }: DiaryStatusBlockProps) {
   return (
-    <>
+    <section className={styles.statusPanel}>
       <div className={styles.statusRow}>
         <Button type="primary" onClick={onOpenReport} disabled={disabledReport}>
           {labels.reportButton}
@@ -50,6 +50,6 @@ export function DiaryStatusBlock({
           {labels.workoutsLabel}: {status?.workoutsWithFullReport ?? 0}/{status?.workoutsTotal ?? 0}
         </Tag>
       </div>
-    </>
+    </section>
   );
 }

@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 24px;
-  min-height: 100vh;
+  width: 100%;
+  min-width: 0;
 }
 
 .cardStyle {
@@ -14,32 +14,9 @@
   width: 100%;
 }
 
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.headerText {
-  flex: 1;
-  min-width: 220px;
-}
-
-.headerActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.typographyTitle {
-    margin-bottom: 8px;
-}
-
-.typographyParagraph {
-    margin-bottom: 0px;
+.planEntries {
+  width: 100%;
+  min-width: 0;
 }
 
 .workloadRow :global(.ant-table-cell) {
@@ -48,11 +25,7 @@
 
 .todayRow :global(.ant-table-cell) {
   background-color: rgba(24, 144, 255, 0.06);
-  background-image: linear-gradient(
-    90deg,
-    rgba(24, 144, 255, 0.12),
-    rgba(24, 144, 255, 0) 75%
-  );
+  background-image: linear-gradient(90deg, rgba(24, 144, 255, 0.12), rgba(24, 144, 255, 0) 75%);
 }
 
 .todayRow :global(.ant-table-cell:first-child) {
@@ -67,17 +40,133 @@
   bottom: 6px;
   width: 4px;
   border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    rgba(24, 144, 255, 0.95),
-    rgba(24, 144, 255, 0.35)
-  );
+  background: linear-gradient(180deg, rgba(24, 144, 255, 0.95), rgba(24, 144, 255, 0.35));
   box-shadow: 0 0 8px rgba(24, 144, 255, 0.45);
 }
 
 .multilineText {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.actionsHeaderCell {
+  white-space: nowrap;
+}
+
+.tableActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mobilePlanList {
+  display: none;
+}
+
+.mobileCards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobileDayCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(5, 5, 5, 0.08);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mobileWorkloadCard {
+  border-color: rgba(250, 140, 22, 0.32);
+  background: rgba(250, 140, 22, 0.04);
+}
+
+.mobileTodayCard {
+  border-color: rgba(24, 144, 255, 0.38);
+  background: linear-gradient(90deg, rgba(24, 144, 255, 0.08), rgba(24, 144, 255, 0) 76%);
+}
+
+.mobileTodayCard::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(24, 144, 255, 0.95), rgba(24, 144, 255, 0.35));
+  box-shadow: 0 0 8px rgba(24, 144, 255, 0.45);
+}
+
+.mobileDayHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mobileDayTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mobileDate {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.mobileTags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mobileTags :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.mobileSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mobileSectionTitle {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mobileLoading {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.mobilePagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 @media (min-width: 1200px) {
@@ -86,7 +175,17 @@
   }
 
   .textColumn {
-    width: calc((100% - 488px) / 2);
+    width: calc((100% - 472px) / 2);
+  }
+}
+
+@media (max-width: 1023px) {
+  .desktopPlanTable {
+    display: none;
+  }
+
+  .mobilePlanList {
+    display: block;
   }
 }
 

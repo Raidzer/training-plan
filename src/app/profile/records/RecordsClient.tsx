@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, App, Button, Card, DatePicker, Input, Typography } from "antd";
+import { App, Button, Card, DatePicker, Input, Typography } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import styles from "./records.module.scss";
@@ -306,13 +307,19 @@ export function RecordsClient({ apiUrl = "/api/personal-records" }: { apiUrl?: s
           </Typography.Paragraph>
         </div>
 
-        <Alert
-          type="info"
-          title={labels.alertTitle}
-          description={labels.alertText}
-          showIcon
-          className={styles.alert}
-        />
+        <div className={styles.helpBox}>
+          <div className={styles.helpIcon}>
+            <InfoCircleOutlined />
+          </div>
+          <div className={styles.helpContent}>
+            <Typography.Text strong className={styles.helpTitle}>
+              {labels.alertTitle}
+            </Typography.Text>
+            <Typography.Paragraph className={styles.helpText}>
+              {labels.alertText}
+            </Typography.Paragraph>
+          </div>
+        </div>
 
         <div className={styles.grid}>
           <div className={styles.gridHeader}>

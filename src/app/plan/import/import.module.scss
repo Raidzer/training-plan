@@ -1,7 +1,8 @@
 .mainContainer {
   display: flex;
   justify-content: center;
-  padding: 24px;
+  width: 100%;
+  min-width: 0;
 }
 
 .cardStyle {
@@ -11,34 +12,6 @@
 
 .spaceStyle {
   width: 100%;
-}
-
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.headerText {
-  flex: 1;
-  min-width: 220px;
-}
-
-.headerActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.typographyTitle {
-  margin-bottom: 8px;
-}
-
-.typographyParagraph {
-  margin-bottom: 0px;
 }
 
 .resultParagraph {

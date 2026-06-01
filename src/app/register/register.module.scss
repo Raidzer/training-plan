@@ -1,11 +1,29 @@
 .page {
   display: grid;
-  place-items: center;
+  justify-items: center;
+  align-items: start;
   min-height: 70vh;
+  width: 100%;
+  min-width: 0;
 }
 
 .card {
-  width: 380px;
+  width: min(100%, 420px);
+  min-width: 0;
+}
+
+.card :global(.ant-card-body),
+.card :global(.ant-form),
+.card :global(.ant-form-item-control-input),
+.card :global(.ant-input-affix-wrapper),
+.card :global(.ant-select) {
+  min-width: 0;
+}
+
+.card :global(.ant-radio-group) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
 }
 
 .title {
@@ -22,4 +40,10 @@
   display: grid;
   gap: 12px;
   margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
 }

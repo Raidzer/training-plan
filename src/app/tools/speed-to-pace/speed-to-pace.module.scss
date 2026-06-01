@@ -3,6 +3,8 @@
   flex-direction: column;
   gap: 24px;
   color: var(--brand-color);
+  width: 100%;
+  min-width: 0;
 }
 
 .header {
@@ -13,7 +15,8 @@
 
 .title {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 32px);
+  font-size: 30px;
+  line-height: 1.2;
 }
 
 .titleLine {
@@ -36,6 +39,7 @@
   border: 1px solid var(--surface-border);
   background: var(--surface-bg);
   box-shadow: var(--surface-shadow);
+  min-width: 0;
 }
 
 .table {
@@ -51,6 +55,7 @@
   border: 1px solid var(--surface-border);
   overflow: hidden;
   background: var(--surface-bg);
+  min-width: 0;
 }
 
 .rowTitle {
@@ -67,6 +72,7 @@
   display: grid;
   gap: 16px;
   align-items: start;
+  min-width: 0;
 }
 
 .speedGrid {
@@ -81,6 +87,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .fieldLabel {
@@ -99,10 +106,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .input {
   width: 90px;
+  max-width: 100%;
   padding: 6px 8px;
   border-radius: 8px;
   border: 1px solid var(--surface-border);
@@ -137,6 +146,14 @@
 }
 
 @media (max-width: 640px) {
+  .title {
+    font-size: 24px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
   .row {
     grid-template-columns: 1fr;
   }
@@ -144,6 +161,11 @@
   .rowTitle {
     border-right: none;
     border-bottom: 1px solid var(--surface-border);
+  }
+
+  .fieldRow,
+  .inputGroup {
+    flex-wrap: wrap;
   }
 }
 

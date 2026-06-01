@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
-import { Button, Card, DatePicker, Space, Table, Tag, Typography, message } from "antd";
-import { ArrowLeftOutlined, HomeOutlined } from "@ant-design/icons";
+import { Button, Card, DatePicker, Table, Tag, Typography, message } from "antd";
+import { ArrowLeftOutlined, DownloadOutlined, HomeOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
 import styles from "./period.module.scss";
 
 type DayStatus = {
@@ -156,31 +157,29 @@ export function DiaryPeriodClient() {
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
-          <div className={styles.headerRow}>
-            <div className={styles.headerText}>
-              <Typography.Title level={3} className={styles.typographyTitle}>
-                Дневник за период
-              </Typography.Title>
-              <Typography.Paragraph type="secondary" className={styles.typographyParagraph}>
-                Просмотр заполнения дневника за выбранный период.
-              </Typography.Paragraph>
-            </div>
-            <Space size="small" className={styles.headerActions}>
-              <Link href="/diary" passHref>
-                <Button icon={<ArrowLeftOutlined />}>Назад к дневному виду</Button>
-              </Link>
-              <Link href="/" passHref>
-                <Button icon={<HomeOutlined />}>На главную</Button>
-              </Link>
-            </Space>
-          </div>
+        <div className={styles.spaceStyle}>
+          <PageHeader
+            title="Дневник за период"
+            subtitle="Просмотр заполнения дневника за выбранный период."
+            actions={
+              <>
+                <Link href="/diary" passHref>
+                  <Button icon={<ArrowLeftOutlined />}>Назад к дневному виду</Button>
+                </Link>
+                <Link href="/" passHref>
+                  <Button icon={<HomeOutlined />}>На главную</Button>
+                </Link>
+              </>
+            }
+          />
 
-          <Card type="inner">
-            <Space size="middle" className={styles.rangeRow} wrap>
+          <Card type="inner" className={styles.rangeCard}>
+            <div className={styles.rangeRow}>
               <RangePicker
+                className={styles.rangePicker}
                 value={range}
                 format="DD.MM.YYYY"
+                allowClear={false}
                 onChange={(values) => {
                   if (!values || values.length !== 2) {
                     return;
@@ -198,10 +197,15 @@ export function DiaryPeriodClient() {
               <Button onClick={() => setRange([dayjs().subtract(29, "day"), dayjs()])}>
                 Последние 30 дней
               </Button>
-              <Button type="primary" loading={exporting} onClick={handleExport}>
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+                loading={exporting}
+                onClick={handleExport}
+              >
                 Выгрузить Excel
               </Button>
-            </Space>
+            </div>
           </Card>
 
           <div className={styles.summaryRow}>
@@ -225,14 +229,55 @@ export function DiaryPeriodClient() {
 
           <Table
             size="small"
+            className={`${styles.periodTable} ${styles.desktopPeriodTable}`}
             columns={columns}
             dataSource={days}
             loading={loading}
             rowKey="date"
-            pagination={{ pageSize: 20 }}
+            scroll={{ x: 860 }}
+            pagination={{ pageSize: 20, showSizeChanger: false }}
           />
-        </Space>
+          <div className={styles.mobilePeriodList}>
+            {days.map((day) => (
+              <PeriodDayCard key={day.date} day={day} />
+            ))}
+          </div>
+        </div>
       </Card>
     </main>
+  );
+}
+
+function PeriodDayCard({ day }: { day: DayStatus }) {
+  return (
+    <article className={styles.periodDayCard}>
+      <div className={styles.periodDayHeader}>
+        <div>
+          <Typography.Text strong>{dayjs(day.date).format("DD.MM.YYYY")}</Typography.Text>
+        </div>
+        {day.dayHasReport ? <Tag color="green">Заполнено</Tag> : <Tag>Не заполнено</Tag>}
+      </div>
+      <div className={styles.periodDayGrid}>
+        <Metric
+          label="Вес"
+          value={`${day.hasWeightMorning ? "У" : "-"} / ${day.hasWeightEvening ? "В" : "-"}`}
+        />
+        <Metric label="Дистанция" value={`${day.totalDistanceKm.toFixed(2)} км`} />
+        <Metric
+          label="Восстановление"
+          value={`${day.hasBath ? "Б" : "-"} / ${day.hasMfr ? "МФР" : "-"} / ${day.hasMassage ? "М" : "-"}`}
+        />
+        <Metric label="Тренировки" value={`${day.workoutsWithFullReport}/${day.workoutsTotal}`} />
+      </div>
+    </article>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.metric}>
+      <Typography.Text type="secondary">{label}</Typography.Text>
+      <Typography.Text>{value}</Typography.Text>
+    </div>
   );
 }

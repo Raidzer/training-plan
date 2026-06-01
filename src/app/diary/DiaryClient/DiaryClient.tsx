@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card, message, Space } from "antd";
+import { Card, message } from "antd";
 import styles from "./diary.module.scss";
 import { buildDailyReportText } from "@/shared/utils/dailyReport";
 import { formatDate } from "./utils/diaryUtils";
@@ -140,7 +140,6 @@ export function DiaryClient({ userId }: { userId: number }) {
     shoes,
     loadingShoes,
     updateSelectedDate,
-    shiftDate,
     handleSaveWeight,
     handleSaveWorkout,
     handleSaveRecovery,
@@ -236,109 +235,107 @@ export function DiaryClient({ userId }: { userId: number }) {
   return (
     <main className={styles.mainContainer}>
       {contextHolder}
-      <Card className={styles.cardStyle}>
-        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
-          <DiaryHeader
-            title={headerLabels.title}
-            subtitle={headerLabels.subtitle}
-            periodHref="/diary/period"
-            periodLabel={headerLabels.periodLabel}
-            dashboardHref="/dashboard"
-            dashboardLabel={headerLabels.dashboardLabel}
-          />
-          <div className={styles.grid}>
-            <div className={styles.calendarBlock}>
-              <DiaryCalendar
-                title={calendarLabels.title}
-                loading={loadingMarks && Object.keys(marks).length === 0}
-                selectedDate={selectedDate}
-                marks={marks}
-                onSelectDate={updateSelectedDate}
-                onPanelChange={setPanelDate}
-              />
-            </div>
-            <div className={styles.dayBlock}>
-              <Card
-                title={`Выбранный день: ${formatDate(selectedDate)}`}
-                loading={loadingDay && !dayData}
-                className={styles.dayCard}
-              >
-                <Space orientation="vertical" size="middle" className={styles.spaceStyle}>
-                  <DiaryStatusBlock
-                    status={status}
-                    workoutsComplete={workoutsComplete}
-                    disabledReport={!dayData}
-                    labels={statusLabels}
-                    onOpenReport={() => setIsReportOpen(true)}
-                  />
-                  <div className={styles.dayLayout}>
-                    <div className={styles.weightRecoveryBlock}>
-                      <WeightCard
-                        title={weightLabels.title}
-                        morningPlaceholder={weightLabels.morningPlaceholder}
-                        eveningPlaceholder={weightLabels.eveningPlaceholder}
-                        saveLabel={weightLabels.saveLabel}
-                        weightForm={weightForm}
-                        savingWeight={savingWeight}
-                        onChange={handleWeightChange}
-                        onSave={handleSaveWeight}
-                      />
-                      <RecoveryCard
-                        title={recoveryLabels.title}
-                        bathLabel={recoveryLabels.bathLabel}
-                        mfrLabel={recoveryLabels.mfrLabel}
-                        massageLabel={recoveryLabels.massageLabel}
-                        sleepLabel={recoveryLabels.sleepLabel}
-                        sleepPlaceholder={recoveryLabels.sleepPlaceholder}
-                        saveLabel={recoveryLabels.saveLabel}
-                        recoveryForm={recoveryForm}
-                        savingRecovery={savingRecovery}
-                        onToggle={handleRecoveryToggle}
-                        onSleepChange={handleRecoverySleepChange}
-                        onSave={handleSaveRecovery}
-                      />
-                    </div>
-                    <div className={styles.workoutsBlock}>
-                      <WorkoutsCard
-                        userId={userId}
-                        messageApi={messageApi}
-                        title={workoutLabels.title}
-                        emptyLabel={workoutLabels.emptyLabel}
-                        completeLabel={workoutLabels.completeLabel}
-                        incompleteLabel={workoutLabels.incompleteLabel}
-                        startTimePlaceholder={workoutLabels.startTimePlaceholder}
-                        resultPlaceholder={workoutLabels.resultPlaceholder}
-                        distancePlaceholder={workoutLabels.distancePlaceholder}
-                        overallScoreLabel={workoutLabels.overallScoreLabel}
-                        functionalScoreLabel={workoutLabels.functionalScoreLabel}
-                        muscleScoreLabel={workoutLabels.muscleScoreLabel}
-                        scorePlaceholder={workoutLabels.scorePlaceholder}
-                        surfacePlaceholder={workoutLabels.surfacePlaceholder}
-                        shoePlaceholder={workoutLabels.shoePlaceholder}
-                        weatherPlaceholder={workoutLabels.weatherPlaceholder}
-                        windPlaceholder={workoutLabels.windPlaceholder}
-                        temperaturePlaceholder={workoutLabels.temperaturePlaceholder}
-                        commentPlaceholder={workoutLabels.commentPlaceholder}
-                        saveReportLabel={workoutLabels.saveReportLabel}
-                        surfaceOptions={SURFACE_OPTIONS}
-                        shoeOptions={shoeOptions}
-                        weatherOptions={WEATHER_OPTIONS}
-                        windOptions={WIND_OPTIONS}
-                        shoeLoading={loadingShoes}
-                        entries={dayData?.planEntries ?? []}
-                        workoutForm={workoutForm}
-                        savingWorkouts={savingWorkouts}
-                        onChange={handleWorkoutChange}
-                        onSave={handleSaveWorkout}
-                      />
-                    </div>
-                  </div>
-                </Space>
-              </Card>
-            </div>
+      <div className={styles.pageStack}>
+        <DiaryHeader
+          title={headerLabels.title}
+          subtitle={headerLabels.subtitle}
+          periodHref="/diary/period"
+          periodLabel={headerLabels.periodLabel}
+          dashboardHref="/dashboard"
+          dashboardLabel={headerLabels.dashboardLabel}
+        />
+        <div className={styles.grid}>
+          <div className={styles.calendarBlock}>
+            <DiaryCalendar
+              title={calendarLabels.title}
+              loading={loadingMarks && Object.keys(marks).length === 0}
+              selectedDate={selectedDate}
+              marks={marks}
+              onSelectDate={updateSelectedDate}
+              onPanelChange={setPanelDate}
+            />
           </div>
-        </Space>
-      </Card>
+          <div className={styles.dayBlock}>
+            <Card
+              title={`Выбранный день: ${formatDate(selectedDate)}`}
+              loading={loadingDay && !dayData}
+              className={styles.dayCard}
+            >
+              <div className={styles.dayContent}>
+                <DiaryStatusBlock
+                  status={status}
+                  workoutsComplete={workoutsComplete}
+                  disabledReport={!dayData}
+                  labels={statusLabels}
+                  onOpenReport={() => setIsReportOpen(true)}
+                />
+                <div className={styles.dayLayout}>
+                  <div className={styles.weightRecoveryBlock}>
+                    <WeightCard
+                      title={weightLabels.title}
+                      morningPlaceholder={weightLabels.morningPlaceholder}
+                      eveningPlaceholder={weightLabels.eveningPlaceholder}
+                      saveLabel={weightLabels.saveLabel}
+                      weightForm={weightForm}
+                      savingWeight={savingWeight}
+                      onChange={handleWeightChange}
+                      onSave={handleSaveWeight}
+                    />
+                    <RecoveryCard
+                      title={recoveryLabels.title}
+                      bathLabel={recoveryLabels.bathLabel}
+                      mfrLabel={recoveryLabels.mfrLabel}
+                      massageLabel={recoveryLabels.massageLabel}
+                      sleepLabel={recoveryLabels.sleepLabel}
+                      sleepPlaceholder={recoveryLabels.sleepPlaceholder}
+                      saveLabel={recoveryLabels.saveLabel}
+                      recoveryForm={recoveryForm}
+                      savingRecovery={savingRecovery}
+                      onToggle={handleRecoveryToggle}
+                      onSleepChange={handleRecoverySleepChange}
+                      onSave={handleSaveRecovery}
+                    />
+                  </div>
+                  <div className={styles.workoutsBlock}>
+                    <WorkoutsCard
+                      userId={userId}
+                      messageApi={messageApi}
+                      title={workoutLabels.title}
+                      emptyLabel={workoutLabels.emptyLabel}
+                      completeLabel={workoutLabels.completeLabel}
+                      incompleteLabel={workoutLabels.incompleteLabel}
+                      startTimePlaceholder={workoutLabels.startTimePlaceholder}
+                      resultPlaceholder={workoutLabels.resultPlaceholder}
+                      distancePlaceholder={workoutLabels.distancePlaceholder}
+                      overallScoreLabel={workoutLabels.overallScoreLabel}
+                      functionalScoreLabel={workoutLabels.functionalScoreLabel}
+                      muscleScoreLabel={workoutLabels.muscleScoreLabel}
+                      scorePlaceholder={workoutLabels.scorePlaceholder}
+                      surfacePlaceholder={workoutLabels.surfacePlaceholder}
+                      shoePlaceholder={workoutLabels.shoePlaceholder}
+                      weatherPlaceholder={workoutLabels.weatherPlaceholder}
+                      windPlaceholder={workoutLabels.windPlaceholder}
+                      temperaturePlaceholder={workoutLabels.temperaturePlaceholder}
+                      commentPlaceholder={workoutLabels.commentPlaceholder}
+                      saveReportLabel={workoutLabels.saveReportLabel}
+                      surfaceOptions={SURFACE_OPTIONS}
+                      shoeOptions={shoeOptions}
+                      weatherOptions={WEATHER_OPTIONS}
+                      windOptions={WIND_OPTIONS}
+                      shoeLoading={loadingShoes}
+                      entries={dayData?.planEntries ?? []}
+                      workoutForm={workoutForm}
+                      savingWorkouts={savingWorkouts}
+                      onChange={handleWorkoutChange}
+                      onSave={handleSaveWorkout}
+                    />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
       <DailyReportModal
         open={isReportOpen}
         title={reportLabels.title}

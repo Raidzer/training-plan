@@ -1,50 +1,79 @@
 "use client";
 
 import React, { useState } from "react";
-import { Table, Button, Space, Popconfirm, Tag, App } from "antd";
+import { Table, Button, Space, Popconfirm, Tag, App, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { deleteTemplate } from "@/app/actions/diaryTemplates";
 import type { DiaryResultTemplate } from "@/shared/types/diary-templates";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import styles from "./TemplateManager.module.scss";
 
 type TemplateManagerProps = {
   initialTemplates: DiaryResultTemplate[];
   userId: number;
 };
 
-export const TemplateManager: React.FC<TemplateManagerProps> = ({ initialTemplates, userId }) => {
+export const TemplateManager: React.FC<TemplateManagerProps> = ({ initialTemplates }) => {
   const [templates, setTemplates] = useState(initialTemplates);
   const { message } = App.useApp();
   const router = useRouter();
 
-  const columns = [
+  const columns: ColumnsType<DiaryResultTemplate> = [
     {
       title: "Название",
       dataIndex: "name",
       key: "name",
+      width: 260,
+      render: (value) => (
+        <Typography.Text strong className={styles.templateName}>
+          {String(value ?? "-")}
+        </Typography.Text>
+      ),
     },
     {
       title: "Паттерны",
       dataIndex: "matchPattern",
       key: "matchPattern",
-      render: (text: string) => (text ? text.split(";").map((t) => <Tag key={t}>{t}</Tag>) : "-"),
+      width: 380,
+      render: (text: string | null) =>
+        text ? (
+          <div className={styles.patternTags}>
+            {text
+              .split(";")
+              .map((item) => item.trim())
+              .filter(Boolean)
+              .map((item) => (
+                <Tag key={item}>{item}</Tag>
+              ))}
+          </div>
+        ) : (
+          "-"
+        ),
     },
 
     {
       title: "Действия",
       key: "action",
-      render: (_: any, record: DiaryResultTemplate) => (
-        <Space size="middle">
+      width: 140,
+      render: (_, record) => (
+        <Space size="small" className={styles.actions}>
           <Link href={`/tools/templates/${record.id}`}>
-            <Button icon={<EditOutlined />} />
+            <Button size="small" icon={<EditOutlined />} aria-label="Редактировать" />
           </Link>
           <Popconfirm
             title="Удалить шаблон?"
             onConfirm={() => handleDelete(record.id)}
             disabled={record.userId === null}
           >
-            <Button icon={<DeleteOutlined />} danger disabled={record.userId === null} />
+            <Button
+              size="small"
+              icon={<DeleteOutlined />}
+              danger
+              disabled={record.userId === null}
+              aria-label="Удалить"
+            />
           </Popconfirm>
         </Space>
       ),
@@ -59,15 +88,21 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({ initialTemplat
   };
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16 }}>
+    <div className={styles.manager}>
+      <Space className={styles.toolbar}>
         <Link href="/tools/templates/new">
           <Button type="primary" icon={<PlusOutlined />}>
             Создать шаблон
           </Button>
         </Link>
       </Space>
-      <Table columns={columns} dataSource={templates} rowKey="id" />
+      <Table
+        className={styles.table}
+        columns={columns}
+        dataSource={templates}
+        rowKey="id"
+        scroll={{ x: 780 }}
+      />
     </div>
   );
 };

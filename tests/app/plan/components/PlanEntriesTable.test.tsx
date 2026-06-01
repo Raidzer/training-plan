@@ -73,4 +73,13 @@ describe("PlanEntriesTable", () => {
     const elements = screen.getAllByText("Заполнен");
     expect(elements.length).toBeGreaterThan(0);
   });
+
+  it("должен рендерить мобильные карточки с действиями", () => {
+    const { container } = render(<PlanEntriesTable {...defaultProps} />);
+
+    expect(container.querySelectorAll("article[data-plan-entry-key]")).toHaveLength(2);
+    expect(screen.getByText("Нет отчета")).toBeTruthy();
+    expect(screen.getAllByLabelText("Редактировать день 2023-10-01").length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText("Открыть дневник на 2023-10-01").length).toBeGreaterThan(0);
+  });
 });

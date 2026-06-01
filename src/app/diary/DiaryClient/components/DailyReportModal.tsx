@@ -49,6 +49,8 @@ export function DailyReportModal({
     <Modal
       open={open}
       title={title}
+      width="min(720px, calc(100vw - 24px))"
+      className={styles.reportModal}
       onCancel={onClose}
       footer={[
         <Button key="copy" type="primary" onClick={handleCopyReport}>
