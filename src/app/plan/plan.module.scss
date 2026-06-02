@@ -79,9 +79,9 @@
   min-width: 0;
   padding: 14px;
   overflow: hidden;
-  border: 1px solid rgba(5, 5, 5, 0.08);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface-bg);
 }
 
 .mobileWorkloadCard {
@@ -152,7 +152,7 @@
 }
 
 .mobileSectionTitle {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.4;
 }
