@@ -79,9 +79,9 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px;
-  border: 1px solid rgba(5, 5, 5, 0.06);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background: #f7f9fb;
+  background: var(--surface-soft);
 }
 
 .statusPanel :global(.ant-tag) {
@@ -95,9 +95,9 @@
   width: 100%;
   min-width: 0;
   padding: 14px;
-  border: 1px solid rgba(5, 5, 5, 0.08);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface-bg);
 }
 
 .sectionHeader {
@@ -162,9 +162,9 @@
   width: 100%;
   min-width: 0;
   padding: 14px;
-  border: 1px solid rgba(5, 5, 5, 0.08);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background: #fbfcfd;
+  background: var(--surface-soft);
 }
 
 .workoutHeader {
