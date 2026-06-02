@@ -4,6 +4,7 @@ import {
   DAILY_REPORT_BUTTON_TEXT,
   DATE_BUTTON_TEXT,
   HELP_BUTTON_TEXT,
+  HIDE_MENU_BUTTON_TEXT,
   TODAY_BUTTON_TEXT,
   WEIGHT_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
@@ -15,6 +16,7 @@ describe("bot/commands/handlers/helpers", () => {
     expect(getMenuActionByText(DAILY_REPORT_BUTTON_TEXT)).toBe("dailyReport");
     expect(getMenuActionByText(WEIGHT_BUTTON_TEXT)).toBe("weight");
     expect(getMenuActionByText(HELP_BUTTON_TEXT)).toBe("help");
+    expect(getMenuActionByText(HIDE_MENU_BUTTON_TEXT)).toBe("hideMenu");
   });
 
   it("должен возвращать null для неизвестного текста", () => {
