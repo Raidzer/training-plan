@@ -4,6 +4,7 @@ import {
   CANCEL_LINK_BUTTON_TEXT,
   DATE_BUTTON_TEXT,
   HELP_BUTTON_TEXT,
+  HIDE_MENU_BUTTON_TEXT,
   LINK_BUTTON_TEXT,
   SUBSCRIBE_OFF_BUTTON_TEXT,
   SUBSCRIBE_ON_BUTTON_TEXT,
@@ -47,6 +48,8 @@ export const getMenuActionByText = (text: string) => {
       return "unlink";
     case HELP_BUTTON_TEXT:
       return "help";
+    case HIDE_MENU_BUTTON_TEXT:
+      return "hideMenu";
     case WEIGHT_BUTTON_TEXT:
       return "weight";
     case ALICE_LINK_BUTTON_TEXT:

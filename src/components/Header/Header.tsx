@@ -119,7 +119,7 @@ export function Header({ mode, onToggle }: { mode: Mode; onToggle: (next: Mode) 
           aria-label="Открыть меню навигации"
           onClick={() => setDrawerOpen(true)}
         />
-        <Drawer title="Меню" placement="right" width={320} open={drawerOpen} onClose={closeDrawer}>
+        <Drawer title="Меню" placement="right" size={320} open={drawerOpen} onClose={closeDrawer}>
           <Menu mode="inline" selectable={false} items={drawerItems} onClick={closeDrawer} />
           <div className={styles.drawerTheme}>
             <span className={styles.drawerThemeText}>Тема</span>

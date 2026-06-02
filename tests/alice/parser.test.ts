@@ -10,6 +10,8 @@ describe("alice/parser", () => {
     expect(parseSleepCommand("спал 8 часов")).toEqual({ sleepHours: 8 });
     expect(parseSleepCommand("спала 7 часов 30 минут")).toEqual({ sleepHours: 7.5 });
     expect(parseSleepCommand("запиши сон 8 и 32")).toEqual({ sleepHours: 8.53 });
+    expect(parseSleepCommand("запиши сон 7 30")).toEqual({ sleepHours: 7.5 });
+    expect(parseSleepCommand("запиши сон 7 05")).toEqual({ sleepHours: 7.08 });
     expect(parseSleepCommand("запиши сон 845")).toEqual({ sleepHours: 8.75 });
     expect(parseSleepCommand("сон 1032")).toEqual({ sleepHours: 10.53 });
   });
@@ -24,6 +26,8 @@ describe("alice/parser", () => {
     expect(parseSleepCommand("8 часов", { allowNumericOnly: true })).toEqual({ sleepHours: 8 });
     expect(parseSleepCommand("845", { allowNumericOnly: true })).toEqual({ sleepHours: 8.75 });
     expect(parseSleepCommand("1032", { allowNumericOnly: true })).toEqual({ sleepHours: 10.53 });
+    expect(parseSleepCommand("7 30", { allowNumericOnly: true })).toEqual({ sleepHours: 7.5 });
+    expect(parseSleepCommand("7 05", { allowNumericOnly: true })).toEqual({ sleepHours: 7.08 });
   });
 
   it("parseSleepCommand должен отклонять ввод без маркера сна вне ожидаемого режима", () => {

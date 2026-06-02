@@ -21,6 +21,13 @@ export const handleMenuAction = async ({ ctx, chatId, action }: MenuActionHandle
     return;
   }
 
+  if (action === "hideMenu") {
+    await ctx.reply("Меню скрыто. Чтобы вернуть его, отправьте /menu.", {
+      reply_markup: { remove_keyboard: true },
+    });
+    return;
+  }
+
   const userId = await ensureLinked(chatId);
   if (!userId) {
     await ctx.reply("Сначала свяжите аккаунт командой /link.", {
