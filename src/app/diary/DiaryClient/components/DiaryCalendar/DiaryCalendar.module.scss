@@ -1,0 +1,24 @@
+.calendarCard {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.markDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #52c41a;
+  display: block;
+  margin: 4px auto 0;
+}
+
+@media (max-width: 640px) {
+  .calendarCard :global(.ant-card-body) {
+    padding: 12px !important;
+  }
+
+  .calendarCard :global(.ant-card-head) {
+    padding-inline: 12px !important;
+  }
+}

@@ -1,8 +1,8 @@
 "use client";
 
 import { Button, Input } from "antd";
-import type { SavingWeightState, WeightFormState } from "../types/diaryTypes";
-import styles from "../diary.module.scss";
+import type { SavingWeightState, WeightFormState } from "../../types/diaryTypes";
+import styles from "./WeightCard.module.scss";
 
 type WeightCardProps = {
   title: string;

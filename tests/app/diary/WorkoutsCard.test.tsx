@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { WorkoutsCard } from "@/app/diary/DiaryClient/components/WorkoutsCard";
+import { WorkoutsCard } from "@/app/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard";
 
 vi.mock("@/components/templates/TemplateConstructorModal", () => {
   return {
@@ -79,6 +79,7 @@ describe("WorkoutsCard", () => {
         scorePlaceholder="Score"
         surfacePlaceholder="Surface"
         shoePlaceholder="Shoes"
+        shoeMileagePlaceholder="Shoe mileage"
         weatherPlaceholder="Weather"
         windPlaceholder="Wind"
         temperaturePlaceholder="Temperature"
@@ -116,6 +117,7 @@ describe("WorkoutsCard", () => {
             temperatureC: "",
             surface: "",
             shoeIds: [],
+            shoeMileageKm: {},
           },
         }}
         savingWorkouts={{}}

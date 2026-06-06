@@ -29,6 +29,7 @@ const messages: DiaryMessages = {
   weightSaved: "weightSaved",
   workoutRequired: "workoutRequired",
   workoutDistanceInvalid: "workoutDistanceInvalid",
+  workoutShoeMileageInvalid: "workoutShoeMileageInvalid",
   workoutTemperatureInvalid: "workoutTemperatureInvalid",
   workoutSaveFailed: "workoutSaveFailed",
   workoutSaved: "workoutSaved",

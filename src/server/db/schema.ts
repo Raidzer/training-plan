@@ -326,6 +326,7 @@ export const workoutReportShoes = pgTable(
     shoeId: integer("shoe_id")
       .notNull()
       .references(() => shoes.id),
+    mileageKm: numeric("mileage_km", { precision: 7, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => ({

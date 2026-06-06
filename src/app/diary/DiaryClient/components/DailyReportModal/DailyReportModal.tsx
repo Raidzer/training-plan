@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Modal, Typography } from "antd";
-import styles from "../diary.module.scss";
+import styles from "./DailyReportModal.module.scss";
 
 type DailyReportModalProps = {
   open: boolean;

@@ -146,7 +146,9 @@ describe("server/workoutReports", () => {
   });
 
   it("upsertWorkoutReport должен вставлять отчет, условия и кроссовки", async () => {
-    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([]));
+    dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([]))
+      .mockReturnValueOnce(createSelectWhereBuilder([]));
 
     const insertReportReturningMock = vi.fn().mockResolvedValue([{ id: 20 }]);
     const insertReportValuesMock = vi.fn(() => ({
@@ -201,5 +203,62 @@ describe("server/workoutReports", () => {
       expect.objectContaining({ workoutReportId: 20, shoeId: 1 }),
       expect.objectContaining({ workoutReportId: 20, shoeId: 2 }),
     ]);
+  });
+
+  it("upsertWorkoutReport должен сохранять пробег обуви и обновлять текущий пробег дельтой", async () => {
+    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }])).mockReturnValueOnce(
+      createSelectWhereBuilder([
+        { shoeId: 1, mileageKm: "3" },
+        { shoeId: 2, mileageKm: "5" },
+      ])
+    );
+
+    const updateSetCalls: unknown[] = [];
+    const updateWhereMock = vi.fn().mockResolvedValue(undefined);
+    const updateSetMock = vi.fn((values: unknown) => {
+      updateSetCalls.push(values);
+      return {
+        where: updateWhereMock,
+      };
+    });
+    dbUpdateMock.mockReturnValue({
+      set: updateSetMock,
+    });
+
+    const deleteWhereMock = vi.fn().mockResolvedValue(undefined);
+    dbDeleteMock.mockReturnValue({
+      where: deleteWhereMock,
+    });
+
+    const insertShoesValuesMock = vi.fn().mockResolvedValue(undefined);
+    dbInsertMock.mockReturnValue({
+      values: insertShoesValuesMock,
+    });
+
+    await upsertWorkoutReport({
+      userId: 1,
+      planEntryId: 11,
+      date: "2026-02-09",
+      startTime: "08:00",
+      resultText: "OK",
+      shoeUsages: [
+        { shoeId: 1, mileageKm: 4.5 },
+        { shoeId: 3, mileageKm: 2 },
+      ],
+    });
+
+    expect(insertShoesValuesMock).toHaveBeenCalledWith([
+      expect.objectContaining({ workoutReportId: 99, shoeId: 1, mileageKm: "4.5" }),
+      expect.objectContaining({ workoutReportId: 99, shoeId: 3, mileageKm: "2" }),
+    ]);
+    expect(updateSetMock).toHaveBeenCalledTimes(4);
+    expect(updateSetCalls[0]).toEqual(
+      expect.objectContaining({
+        date: "2026-02-09",
+        startTime: "08:00",
+        resultText: "OK",
+      })
+    );
+    expect(updateSetCalls.slice(1)).toHaveLength(3);
   });
 });

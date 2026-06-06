@@ -1,0 +1,27 @@
+.reportText {
+  white-space: pre-wrap;
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+
+.reportModal :global(.ant-modal-content) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+
+.reportModal :global(.ant-modal-body) {
+  overflow-y: auto;
+  max-height: min(60vh, 560px);
+}
+
+.reportModal :global(.ant-modal-footer) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reportModal :global(.ant-modal-footer .ant-btn + .ant-btn) {
+  margin-inline-start: 0;
+}

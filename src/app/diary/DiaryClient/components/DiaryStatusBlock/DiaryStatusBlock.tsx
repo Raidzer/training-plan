@@ -1,8 +1,8 @@
 "use client";
 
 import { Button, Tag } from "antd";
-import type { DayStatus } from "../types/diaryTypes";
-import styles from "../diary.module.scss";
+import type { DayStatus } from "../../types/diaryTypes";
+import styles from "./DiaryStatusBlock.module.scss";
 
 type DiaryStatusLabels = {
   reportButton: string;

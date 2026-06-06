@@ -1,0 +1,74 @@
+.sectionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-bg);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.recoveryGrid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.recoveryScores {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.recoveryField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recoveryInput {
+  width: 100%;
+}
+
+.recoveryActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+@media (min-width: 640px) {
+  .recoveryScores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .recoveryGrid {
+    flex-wrap: wrap;
+  }
+
+  .recoveryActions {
+    justify-content: stretch;
+  }
+
+  .recoveryActions :global(.ant-btn) {
+    width: 100%;
+  }
+}
