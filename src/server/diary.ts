@@ -54,7 +54,7 @@ export type DiaryWorkoutReport = {
   hasWind: boolean | null;
   temperatureC: string | null;
   surface: string | null;
-  shoes: { id: number; name: string }[];
+  shoes: { id: number; name: string; mileageKm: string | null }[];
 };
 
 export type DiaryWeightEntry = {
@@ -134,6 +134,25 @@ const getWeekEndSunday = (value: string) => {
   }
   return sunday;
 };
+
+const formatShoeMileage = (value?: string | null) => {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+  const parsed = Number(String(value).replace(",", "."));
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+  return `${new Intl.NumberFormat("ru-RU", {
+    maximumFractionDigits: 2,
+  }).format(parsed)} км`;
+};
+
+const formatShoeLabel = (shoe: { name: string; mileageKm?: string | null }) => {
+  const mileage = formatShoeMileage(shoe.mileageKm);
+  return mileage ? `${shoe.name} (${mileage})` : shoe.name;
+};
+
 export { type DiaryDayStatus, isValidDateString };
 
 export const getDiaryDayData = async (params: { userId: number; date: string }) => {
@@ -229,15 +248,19 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
             reportId: workoutReportShoes.workoutReportId,
             shoeId: workoutReportShoes.shoeId,
             shoeName: shoes.name,
+            mileageKm: workoutReportShoes.mileageKm,
           })
           .from(workoutReportShoes)
           .innerJoin(shoes, eq(shoes.id, workoutReportShoes.shoeId))
           .where(inArray(workoutReportShoes.workoutReportId, reportIds))
       : [];
-  const reportShoesMap = new Map<number, { id: number; name: string }[]>();
+  const reportShoesMap = new Map<
+    number,
+    { id: number; name: string; mileageKm: string | null }[]
+  >();
   for (const row of reportShoesRows) {
     const existing = reportShoesMap.get(row.reportId);
-    const item = { id: row.shoeId, name: row.shoeName };
+    const item = { id: row.shoeId, name: row.shoeName, mileageKm: row.mileageKm };
     if (!existing) {
       reportShoesMap.set(row.reportId, [item]);
     } else {
@@ -559,15 +582,19 @@ export const getDiaryExportRows = async (params: {
             reportId: workoutReportShoes.workoutReportId,
             shoeId: workoutReportShoes.shoeId,
             shoeName: shoes.name,
+            mileageKm: workoutReportShoes.mileageKm,
           })
           .from(workoutReportShoes)
           .innerJoin(shoes, eq(shoes.id, workoutReportShoes.shoeId))
           .where(inArray(workoutReportShoes.workoutReportId, reportIds))
       : [];
-  const reportShoesMap = new Map<number, { id: number; name: string }[]>();
+  const reportShoesMap = new Map<
+    number,
+    { id: number; name: string; mileageKm: string | null }[]
+  >();
   for (const row of reportShoesRows) {
     const existing = reportShoesMap.get(row.reportId);
-    const item = { id: row.shoeId, name: row.shoeName };
+    const item = { id: row.shoeId, name: row.shoeName, mileageKm: row.mileageKm };
     if (!existing) {
       reportShoesMap.set(row.reportId, [item]);
     } else {
@@ -633,7 +660,7 @@ export const getDiaryExportRows = async (params: {
       hasWind: boolean | null;
       temperatureC: string | null;
       surface: string | null;
-      shoes: { id: number; name: string }[];
+      shoes: { id: number; name: string; mileageKm: string | null }[];
     }
   >();
   for (const report of reportRows) {
@@ -736,7 +763,7 @@ export const getDiaryExportRows = async (params: {
       }
       const shoeText =
         report?.shoes && report.shoes.length > 0
-          ? report.shoes.map((shoe) => shoe.name).join(", ")
+          ? report.shoes.map(formatShoeLabel).join(", ")
           : "";
       if (shoeText) {
         commentParts.push(shoeText);

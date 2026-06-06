@@ -14,10 +14,11 @@ import {
 } from "antd";
 import { BuildOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
-import type { PlanEntry, SavingWorkoutsState, WorkoutFormState } from "../types/diaryTypes";
-import { normalizeStartTimeInput } from "../utils/diaryUtils";
+import type { PlanEntry, SavingWorkoutsState, WorkoutFormState } from "../../types/diaryTypes";
+import { normalizeStartTimeInput } from "../../utils/diaryUtils";
+import { WorkoutShoeMileageFields } from "../WorkoutShoeMileageFields/WorkoutShoeMileageFields";
 import { TemplateConstructorModal } from "@/components/templates/TemplateConstructorModal";
-import styles from "../diary.module.scss";
+import styles from "./WorkoutsCard.module.scss";
 
 type WorkoutField =
   | "startTime"
@@ -31,7 +32,8 @@ type WorkoutField =
   | "hasWind"
   | "temperatureC"
   | "surface"
-  | "shoeIds";
+  | "shoeIds"
+  | "shoeMileageKm";
 
 type WorkoutsCardProps = {
   userId: number;
@@ -49,6 +51,7 @@ type WorkoutsCardProps = {
   scorePlaceholder: string;
   surfacePlaceholder: string;
   shoePlaceholder: string;
+  shoeMileagePlaceholder: string;
   weatherPlaceholder: string;
   windPlaceholder: string;
   temperaturePlaceholder: string;
@@ -65,7 +68,7 @@ type WorkoutsCardProps = {
   onChange: (
     entryId: number,
     field: WorkoutField,
-    value: string | number | number[] | null
+    value: string | number | number[] | Record<number, string> | null
   ) => void;
   onSave: (entryId: number) => void;
 };
@@ -89,6 +92,7 @@ export function WorkoutsCard({
   scorePlaceholder,
   surfacePlaceholder,
   shoePlaceholder,
+  shoeMileagePlaceholder,
   weatherPlaceholder,
   windPlaceholder,
   temperaturePlaceholder,
@@ -117,7 +121,10 @@ export function WorkoutsCard({
   const surfaceOptionsAC = surfaceOptions.map((o) => ({ value: o.label, label: o.label }));
   const weatherOptionsAC = weatherOptions.map((o) => ({ value: o.label, label: o.label }));
 
-  const normalizedShoeOptions = normalizeOptions(shoeOptions);
+  const normalizedShoeOptions = shoeOptions.map((option) => ({
+    value: option.value,
+    label: option.label,
+  }));
   const normalizedWindOptions = normalizeOptions(windOptions);
 
   const [constructorState, setConstructorState] = useState<{
@@ -168,6 +175,7 @@ export function WorkoutsCard({
 
             const surfaceValue = form?.surface ? form.surface : null;
             const shoeValue = Array.isArray(form?.shoeIds) ? form.shoeIds : [];
+            const shoeMileageValue = form?.shoeMileageKm ?? {};
             const weatherValue = form?.weather ? form.weather : null;
             const windValue = form?.hasWind ? form.hasWind : null;
             const isComplete =
@@ -285,15 +293,6 @@ export function WorkoutsCard({
                         (option?.label ?? "").toUpperCase().includes(inputValue.toUpperCase())
                       }
                     />
-                    <Select
-                      mode="multiple"
-                      value={shoeValue}
-                      placeholder={shoePlaceholder}
-                      options={normalizedShoeOptions}
-                      allowClear
-                      loading={shoeLoading}
-                      onChange={(value) => onChange(entry.id, "shoeIds", value ?? [])}
-                    />
                     {isIndoorSurface ? null : (
                       <>
                         <AutoComplete
@@ -323,6 +322,21 @@ export function WorkoutsCard({
                       </>
                     )}
                   </div>
+                  <WorkoutShoeMileageFields
+                    selectedShoeIds={shoeValue}
+                    shoeMileageKm={shoeMileageValue}
+                    shoeOptions={normalizedShoeOptions}
+                    shoeLoading={shoeLoading}
+                    shoePlaceholder={shoePlaceholder}
+                    mileagePlaceholder={shoeMileagePlaceholder}
+                    onShoeIdsChange={(value) => onChange(entry.id, "shoeIds", value)}
+                    onMileageChange={(shoeId, value) =>
+                      onChange(entry.id, "shoeMileageKm", {
+                        ...shoeMileageValue,
+                        [shoeId]: value,
+                      })
+                    }
+                  />
                   <Input.TextArea
                     value={form?.commentText ?? ""}
                     autoSize={{ minRows: 3, maxRows: 10 }}

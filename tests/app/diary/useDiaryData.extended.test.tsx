@@ -37,6 +37,7 @@ const messages: DiaryMessages = {
   weightSaved: "weightSaved",
   workoutRequired: "workoutRequired",
   workoutDistanceInvalid: "workoutDistanceInvalid",
+  workoutShoeMileageInvalid: "workoutShoeMileageInvalid",
   workoutTemperatureInvalid: "workoutTemperatureInvalid",
   workoutSaveFailed: "workoutSaveFailed",
   workoutSaved: "workoutSaved",
@@ -475,6 +476,10 @@ describe("useDiaryData (extended)", () => {
           temperatureC: "5",
           surface: "manezh",
           shoeIds: [1, 1, 2, -5 as unknown as number],
+          shoeMileageKm: {
+            1: "5,25",
+            2: "",
+          },
         },
       }));
     });
@@ -488,7 +493,55 @@ describe("useDiaryData (extended)", () => {
     expect(savedWorkoutBody.temperatureC).toBeNull();
     expect(savedWorkoutBody.distanceKm).toBe(12.5);
     expect(savedWorkoutBody.shoeIds).toEqual([1, 2]);
+    expect(savedWorkoutBody.shoeUsages).toEqual([
+      { shoeId: 1, mileageKm: 5.25 },
+      { shoeId: 2, mileageKm: null },
+    ]);
     expect(messageApi.success).toHaveBeenCalledWith(messages.workoutSaved);
+  });
+
+  it("должен валидировать пробег выбранной обуви", async () => {
+    const dayPayload = createDayPayload({
+      totalDistanceKm: 10,
+      workoutResult: "ok",
+      hasBath: false,
+      sleepHours: "8",
+      weightMorning: "70",
+    });
+
+    setFetchHandler(createDefaultDiaryFetchHandler(dayPayload));
+
+    const messageApi = createMessageApiMock();
+    const { result } = renderHook(() => useDiaryData({ messageApi, messages }));
+
+    await waitFor(() => {
+      expect(result.current.workoutForm[1]).toBeDefined();
+    });
+
+    act(() => {
+      result.current.setWorkoutForm((prev) => ({
+        ...prev,
+        1: {
+          ...prev[1],
+          startTime: "09:30",
+          resultText: "done",
+          shoeIds: [1],
+          shoeMileageKm: {
+            1: "bad",
+          },
+        },
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSaveWorkout(1);
+    });
+
+    expect(messageApi.error).toHaveBeenCalledWith(messages.workoutShoeMileageInvalid);
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      "/api/diary/workout-report",
+      expect.objectContaining({ method: "POST" })
+    );
   });
 
   it("должен валидировать температуру для открытой поверхности", async () => {

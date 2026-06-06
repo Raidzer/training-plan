@@ -1,9 +1,9 @@
 "use client";
 
 import { Button, Checkbox, Input, Typography } from "antd";
-import type { RecoveryForm } from "../types/diaryTypes";
-import { normalizeStartTimeInput } from "../utils/diaryUtils";
-import styles from "../diary.module.scss";
+import type { RecoveryForm } from "../../types/diaryTypes";
+import { normalizeStartTimeInput } from "../../utils/diaryUtils";
+import styles from "./RecoveryCard.module.scss";
 
 type RecoveryToggleField = "hasBath" | "hasMfr" | "hasMassage";
 

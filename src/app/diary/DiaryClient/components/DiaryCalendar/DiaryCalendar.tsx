@@ -2,9 +2,9 @@
 
 import type { Dayjs } from "dayjs";
 import { Calendar, Card } from "antd";
-import type { DiaryDayMap } from "../types/diaryTypes";
-import { formatDate } from "../utils/diaryUtils";
-import styles from "../diary.module.scss";
+import type { DiaryDayMap } from "../../types/diaryTypes";
+import { formatDate } from "../../utils/diaryUtils";
+import styles from "./DiaryCalendar.module.scss";
 
 type DiaryCalendarProps = {
   title: string;

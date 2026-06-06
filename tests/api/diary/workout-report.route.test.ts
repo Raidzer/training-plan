@@ -140,6 +140,18 @@ describe("POST /api/diary/workout-report", () => {
     await expectJsonError(response, 400, "invalid_shoes");
   });
 
+  it("должен возвращать 400 при невалидном пробеге обуви", async () => {
+    const request = createJsonRequest({
+      url: "http://localhost/api/diary/workout-report",
+      body: createValidPayload({
+        shoeUsages: [{ shoeId: 1, mileageKm: "bad" }],
+      }),
+    });
+
+    const response = await POST(request);
+    await expectJsonError(response, 400, "invalid_shoes");
+  });
+
   it("должен возвращать 400 при невалидном hasWind", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/diary/workout-report",
@@ -272,6 +284,36 @@ describe("POST /api/diary/workout-report", () => {
       temperatureC: -3.4,
       shoeIds: [1, 2],
     });
+  });
+
+  it("должен сохранять отчет с пробегом по каждой выбранной паре обуви", async () => {
+    const request = createJsonRequest({
+      url: "http://localhost/api/diary/workout-report",
+      body: createValidPayload({
+        shoeUsages: [
+          { shoeId: "1", mileageKm: "5,25" },
+          { id: 2, mileageKm: "   " },
+          { shoeId: 1, mileageKm: 10 },
+        ],
+      }),
+    });
+
+    const response = await POST(request);
+    const payload = await expectJsonSuccess<{ ok: boolean }>(response, 200);
+
+    expect(payload.ok).toBe(true);
+    expect(areShoesOwnedByUserMock).toHaveBeenCalledWith({
+      userId: 15,
+      shoeIds: [1, 2],
+    });
+    expect(upsertWorkoutReportMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shoeUsages: [
+          { shoeId: 1, mileageKm: 5.25 },
+          { shoeId: 2, mileageKm: null },
+        ],
+      })
+    );
   });
 
   it("должен сбрасывать погодные поля для поверхности в помещении", async () => {

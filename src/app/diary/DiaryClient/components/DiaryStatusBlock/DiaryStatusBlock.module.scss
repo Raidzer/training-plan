@@ -1,0 +1,19 @@
+.statusPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.statusPanel :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

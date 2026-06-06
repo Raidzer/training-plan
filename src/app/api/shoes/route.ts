@@ -1,21 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createShoe, listShoesByUser } from "@/server/shoes";
-
-type ShoePayload = {
-  name?: string;
-};
-
-const parseName = (payload: ShoePayload | null) => {
-  const raw = typeof payload?.name === "string" ? payload.name.trim() : "";
-  if (!raw) {
-    return null;
-  }
-  if (raw.length > 255) {
-    return null;
-  }
-  return raw;
-};
+import {
+  parseName,
+  parseOptionalFlag,
+  parseOptionalMileageKm,
+  type ShoePayload,
+} from "./shoePayload";
 
 export async function GET() {
   const session = await auth();
@@ -45,12 +36,46 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json().catch(() => null)) as ShoePayload | null;
-  const name = parseName(body);
-  if (!name) {
+  const name = parseName(body?.name, true);
+  if (!name.valid || !name.value) {
     return NextResponse.json({ error: "invalid_name" }, { status: 400 });
   }
+  const mileageLimitKm = parseOptionalMileageKm(body?.mileageLimitKm);
+  const currentMileageKm = parseOptionalMileageKm(body?.currentMileageKm);
+  const notifyOnLimitEmail = parseOptionalFlag(body?.notifyOnLimitEmail);
+  const notifyOnLimitTelegram = parseOptionalFlag(body?.notifyOnLimitTelegram);
 
-  const created = await createShoe({ userId, name });
+  if (!mileageLimitKm.valid) {
+    return NextResponse.json({ error: "invalid_mileage_limit" }, { status: 400 });
+  }
+  if (!currentMileageKm.valid) {
+    return NextResponse.json({ error: "invalid_current_mileage" }, { status: 400 });
+  }
+  if (!notifyOnLimitEmail.valid) {
+    return NextResponse.json({ error: "invalid_notify_on_limit_email" }, { status: 400 });
+  }
+  if (!notifyOnLimitTelegram.valid) {
+    return NextResponse.json({ error: "invalid_notify_on_limit_telegram" }, { status: 400 });
+  }
+
+  const createParams: Parameters<typeof createShoe>[0] = {
+    userId,
+    name: name.value,
+  };
+  if (mileageLimitKm.value !== undefined) {
+    createParams.mileageLimitKm = mileageLimitKm.value;
+  }
+  if (currentMileageKm.value !== undefined) {
+    createParams.currentMileageKm = currentMileageKm.value;
+  }
+  if (notifyOnLimitEmail.value !== undefined) {
+    createParams.notifyOnLimitEmail = notifyOnLimitEmail.value;
+  }
+  if (notifyOnLimitTelegram.value !== undefined) {
+    createParams.notifyOnLimitTelegram = notifyOnLimitTelegram.value;
+  }
+
+  const created = await createShoe(createParams);
 
   return NextResponse.json({ shoe: created }, { status: 201 });
 }

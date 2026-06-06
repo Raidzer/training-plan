@@ -1,146 +1,123 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Alert, App, Button, Card, Input, Typography } from "antd";
-import styles from "./shoes.module.scss";
-
-type ShoeItem = {
-  id: number;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type NameValidation = { ok: true; value: string } | { ok: false; error: string };
-
-const MAX_NAME_LENGTH = 255;
-
-const labels = {
-  title: "Обувь",
-  subtitle: "Профиль в разработке, список обуви пока живет здесь.",
-  alertTitle: "Временная страница",
-  alertText: "Позже перенесем ее в профиль пользователя.",
-  inputPlaceholder: "Nike Pegasus",
-  addButton: "Добавить",
-  listTitle: "Список обуви",
-  editButton: "Редактировать",
-  saveButton: "Сохранить",
-  cancelButton: "Отмена",
-  emptyText: "Пока нет обуви.",
-  loadingText: "Загрузка...",
-  helperText: "Можно добавлять и редактировать названия.",
-  nameRequired: "Введите название.",
-  nameTooLong: "Название длиннее 255 символов.",
-  saveOk: "Обувь добавлена.",
-  updateOk: "Обувь обновлена.",
-  deleteButton: "Удалить",
-  deleteConfirm: "Удалить обувь?",
-  deleteOk: "Обувь удалена.",
-  loadFail: "Не удалось загрузить список обуви.",
-  saveFail: "Не удалось сохранить обувь.",
-  updateFail: "Не удалось обновить обувь.",
-  deleteFail: "Не удалось удалить обувь.",
-} as const;
-
-const validateName = (value: string): NameValidation => {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return { ok: false, error: labels.nameRequired };
-  }
-  if (trimmed.length > MAX_NAME_LENGTH) {
-    return { ok: false, error: labels.nameTooLong };
-  }
-  return { ok: true, value: trimmed };
-};
-
-const getShoesFromResponse = (data: unknown): ShoeItem[] => {
-  if (!data || typeof data !== "object") {
-    return [];
-  }
-  const shoesValue = (data as { shoes?: unknown }).shoes;
-  if (!Array.isArray(shoesValue)) {
-    return [];
-  }
-  return shoesValue as ShoeItem[];
-};
-
-const getShoeFromResponse = (data: unknown): ShoeItem | null => {
-  if (!data || typeof data !== "object") {
-    return null;
-  }
-  const shoeValue = (data as { shoe?: unknown }).shoe;
-  if (!shoeValue || typeof shoeValue !== "object") {
-    return null;
-  }
-  return shoeValue as ShoeItem;
-};
+import { useCallback, useEffect, useState } from "react";
+import { App, Card, Typography } from "antd";
+import { ShoeCreateForm } from "./ShoeCreateForm/ShoeCreateForm";
+import { ShoeList } from "./ShoeList/ShoeList";
+import { shoesLabels } from "./shoes.constants";
+import type { ShoeFormState, ShoeFormUpdate, ShoeItem, ShoeMutationPayload } from "./shoes.types";
+import {
+  createEmptyForm,
+  createFormFromShoe,
+  getShoeFromResponse,
+  getShoesFromResponse,
+  validateMileageLimit,
+  validateName,
+} from "./shoes.utils";
+import styles from "./ShoesClient.module.scss";
 
 export function ShoesClient() {
   const { message: messageApi, modal: modalApi } = App.useApp();
   const [items, setItems] = useState<ShoeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newForm, setNewForm] = useState<ShoeFormState>(() => createEmptyForm());
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingName, setEditingName] = useState("");
+  const [editingForm, setEditingForm] = useState<ShoeFormState>(() => createEmptyForm());
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const loadShoes = async (showError = true) => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/shoes", { cache: "no-store" });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        if (showError) {
-          messageApi.error(labels.loadFail);
+  const loadShoes = useCallback(
+    async (showError = true) => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/shoes", { cache: "no-store" });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          if (showError) {
+            messageApi.error(shoesLabels.loadFail);
+          }
+          setItems([]);
+          return;
         }
-        setItems([]);
-        return;
+        setItems(getShoesFromResponse(data));
+      } catch (error) {
+        if (showError) {
+          messageApi.error(shoesLabels.loadFail);
+        }
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
-      setItems(getShoesFromResponse(data));
-    } catch (error) {
-      if (showError) {
-        messageApi.error(labels.loadFail);
-      }
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [messageApi]
+  );
 
   useEffect(() => {
     void loadShoes(false);
-  }, []);
+  }, [loadShoes]);
+
+  const updateNewForm: ShoeFormUpdate = (key, value) => {
+    setNewForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateEditingForm: ShoeFormUpdate = (key, value) => {
+    setEditingForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const buildPayload = (form: ShoeFormState, emptyMileageValue: null | undefined) => {
+    const name = validateName(form.name);
+    if (!name.ok) {
+      messageApi.warning(name.error);
+      return null;
+    }
+
+    const mileageLimit = validateMileageLimit(form.mileageLimitKm, emptyMileageValue);
+    if (!mileageLimit.ok) {
+      messageApi.warning(mileageLimit.error);
+      return null;
+    }
+
+    const payload: ShoeMutationPayload = {
+      name: name.value,
+      notifyOnLimitEmail: form.notifyOnLimitEmail,
+      notifyOnLimitTelegram: form.notifyOnLimitTelegram,
+    };
+    if (mileageLimit.value !== undefined) {
+      payload.mileageLimitKm = mileageLimit.value;
+    }
+
+    return payload;
+  };
 
   const handleCreate = async () => {
-    const validation = validateName(newName);
-    if (!validation.ok) {
-      messageApi.warning(validation.error);
+    const payload = buildPayload(newForm, undefined);
+    if (!payload) {
       return;
     }
+
     setSaving(true);
     try {
       const res = await fetch("/api/shoes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: validation.value }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        messageApi.error(labels.saveFail);
+        messageApi.error(shoesLabels.saveFail);
         return;
       }
       const created = getShoeFromResponse(data);
       if (!created) {
-        messageApi.error(labels.saveFail);
+        messageApi.error(shoesLabels.saveFail);
         return;
       }
       setItems((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
-      setNewName("");
-      messageApi.success(labels.saveOk);
+      setNewForm(createEmptyForm());
+      messageApi.success(shoesLabels.saveOk);
     } catch (error) {
-      messageApi.error(labels.saveFail);
+      messageApi.error(shoesLabels.saveFail);
       console.error(error);
     } finally {
       setSaving(false);
@@ -149,45 +126,46 @@ export function ShoesClient() {
 
   const handleStartEdit = (item: ShoeItem) => {
     setEditingId(item.id);
-    setEditingName(item.name);
+    setEditingForm(createFormFromShoe(item));
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditingName("");
+    setEditingForm(createEmptyForm());
   };
 
   const handleSaveEdit = async () => {
     if (editingId === null) {
       return;
     }
-    const validation = validateName(editingName);
-    if (!validation.ok) {
-      messageApi.warning(validation.error);
+
+    const payload = buildPayload(editingForm, null);
+    if (!payload) {
       return;
     }
+
     setUpdatingId(editingId);
     try {
       const res = await fetch(`/api/shoes/${editingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: validation.value }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        messageApi.error(labels.updateFail);
+        messageApi.error(shoesLabels.updateFail);
         return;
       }
       const updated = getShoeFromResponse(data);
       if (!updated) {
-        messageApi.error(labels.updateFail);
+        messageApi.error(shoesLabels.updateFail);
         return;
       }
       setItems((prev) => [updated, ...prev.filter((item) => item.id !== updated.id)]);
-      messageApi.success(labels.updateOk);
+      messageApi.success(shoesLabels.updateOk);
       handleCancelEdit();
     } catch (error) {
-      messageApi.error(labels.updateFail);
+      messageApi.error(shoesLabels.updateFail);
       console.error(error);
     } finally {
       setUpdatingId(null);
@@ -197,11 +175,11 @@ export function ShoesClient() {
   const confirmDelete = (name: string) =>
     new Promise<boolean>((resolve) => {
       modalApi.confirm({
-        title: labels.deleteConfirm,
+        title: shoesLabels.deleteConfirm,
         content: `Удалить обувь "${name}"?`,
-        okText: labels.deleteButton,
+        okText: shoesLabels.deleteButton,
         okButtonProps: { danger: true },
-        cancelText: labels.cancelButton,
+        cancelText: shoesLabels.cancelButton,
         onOk: () => {
           resolve(true);
         },
@@ -221,16 +199,16 @@ export function ShoesClient() {
       const res = await fetch(`/api/shoes/${item.id}`, { method: "DELETE" });
       await res.json().catch(() => null);
       if (!res.ok) {
-        messageApi.error(labels.deleteFail);
+        messageApi.error(shoesLabels.deleteFail);
         return;
       }
       setItems((prev) => prev.filter((existing) => existing.id !== item.id));
       if (editingId === item.id) {
         handleCancelEdit();
       }
-      messageApi.success(labels.deleteOk);
+      messageApi.success(shoesLabels.deleteOk);
     } catch (error) {
-      messageApi.error(labels.deleteFail);
+      messageApi.error(shoesLabels.deleteFail);
       console.error(error);
     } finally {
       setDeletingId(null);
@@ -241,112 +219,28 @@ export function ShoesClient() {
     <main className={styles.page}>
       <Card className={styles.card}>
         <Typography.Title level={3} className={styles.title}>
-          {labels.title}
+          {shoesLabels.title}
         </Typography.Title>
-        <Typography.Paragraph type="secondary" className={styles.subtitle}>
-          {labels.subtitle}
-        </Typography.Paragraph>
-        <Alert
-          type="info"
-          title={labels.alertTitle}
-          description={labels.alertText}
-          showIcon
-          className={styles.alert}
+        <ShoeCreateForm
+          form={newForm}
+          saving={saving}
+          onChange={updateNewForm}
+          onSubmit={handleCreate}
         />
-
-        <div className={styles.form}>
-          <Typography.Text type="secondary">{labels.helperText}</Typography.Text>
-          <div className={styles.formRow}>
-            <Input
-              value={newName}
-              onChange={(event) => {
-                setNewName(event.target.value);
-              }}
-              placeholder={labels.inputPlaceholder}
-              disabled={saving}
-              className={styles.formInput}
-            />
-            <Button type="primary" onClick={handleCreate} loading={saving}>
-              {labels.addButton}
-            </Button>
-          </div>
-        </div>
-
-        <Typography.Title level={5} className={styles.listTitle}>
-          {labels.listTitle}
-        </Typography.Title>
-        <div className={styles.list}>
-          {loading ? (
-            <Typography.Text>{labels.loadingText}</Typography.Text>
-          ) : (
-            <>
-              {items.length === 0 ? (
-                <Typography.Text type="secondary">{labels.emptyText}</Typography.Text>
-              ) : (
-                <div>
-                  {items.map((item) => {
-                    const isEditing = editingId === item.id;
-                    if (isEditing) {
-                      return (
-                        <div className={styles.listItem} key={item.id}>
-                          <div className={styles.editRow}>
-                            <Input
-                              value={editingName}
-                              onChange={(event) => {
-                                setEditingName(event.target.value);
-                              }}
-                              disabled={updatingId === item.id}
-                              className={styles.editInput}
-                            />
-                            <Button
-                              type="primary"
-                              onClick={handleSaveEdit}
-                              loading={updatingId === item.id}
-                            >
-                              {labels.saveButton}
-                            </Button>
-                            <Button onClick={handleCancelEdit} disabled={updatingId === item.id}>
-                              {labels.cancelButton}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className={styles.listItem} key={item.id}>
-                        <div className={styles.itemRow}>
-                          <Typography.Text className={styles.itemName}>{item.name}</Typography.Text>
-                          <div className={styles.itemActions}>
-                            <Button
-                              type="link"
-                              onClick={() => {
-                                handleStartEdit(item);
-                              }}
-                              disabled={saving || updatingId !== null || deletingId !== null}
-                            >
-                              {labels.editButton}
-                            </Button>
-                            <Button
-                              type="link"
-                              danger
-                              onClick={() => {
-                                handleDelete(item);
-                              }}
-                              disabled={saving || updatingId !== null || deletingId !== null}
-                              loading={deletingId === item.id}
-                            >
-                              {labels.deleteButton}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        <ShoeList
+          items={items}
+          loading={loading}
+          saving={saving}
+          editingId={editingId}
+          editingForm={editingForm}
+          updatingId={updatingId}
+          deletingId={deletingId}
+          onStartEdit={handleStartEdit}
+          onChangeEdit={updateEditingForm}
+          onSaveEdit={handleSaveEdit}
+          onCancelEdit={handleCancelEdit}
+          onDelete={handleDelete}
+        />
       </Card>
     </main>
   );
