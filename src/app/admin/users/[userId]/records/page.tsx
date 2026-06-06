@@ -1,13 +1,10 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { RecordsClient } from "@/app/profile/records/RecordsClient/RecordsClient";
-import { Button } from "antd";
-import Link from "next/link";
-import { ArrowLeftOutlined } from "@ant-design/icons";
 
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
+import { AdminUserRecordsContent } from "./AdminUserRecordsPage/AdminUserRecordsPage";
 
 type Props = {
   params: Promise<{ userId: string }>;
@@ -31,19 +28,5 @@ export default async function AdminUserRecordsPage({ params }: Props) {
 
   const userLabel = user ? `${user.name} ${user.lastName || ""}`.trim() : `ID: ${userId}`;
 
-  return (
-    <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
-      <div style={{ marginBottom: 16 }}>
-        <Link href="/admin/users">
-          <Button icon={<ArrowLeftOutlined />}>Назад к списку пользователей</Button>
-        </Link>
-      </div>
-
-      <h3 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "16px" }}>
-        Редактирование рекордов: {userLabel}
-      </h3>
-
-      <RecordsClient apiUrl={`/api/admin/users/${userId}/records`} />
-    </div>
-  );
+  return <AdminUserRecordsContent userId={userId} userLabel={userLabel} />;
 }
