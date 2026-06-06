@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { RecordsClient } from "./RecordsClient";
+import { RecordsClient } from "./RecordsClient/RecordsClient";
 
 export default async function RecordsPage() {
   const session = await auth();

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
-import { LoginForm } from "./LoginForm";
+import { authOptions } from "@/auth";
+import { LoginClient } from "./LoginClient/LoginClient";
 
 export default async function LoginPage() {
   const session = await getServerSession(authOptions);
@@ -10,5 +10,5 @@ export default async function LoginPage() {
     redirect("/dashboard");
   }
 
-  return <LoginForm />;
+  return <LoginClient />;
 }

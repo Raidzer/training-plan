@@ -1,0 +1,66 @@
+import type { RoleMeta } from "../types/adminUsersTypes";
+
+export const ADMIN_USERS_LABELS = {
+  title: "Пользователи",
+  subtitle: "Список зарегистрированных пользователей и их текущих ролей.",
+  invitesButton: "Приглашения",
+  dashboardButton: "В кабинет",
+  recordsButton: "Рекорды",
+  roleButton: "Роль",
+  passwordButton: "Пароль",
+  disableButton: "Отключить",
+  enableButton: "Включить",
+  saveButton: "Сохранить",
+  cancelButton: "Отмена",
+  userColumn: "Пользователь",
+  genderColumn: "Пол",
+  loginColumn: "Логин",
+  roleColumn: "Роль",
+  createdAtColumn: "Создан",
+  statusColumn: "Статус",
+  actionsColumn: "Действия",
+  activeStatus: "Активен",
+  disabledStatus: "Отключен",
+  roleModalTitle: "Сменить роль",
+  passwordModalTitle: "Сменить пароль",
+  newPasswordLabel: "Новый пароль",
+  confirmPasswordLabel: "Повторите пароль",
+  selectRolePlaceholder: "Выберите роль",
+  selectRoleRequired: "Выберите роль",
+  newPasswordRequired: "Введите новый пароль",
+  confirmPasswordRequired: "Повторите пароль",
+  passwordMismatch: "Пароли не совпадают",
+  roleUserMissing: "Не выбран пользователь для смены роли.",
+  passwordUserMissing: "Не выбран пользователь для смены пароля.",
+  roleUpdateOk: "Роль обновлена.",
+  roleUpdateFail: "Не удалось обновить роль.",
+  passwordUpdateOk: "Пароль обновлен.",
+  passwordUpdateFail: "Не удалось обновить пароль.",
+  statusUpdateFail: "Не удалось обновить статус.",
+  userEnabled: "Пользователь включен.",
+  userDisabled: "Пользователь отключен.",
+  disableConfirmText: "Пользователь не сможет входить в систему до обратного включения.",
+  unauthorized: "Нужно войти в систему.",
+  forbidden: "Недостаточно прав для выполнения действия.",
+  invalidPayload: "Некорректные данные.",
+  invalidUserId: "Некорректный идентификатор пользователя.",
+  notFound: "Пользователь не найден.",
+  cannotDisableSelf: "Нельзя отключить собственного пользователя.",
+  unknownRole: "Не задана",
+  maleGender: "Мужской",
+  femaleGender: "Женский",
+} as const;
+
+export const ROLE_META: Record<string, RoleMeta> = {
+  admin: { label: "Администратор", color: "geekblue" },
+  athlete: { label: "Атлет", color: "green" },
+  coach: { label: "Тренер", color: "purple" },
+};
+
+export const ROLE_OPTIONS = [
+  { value: "admin", label: "Администратор" },
+  { value: "coach", label: "Тренер" },
+  { value: "athlete", label: "Атлет" },
+];
+
+export const PASSWORD_MIN_LENGTH = 6;

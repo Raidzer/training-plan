@@ -3,9 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { registrationInvites, users } from "@/server/db/schema";
-import { AdminInvitesClient, type AdminInviteRow } from "./AdminInvitesClient";
-
-type InviteStatus = "active" | "used" | "expired";
+import { AdminInvitesClient } from "./AdminInvitesClient/AdminInvitesClient";
+import type { AdminInviteRow, InviteStatus } from "./AdminInvitesClient/types/adminInvitesTypes";
 
 const getInviteStatus = (
   invite: {

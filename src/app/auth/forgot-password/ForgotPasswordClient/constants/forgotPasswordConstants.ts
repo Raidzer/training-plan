@@ -1,0 +1,16 @@
+export const FORGOT_PASSWORD_TEXT = {
+  successTitle: "Проверьте почту",
+  successDescription: "Мы отправили письмо с ссылкой для сброса пароля. Пожалуйста проверьте почту",
+  title: "Сброс пароля",
+  subtitle: "Введите email, чтобы получить ссылку для сброса",
+  emailLabel: "Email",
+  emailPlaceholder: "Email",
+  emailRequired: "Пожалуйста, введите email!",
+  emailInvalid: "Введите корректный email!",
+  submit: "Отправить ссылку",
+  backToLogin: "Вернуться ко входу",
+  loginLink: "Вспомнили пароль? Войти",
+  successMessage: "Если аккаунт существует, мы отправили письмо с инструкциями.",
+  sendError: "Произошла ошибка при отправке запроса.",
+  requestError: "Произошла ошибка. Пожалуйста, попробуйте позже.",
+} as const;

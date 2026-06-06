@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getTemplateById } from "@/app/actions/diaryTemplates";
-import { TemplateEditorPage } from "./TemplateEditorPage";
+import { TemplateEditorClient } from "../TemplateEditorClient/TemplateEditorClient";
 
 type Props = {
   params: Promise<{ templateId: string }>;
@@ -24,14 +24,10 @@ export default async function Page({ params }: Props) {
 
   if (templateId !== "new") {
     const id = Number(templateId);
-    if (!isNaN(id)) {
+    if (!Number.isNaN(id)) {
       template = await getTemplateById(id);
     }
   }
 
-  if (template) {
-    // Security checks can be implemented here if needed
-  }
-
-  return <TemplateEditorPage template={template} userId={userId} />;
+  return <TemplateEditorClient template={template} userId={userId} />;
 }

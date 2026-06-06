@@ -7,7 +7,7 @@ import {
   toNonNegativeFloat,
   toNonNegativeInt,
   toTotalMinutes,
-} from "@/app/tools/speed-to-pace/speed-to-pace.utils";
+} from "@/app/tools/speed-to-pace/SpeedToPaceClient/utils/speedToPaceUtils";
 
 describe("app/tools/speed-to-pace.utils", () => {
   it("должен парсить неотрицательные числа", () => {
