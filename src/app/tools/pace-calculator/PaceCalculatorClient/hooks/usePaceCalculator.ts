@@ -1,41 +1,19 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
-import type { LastEdited, SavedResult, SplitItem } from "./pace-calculator.types";
+import { STORAGE_KEY } from "../constants/paceCalculatorConstants";
+import type {
+  LastEdited,
+  SavedResult,
+  SplitItem,
+  UsePaceCalculatorReturn,
+} from "../types/paceCalculatorTypes";
 import {
-  STORAGE_KEY,
   formatTime,
   getCeilSeconds,
   getDistanceLabel,
   safeParseSaved,
   toNonNegativeInt,
   parseTimeInputToSeconds,
-} from "./pace-calculator.utils";
-
-type UsePaceCalculatorReturn = {
-  distance: number;
-  resultHours: number;
-  resultMinutes: number;
-  resultSeconds: number;
-  paceMinutes: number;
-  paceSeconds: number;
-  lapMinutes: number;
-  lapSeconds: number;
-  splits: SplitItem[];
-  splitGroups: SplitItem[][];
-  savedResults: SavedResult[];
-  canSave: boolean;
-  handleDistanceChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleDistancePreset: (value: number) => void;
-  formatSplitTime: (seconds: number) => string;
-  getSavedDistanceLabel: (meters: number) => string;
-  resultTimeString: string;
-  paceTimeString: string;
-  lapTimeString: string;
-  handleResultTimeChange: (value: string) => void;
-  handlePaceTimeChange: (value: string) => void;
-  handleLapTimeChange: (value: string) => void;
-  handleSaveResult: () => void;
-  handleDeleteResult: (id: string) => void;
-};
+} from "../utils/paceCalculatorUtils";
 
 export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   const [distance, setDistance] = useState(10000);
@@ -72,27 +50,43 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     const minutes = Math.floor((safeSeconds % 3600) / 60);
     const seconds = safeSeconds % 60;
 
-    // Only update state if changed to avoid loops if we were careful, but here explicit check needed?
-    // React state updates bail out if same value, but we split across 3 states.
-    if (resultHours !== hours) setResultHours(hours);
-    if (resultMinutes !== minutes) setResultMinutes(minutes);
-    if (resultSeconds !== seconds) setResultSeconds(seconds);
+    if (resultHours !== hours) {
+      setResultHours(hours);
+    }
+
+    if (resultMinutes !== minutes) {
+      setResultMinutes(minutes);
+    }
+
+    if (resultSeconds !== seconds) {
+      setResultSeconds(seconds);
+    }
   };
 
   const setPaceFromSeconds = (totalSeconds: number) => {
     const safeSeconds = getCeilSeconds(totalSeconds);
     const minutes = Math.floor(safeSeconds / 60);
     const seconds = safeSeconds % 60;
-    if (paceMinutes !== minutes) setPaceMinutes(minutes);
-    if (paceSeconds !== seconds) setPaceSeconds(seconds);
+    if (paceMinutes !== minutes) {
+      setPaceMinutes(minutes);
+    }
+
+    if (paceSeconds !== seconds) {
+      setPaceSeconds(seconds);
+    }
   };
 
   const setLapFromSeconds = (totalSeconds: number) => {
     const safeSeconds = getCeilSeconds(totalSeconds);
     const minutes = Math.floor(safeSeconds / 60);
     const seconds = safeSeconds % 60;
-    if (lapMinutes !== minutes) setLapMinutes(minutes);
-    if (lapSeconds !== seconds) setLapSeconds(seconds);
+    if (lapMinutes !== minutes) {
+      setLapMinutes(minutes);
+    }
+
+    if (lapSeconds !== seconds) {
+      setLapSeconds(seconds);
+    }
   };
 
   const syncFromResult = (nextResultSeconds: number, nextDistance: number) => {
@@ -166,17 +160,26 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   };
 
   const resultTimeString = useMemo(() => {
-    if (lastEdited === "result") return inputValue;
+    if (lastEdited === "result") {
+      return inputValue;
+    }
+
     return formatTime(resultTotalSeconds);
   }, [resultTotalSeconds, lastEdited, inputValue]);
 
   const paceTimeString = useMemo(() => {
-    if (lastEdited === "pace") return inputValue;
+    if (lastEdited === "pace") {
+      return inputValue;
+    }
+
     return formatTime(paceTotalSeconds);
   }, [paceTotalSeconds, lastEdited, inputValue]);
 
   const lapTimeString = useMemo(() => {
-    if (lastEdited === "lap") return inputValue;
+    if (lastEdited === "lap") {
+      return inputValue;
+    }
+
     return formatTime(lapTotalSeconds);
   }, [lapTotalSeconds, lastEdited, inputValue]);
 

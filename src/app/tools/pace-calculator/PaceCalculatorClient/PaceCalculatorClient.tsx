@@ -1,12 +1,13 @@
 ﻿"use client";
 
-import styles from "./pace-calculator.module.scss";
-import { formatMinutesSeconds, formatTime } from "./pace-calculator.utils";
-import { DistanceSection } from "./components/DistanceSection";
-import { ResultSection } from "./components/ResultSection";
-import { SavedResultsList } from "./components/SavedResultsList";
-import { SplitsPanel } from "./components/SplitsPanel";
-import { usePaceCalculator } from "./usePaceCalculator";
+import { PACE_CALCULATOR_TEXT } from "./constants/paceCalculatorConstants";
+import { DistanceSection } from "./components/DistanceSection/DistanceSection";
+import { ResultSection } from "./components/ResultSection/ResultSection";
+import { SavedResultsList } from "./components/SavedResultsList/SavedResultsList";
+import { SplitsPanel } from "./components/SplitsPanel/SplitsPanel";
+import { usePaceCalculator } from "./hooks/usePaceCalculator";
+import { formatMinutesSeconds, formatTime } from "./utils/paceCalculatorUtils";
+import styles from "./PaceCalculatorClient.module.scss";
 
 export function PaceCalculatorClient() {
   const {
@@ -31,17 +32,10 @@ export function PaceCalculatorClient() {
   return (
     <section className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Калькулятор расчета темпа и результата на забеге</h1>
+        <h1 className={styles.title}>{PACE_CALCULATOR_TEXT.header.title}</h1>
         <div className={styles.titleLine} />
-        <p className={styles.description}>
-          Калькулятор для расчета темпа бега в зависимости от результата и времени бега в
-          зависимости от темпа. Раскладка времени по километрам. Удобное сохранение нескольких
-          результатов.
-        </p>
-        <p className={styles.description}>
-          Просто введите дистанцию и впишите темп или результат. Воспользуйтесь кнопкой Сохранить
-          результат для сохранения результата для последующего сравнения.
-        </p>
+        <p className={styles.description}>{PACE_CALCULATOR_TEXT.header.description}</p>
+        <p className={styles.description}>{PACE_CALCULATOR_TEXT.header.hint}</p>
       </header>
 
       <div className={styles.calculatorGrid}>

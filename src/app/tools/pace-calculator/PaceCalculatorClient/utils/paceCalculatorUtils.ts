@@ -1,6 +1,4 @@
-import type { SavedResult } from "./pace-calculator.types";
-
-export const STORAGE_KEY = "pace-calculator:results";
+import type { SavedResult } from "../types/paceCalculatorTypes";
 
 export const toNonNegativeInt = (value: string) => {
   const parsed = Number.parseInt(value, 10);
@@ -44,7 +42,9 @@ export const formatMinutesSeconds = (totalSeconds: number) => {
 export const getDistanceLabel = (meters: number) => `${meters.toLocaleString("ru-RU")} м`;
 
 export const parseTimeInputToSeconds = (value: string): number => {
-  if (!value) return 0;
+  if (!value) {
+    return 0;
+  }
   const parts = value.split(":");
   let seconds = 0;
   if (parts.length === 3) {

@@ -2,8 +2,9 @@
 
 import { Input } from "antd";
 import { TimeInput } from "@/components/inputs/TimeInput";
-import styles from "./speed-to-pace.module.scss";
-import { useSpeedToPace } from "./useSpeedToPace";
+import { SPEED_TO_PACE_TEXT } from "./constants/speedToPaceConstants";
+import { useSpeedToPace } from "./hooks/useSpeedToPace";
+import styles from "./SpeedToPaceClient.module.scss";
 
 export function SpeedToPaceClient() {
   const {
@@ -22,71 +23,64 @@ export function SpeedToPaceClient() {
   return (
     <section className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>
-          Калькулятор перевода скорости (км/ч, м/с, миль/ч) в темп (мин/км, мин/милю)
-        </h1>
+        <h1 className={styles.title}>{SPEED_TO_PACE_TEXT.header.title}</h1>
         <div className={styles.titleLine} />
-        <p className={styles.description}>
-          Позволяет мгновенно перевести скорость в разные единицы измерения (км/ч, м/с, миль/ч),
-          скорость в темп (мин/км, мин/милю) и обратно.
-        </p>
-        <p className={styles.description}>
-          Просто заполните одно из значений, остальные пересчитаются автоматически.
-        </p>
+        <p className={styles.description}>{SPEED_TO_PACE_TEXT.header.description}</p>
+        <p className={styles.description}>{SPEED_TO_PACE_TEXT.header.hint}</p>
       </header>
 
       <div className={styles.panel}>
         <div className={styles.table}>
           <div className={styles.row}>
-            <div className={styles.rowTitle}>Скорость</div>
+            <div className={styles.rowTitle}>{SPEED_TO_PACE_TEXT.speed.title}</div>
             <div className={`${styles.rowContent} ${styles.speedGrid}`}>
               <div className={styles.field}>
-                <span className={styles.fieldLabel}>Км в час</span>
+                <span className={styles.fieldLabel}>{SPEED_TO_PACE_TEXT.speed.kmhLabel}</span>
                 <div className={styles.fieldRow}>
                   <Input
                     className={`${styles.input} ${styles.centeredInput}`}
                     inputMode="decimal"
                     value={speedKmhString}
                     onChange={handleSpeedKmhChange}
-                    aria-label="Километров в час"
+                    aria-label={SPEED_TO_PACE_TEXT.speed.kmhAriaLabel}
                   />
-                  <span className={styles.unit}>км/ч</span>
+                  <span className={styles.unit}>{SPEED_TO_PACE_TEXT.speed.kmhUnit}</span>
                 </div>
               </div>
               <div className={styles.field}>
-                <span className={styles.fieldLabel}>Метров в сек</span>
+                <span className={styles.fieldLabel}>{SPEED_TO_PACE_TEXT.speed.mpsLabel}</span>
                 <div className={styles.fieldRow}>
                   <Input
                     className={`${styles.input} ${styles.centeredInput}`}
                     inputMode="decimal"
                     value={speedMpsString}
                     onChange={handleSpeedMpsChange}
-                    aria-label="Метров в секунду"
+                    aria-label={SPEED_TO_PACE_TEXT.speed.mpsAriaLabel}
                   />
-                  <span className={styles.unit}>м/с</span>
+                  <span className={styles.unit}>{SPEED_TO_PACE_TEXT.speed.mpsUnit}</span>
                 </div>
               </div>
               <div className={styles.field}>
-                <span className={styles.fieldLabel}>Миль в час</span>
+                <span className={styles.fieldLabel}>{SPEED_TO_PACE_TEXT.speed.mphLabel}</span>
                 <div className={styles.fieldRow}>
                   <Input
                     className={`${styles.input} ${styles.centeredInput}`}
                     inputMode="decimal"
                     value={speedMphString}
                     onChange={handleSpeedMphChange}
-                    aria-label="Миль в час"
+                    aria-label={SPEED_TO_PACE_TEXT.speed.mphAriaLabel}
                   />
-                  <span className={styles.unit}>миль/ч</span>
+                  <span className={styles.unit}>{SPEED_TO_PACE_TEXT.speed.mphUnit}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className={styles.row}>
-            <div className={styles.rowTitle}>Темп</div>
+            <div className={styles.rowTitle}>{SPEED_TO_PACE_TEXT.pace.title}</div>
             <div className={`${styles.rowContent} ${styles.paceGrid}`}>
               <div className={styles.field}>
-                <span className={styles.fieldLabel}>Минут на км</span>
+                <span className={styles.fieldLabel}>{SPEED_TO_PACE_TEXT.pace.kmLabel}</span>
                 <div className={styles.fieldRow}>
                   <div className={styles.inputGroup}>
                     <TimeInput
@@ -95,12 +89,12 @@ export function SpeedToPaceClient() {
                       value={paceKmTimeString}
                       onChange={handlePaceKmTimeChange}
                     />
-                    <span className={styles.unit}>мин:сек</span>
+                    <span className={styles.unit}>{SPEED_TO_PACE_TEXT.pace.unit}</span>
                   </div>
                 </div>
               </div>
               <div className={styles.field}>
-                <span className={styles.fieldLabel}>Минут на милю</span>
+                <span className={styles.fieldLabel}>{SPEED_TO_PACE_TEXT.pace.mileLabel}</span>
                 <div className={styles.fieldRow}>
                   <div className={styles.inputGroup}>
                     <TimeInput
@@ -109,7 +103,7 @@ export function SpeedToPaceClient() {
                       value={paceMileTimeString}
                       onChange={handlePaceMileTimeChange}
                     />
-                    <span className={styles.unit}>мин:сек</span>
+                    <span className={styles.unit}>{SPEED_TO_PACE_TEXT.pace.unit}</span>
                   </div>
                 </div>
               </div>

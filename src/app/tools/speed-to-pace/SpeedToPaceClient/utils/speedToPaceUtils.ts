@@ -1,4 +1,4 @@
-export const KM_PER_MILE = 1.609344;
+export { KM_PER_MILE } from "../constants/speedToPaceConstants";
 
 export const toNonNegativeFloat = (value: string | number): number => {
   if (typeof value === "number") {
@@ -60,7 +60,9 @@ export const toTotalMinutes = (minutes: number, seconds: number) => {
 };
 
 export const parseTimeInputToTotalMinutes = (value: string): number => {
-  if (!value) return 0;
+  if (!value) {
+    return 0;
+  }
   const parts = value.split(":");
   let totalMinutes = 0;
   // TimeInput usually gives "HH:MM:SS" or "MM:SS" (if we force it?) or just "12:34"

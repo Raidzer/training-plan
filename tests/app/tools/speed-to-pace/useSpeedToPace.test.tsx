@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ChangeEvent } from "react";
 import { describe, expect, it } from "vitest";
-import { useSpeedToPace } from "@/app/tools/speed-to-pace/useSpeedToPace";
+import { useSpeedToPace } from "@/app/tools/speed-to-pace/SpeedToPaceClient/hooks/useSpeedToPace";
 
 describe("useSpeedToPace", () => {
   it("должен инициализировать со скоростью по умолчанию в km/h", () => {

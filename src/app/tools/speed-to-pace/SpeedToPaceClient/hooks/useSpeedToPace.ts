@@ -1,37 +1,17 @@
 "use client";
 import { useState, type ChangeEvent } from "react";
+import { DEFAULT_KMH, KM_PER_MILE } from "../constants/speedToPaceConstants";
+import type {
+  SpeedToPaceInput,
+  SpeedToPaceValues,
+  UseSpeedToPaceReturn,
+} from "../types/speedToPaceTypes";
 import {
-  KM_PER_MILE,
   roundTo,
   splitMinutesSeconds,
   toNonNegativeFloat,
   parseTimeInputToTotalMinutes,
-} from "./speed-to-pace.utils";
-
-type SpeedToPaceValues = {
-  speedKmh: number;
-  speedMps: number;
-  speedMph: number;
-  paceKmMinutes: number;
-  paceKmSeconds: number;
-  paceMileMinutes: number;
-  paceMileSeconds: number;
-};
-
-type UseSpeedToPaceReturn = SpeedToPaceValues & {
-  handleSpeedKmhChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleSpeedMpsChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleSpeedMphChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handlePaceKmTimeChange: (value: string) => void;
-  handlePaceMileTimeChange: (value: string) => void;
-  paceKmTimeString: string;
-  paceMileTimeString: string;
-  speedKmhString: string;
-  speedMpsString: string;
-  speedMphString: string;
-};
-
-const DEFAULT_KMH = 10;
+} from "../utils/speedToPaceUtils";
 
 const ZERO_VALUES: SpeedToPaceValues = {
   speedKmh: 0,
@@ -131,9 +111,7 @@ const buildStateFromPaceMile = (totalMinutes: number): SpeedToPaceValues => {
 export const useSpeedToPace = (): UseSpeedToPaceReturn => {
   const [values, setValues] = useState<SpeedToPaceValues>(() => buildStateFromKmH(DEFAULT_KMH));
 
-  const [activeInput, setActiveInput] = useState<
-    "paceKm" | "paceMile" | "speedKmh" | "speedMps" | "speedMph" | null
-  >(null);
+  const [activeInput, setActiveInput] = useState<SpeedToPaceInput | null>(null);
   const [inputValue, setInputValue] = useState("");
 
   const handleSpeedKmhChange = (event: ChangeEvent<HTMLInputElement>) => {

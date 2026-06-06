@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { STORAGE_KEY } from "@/app/tools/pace-calculator/pace-calculator.utils";
-import { usePaceCalculator } from "@/app/tools/pace-calculator/usePaceCalculator";
+import { STORAGE_KEY } from "@/app/tools/pace-calculator/PaceCalculatorClient/constants/paceCalculatorConstants";
+import { usePaceCalculator } from "@/app/tools/pace-calculator/PaceCalculatorClient/hooks/usePaceCalculator";
 
 describe("usePaceCalculator", () => {
   beforeEach(() => {

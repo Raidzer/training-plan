@@ -1,5 +1,6 @@
 import { TimeInput } from "@/components/inputs/TimeInput";
-import styles from "../pace-calculator.module.scss";
+import { PACE_CALCULATOR_TEXT } from "../../constants/paceCalculatorConstants";
+import styles from "./ResultSection.module.scss";
 
 type ResultSectionProps = {
   resultTime: string;
@@ -25,13 +26,13 @@ export function ResultSection({
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeaderRow}>
-        <h2 className={styles.sectionTitle}>Результат:</h2>
+        <h2 className={styles.sectionTitle}>{PACE_CALCULATOR_TEXT.result.title}</h2>
         <button type="button" className={styles.saveButton} disabled={!canSave} onClick={onSave}>
-          Сохранить результат
+          {PACE_CALCULATOR_TEXT.result.save}
         </button>
       </div>
       <div className={styles.inputRow}>
-        <span className={styles.rowLabel}>Результат:</span>
+        <span className={styles.rowLabel}>{PACE_CALCULATOR_TEXT.result.resultLabel}</span>
         <div className={styles.fields}>
           <div className={styles.fieldGroup}>
             <TimeInput
@@ -45,7 +46,7 @@ export function ResultSection({
       </div>
 
       <div className={styles.inputRow}>
-        <span className={styles.rowLabel}>Темп (мин/км):</span>
+        <span className={styles.rowLabel}>{PACE_CALCULATOR_TEXT.result.paceLabel}</span>
         <div className={styles.fields}>
           <div className={styles.fieldGroup}>
             <TimeInput
@@ -59,7 +60,7 @@ export function ResultSection({
       </div>
 
       <div className={styles.inputRow}>
-        <span className={styles.rowLabel}>Время на круге (400 м):</span>
+        <span className={styles.rowLabel}>{PACE_CALCULATOR_TEXT.result.lapLabel}</span>
         <div className={styles.fields}>
           <div className={styles.fieldGroup}>
             <TimeInput
@@ -72,9 +73,7 @@ export function ResultSection({
         </div>
       </div>
 
-      <p className={styles.helperNote}>
-        Если менять одно значение, то остальные значения пересчитываются автоматически
-      </p>
+      <p className={styles.helperNote}>{PACE_CALCULATOR_TEXT.result.helper}</p>
     </div>
   );
 }

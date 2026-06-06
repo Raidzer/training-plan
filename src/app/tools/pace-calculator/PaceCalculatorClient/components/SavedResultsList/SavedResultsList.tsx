@@ -1,5 +1,6 @@
-import styles from "../pace-calculator.module.scss";
-import type { SavedResult } from "../pace-calculator.types";
+import { PACE_CALCULATOR_TEXT } from "../../constants/paceCalculatorConstants";
+import type { SavedResult } from "../../types/paceCalculatorTypes";
+import styles from "./SavedResultsList.module.scss";
 
 type SavedResultsListProps = {
   results: SavedResult[];
@@ -19,10 +20,10 @@ export function SavedResultsList({
   return (
     <div className={styles.panel}>
       <div className={styles.sectionHeaderRow}>
-        <h2 className={styles.sectionTitle}>Сохраненные результаты</h2>
+        <h2 className={styles.sectionTitle}>{PACE_CALCULATOR_TEXT.savedResults.title}</h2>
       </div>
       {results.length === 0 ? (
-        <p className={styles.emptyState}>Пока нет сохраненных результатов.</p>
+        <p className={styles.emptyState}>{PACE_CALCULATOR_TEXT.savedResults.empty}</p>
       ) : (
         <ul className={styles.savedList}>
           {results.map((item) => (
@@ -32,13 +33,14 @@ export function SavedResultsList({
                   {getDistanceLabel(item.distanceMeters)}
                 </span>
                 <span className={styles.savedResult}>
-                  Результат: {formatTime(item.resultSeconds)}
+                  {PACE_CALCULATOR_TEXT.savedResults.result} {formatTime(item.resultSeconds)}
                 </span>
                 <span className={styles.savedMeta}>
-                  Темп: {formatMinutesSeconds(item.paceSeconds)} / км
+                  {PACE_CALCULATOR_TEXT.savedResults.pace} {formatMinutesSeconds(item.paceSeconds)}{" "}
+                  {PACE_CALCULATOR_TEXT.savedResults.paceUnit}
                 </span>
                 <span className={styles.savedMeta}>
-                  Круг 400 м: {formatMinutesSeconds(item.lapSeconds)}
+                  {PACE_CALCULATOR_TEXT.savedResults.lap} {formatMinutesSeconds(item.lapSeconds)}
                 </span>
               </div>
               <div className={styles.savedActions}>
@@ -47,7 +49,7 @@ export function SavedResultsList({
                   className={styles.deleteButton}
                   onClick={() => onDelete(item.id)}
                 >
-                  Удалить
+                  {PACE_CALCULATOR_TEXT.savedResults.delete}
                 </button>
                 <span className={styles.savedTimestamp}>
                   {new Date(item.createdAt).toLocaleString("ru-RU")}
