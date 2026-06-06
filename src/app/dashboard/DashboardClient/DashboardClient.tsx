@@ -2,7 +2,6 @@
 import {
   BookOutlined,
   CalendarOutlined,
-  MessageOutlined,
   ShoppingOutlined,
   SnippetsOutlined,
   TeamOutlined,
@@ -111,17 +110,6 @@ export function DashboardClient({ session }: Props) {
             >
               <Typography.Text type="secondary">
                 Заполните личные рекорды по дистанциям и добавьте ссылку на протокол.
-              </Typography.Text>
-            </Card>
-          </Link>
-          <Link href="/verify-telegram" className={styles.cardLink}>
-            <Card
-              hoverable
-              className={styles.card}
-              title={<CardTitle icon={<MessageOutlined />} title="Telegram" />}
-            >
-              <Typography.Text type="secondary">
-                Получите код и свяжите Telegram для плана и рассылки.
               </Typography.Text>
             </Card>
           </Link>

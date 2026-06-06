@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BackButton } from "@/components/BackButton/BackButton";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
 import { PageHeader } from "@/components/PageHeader";
+import { TelegramLinkPanel } from "@/components/TelegramLinkPanel/TelegramLinkPanel";
 import {
   buildTimezoneOptions,
   DEFAULT_TIMEZONE,
@@ -384,6 +385,10 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
             <Button onClick={openPasswordModal}>Изменить пароль</Button>
           </div>
         </Form>
+
+        <div className={styles.telegramSection}>
+          <TelegramLinkPanel />
+        </div>
       </Card>
 
       <Modal
