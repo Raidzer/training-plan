@@ -1,0 +1,32 @@
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.formRow :global(.ant-form-item) {
+  flex: 0 1 260px;
+  margin-bottom: 0;
+}
+
+.formRow :global(.ant-select),
+.formRow :global(.ant-btn) {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .formRow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .formRow :global(.ant-form-item) {
+    width: 100%;
+  }
+
+  .formRow :global(.ant-btn) {
+    width: 100%;
+  }
+}
