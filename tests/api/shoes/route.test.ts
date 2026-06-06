@@ -37,6 +37,10 @@ describe("API /api/shoes route", () => {
       {
         id: 1,
         name: "Pegasus",
+        mileageLimitKm: "600",
+        currentMileageKm: "120.5",
+        notifyOnLimitEmail: true,
+        notifyOnLimitTelegram: false,
         createdAt: new Date("2026-01-01T10:00:00.000Z"),
         updatedAt: new Date("2026-01-02T10:00:00.000Z"),
       },
@@ -44,6 +48,10 @@ describe("API /api/shoes route", () => {
     createShoeMock.mockResolvedValue({
       id: 2,
       name: "Vaporfly",
+      mileageLimitKm: null,
+      currentMileageKm: null,
+      notifyOnLimitEmail: false,
+      notifyOnLimitTelegram: false,
       createdAt: new Date("2026-01-03T10:00:00.000Z"),
       updatedAt: new Date("2026-01-03T10:00:00.000Z"),
     });
@@ -142,6 +150,43 @@ describe("API /api/shoes route", () => {
         userId: 13,
         name: "Vaporfly",
       });
+    });
+
+    it("должен создавать кроссовок с настройками пробега и уведомлений", async () => {
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes",
+        body: {
+          name: "Vaporfly",
+          mileageLimitKm: "600,25",
+          currentMileageKm: 25.128,
+          notifyOnLimitEmail: true,
+          notifyOnLimitTelegram: "false",
+        },
+      });
+
+      const response = await POST(request);
+      await expectJsonSuccess(response, 201);
+
+      expect(createShoeMock).toHaveBeenCalledWith({
+        userId: 13,
+        name: "Vaporfly",
+        mileageLimitKm: 600.25,
+        currentMileageKm: 25.13,
+        notifyOnLimitEmail: true,
+        notifyOnLimitTelegram: false,
+      });
+    });
+
+    it("должен возвращать 400 при невалидном лимите пробега", async () => {
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes",
+        body: { name: "Vaporfly", mileageLimitKm: -1 },
+      });
+
+      const response = await POST(request);
+
+      await expectJsonError(response, 400, "invalid_mileage_limit");
+      expect(createShoeMock).not.toHaveBeenCalled();
     });
   });
 });

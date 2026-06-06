@@ -1,24 +1,15 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { deleteShoe, updateShoe } from "@/server/shoes";
+import {
+  parseName,
+  parseOptionalFlag,
+  parseOptionalMileageKm,
+  type ShoePayload,
+} from "../shoePayload";
 
 type Params = {
   shoeId: string;
-};
-
-type ShoePayload = {
-  name?: string;
-};
-
-const parseName = (payload: ShoePayload | null) => {
-  const raw = typeof payload?.name === "string" ? payload.name.trim() : "";
-  if (!raw) {
-    return null;
-  }
-  if (raw.length > 255) {
-    return null;
-  }
-  return raw;
 };
 
 export async function PATCH(req: Request, { params }: { params: Promise<Params> }) {
@@ -39,12 +30,59 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
   }
 
   const body = (await req.json().catch(() => null)) as ShoePayload | null;
-  const name = parseName(body);
-  if (!name) {
+  const name = parseName(body?.name, false);
+  if (!name.valid) {
     return NextResponse.json({ error: "invalid_name" }, { status: 400 });
   }
+  const mileageLimitKm = parseOptionalMileageKm(body?.mileageLimitKm);
+  const currentMileageKm = parseOptionalMileageKm(body?.currentMileageKm);
+  const notifyOnLimitEmail = parseOptionalFlag(body?.notifyOnLimitEmail);
+  const notifyOnLimitTelegram = parseOptionalFlag(body?.notifyOnLimitTelegram);
 
-  const updated = await updateShoe({ userId, shoeId, name });
+  if (!mileageLimitKm.valid) {
+    return NextResponse.json({ error: "invalid_mileage_limit" }, { status: 400 });
+  }
+  if (!currentMileageKm.valid) {
+    return NextResponse.json({ error: "invalid_current_mileage" }, { status: 400 });
+  }
+  if (!notifyOnLimitEmail.valid) {
+    return NextResponse.json({ error: "invalid_notify_on_limit_email" }, { status: 400 });
+  }
+  if (!notifyOnLimitTelegram.valid) {
+    return NextResponse.json({ error: "invalid_notify_on_limit_telegram" }, { status: 400 });
+  }
+
+  const updateParams: Parameters<typeof updateShoe>[0] = {
+    userId,
+    shoeId,
+  };
+  if (name.value !== null) {
+    updateParams.name = name.value;
+  }
+  if (mileageLimitKm.value !== undefined) {
+    updateParams.mileageLimitKm = mileageLimitKm.value;
+  }
+  if (currentMileageKm.value !== undefined) {
+    updateParams.currentMileageKm = currentMileageKm.value;
+  }
+  if (notifyOnLimitEmail.value !== undefined) {
+    updateParams.notifyOnLimitEmail = notifyOnLimitEmail.value;
+  }
+  if (notifyOnLimitTelegram.value !== undefined) {
+    updateParams.notifyOnLimitTelegram = notifyOnLimitTelegram.value;
+  }
+
+  const hasUpdates =
+    updateParams.name !== undefined ||
+    updateParams.mileageLimitKm !== undefined ||
+    updateParams.currentMileageKm !== undefined ||
+    updateParams.notifyOnLimitEmail !== undefined ||
+    updateParams.notifyOnLimitTelegram !== undefined;
+  if (!hasUpdates) {
+    return NextResponse.json({ error: "empty_update" }, { status: 400 });
+  }
+
+  const updated = await updateShoe(updateParams);
 
   if (!updated) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
