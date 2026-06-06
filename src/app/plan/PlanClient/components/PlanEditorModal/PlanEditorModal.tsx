@@ -1,10 +1,10 @@
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Card, DatePicker, Input, Modal, Space, Switch, Typography } from "antd";
 import type { Dayjs } from "dayjs";
-import { PLAN_DATE_DISPLAY_FORMAT } from "../planConstants";
-import styles from "../plan.module.scss";
-import { PLAN_TEXT } from "../planText";
-import type { PlanDraft, PlanDraftEntry } from "../planUtils";
+import { PLAN_DATE_DISPLAY_FORMAT } from "../../constants/planConstants";
+import { PLAN_TEXT } from "../../constants/planText";
+import type { PlanDraft, PlanDraftEntry } from "../../types/planTypes";
+import styles from "./PlanEditorModal.module.scss";
 
 const { TextArea } = Input;
 

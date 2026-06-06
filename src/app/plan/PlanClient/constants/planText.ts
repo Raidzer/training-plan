@@ -9,6 +9,8 @@ export const PLAN_TEXT = {
     addDay: "Добавить день",
     reload: "Обновить план",
     importExcel: "Загрузить план из Excel",
+    backToPlan: "Обратно к плану",
+    upload: "Загрузить",
   },
   filter: {
     onlyWithoutReports: "Только без отчетов",
@@ -56,6 +58,12 @@ export const PLAN_TEXT = {
   messages: {
     loadFailed: "Не удалось загрузить записи плана",
     loadError: "Произошла ошибка при загрузке плана",
+    fileRequired: "Выберите файл Excel",
+    importFailed: "Не удалось загрузить план",
+    importRequestError: "Ошибка запроса",
+    importWithErrors: (inserted: number, errorsCount: number) =>
+      `Загружено: ${inserted}, пропущено: ${errorsCount}`,
+    importSuccess: (inserted: number) => `Загружено строк: ${inserted}`,
     dateRequired: "Укажите дату",
     dateExists: "Эта дата уже есть в плане",
     fillWorkouts: "Заполните все тренировки",
@@ -67,5 +75,17 @@ export const PLAN_TEXT = {
     deleteFailed: "Не удалось удалить день",
     deleteError: "Ошибка при удалении дня",
     dayDeleted: "День удален",
+  },
+  importPage: {
+    title: "Импорт плана из Excel",
+    description:
+      "Файл должен содержать колонки «Дата», «Задание», «Комментарий» (первая строка — заголовки). Используется только первый лист.",
+    dragText: "Перетащите файл сюда или кликните для выбора",
+    dragHint: "При повторной загрузке строки добавятся как новая версия (старые не обновляются).",
+    resultTitle: "Результат импорта",
+    resultSummary: (importId: number, inserted: number, skipped: number) =>
+      `Импорт #${importId}: добавлено ${inserted}, пропущено ${skipped}.`,
+    rowErrors: "Ошибки строк:",
+    rowError: (row: number, message: string) => `Строка ${row}: ${message}`,
   },
 } as const;

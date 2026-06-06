@@ -1,35 +1,6 @@
-export type PlanEntry = {
-  id: number;
-  date: string;
-  sessionOrder: number;
-  taskText: string;
-  commentText: string | null;
-  importId: number | null;
-  isWorkload: boolean;
-  hasReport: boolean;
-};
+import type { PlanDayEntry, PlanDraftEntry, PlanEntry } from "../types/planTypes";
 
-export type PlanDayEntry = {
-  date: string;
-  taskText: string;
-  commentText: string | null;
-  isWorkload: boolean;
-  hasReport: boolean;
-};
-
-export type PlanDraftEntry = {
-  id?: number;
-  taskText: string;
-  commentText: string;
-  hasReport: boolean;
-};
-
-export type PlanDraft = {
-  date: string;
-  originalDate?: string;
-  isWorkload: boolean;
-  entries: PlanDraftEntry[];
-};
+export type { PlanDayEntry, PlanDraft, PlanDraftEntry, PlanEntry } from "../types/planTypes";
 
 export const createEmptyDraftEntry = (): PlanDraftEntry => ({
   taskText: "",
