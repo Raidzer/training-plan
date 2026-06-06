@@ -1,0 +1,43 @@
+.rangeRow {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 1fr) auto auto auto;
+  align-items: center;
+}
+
+.rangeCard {
+  width: 100%;
+}
+
+.rangePicker {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  .rangeRow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rangePicker {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .rangeCard :global(.ant-card-body) {
+    padding: 12px !important;
+  }
+
+  .rangeCard :global(.ant-card-head) {
+    padding-inline: 12px !important;
+  }
+
+  .rangeRow {
+    grid-template-columns: 1fr;
+  }
+
+  .rangeRow :global(.ant-btn) {
+    width: 100%;
+  }
+}

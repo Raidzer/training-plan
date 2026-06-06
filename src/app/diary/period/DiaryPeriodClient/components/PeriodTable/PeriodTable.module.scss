@@ -1,0 +1,14 @@
+.periodTable {
+  width: 100%;
+  min-width: 0;
+}
+
+.periodTable :global(.ant-table-content) {
+  overflow-x: auto;
+}
+
+@media (max-width: 1023px) {
+  .periodTable {
+    display: none;
+  }
+}
