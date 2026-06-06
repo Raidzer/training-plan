@@ -1,11 +1,12 @@
 "use client";
 
-import { GlobalOutlined } from "@ant-design/icons";
-import { App, Button, Card, Form, Input, Modal, Select } from "antd";
+import { CheckCircleFilled, GlobalOutlined } from "@ant-design/icons";
+import { App, Button, Card, Form, Input, Modal, Select, Tooltip } from "antd";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BackButton } from "@/components/BackButton/BackButton";
+import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
 import { PageHeader } from "@/components/PageHeader";
 import styles from "./ProfileForm.module.scss";
 
@@ -70,7 +71,7 @@ async function readJson<T>(response: Response): Promise<T | null> {
 
 export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => {
   const { message } = App.useApp();
-  const { update } = useSession();
+  const { data: session, update } = useSession();
   const [profileForm] = Form.useForm<ProfileFormValues>();
   const [passwordForm] = Form.useForm<PasswordFormValues>();
   const [userData, setUserData] = useState(initialUserData);
@@ -92,6 +93,7 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
       normalizedDraft.timezone !== normalizedCurrent.timezone,
     [normalizedCurrent, normalizedDraft]
   );
+  const isEmailVerified = Boolean(session?.user?.emailVerified);
 
   const timezoneOptions = useMemo(() => {
     try {
@@ -228,6 +230,8 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
           }
         />
 
+        <EmailVerificationBanner />
+
         <Form<ProfileFormValues>
           form={profileForm}
           initialValues={initialValues}
@@ -236,7 +240,21 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
           layout="vertical"
           onValuesChange={handleProfileValuesChange}
         >
-          <Form.Item label="Email">
+          <Form.Item
+            label={
+              <span className={styles.emailLabel}>
+                Email
+                {isEmailVerified ? (
+                  <Tooltip title="Почта подтверждена">
+                    <CheckCircleFilled
+                      aria-label="Почта подтверждена"
+                      className={styles.verifiedIcon}
+                    />
+                  </Tooltip>
+                ) : null}
+              </span>
+            }
+          >
             <Input value={userData.email} disabled />
           </Form.Item>
           <Form.Item
