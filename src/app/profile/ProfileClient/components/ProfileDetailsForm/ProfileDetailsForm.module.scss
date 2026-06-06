@@ -1,0 +1,33 @@
+.form {
+  width: 100%;
+  max-width: 640px;
+  margin: 28px auto 0;
+}
+
+.emailLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.verifiedIcon {
+  color: #52c41a;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions :global(.ant-btn) {
+    width: 100%;
+  }
+}

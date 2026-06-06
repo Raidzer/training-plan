@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/server/db/client";
 import { verificationTokens } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export const generateVerificationToken = async (email: string) => {
   const token = uuidv4();
@@ -38,4 +38,13 @@ export const getVerificationTokenByToken = async (token: string) => {
     .where(eq(verificationTokens.token, token));
 
   return verificationToken;
+};
+
+export const deleteVerificationTokensByIdentifierAndType = async (
+  identifier: string,
+  type: string
+) => {
+  await db
+    .delete(verificationTokens)
+    .where(and(eq(verificationTokens.identifier, identifier), eq(verificationTokens.type, type)));
 };

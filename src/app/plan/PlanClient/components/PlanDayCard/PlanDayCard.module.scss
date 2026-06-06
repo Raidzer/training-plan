@@ -1,0 +1,92 @@
+.mobileDayCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-bg);
+}
+
+.mobileWorkloadCard {
+  border-color: rgba(250, 140, 22, 0.32);
+  background: rgba(250, 140, 22, 0.04);
+}
+
+.mobileTodayCard {
+  border-color: rgba(24, 144, 255, 0.38);
+  background: linear-gradient(90deg, rgba(24, 144, 255, 0.08), rgba(24, 144, 255, 0) 76%);
+}
+
+.mobileTodayCard::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(24, 144, 255, 0.95), rgba(24, 144, 255, 0.35));
+  box-shadow: 0 0 8px rgba(24, 144, 255, 0.45);
+}
+
+.mobileDayHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mobileDayTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mobileDate {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.mobileTags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mobileTags :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.mobileSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mobileSectionTitle {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.multilineText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

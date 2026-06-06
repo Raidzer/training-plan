@@ -31,6 +31,11 @@ export const toDefaultWorkoutForm = (report?: WorkoutReport | null): WorkoutForm
   temperatureC: report?.temperatureC ?? "",
   surface: report?.surface ?? "",
   shoeIds: report?.shoes ? report.shoes.map((shoe) => shoe.id) : [],
+  shoeMileageKm: report?.shoes
+    ? Object.fromEntries(
+        report.shoes.map((shoe) => [shoe.id, shoe.mileageKm ? String(Number(shoe.mileageKm)) : ""])
+      )
+    : {},
 });
 
 const normalizeText = (value?: string | null) =>

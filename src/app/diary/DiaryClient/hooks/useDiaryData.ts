@@ -35,6 +35,7 @@ export type DiaryMessages = {
   weightSaved: string;
   workoutRequired: string;
   workoutDistanceInvalid: string;
+  workoutShoeMileageInvalid: string;
   workoutTemperatureInvalid: string;
   workoutSaveFailed: string;
   workoutSaved: string;
@@ -56,6 +57,20 @@ type LoadDayOptions = {
 type ShoeItem = {
   id: number;
   name: string;
+};
+
+const MAX_SHOE_MILEAGE_KM = 99999.99;
+
+const parseShoeMileageInput = (value: string | undefined) => {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return { valid: true, value: null } as const;
+  }
+  const parsed = Number(trimmed.replace(",", "."));
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > MAX_SHOE_MILEAGE_KM) {
+    return { valid: false, value: null } as const;
+  }
+  return { valid: true, value: Math.round(parsed * 100) / 100 } as const;
 };
 
 const parseShoesResponse = (value: unknown): ShoeItem[] => {
@@ -343,6 +358,15 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       const shoeIds = Array.from(
         new Set(rawShoeIds.filter((shoeId) => Number.isInteger(shoeId) && shoeId > 0))
       );
+      const shoeUsages: Array<{ shoeId: number; mileageKm: number | null }> = [];
+      for (const shoeId of shoeIds) {
+        const mileage = parseShoeMileageInput(form.shoeMileageKm?.[shoeId]);
+        if (!mileage.valid) {
+          messageApi.error(messages.workoutShoeMileageInvalid);
+          return;
+        }
+        shoeUsages.push({ shoeId, mileageKm: mileage.value });
+      }
 
       if (!isIndoorSurface && temperatureValue.length > 0 && !Number.isFinite(temperatureC)) {
         messageApi.error(messages.workoutTemperatureInvalid);
@@ -368,6 +392,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
             hasWind: hasWindValue === "true" ? true : hasWindValue === "false" ? false : null,
             temperatureC,
             shoeIds,
+            shoeUsages,
           }),
         });
         if (!res.ok) {

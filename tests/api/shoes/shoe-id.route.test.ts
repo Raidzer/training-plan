@@ -42,6 +42,10 @@ describe("API /api/shoes/[shoeId] route", () => {
     updateShoeMock.mockResolvedValue({
       id: 7,
       name: "Pegasus",
+      mileageLimitKm: "600",
+      currentMileageKm: "120.5",
+      notifyOnLimitEmail: true,
+      notifyOnLimitTelegram: false,
       createdAt: new Date("2026-01-01T10:00:00.000Z"),
       updatedAt: new Date("2026-01-04T10:00:00.000Z"),
     });
@@ -127,6 +131,57 @@ describe("API /api/shoes/[shoeId] route", () => {
         shoeId: 7,
         name: "Pegasus",
       });
+    });
+
+    it("должен частично обновлять пробег и флаги уведомлений", async () => {
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes/7",
+        method: "PATCH",
+        body: {
+          mileageLimitKm: null,
+          currentMileageKm: "700,255",
+          notifyOnLimitEmail: "true",
+          notifyOnLimitTelegram: null,
+        },
+      });
+
+      const response = await PATCH(request, createRouteContext("7"));
+      await expectJsonSuccess(response, 200);
+
+      expect(updateShoeMock).toHaveBeenCalledWith({
+        userId: 44,
+        shoeId: 7,
+        mileageLimitKm: null,
+        currentMileageKm: 700.26,
+        notifyOnLimitEmail: true,
+        notifyOnLimitTelegram: false,
+      });
+    });
+
+    it("должен возвращать 400 при пустом обновлении", async () => {
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes/7",
+        method: "PATCH",
+        body: {},
+      });
+
+      const response = await PATCH(request, createRouteContext("7"));
+
+      await expectJsonError(response, 400, "empty_update");
+      expect(updateShoeMock).not.toHaveBeenCalled();
+    });
+
+    it("должен возвращать 400 при невалидном текущем пробеге", async () => {
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes/7",
+        method: "PATCH",
+        body: { currentMileageKm: "bad" },
+      });
+
+      const response = await PATCH(request, createRouteContext("7"));
+
+      await expectJsonError(response, 400, "invalid_current_mileage");
+      expect(updateShoeMock).not.toHaveBeenCalled();
     });
   });
 

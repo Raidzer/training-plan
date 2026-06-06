@@ -1,0 +1,52 @@
+.page {
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  min-height: 70vh;
+  width: 100%;
+  min-width: 0;
+}
+
+.card {
+  width: min(100%, 380px);
+  min-width: 0;
+}
+
+.card :global(.ant-card-body) {
+  min-width: 0;
+}
+
+.card :global(.ant-input-affix-wrapper),
+.card :global(.ant-input-affix-wrapper:hover),
+.card :global(.ant-input-affix-wrapper-focused),
+.card :global(.ant-input-affix-wrapper .ant-input) {
+  background: transparent;
+}
+
+.card :global(.ant-input-affix-wrapper .ant-input:-webkit-autofill),
+.card :global(.ant-input-affix-wrapper .ant-input:-webkit-autofill:hover),
+.card :global(.ant-input-affix-wrapper .ant-input:-webkit-autofill:focus) {
+  -webkit-box-shadow: 0 0 0 1000px var(--ant-color-bg-container) inset;
+  -webkit-text-fill-color: var(--ant-color-text);
+  transition: background-color 9999s ease-out;
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  margin-bottom: 24px;
+}
+
+.links {
+  text-align: center;
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
+}

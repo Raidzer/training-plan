@@ -8,6 +8,7 @@ import {
 } from "@/server/workoutReports";
 
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const MAX_SHOE_MILEAGE_KM = 99999.99;
 
 const WEATHER_OPTIONS = new Set(["cloudy", "sunny", "rain", "snow"]);
 const SURFACE_OPTIONS = new Set(["ground", "asphalt", "manezh", "treadmill", "stadium"]);
@@ -124,6 +125,56 @@ const parseOptionalIdList = (value: unknown) => {
   return { value: ids, valid: true };
 };
 
+const parseOptionalShoeMileage = (value: unknown) => {
+  if (value === undefined || value === null || value === "") {
+    return { value: null, valid: true };
+  }
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (typeof value === "string" && !trimmed) {
+    return { value: null, valid: true };
+  }
+  const parsed = typeof value === "number" ? value : Number(trimmed.replace(",", "."));
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > MAX_SHOE_MILEAGE_KM) {
+    return { value: null, valid: false };
+  }
+  return { value: Math.round(parsed * 100) / 100, valid: true };
+};
+
+const parseOptionalShoeUsages = (value: unknown) => {
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null || value === "") {
+    return { value: [], valid: true };
+  }
+  if (!Array.isArray(value)) {
+    return { value: [], valid: false };
+  }
+
+  const usages: Array<{ shoeId: number; mileageKm: number | null }> = [];
+  const seen = new Set<number>();
+  for (const item of value) {
+    if (!item || typeof item !== "object") {
+      return { value: [], valid: false };
+    }
+    const rawShoeId =
+      (item as { shoeId?: unknown; id?: unknown }).shoeId ?? (item as { id?: unknown }).id;
+    const shoeId = typeof rawShoeId === "number" ? rawShoeId : Number(String(rawShoeId).trim());
+    if (!Number.isInteger(shoeId) || shoeId <= 0) {
+      return { value: [], valid: false };
+    }
+    const mileage = parseOptionalShoeMileage((item as { mileageKm?: unknown }).mileageKm);
+    if (!mileage.valid) {
+      return { value: [], valid: false };
+    }
+    if (!seen.has(shoeId)) {
+      seen.add(shoeId);
+      usages.push({ shoeId, mileageKm: mileage.value });
+    }
+  }
+  return { value: usages, valid: true };
+};
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) {
@@ -150,6 +201,7 @@ export async function POST(req: Request) {
     temperatureC?: number | string | null;
     surface?: string | null;
     shoeIds?: number[] | string[] | null;
+    shoeUsages?: unknown;
   } | null;
 
   const planEntryId = Number(body?.planEntryId);
@@ -164,6 +216,9 @@ export async function POST(req: Request) {
   const muscleScore = parseOptionalScore(body?.muscleScore);
   const surface = typeof body?.surface === "string" ? body.surface.trim() : null;
   const shoeIds = parseOptionalIdList(body?.shoeIds);
+  const shoeUsages = parseOptionalShoeUsages(body?.shoeUsages);
+  const normalizedShoeIds =
+    shoeUsages.value !== undefined ? shoeUsages.value.map((usage) => usage.shoeId) : shoeIds.value;
   const isIndoorSurface =
     surface === "manezh" ||
     surface === "treadmill" ||
@@ -205,7 +260,7 @@ export async function POST(req: Request) {
   if (!distanceKm.valid) {
     return NextResponse.json({ error: "invalid_distance" }, { status: 400 });
   }
-  if (!shoeIds.valid) {
+  if (!shoeIds.valid || !shoeUsages.valid) {
     return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
   }
   if (!hasWind.valid) {
@@ -226,8 +281,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "date_mismatch" }, { status: 400 });
   }
 
-  if (shoeIds.value !== undefined && shoeIds.value.length > 0) {
-    const allowed = await areShoesOwnedByUser({ userId, shoeIds: shoeIds.value });
+  if (normalizedShoeIds !== undefined && normalizedShoeIds.length > 0) {
+    const allowed = await areShoesOwnedByUser({ userId, shoeIds: normalizedShoeIds });
     if (!allowed) {
       return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
     }
@@ -265,7 +320,9 @@ export async function POST(req: Request) {
   if (temperatureC.value !== undefined) {
     upsertParams.temperatureC = temperatureC.value;
   }
-  if (shoeIds.value !== undefined) {
+  if (shoeUsages.value !== undefined) {
+    upsertParams.shoeUsages = shoeUsages.value;
+  } else if (shoeIds.value !== undefined) {
     upsertParams.shoeIds = shoeIds.value;
   }
 

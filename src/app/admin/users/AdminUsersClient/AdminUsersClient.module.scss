@@ -1,0 +1,23 @@
+.page {
+  width: 100%;
+  min-width: 0;
+}
+
+.card {
+  width: 100%;
+  min-width: 0;
+}
+
+.pageHeader {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
+
+  .pageHeader :global(.ant-btn) {
+    width: 100%;
+  }
+}

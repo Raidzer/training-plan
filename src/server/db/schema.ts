@@ -169,6 +169,10 @@ export const shoes = pgTable(
       .notNull()
       .references(() => users.id),
     name: varchar("name", { length: 255 }).notNull(),
+    mileageLimitKm: numeric("mileage_limit_km", { precision: 7, scale: 2 }),
+    currentMileageKm: numeric("current_mileage_km", { precision: 7, scale: 2 }),
+    notifyOnLimitEmail: boolean("notify_on_limit_email").notNull().default(false),
+    notifyOnLimitTelegram: boolean("notify_on_limit_telegram").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -322,6 +326,7 @@ export const workoutReportShoes = pgTable(
     shoeId: integer("shoe_id")
       .notNull()
       .references(() => shoes.id),
+    mileageKm: numeric("mileage_km", { precision: 7, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => ({

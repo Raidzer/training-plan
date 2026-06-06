@@ -2,122 +2,30 @@
 
 import { useMemo, useState } from "react";
 import { Card, message } from "antd";
-import styles from "./diary.module.scss";
+import styles from "./DiaryClient.module.scss";
 import { buildDailyReportText } from "@/shared/utils/dailyReport";
 import { formatDate } from "./utils/diaryUtils";
 import { useDiaryData } from "./hooks/useDiaryData";
-import { DiaryHeader } from "./components/DiaryHeader";
-import { DiaryCalendar } from "./components/DiaryCalendar";
-import { DiaryStatusBlock } from "./components/DiaryStatusBlock";
-import { WeightCard } from "./components/WeightCard";
-import { RecoveryCard } from "./components/RecoveryCard";
-import { WorkoutsCard } from "./components/WorkoutsCard";
-import { DailyReportModal } from "./components/DailyReportModal";
-
-const WEATHER_OPTIONS = [
-  { value: "cloudy", label: "Пасмурно" },
-  { value: "sunny", label: "Солнечно" },
-  { value: "rain", label: "Дождь" },
-  { value: "snow", label: "Снег" },
-] as const;
-
-const SURFACE_OPTIONS = [
-  { value: "ground", label: "Грунт" },
-  { value: "asphalt", label: "Асфальт" },
-  { value: "manezh", label: "Манеж" },
-  { value: "treadmill", label: "Беговая дорожка" },
-  { value: "stadium", label: "Стадион" },
-] as const;
-
-const WIND_OPTIONS = [
-  { value: "true", label: "Есть" },
-  { value: "false", label: "Нет" },
-] as const;
-
-const diaryMessages = {
-  marksLoadFailed: "Не удалось загрузить отметки календаря.",
-  dayLoadFailed: "Не удалось загрузить дневник за день.",
-  weightInvalid: "Введите корректный вес.",
-  weightSaveFailed: "Не удалось сохранить вес.",
-  weightSaved: "Вес сохранен.",
-  workoutRequired: "Время начала и результат обязательны.",
-  workoutDistanceInvalid: "Введите корректную дистанцию тренировки.",
-  workoutTemperatureInvalid: "Введите корректную температуру воздуха.",
-  workoutSaveFailed: "Не удалось сохранить отчет о тренировке.",
-  workoutSaved: "Отчет о тренировке сохранен.",
-  recoveryInvalidSleep: "Введите время сна в формате ЧЧ:ММ.",
-  recoverySaveFailed: "Не удалось сохранить отметки восстановления.",
-  recoverySaved: "Отметки восстановления сохранены.",
-  shoesLoadFailed: "Не удалось загрузить список обуви.",
-} as const;
-
-const headerLabels = {
-  title: "Дневник за день",
-  subtitle: "Отмечайте вес и отчеты о тренировках за выбранный день.",
-  periodLabel: "Просмотр периода",
-  dashboardLabel: "Назад к панели",
-};
-
-const calendarLabels = {
-  title: "Календарь",
-};
-
-const statusLabels = {
-  reportButton: "Ежедневный отчет",
-  dayComplete: "День заполнен",
-  dayIncomplete: "День не заполнен",
-  weightLabel: "Вес",
-  weightMorningShort: "У",
-  weightEveningShort: "В",
-  workoutsLabel: "Тренировки",
-};
-
-const weightLabels = {
-  title: "Вес",
-  morningPlaceholder: "Вес утром",
-  eveningPlaceholder: "Вес вечером",
-  saveLabel: "Сохранить",
-};
-
-const recoveryLabels = {
-  title: "Восстановление",
-  bathLabel: "Баня",
-  mfrLabel: "МФР",
-  massageLabel: "Массаж",
-  overallLabel: "Общая оценка",
-  functionalLabel: "Функциональная оценка",
-  muscleLabel: "Мышечная оценка",
-  sleepLabel: "Сон, часы",
-  sleepPlaceholder: "ЧЧ:ММ",
-  scorePlaceholder: "1-10",
-  saveLabel: "Сохранить",
-};
-
-const workoutLabels = {
-  title: "Тренировки",
-  emptyLabel: "На эту дату тренировки не запланированы.",
-  completeLabel: "Заполнено",
-  incompleteLabel: "Не заполнено",
-  startTimePlaceholder: "Время начала (ЧЧ:ММ)",
-  resultPlaceholder: "Результат",
-  distancePlaceholder: "Дистанция (км)",
-  overallScoreLabel: recoveryLabels.overallLabel,
-  functionalScoreLabel: recoveryLabels.functionalLabel,
-  muscleScoreLabel: recoveryLabels.muscleLabel,
-  scorePlaceholder: recoveryLabels.scorePlaceholder,
-  surfacePlaceholder: "Покрытие",
-  shoePlaceholder: "Обувь",
-  weatherPlaceholder: "Погода",
-  windPlaceholder: "Ветер",
-  temperaturePlaceholder: "Температура, °C",
-  commentPlaceholder: "Комментарий",
-  saveReportLabel: "Сохранить отчет",
-};
-
-const reportLabels = {
-  title: "Ежедневный отчет",
-  closeLabel: "Закрыть",
-};
+import { DiaryHeader } from "./components/DiaryHeader/DiaryHeader";
+import { DiaryCalendar } from "./components/DiaryCalendar/DiaryCalendar";
+import { DiaryStatusBlock } from "./components/DiaryStatusBlock/DiaryStatusBlock";
+import { WeightCard } from "./components/WeightCard/WeightCard";
+import { RecoveryCard } from "./components/RecoveryCard/RecoveryCard";
+import { WorkoutsCard } from "./components/WorkoutsCard/WorkoutsCard";
+import { DailyReportModal } from "./components/DailyReportModal/DailyReportModal";
+import {
+  CALENDAR_LABELS,
+  DIARY_MESSAGES,
+  HEADER_LABELS,
+  RECOVERY_LABELS,
+  REPORT_LABELS,
+  STATUS_LABELS,
+  SURFACE_OPTIONS,
+  WEATHER_OPTIONS,
+  WEIGHT_LABELS,
+  WIND_OPTIONS,
+  WORKOUT_LABELS,
+} from "./constants/diaryConstants";
 
 export function DiaryClient({ userId }: { userId: number }) {
   const [messageApi, contextHolder] = message.useMessage();
@@ -143,7 +51,7 @@ export function DiaryClient({ userId }: { userId: number }) {
     handleSaveWeight,
     handleSaveWorkout,
     handleSaveRecovery,
-  } = useDiaryData({ messageApi, messages: diaryMessages });
+  } = useDiaryData({ messageApi, messages: DIARY_MESSAGES });
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   const shoeOptions = useMemo(
@@ -177,8 +85,9 @@ export function DiaryClient({ userId }: { userId: number }) {
       | "hasWind"
       | "temperatureC"
       | "surface"
-      | "shoeIds",
-    value: string | number | number[] | null
+      | "shoeIds"
+      | "shoeMileageKm",
+    value: string | number | number[] | Record<number, string> | null
   ) => {
     setWorkoutForm((prev) => {
       const current = prev[entryId] ?? {
@@ -194,11 +103,21 @@ export function DiaryClient({ userId }: { userId: number }) {
         temperatureC: "",
         surface: "",
         shoeIds: [],
+        shoeMileageKm: {},
       };
       let next = current;
       if (field === "shoeIds") {
         const nextIds = Array.isArray(value) ? value : [];
-        next = { ...current, shoeIds: nextIds };
+        const nextMileage = Object.fromEntries(
+          nextIds.map((shoeId) => [shoeId, current.shoeMileageKm?.[shoeId] ?? ""])
+        );
+        next = { ...current, shoeIds: nextIds, shoeMileageKm: nextMileage };
+      } else if (field === "shoeMileageKm") {
+        const nextMileage =
+          value && typeof value === "object" && !Array.isArray(value)
+            ? (value as Record<number, string>)
+            : {};
+        next = { ...current, shoeMileageKm: nextMileage };
       } else {
         next = { ...current, [field]: value as string | number | null };
         if (field === "surface") {
@@ -237,17 +156,17 @@ export function DiaryClient({ userId }: { userId: number }) {
       {contextHolder}
       <div className={styles.pageStack}>
         <DiaryHeader
-          title={headerLabels.title}
-          subtitle={headerLabels.subtitle}
+          title={HEADER_LABELS.title}
+          subtitle={HEADER_LABELS.subtitle}
           periodHref="/diary/period"
-          periodLabel={headerLabels.periodLabel}
+          periodLabel={HEADER_LABELS.periodLabel}
           dashboardHref="/dashboard"
-          dashboardLabel={headerLabels.dashboardLabel}
+          dashboardLabel={HEADER_LABELS.dashboardLabel}
         />
         <div className={styles.grid}>
           <div className={styles.calendarBlock}>
             <DiaryCalendar
-              title={calendarLabels.title}
+              title={CALENDAR_LABELS.title}
               loading={loadingMarks && Object.keys(marks).length === 0}
               selectedDate={selectedDate}
               marks={marks}
@@ -266,29 +185,29 @@ export function DiaryClient({ userId }: { userId: number }) {
                   status={status}
                   workoutsComplete={workoutsComplete}
                   disabledReport={!dayData}
-                  labels={statusLabels}
+                  labels={STATUS_LABELS}
                   onOpenReport={() => setIsReportOpen(true)}
                 />
                 <div className={styles.dayLayout}>
                   <div className={styles.weightRecoveryBlock}>
                     <WeightCard
-                      title={weightLabels.title}
-                      morningPlaceholder={weightLabels.morningPlaceholder}
-                      eveningPlaceholder={weightLabels.eveningPlaceholder}
-                      saveLabel={weightLabels.saveLabel}
+                      title={WEIGHT_LABELS.title}
+                      morningPlaceholder={WEIGHT_LABELS.morningPlaceholder}
+                      eveningPlaceholder={WEIGHT_LABELS.eveningPlaceholder}
+                      saveLabel={WEIGHT_LABELS.saveLabel}
                       weightForm={weightForm}
                       savingWeight={savingWeight}
                       onChange={handleWeightChange}
                       onSave={handleSaveWeight}
                     />
                     <RecoveryCard
-                      title={recoveryLabels.title}
-                      bathLabel={recoveryLabels.bathLabel}
-                      mfrLabel={recoveryLabels.mfrLabel}
-                      massageLabel={recoveryLabels.massageLabel}
-                      sleepLabel={recoveryLabels.sleepLabel}
-                      sleepPlaceholder={recoveryLabels.sleepPlaceholder}
-                      saveLabel={recoveryLabels.saveLabel}
+                      title={RECOVERY_LABELS.title}
+                      bathLabel={RECOVERY_LABELS.bathLabel}
+                      mfrLabel={RECOVERY_LABELS.mfrLabel}
+                      massageLabel={RECOVERY_LABELS.massageLabel}
+                      sleepLabel={RECOVERY_LABELS.sleepLabel}
+                      sleepPlaceholder={RECOVERY_LABELS.sleepPlaceholder}
+                      saveLabel={RECOVERY_LABELS.saveLabel}
                       recoveryForm={recoveryForm}
                       savingRecovery={savingRecovery}
                       onToggle={handleRecoveryToggle}
@@ -300,24 +219,25 @@ export function DiaryClient({ userId }: { userId: number }) {
                     <WorkoutsCard
                       userId={userId}
                       messageApi={messageApi}
-                      title={workoutLabels.title}
-                      emptyLabel={workoutLabels.emptyLabel}
-                      completeLabel={workoutLabels.completeLabel}
-                      incompleteLabel={workoutLabels.incompleteLabel}
-                      startTimePlaceholder={workoutLabels.startTimePlaceholder}
-                      resultPlaceholder={workoutLabels.resultPlaceholder}
-                      distancePlaceholder={workoutLabels.distancePlaceholder}
-                      overallScoreLabel={workoutLabels.overallScoreLabel}
-                      functionalScoreLabel={workoutLabels.functionalScoreLabel}
-                      muscleScoreLabel={workoutLabels.muscleScoreLabel}
-                      scorePlaceholder={workoutLabels.scorePlaceholder}
-                      surfacePlaceholder={workoutLabels.surfacePlaceholder}
-                      shoePlaceholder={workoutLabels.shoePlaceholder}
-                      weatherPlaceholder={workoutLabels.weatherPlaceholder}
-                      windPlaceholder={workoutLabels.windPlaceholder}
-                      temperaturePlaceholder={workoutLabels.temperaturePlaceholder}
-                      commentPlaceholder={workoutLabels.commentPlaceholder}
-                      saveReportLabel={workoutLabels.saveReportLabel}
+                      title={WORKOUT_LABELS.title}
+                      emptyLabel={WORKOUT_LABELS.emptyLabel}
+                      completeLabel={WORKOUT_LABELS.completeLabel}
+                      incompleteLabel={WORKOUT_LABELS.incompleteLabel}
+                      startTimePlaceholder={WORKOUT_LABELS.startTimePlaceholder}
+                      resultPlaceholder={WORKOUT_LABELS.resultPlaceholder}
+                      distancePlaceholder={WORKOUT_LABELS.distancePlaceholder}
+                      overallScoreLabel={WORKOUT_LABELS.overallScoreLabel}
+                      functionalScoreLabel={WORKOUT_LABELS.functionalScoreLabel}
+                      muscleScoreLabel={WORKOUT_LABELS.muscleScoreLabel}
+                      scorePlaceholder={WORKOUT_LABELS.scorePlaceholder}
+                      surfacePlaceholder={WORKOUT_LABELS.surfacePlaceholder}
+                      shoePlaceholder={WORKOUT_LABELS.shoePlaceholder}
+                      shoeMileagePlaceholder={WORKOUT_LABELS.shoeMileagePlaceholder}
+                      weatherPlaceholder={WORKOUT_LABELS.weatherPlaceholder}
+                      windPlaceholder={WORKOUT_LABELS.windPlaceholder}
+                      temperaturePlaceholder={WORKOUT_LABELS.temperaturePlaceholder}
+                      commentPlaceholder={WORKOUT_LABELS.commentPlaceholder}
+                      saveReportLabel={WORKOUT_LABELS.saveReportLabel}
                       surfaceOptions={SURFACE_OPTIONS}
                       shoeOptions={shoeOptions}
                       weatherOptions={WEATHER_OPTIONS}
@@ -338,8 +258,8 @@ export function DiaryClient({ userId }: { userId: number }) {
       </div>
       <DailyReportModal
         open={isReportOpen}
-        title={reportLabels.title}
-        closeLabel={reportLabels.closeLabel}
+        title={REPORT_LABELS.title}
+        closeLabel={REPORT_LABELS.closeLabel}
         reportText={reportText}
         onClose={() => setIsReportOpen(false)}
       />

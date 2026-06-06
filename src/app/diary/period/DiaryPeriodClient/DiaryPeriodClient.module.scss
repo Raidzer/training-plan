@@ -1,0 +1,29 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.cardStyle {
+  width: 100%;
+}
+
+.spaceStyle {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .cardStyle :global(.ant-card-body) {
+    padding: 12px !important;
+  }
+
+  .cardStyle :global(.ant-card-head) {
+    padding-inline: 12px !important;
+  }
+}

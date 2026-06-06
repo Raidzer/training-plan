@@ -7,7 +7,7 @@ import {
   parseTimeInputToSeconds,
   safeParseSaved,
   toNonNegativeInt,
-} from "@/app/tools/pace-calculator/pace-calculator.utils";
+} from "@/app/tools/pace-calculator/PaceCalculatorClient/utils/paceCalculatorUtils";
 
 describe("app/tools/pace-calculator.utils", () => {
   it("должен парсить неотрицательные целые числа", () => {

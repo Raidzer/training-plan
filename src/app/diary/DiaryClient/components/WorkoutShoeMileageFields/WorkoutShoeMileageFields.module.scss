@@ -1,0 +1,34 @@
+.field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mileageList {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mileageRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(140px, 180px);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shoeName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mileageInput {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .mileageRow {
+    grid-template-columns: 1fr;
+  }
+}

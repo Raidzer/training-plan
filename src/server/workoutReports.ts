@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   planEntries,
@@ -11,6 +11,12 @@ import {
 export type WorkoutReportShoe = {
   id: number;
   name: string;
+  mileageKm: string | null;
+};
+
+type WorkoutReportShoeUsage = {
+  shoeId: number;
+  mileageKm?: number | null;
 };
 
 export type WorkoutReportSummary = {
@@ -41,13 +47,14 @@ const loadReportShoes = async (reportIds: number[]) => {
       reportId: workoutReportShoes.workoutReportId,
       shoeId: workoutReportShoes.shoeId,
       shoeName: shoes.name,
+      mileageKm: workoutReportShoes.mileageKm,
     })
     .from(workoutReportShoes)
     .innerJoin(shoes, eq(shoes.id, workoutReportShoes.shoeId))
     .where(inArray(workoutReportShoes.workoutReportId, reportIds));
   for (const row of rows) {
     const existing = map.get(row.reportId);
-    const item = { id: row.shoeId, name: row.shoeName };
+    const item = { id: row.shoeId, name: row.shoeName, mileageKm: row.mileageKm };
     if (!existing) {
       map.set(row.reportId, [item]);
     } else {
@@ -182,6 +189,7 @@ export const upsertWorkoutReport = async (params: {
   temperatureC?: number | null;
   surface?: string | null;
   shoeIds?: number[] | null;
+  shoeUsages?: WorkoutReportShoeUsage[] | null;
 }) => {
   const now = new Date();
   const updateValues: {
@@ -255,7 +263,7 @@ export const upsertWorkoutReport = async (params: {
     params.temperatureC,
     params.surface,
   ].some((value) => value !== undefined);
-  const shouldUpsertShoes = params.shoeIds !== undefined;
+  const shouldUpsertShoes = params.shoeIds !== undefined || params.shoeUsages !== undefined;
 
   const upsertConditions = async (workoutReportId: number) => {
     if (!shouldUpsertConditions) {
@@ -313,19 +321,74 @@ export const upsertWorkoutReport = async (params: {
     if (!shouldUpsertShoes) {
       return;
     }
+    const previousRows = await db
+      .select({
+        shoeId: workoutReportShoes.shoeId,
+        mileageKm: workoutReportShoes.mileageKm,
+      })
+      .from(workoutReportShoes)
+      .where(eq(workoutReportShoes.workoutReportId, workoutReportId));
     await db
       .delete(workoutReportShoes)
       .where(eq(workoutReportShoes.workoutReportId, workoutReportId));
-    const shoeIds = params.shoeIds ?? [];
-    if (shoeIds.length === 0) {
+    const shoeUsages =
+      params.shoeUsages ??
+      (params.shoeIds ?? []).map((shoeId) => ({
+        shoeId,
+        mileageKm: null,
+      }));
+    if (shoeUsages.length === 0) {
+      await updateShoeMileageTotals(previousRows, []);
       return;
     }
-    const values = shoeIds.map((shoeId) => ({
+    const values = shoeUsages.map((usage) => ({
       workoutReportId,
-      shoeId,
+      shoeId: usage.shoeId,
+      mileageKm:
+        usage.mileageKm === null || usage.mileageKm === undefined ? null : String(usage.mileageKm),
       createdAt: now,
     }));
     await db.insert(workoutReportShoes).values(values);
+    await updateShoeMileageTotals(previousRows, shoeUsages);
+  };
+
+  const updateShoeMileageTotals = async (
+    previousRows: Array<{ shoeId: number; mileageKm: string | null }>,
+    nextRows: WorkoutReportShoeUsage[]
+  ) => {
+    const previousMileageByShoeId = new Map<number, number>();
+    for (const row of previousRows) {
+      const mileage = row.mileageKm === null ? 0 : Number(row.mileageKm);
+      previousMileageByShoeId.set(
+        row.shoeId,
+        (previousMileageByShoeId.get(row.shoeId) ?? 0) + (Number.isFinite(mileage) ? mileage : 0)
+      );
+    }
+
+    const nextMileageByShoeId = new Map<number, number>();
+    for (const row of nextRows) {
+      const mileage = row.mileageKm === null || row.mileageKm === undefined ? 0 : row.mileageKm;
+      nextMileageByShoeId.set(row.shoeId, (nextMileageByShoeId.get(row.shoeId) ?? 0) + mileage);
+    }
+
+    const shoeIds = new Set([...previousMileageByShoeId.keys(), ...nextMileageByShoeId.keys()]);
+    for (const shoeId of shoeIds) {
+      const delta =
+        Math.round(
+          ((nextMileageByShoeId.get(shoeId) ?? 0) - (previousMileageByShoeId.get(shoeId) ?? 0)) *
+            100
+        ) / 100;
+      if (delta === 0) {
+        continue;
+      }
+      await db
+        .update(shoes)
+        .set({
+          currentMileageKm: sql`greatest(coalesce(${shoes.currentMileageKm}, 0) + ${delta}, 0)`,
+          updatedAt: now,
+        })
+        .where(and(eq(shoes.id, shoeId), eq(shoes.userId, params.userId)));
+    }
   };
 
   const [existing] = await db

@@ -59,6 +59,7 @@ describe("GET /api/auth/verify-email", () => {
     getVerificationTokenByTokenMock.mockResolvedValue({
       id: 5,
       identifier: "user@example.com",
+      type: "verify-email",
       expires: new Date(Date.now() + 60_000).toISOString(),
     });
     getUserByEmailMock.mockResolvedValue({
@@ -90,10 +91,27 @@ describe("GET /api/auth/verify-email", () => {
     expect(getUserByEmailMock).not.toHaveBeenCalled();
   });
 
+  it("должен редиректить с invalid_token когда токен не для подтверждения email", async () => {
+    getVerificationTokenByTokenMock.mockResolvedValue({
+      id: 5,
+      identifier: "test@example.com",
+      type: "reset-password",
+      expires: new Date(Date.now() + 60_000).toISOString(),
+    });
+
+    const response = await GET(
+      createVerifyEmailRequest("http://localhost/api/auth/verify-email?token=wrong-type") as any
+    );
+
+    expectRedirectTo(response, "/auth/verify-email?error=invalid_token");
+    expect(getUserByEmailMock).not.toHaveBeenCalled();
+  });
+
   it("должен редиректить с просроченный когда токен является просроченный", async () => {
     getVerificationTokenByTokenMock.mockResolvedValue({
       id: 5,
       identifier: "user@example.com",
+      type: "verify-email",
       expires: new Date(Date.now() - 60_000).toISOString(),
     });
 

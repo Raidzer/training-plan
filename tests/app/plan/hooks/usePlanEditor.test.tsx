@@ -1,10 +1,12 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PLAN_TEXT } from "@/app/plan/planText";
-import type { PlanEntry } from "@/app/plan/planUtils";
-import { usePlanEditor } from "@/app/plan/hooks/usePlanEditor";
+import { PLAN_TEXT } from "@/app/plan/PlanClient/constants/planText";
+import type { PlanEntry } from "@/app/plan/PlanClient/types/planTypes";
+import { usePlanEditor } from "@/app/plan/PlanClient/hooks/usePlanEditor";
 import type { Dispatch, SetStateAction } from "react";
+import type { MessageInstance } from "antd/es/message/interface";
+import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
 
 function createPlanEntry(overrides: Partial<PlanEntry> = {}): PlanEntry {
   return {
@@ -35,8 +37,8 @@ function createHookHarness(params: { entries?: PlanEntry[] }) {
     usePlanEditor({
       entries,
       setEntries: setEntries as unknown as Dispatch<SetStateAction<PlanEntry[]>>,
-      msgApi: msgApi as any,
-      modalApi: modalApi as any,
+      msgApi: msgApi as unknown as MessageInstance,
+      modalApi: modalApi as unknown as ModalHookAPI,
     })
   );
 

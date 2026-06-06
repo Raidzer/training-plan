@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { ShoesClient } from "./ShoesClient";
+import { ShoesClient } from "./ShoesClient/ShoesClient";
 
 export default async function ShoesPage() {
   const session = await auth();

@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
-import { AdminUsersClient, type AdminUserRow } from "./AdminUsersClient";
+import { AdminUsersClient } from "./AdminUsersClient/AdminUsersClient";
+import type { AdminUserRow } from "./AdminUsersClient/types/adminUsersTypes";
 
 export default async function AdminUsersPage() {
   const session = await auth();
