@@ -9,7 +9,7 @@
 
 .card {
   width: 100%;
-  max-width: 520px;
+  max-width: 680px;
   min-width: 0;
 }
 
@@ -39,7 +39,20 @@
 }
 
 .formInput {
-  flex: 1 1 240px;
+  flex: 2 1 240px;
+  min-width: 0;
+}
+
+.limitInput {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.settingsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
   min-width: 0;
 }
 
@@ -78,11 +91,35 @@
   overflow-wrap: anywhere;
 }
 
+.itemInfo {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.itemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+}
+
+.itemMetaText {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
 .itemActions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
+}
+
+.editForm {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
 }
 
 .editRow {
@@ -94,7 +131,15 @@
 }
 
 .editInput {
-  flex: 1 1 240px;
+  flex: 2 1 240px;
+  min-width: 0;
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -109,7 +154,7 @@
   }
 
   .formRow :global(.ant-btn),
-  .editRow :global(.ant-btn) {
+  .editActions :global(.ant-btn) {
     width: 100%;
   }
 
@@ -128,6 +173,11 @@
   }
 
   .editRow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .itemMeta {
     display: grid;
     grid-template-columns: 1fr;
   }
