@@ -1,12 +1,34 @@
-.title {
-  display: flex;
-  justify-content: space-between;
+.profile {
+  width: 100%;
+  min-width: 0;
+}
+
+.panel {
+  width: 100%;
+  min-width: 0;
 }
 
 .form {
-  width: 400px;
+  width: 100%;
+  max-width: 640px;
 }
 
-.formInput {
-  margin: 0 auto;
+.panel .form {
+  margin: 28px auto 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions :global(.ant-btn) {
+    width: 100%;
+  }
 }

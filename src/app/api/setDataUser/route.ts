@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
-import { db } from "@/server/db/client";
-import { users } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
-import { NextResponse, type NextRequest } from "next/server";
-import z from "zod";
+import { isSameOriginRequest } from "@/server/requestSecurity";
+import { updateUserProfileById } from "@/server/services/users";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const PROFILE_GENDERS = ["male", "female"] as const;
 
 const isValidTimeZone = (timezone: string): boolean => {
   try {
@@ -18,19 +19,31 @@ const isValidTimeZone = (timezone: string): boolean => {
   }
 };
 
-const schema = z.object({
-  userId: z.number(),
-  name: z.string().min(1, "Имя обязательно для заполнения").optional(),
-  lastName: z.string().optional().nullable(),
-  gender: z.string().optional(),
-  timezone: z
-    .string()
-    .min(1, "Выберите часовой пояс")
-    .refine((val) => isValidTimeZone(val), { message: "Неверный часовой пояс" })
-    .optional(),
-});
+const schema = z
+  .object({
+    name: z.string().trim().min(1, "Имя обязательно для заполнения").max(255),
+    lastName: z
+      .string()
+      .trim()
+      .max(255)
+      .nullable()
+      .optional()
+      .transform((value) => value || null),
+    gender: z.enum(PROFILE_GENDERS),
+    timezone: z
+      .string()
+      .trim()
+      .min(1, "Выберите часовой пояс")
+      .max(64, "Слишком длинный часовой пояс")
+      .refine((val) => isValidTimeZone(val), { message: "Неверный часовой пояс" }),
+  })
+  .strict();
 
-export async function PATCH(req: NextRequest) {
+export async function PATCH(req: Request) {
+  if (!isSameOriginRequest(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -41,86 +54,23 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   try {
-    // Получаем тело запроса
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
 
-    // Парсим и валидируем
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      const errors = parsed.error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-      return NextResponse.json({ error: "Некорректные данные", errors }, { status: 400 });
+      return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
     }
 
     const { name, lastName, gender, timezone } = parsed.data;
-
-    // Проверяем существование пользователя
-    const [existingUser] = await db
-      .select({
-        id: users.id,
-        currentName: users.name,
-        currentLastName: users.lastName,
-        currentGender: users.gender,
-        currentTimezone: users.timezone,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!existingUser) {
-      return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
+    const updatedUser = await updateUserProfileById(userId, {
+      name,
+      lastName,
+      gender,
+      timezone,
+    });
+    if (!updatedUser) {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
-
-    // Создаем объект для обновления
-    const updateData: {
-      name?: string;
-      lastName?: string | null;
-      gender?: string;
-      timezone?: string;
-    } = {};
-
-    // Добавляем только те поля, которые были переданы
-    if (name !== undefined) {
-      updateData.name = name;
-    }
-    if (lastName !== undefined) {
-      updateData.lastName = lastName;
-    }
-
-    if (gender !== undefined) {
-      updateData.gender = gender;
-    }
-
-    if (timezone !== undefined) {
-      if (!isValidTimeZone(timezone)) {
-        return NextResponse.json({ error: "Неверный часовой пояс" }, { status: 400 });
-      }
-      updateData.timezone = timezone;
-    }
-
-    // Выполняем обновление, если есть что обновлять
-    if (Object.keys(updateData).length > 0) {
-      if (!session) {
-        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-      }
-      await db.update(users).set(updateData).where(eq(users.id, userId));
-    }
-
-    // Получаем обновленные данные
-    const [updatedUser] = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        lastName: users.lastName,
-        gender: users.gender,
-        timezone: users.timezone,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
 
     return NextResponse.json(
       {
@@ -130,7 +80,7 @@ export async function PATCH(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Внутренняя ошибка сервера" }, { status: 500 });
   }
 }

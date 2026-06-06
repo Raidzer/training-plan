@@ -1,459 +1,335 @@
 "use client";
 
-import { BackButton } from "@/components/BackButton/BackButton";
-import { Button, Form, Input, Modal, Select, Typography, message } from "antd";
+import { GlobalOutlined } from "@ant-design/icons";
+import { App, Button, Card, Form, Input, Modal, Select } from "antd";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { BackButton } from "@/components/BackButton/BackButton";
+import { PageHeader } from "@/components/PageHeader";
 import styles from "./ProfileForm.module.scss";
-import { GlobalOutlined } from "@ant-design/icons";
-import { useSession } from "next-auth/react";
+
+type Gender = "male" | "female";
+
+type ProfileUserData = {
+  id: string;
+  email: string;
+  name: string;
+  lastName: string;
+  gender: string;
+  timezone: string;
+};
+
+type ProfileFormValues = {
+  name: string;
+  lastName: string;
+  gender: Gender;
+  timezone: string;
+};
+
+type PasswordFormValues = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+type ProfileApiResponse = {
+  success?: boolean;
+  error?: string;
+  user?: ProfileUserData;
+};
+
+type PasswordApiResponse = {
+  success?: boolean;
+  error?: string;
+};
 
 interface ProfileFormProps {
-  userData: {
-    id: string;
-    email: string;
-    name: string;
-    lastName: string;
-    gender: string;
-    timezone: string;
-  };
+  userData: ProfileUserData;
+}
+
+const DEFAULT_TIMEZONE = "Europe/Moscow";
+
+const normalizeProfileValues = (values: ProfileFormValues) => ({
+  name: values.name.trim(),
+  lastName: values.lastName?.trim() ?? "",
+  gender: values.gender,
+  timezone: values.timezone,
+});
+
+const toProfileFormValues = (userData: ProfileUserData): ProfileFormValues => ({
+  name: userData.name,
+  lastName: userData.lastName,
+  gender: userData.gender === "female" ? "female" : "male",
+  timezone: userData.timezone || DEFAULT_TIMEZONE,
+});
+
+async function readJson<T>(response: Response): Promise<T | null> {
+  return response.json().catch(() => null) as Promise<T | null>;
 }
 
 export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => {
-  const [messageApi, contextHolder] = message.useMessage();
-  const { data: session, update } = useSession();
-  const [form] = Form.useForm();
-  const [modalForm] = Form.useForm();
-  const [showModal, setShowModal] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [inputPasswordValue, setInputPasswordValue] = useState("");
-  const [newPasswordValue, setNewPasswordValue] = useState("");
-  const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [newPasswordError, setNewPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
-  const [passwordsMatchError, setPasswordsMatchError] = useState("");
-  const [isChangeDataUser, setIsChangeDataUser] = useState(true);
+  const { message } = App.useApp();
+  const { update } = useSession();
+  const [profileForm] = Form.useForm<ProfileFormValues>();
+  const [passwordForm] = Form.useForm<PasswordFormValues>();
   const [userData, setUserData] = useState(initialUserData);
-  const [formValues, setFormValues] = useState({
-    name: initialUserData.name,
-    lastName: initialUserData.lastName,
-    gender: initialUserData.gender,
-    email: initialUserData.email,
-    timezone: initialUserData.timezone,
-  });
+  const [formValues, setFormValues] = useState<ProfileFormValues>(
+    toProfileFormValues(initialUserData)
+  );
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
-  const showModalPassword = () => {
-    setShowModal(true);
-    setCurrentStep(0);
-    setPasswordError("");
-    setNewPasswordError("");
-    setConfirmPasswordError("");
-    setPasswordsMatchError("");
-    setInputPasswordValue("");
-    setNewPasswordValue("");
-    setConfirmPasswordValue("");
-
-    modalForm.resetFields();
-  };
-
-  const closedModalPassword = () => {
-    setShowModal(false);
-    setPasswordError("");
-    setInputPasswordValue("");
-    setPasswordsMatchError("");
-    setConfirmPasswordError("");
-    setPasswordsMatchError("");
-    setNewPasswordError("");
-    modalForm.setFieldsValue({
-      password: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    modalForm.resetFields();
-  };
-
-  const handleFormValuesChange = (
-    _changedValues: Record<string, unknown>,
-    allValues: Record<string, unknown>
-  ) => {
-    setFormValues(allValues as typeof formValues);
-
-    const isNameChanged = allValues.name !== userData.name;
-    const isLastNameChanged = allValues.lastName !== userData.lastName;
-    const isGenderChanged = allValues.gender !== userData.gender;
-    const isTimezoneChange = allValues.timezone !== userData.timezone;
-
-    if (allValues.name === "") {
-      setIsChangeDataUser(true);
-      return;
-    }
-    setIsChangeDataUser(
-      !(isNameChanged || isGenderChanged || isTimezoneChange || isLastNameChanged)
-    );
-  };
-
-  const isFormValid = () => {
-    return (
-      !newPasswordError &&
-      !confirmPasswordError &&
-      !passwordsMatchError &&
-      newPasswordValue.length >= 6 &&
-      confirmPasswordValue.length >= 6
-    );
-  };
-
-  useEffect(() => {
-    form.setFieldsValue({
-      email: userData.email,
-      name: userData.name,
-      lastName: userData.lastName,
-      gender: userData.gender,
-    });
-  }, [userData, form]);
-
-  const handleFinishModal = async () => {
-    if (newPasswordValue !== confirmPasswordValue) {
-      setPasswordsMatchError("Пароли не совпадают");
-      message.error("Пароли не совпадают");
-      return;
-    }
-    try {
-      const userDataFromApi = await changePassword();
-      if (!userDataFromApi.success) {
-        // Обработка различных ошибок
-        if (userDataFromApi.error === "Неверный текущий пароль") {
-          setPasswordError("Неверный текущий пароль");
-          message.error("Неверный текущий пароль");
-          // Возвращаемся на первый шаг
-          setCurrentStep(0);
-          setInputPasswordValue("");
-          setNewPasswordValue("");
-          setConfirmPasswordValue("");
-          modalForm.setFieldsValue({
-            password: "",
-            newPassword: "",
-            confirmPassword: "",
-          });
-          return;
-        } else {
-          setNewPasswordError("Ошибка изменения пароля");
-          message.error(userDataFromApi.error || "Не удалось изменить пароль. Попробуйте еще раз.");
-        }
-      } else {
-        setNewPasswordError("");
-        message.success("Пароль успешно изменен!");
-        setShowModal(false);
-        setCurrentStep(0);
-      }
-    } catch {
-      setNewPasswordError("Произошла ошибка при изменении пароля");
-      message.error("Произошла ошибка при изменении пароля");
-    }
-  };
-
-  const handleNextForm = async () => {
-    try {
-      const userDataFromApi = await checkPassword();
-      if (!userDataFromApi.success) {
-        setPasswordError("Неверный пароль");
-        message.error("Неверный пароль");
-      } else {
-        setCurrentStep(currentStep + 1);
-        setPasswordError("");
-        message.success("Пароль подтвержден");
-      }
-    } catch (error) {
-      setPasswordError("Произошла ошибка при проверке пароля");
-      message.error("Произошла ошибка при проверке пароля");
-    }
-  };
-
-  const checkPassword = async () => {
-    const response = await fetch("/api/checkPassword", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: userData.id,
-        password: inputPasswordValue,
-      }),
-    });
-    const data = await response.json();
-    return data;
-  };
-
-  const changePassword = async () => {
-    const response = await fetch("/api/setUserPassword", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: userData.id,
-        currentPassword: inputPasswordValue,
-        newPassword: newPasswordValue,
-        confirmPassword: confirmPasswordValue,
-      }),
-    });
-    const data = await response.json();
-    return data;
-  };
-
-  const changeDataUser = async () => {
-    try {
-      const response = await fetch("/api/setDataUser", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: userData.id,
-          name: formValues.name,
-          lastName: formValues.lastName,
-          gender: formValues.gender,
-          timezone: formValues.timezone,
-        }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        const updatedUserData = {
-          ...userData,
-          name: formValues.name,
-          lastName: formValues.lastName,
-          gender: formValues.gender,
-          timezone: formValues.timezone,
-        };
-        setUserData(updatedUserData);
-
-        // Обновляем сессию NextAuth
-        if (session && update) {
-          await update({
-            user: {
-              ...session.user,
-              name: formValues.name,
-              lastName: formValues.lastName,
-            },
-          });
-        }
-
-        setIsChangeDataUser(true);
-        messageApi.success("Данные профиля обновлены!");
-      } else {
-        messageApi.error(data.message || "Не удалось обновить данные профиля");
-      }
-      return data;
-    } catch (error) {
-      messageApi.error("Произошла ошибка при обновлении данных");
-    }
-  };
-
-  const footerModalPassword = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <>
-            <Button onClick={closedModalPassword}>Отмена</Button>
-            <Button
-              onClick={handleNextForm}
-              type="primary"
-              disabled={!inputPasswordValue.trim() || inputPasswordValue.length < 6}
-            >
-              Далее
-            </Button>
-          </>
-        );
-      case 1:
-        return (
-          <>
-            <Button onClick={closedModalPassword}>Отмена</Button>
-            <Button onClick={handleFinishModal} type="primary" disabled={!isFormValid()}>
-              Готово
-            </Button>
-          </>
-        );
-    }
-  };
-
-  const renderFormPassword = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <>
-            <Form.Item
-              label="Введите текущий пароль"
-              name="password"
-              validateStatus={
-                passwordError || (inputPasswordValue && inputPasswordValue.length < 6)
-                  ? "error"
-                  : ""
-              }
-              help={
-                passwordError ||
-                (inputPasswordValue && inputPasswordValue.length < 6 ? "Минимум 6 символов" : "")
-              }
-            >
-              <Input.Password
-                value={inputPasswordValue}
-                onChange={(e) => {
-                  setInputPasswordValue(e.target.value);
-                  modalForm.setFieldsValue({ password: e.target.value });
-                }}
-                onPressEnter={handleNextForm}
-              />
-            </Form.Item>
-          </>
-        );
-      case 1:
-        return (
-          <>
-            <Form.Item
-              label="Введите новый пароль"
-              name="newPassword"
-              validateStatus={
-                newPasswordError || (newPasswordValue && newPasswordValue.length < 6) ? "error" : ""
-              }
-              help={
-                passwordError ||
-                (newPasswordValue && newPasswordValue.length < 6 ? "Минимум 6 символов" : "")
-              }
-            >
-              <Input.Password onChange={(e) => setNewPasswordValue(e.target.value)} />
-            </Form.Item>
-            <Form.Item
-              label="Повторите пароль"
-              name="confirmPassword"
-              validateStatus={
-                confirmPasswordValue.length > 0
-                  ? confirmPasswordValue.length < 6
-                    ? "error"
-                    : passwordsMatchError
-                      ? "error"
-                      : ""
-                  : ""
-              }
-              help={
-                confirmPasswordValue.length > 0
-                  ? confirmPasswordValue.length < 6
-                    ? "Минимум 6 символов"
-                    : passwordsMatchError
-                      ? "Пароли не совпадают"
-                      : ""
-                  : ""
-              }
-            >
-              <Input.Password
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setConfirmPasswordValue(value);
-                  if (value.length >= 6) {
-                    if (value !== newPasswordValue) {
-                      setPasswordsMatchError("Пароли не совпадают");
-                    } else {
-                      setPasswordsMatchError("");
-                    }
-                  } else {
-                    setPasswordsMatchError("");
-                  }
-                }}
-              />
-            </Form.Item>
-          </>
-        );
-    }
-  };
+  const initialValues = useMemo(() => toProfileFormValues(userData), [userData]);
+  const normalizedCurrent = useMemo(() => normalizeProfileValues(initialValues), [initialValues]);
+  const normalizedDraft = useMemo(() => normalizeProfileValues(formValues), [formValues]);
+  const hasProfileChanges = useMemo(
+    () =>
+      normalizedDraft.name !== normalizedCurrent.name ||
+      normalizedDraft.lastName !== normalizedCurrent.lastName ||
+      normalizedDraft.gender !== normalizedCurrent.gender ||
+      normalizedDraft.timezone !== normalizedCurrent.timezone,
+    [normalizedCurrent, normalizedDraft]
+  );
 
   const timezoneOptions = useMemo(() => {
     try {
       const timeZones = Intl.supportedValuesOf("timeZone");
-      const formatter = new Intl.DateTimeFormat("ru-RU", {
-        timeZoneName: "longOffset",
-        hour12: false,
-      });
+      const date = new Date();
 
-      return timeZones.map((tz) => {
+      return timeZones.map((timezone) => {
         try {
-          formatter.formatToParts(new Date());
-
-          const date = new Date();
           const gmt =
             new Intl.DateTimeFormat("en-US", {
-              timeZone: tz,
+              timeZone: timezone,
               timeZoneName: "longOffset",
             })
               .formatToParts(date)
-              .find((p) => p.type === "timeZoneName")?.value ?? "";
+              .find((part) => part.type === "timeZoneName")?.value ?? "";
 
-          return { value: tz, label: `${tz} (${gmt})` };
+          return { value: timezone, label: `${timezone} (${gmt})` };
         } catch {
-          return { value: tz, label: tz };
+          return { value: timezone, label: timezone };
         }
       });
     } catch {
       return [
-        { value: "Europe/Moscow", label: "Europe/Moscow (GMT+3)" },
+        { value: DEFAULT_TIMEZONE, label: "Europe/Moscow (GMT+3)" },
         { value: "UTC", label: "UTC (GMT+0)" },
       ];
     }
   }, []);
 
+  useEffect(() => {
+    profileForm.setFieldsValue(initialValues);
+    setFormValues(initialValues);
+  }, [initialValues, profileForm]);
+
+  const handleProfileValuesChange = (
+    _changedValues: Partial<ProfileFormValues>,
+    allValues: ProfileFormValues
+  ) => {
+    setFormValues({
+      ...initialValues,
+      ...allValues,
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    const values = await profileForm.validateFields();
+    const payload = normalizeProfileValues(values);
+    setSavingProfile(true);
+
+    try {
+      const response = await fetch("/api/setDataUser", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await readJson<ProfileApiResponse>(response);
+
+      if (!response.ok || !data?.success || !data.user) {
+        message.error("Не удалось обновить данные профиля");
+        return;
+      }
+
+      const updatedUser = {
+        ...data.user,
+        id: String(data.user.id),
+        lastName: data.user.lastName ?? "",
+      };
+
+      setUserData(updatedUser);
+      await update();
+      message.success("Данные профиля обновлены");
+    } catch {
+      message.error("Произошла ошибка при обновлении данных");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const openPasswordModal = () => {
+    passwordForm.resetFields();
+    setPasswordModalOpen(true);
+  };
+
+  const closePasswordModal = () => {
+    setPasswordModalOpen(false);
+    passwordForm.resetFields();
+  };
+
+  const handleChangePassword = async () => {
+    const values = await passwordForm.validateFields();
+    setSavingPassword(true);
+
+    try {
+      const response = await fetch("/api/setUserPassword", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await readJson<PasswordApiResponse>(response);
+
+      if (response.status === 403 && data?.error === "invalid_current_password") {
+        passwordForm.setFields([
+          {
+            name: "currentPassword",
+            errors: ["Неверный текущий пароль"],
+          },
+        ]);
+        return;
+      }
+
+      if (!response.ok || !data?.success) {
+        message.error("Не удалось изменить пароль");
+        return;
+      }
+
+      message.success("Пароль успешно изменен");
+      closePasswordModal();
+    } catch {
+      message.error("Произошла ошибка при изменении пароля");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   return (
-    <>
-      {contextHolder}
-      <div className={styles.title}>
-        <Typography.Title>Профиль</Typography.Title>
-        <Link href="/dashboard">
-          <BackButton />
-        </Link>
-      </div>
-      <Form
-        form={form}
-        initialValues={{
-          Email: userData.email,
-          name: userData.name,
-          lastName: userData.lastName,
-          gender: userData.gender,
-          timezone: userData.timezone,
-        }}
-        size="large"
-        className={styles.form}
-        layout="vertical"
-        onValuesChange={handleFormValuesChange}
-      >
-        <Form.Item label="email" name="email">
-          <Input disabled />
-        </Form.Item>
-        <Form.Item label="Имя" name="name">
-          <Input />
-        </Form.Item>
-        <Form.Item label="Фамилия" name="lastName">
-          <Input />
-        </Form.Item>
-        <Form.Item label="Пол" name="gender">
-          <Select>
-            <Select.Option value="male">Мужской</Select.Option>
-            <Select.Option value="female">Женский</Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item label="Часовой пояс" name="timezone">
-          <Select showSearch suffixIcon={<GlobalOutlined />} options={timezoneOptions}></Select>
-        </Form.Item>
-        <Button disabled={isChangeDataUser} onClick={() => changeDataUser()}>
-          Сохранить
-        </Button>
-        <Button onClick={showModalPassword}>Изменить пароль</Button>
-      </Form>
+    <main className={styles.profile}>
+      <Card className={styles.panel}>
+        <PageHeader
+          title="Профиль"
+          actions={
+            <Link href="/dashboard">
+              <BackButton />
+            </Link>
+          }
+        />
+
+        <Form<ProfileFormValues>
+          form={profileForm}
+          initialValues={initialValues}
+          size="large"
+          className={styles.form}
+          layout="vertical"
+          onValuesChange={handleProfileValuesChange}
+        >
+          <Form.Item label="Email">
+            <Input value={userData.email} disabled />
+          </Form.Item>
+          <Form.Item
+            label="Имя"
+            name="name"
+            rules={[
+              { required: true, whitespace: true, message: "Имя обязательно для заполнения" },
+              { max: 255, message: "Слишком длинное имя" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item label="Фамилия" name="lastName" rules={[{ max: 255 }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Пол" name="gender" rules={[{ required: true }]}>
+            <Select
+              options={[
+                { value: "male", label: "Мужской" },
+                { value: "female", label: "Женский" },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Часовой пояс"
+            name="timezone"
+            rules={[{ required: true, message: "Выберите часовой пояс" }]}
+          >
+            <Select showSearch suffixIcon={<GlobalOutlined />} options={timezoneOptions} />
+          </Form.Item>
+          <div className={styles.actions}>
+            <Button
+              type="primary"
+              disabled={!hasProfileChanges}
+              loading={savingProfile}
+              onClick={handleSaveProfile}
+            >
+              Сохранить
+            </Button>
+            <Button onClick={openPasswordModal}>Изменить пароль</Button>
+          </div>
+        </Form>
+      </Card>
+
       <Modal
-        footer={footerModalPassword}
         title="Изменение пароля"
-        open={showModal}
-        onCancel={closedModalPassword}
+        open={passwordModalOpen}
+        onCancel={closePasswordModal}
+        confirmLoading={savingPassword}
+        onOk={handleChangePassword}
+        okText="Сохранить"
+        cancelText="Отмена"
       >
-        <Form layout="vertical" form={modalForm}>
-          {renderFormPassword()}
+        <Form<PasswordFormValues> layout="vertical" form={passwordForm}>
+          <Form.Item
+            label="Текущий пароль"
+            name="currentPassword"
+            rules={[{ required: true, message: "Введите текущий пароль" }]}
+          >
+            <Input.Password autoComplete="current-password" />
+          </Form.Item>
+          <Form.Item
+            label="Новый пароль"
+            name="newPassword"
+            rules={[
+              { required: true, message: "Введите новый пароль" },
+              { min: 6, message: "Минимум 6 символов" },
+              { max: 128, message: "Слишком длинный пароль" },
+            ]}
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item
+            label="Повторите пароль"
+            name="confirmPassword"
+            dependencies={["newPassword"]}
+            rules={[
+              { required: true, message: "Повторите новый пароль" },
+              { min: 6, message: "Минимум 6 символов" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("newPassword") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Пароли не совпадают"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
         </Form>
       </Modal>
-    </>
+    </main>
   );
 };

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { UserProfile } from "./UserProfile/UserProfile";
 import { auth } from "@/auth";
+import { getUserProfileById } from "@/server/services/users";
+import { ProfileForm } from "./UserProfile/ProfileForm";
 
 export default async function Profile() {
   const session = await auth();
@@ -9,10 +10,23 @@ export default async function Profile() {
     redirect("/login");
   }
 
-  const userId = (session.user as { id?: string })?.id;
-  if (!userId) {
+  const userId = Number((session.user as { id?: string })?.id);
+  if (!Number.isFinite(userId)) {
     redirect("/login");
   }
 
-  return <UserProfile />;
+  const user = await getUserProfileById(userId);
+  if (!user) {
+    redirect("/login");
+  }
+
+  return (
+    <ProfileForm
+      userData={{
+        ...user,
+        id: String(user.id),
+        lastName: user.lastName ?? "",
+      }}
+    />
+  );
 }
