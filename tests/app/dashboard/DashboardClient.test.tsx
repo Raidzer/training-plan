@@ -40,7 +40,7 @@ describe("DashboardClient", () => {
   it("показывает admin-only карточки администратору", () => {
     const { container } = render(<DashboardClient session={createSession("admin")} />);
 
-    expect(container.querySelectorAll("a .ant-card")).toHaveLength(7);
+    expect(container.querySelectorAll("a .ant-card")).toHaveLength(6);
     expect(screen.getByText("Администрирование")).toBeTruthy();
     expect(screen.getByText("Шаблоны")).toBeTruthy();
   });
@@ -48,7 +48,7 @@ describe("DashboardClient", () => {
   it("скрывает admin-only карточки для обычного пользователя", () => {
     const { container } = render(<DashboardClient session={createSession("user")} />);
 
-    expect(container.querySelectorAll("a .ant-card")).toHaveLength(5);
+    expect(container.querySelectorAll("a .ant-card")).toHaveLength(4);
     expect(screen.queryByText("Администрирование")).toBeNull();
     expect(screen.queryByText("Шаблоны")).toBeNull();
     expect(screen.getByText("План")).toBeTruthy();

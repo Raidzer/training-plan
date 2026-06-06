@@ -53,6 +53,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub!;
         session.user.role = token.role;
         session.user.emailVerified = token.emailVerified;
+        session.user.name = token.name ?? null;
+        session.user.email = token.email ?? null;
       }
       return session;
     },
@@ -60,6 +62,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.emailVerified = user.emailVerified;
+        token.name = user.name ?? null;
+        token.email = user.email ?? null;
       }
 
       if (token.sub) {
@@ -67,6 +71,12 @@ export const authOptions: NextAuthOptions = {
         if (freshUser) {
           token.emailVerified = freshUser.emailVerified;
           token.role = freshUser.role;
+          if (freshUser.name !== undefined) {
+            token.name = freshUser.name;
+          }
+          if (freshUser.email !== undefined) {
+            token.email = freshUser.email;
+          }
         }
       }
       return token;
@@ -98,6 +108,8 @@ export const auth = async () => {
       id: String(user.id),
       role: user.role,
       emailVerified: user.emailVerified,
+      ...(user.name !== undefined ? { name: user.name } : {}),
+      ...(user.email !== undefined ? { email: user.email } : {}),
     },
   };
 };

@@ -24,6 +24,11 @@
 }
 
 .headerAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
   flex: 0 0 auto;
   margin-left: auto;
 }
@@ -95,9 +100,14 @@
 
   .headerAction {
     margin-left: 0;
+    width: 100%;
   }
 
   .headerAction :global(.ant-btn) {
     width: 100%;
+  }
+
+  .headerAction a {
+    flex: 1 1 0;
   }
 }

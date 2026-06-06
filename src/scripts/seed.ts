@@ -5,7 +5,7 @@ import { users } from "@/server/db/schema";
 import { ROLES } from "@/shared/constants";
 import { hash } from "bcryptjs";
 
-const SEED_EMAIL = "test@example.com";
+const SEED_EMAIL = "testNikita@example.com";
 
 async function main() {
   const passwordHash = await hash("password", 10);
@@ -18,7 +18,7 @@ async function main() {
       lastName: "",
       gender: "male",
       email: SEED_EMAIL,
-      login: "test",
+      login: "testNikita",
       passwordHash,
       role: ROLES.ADMIN,
       emailVerified,

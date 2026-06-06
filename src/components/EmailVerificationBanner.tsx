@@ -1,31 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { Alert, Button, message } from "antd";
 import { useSession } from "next-auth/react";
 
 import styles from "./EmailVerificationBanner.module.scss";
 
 export function EmailVerificationBanner() {
-  const { data: session } = useSession();
-  const [visible, setVisible] = useState(false);
+  const { data: session, update } = useSession();
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-
-  useEffect(() => {
-    const isHidden = localStorage.getItem("hide_verification_banner");
-
-    if (session?.user && !session.user.emailVerified && !isHidden) {
-      setVisible(true);
-    } else {
-      setVisible(false);
-    }
-  }, [session]);
-
-  const handleClose = () => {
-    setVisible(false);
-    localStorage.setItem("hide_verification_banner", "true");
-  };
 
   const handleResend = async () => {
     setLoading(true);
@@ -39,8 +23,8 @@ export function EmailVerificationBanner() {
       } else {
         const data = await res.json();
         if (data.error === "Email already verified") {
-          messageApi.success("Email уже подтвержден! Обновите страницу.");
-          setVisible(false);
+          messageApi.success("Email уже подтвержден.");
+          await update();
         } else {
           messageApi.error("Ошибка при отправке письма.");
         }
@@ -52,7 +36,9 @@ export function EmailVerificationBanner() {
     }
   };
 
-  if (!visible) return null;
+  if (!session?.user || session.user.emailVerified) {
+    return null;
+  }
 
   return (
     <div className={styles.container}>
@@ -61,15 +47,13 @@ export function EmailVerificationBanner() {
         title="Ваш Email не подтвержден"
         description={
           <div className={styles.description}>
-            <span>Подтвердите почту для доступа ко всем функциям и восстановления доступа.</span>
+            <span>Подтвердите почту для доступа ко всем функциям и восстановлению доступа.</span>
             <Button size="small" type="primary" onClick={handleResend} loading={loading}>
               Отправить письмо повторно
             </Button>
           </div>
         }
         type="warning"
-        closable
-        onClose={handleClose}
         showIcon
       />
     </div>

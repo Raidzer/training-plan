@@ -2,7 +2,6 @@
 import {
   BookOutlined,
   CalendarOutlined,
-  MessageOutlined,
   ShoppingOutlined,
   SnippetsOutlined,
   TeamOutlined,
@@ -14,6 +13,7 @@ import type { ReactNode } from "react";
 import type { Session } from "next-auth";
 import styles from "./dashboard.module.scss";
 import { SignOutButton } from "@/components/SingOutButton/SignOutButton";
+import { ProfileButton } from "@/components/ProfileButton/ProfileButton";
 
 type Props = { session: Session };
 
@@ -60,6 +60,9 @@ export function DashboardClient({ session }: Props) {
             </Typography.Paragraph>
           </div>
           <div className={styles.headerAction}>
+            <Link href="/profile">
+              <ProfileButton />
+            </Link>
             <SignOutButton />
           </div>
         </div>
@@ -107,17 +110,6 @@ export function DashboardClient({ session }: Props) {
             >
               <Typography.Text type="secondary">
                 Заполните личные рекорды по дистанциям и добавьте ссылку на протокол.
-              </Typography.Text>
-            </Card>
-          </Link>
-          <Link href="/verify-telegram" className={styles.cardLink}>
-            <Card
-              hoverable
-              className={styles.card}
-              title={<CardTitle icon={<MessageOutlined />} title="Telegram" />}
-            >
-              <Typography.Text type="secondary">
-                Получите код и свяжите Telegram для плана и рассылки.
               </Typography.Text>
             </Card>
           </Link>

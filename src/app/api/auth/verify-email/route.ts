@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const existingToken = await getVerificationTokenByToken(token);
 
-  if (!existingToken) {
+  if (!existingToken || existingToken.type !== "verify-email") {
     return NextResponse.redirect(new URL("/auth/verify-email?error=invalid_token", baseUrl));
   }
 
