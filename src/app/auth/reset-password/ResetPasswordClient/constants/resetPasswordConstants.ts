@@ -1,0 +1,18 @@
+export const RESET_PASSWORD_TEXT = {
+  invalidTokenTitle: "Ошибка",
+  invalidTokenDescription: "Неверная ссылка для сброса пароля. Отсутствует токен.",
+  title: "Новый пароль",
+  subtitle: "Придумайте новый надежный пароль",
+  passwordLabel: "Новый пароль",
+  passwordPlaceholder: "Новый пароль",
+  passwordRequired: "Пожалуйста, введите пароль!",
+  passwordMin: "Пароль должен быть не менее 6 символов!",
+  confirmLabel: "Подтвердите пароль",
+  confirmPlaceholder: "Подтвердите пароль",
+  confirmRequired: "Пожалуйста, подтвердите пароль!",
+  confirmMismatch: "Пароли не совпадают!",
+  submit: "Сменить пароль",
+  success: "Пароль успешно изменен!",
+  resetError: "Произошла ошибка при сбросе пароля.",
+  requestError: "Произошла ошибка. Пожалуйста, попробуйте позже.",
+} as const;

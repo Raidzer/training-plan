@@ -2,7 +2,7 @@
 
 import { Card } from "antd";
 import { TelegramLinkPanel } from "@/components/TelegramLinkPanel/TelegramLinkPanel";
-import styles from "./verify-telegram.module.scss";
+import styles from "./VerifyTelegramClient.module.scss";
 
 export function VerifyTelegramClient() {
   return (

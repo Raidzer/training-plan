@@ -6,14 +6,11 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { FormProps } from "antd";
-import styles from "./login.module.scss";
+import { LOGIN_TEXT } from "./constants/loginConstants";
+import type { LoginFields } from "./types/loginTypes";
+import styles from "./LoginClient.module.scss";
 
-type LoginFields = {
-  email: string;
-  password: string;
-};
-
-export function LoginForm() {
+export function LoginClient() {
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -24,10 +21,10 @@ export function LoginForm() {
       callbackUrl: "/dashboard",
     });
     if (res?.error) {
-      messageApi.error("Неверный email или пароль");
+      messageApi.error(LOGIN_TEXT.invalidCredentials);
       return;
     }
-    messageApi.success("Вход выполнен");
+    messageApi.success(LOGIN_TEXT.success);
     router.push(res?.url ?? "/dashboard");
   };
 
@@ -36,31 +33,34 @@ export function LoginForm() {
       {contextHolder}
       <Card className={styles.card}>
         <Typography.Title level={3} className={styles.title}>
-          Вход
+          {LOGIN_TEXT.title}
         </Typography.Title>
         <Typography.Paragraph type="secondary" className={styles.subtitle}>
-          Используйте учетные данные, созданные при инициализации
+          {LOGIN_TEXT.subtitle}
         </Typography.Paragraph>
         <Form<LoginFields> layout="vertical" onFinish={onFinish} requiredMark={false}>
           <Form.Item
             name="email"
-            label="Email или login"
-            rules={[{ required: true, message: "Укажите email или логин" }]}
+            label={LOGIN_TEXT.emailLabel}
+            rules={[{ required: true, message: LOGIN_TEXT.emailRequired }]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Введите email или логин" />
+            <Input prefix={<MailOutlined />} placeholder={LOGIN_TEXT.emailPlaceholder} />
           </Form.Item>
           <Form.Item
             name="password"
-            label="Пароль"
-            rules={[{ required: true, message: "Введите пароль" }]}
+            label={LOGIN_TEXT.passwordLabel}
+            rules={[{ required: true, message: LOGIN_TEXT.passwordRequired }]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Введите пароль" />
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder={LOGIN_TEXT.passwordPlaceholder}
+            />
           </Form.Item>
           <Button type="primary" htmlType="submit" icon={<LoginOutlined />} block>
-            Войти
+            {LOGIN_TEXT.submit}
           </Button>
           <div className={styles.links}>
-            <Link href="/auth/forgot-password">Забыли пароль?</Link>
+            <Link href="/auth/forgot-password">{LOGIN_TEXT.forgotPassword}</Link>
           </div>
         </Form>
       </Card>
