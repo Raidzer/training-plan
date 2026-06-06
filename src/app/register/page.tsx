@@ -22,6 +22,11 @@ import {
   UserAddOutlined,
   GlobalOutlined,
 } from "@ant-design/icons";
+import {
+  buildTimezoneOptions,
+  DEFAULT_TIMEZONE,
+  filterTimezoneOption,
+} from "@/shared/constants/timezones";
 import styles from "./register.module.scss";
 
 type RegisterFields = {
@@ -50,30 +55,7 @@ function RegisterContent() {
   const hasInvite = inviteToken.length >= 10;
 
   const timezoneOptions = useMemo(() => {
-    try {
-      const timeZones = Intl.supportedValuesOf("timeZone");
-      return timeZones.map((tz) => {
-        try {
-          const date = new Date();
-          const gmt =
-            new Intl.DateTimeFormat("en-US", {
-              timeZone: tz,
-              timeZoneName: "longOffset",
-            })
-              .formatToParts(date)
-              .find((p) => p.type === "timeZoneName")?.value ?? "";
-
-          return { value: tz, label: `${tz} (${gmt})` };
-        } catch {
-          return { value: tz, label: tz };
-        }
-      });
-    } catch {
-      return [
-        { value: "Europe/Moscow", label: "Europe/Moscow (GMT+3)" },
-        { value: "UTC", label: "UTC (GMT+0)" },
-      ];
-    }
+    return buildTimezoneOptions();
   }, []);
 
   const onFinish: FormProps<RegisterFields>["onFinish"] = async (values) => {
@@ -150,7 +132,7 @@ function RegisterContent() {
             layout="vertical"
             onFinish={onFinish}
             requiredMark={false}
-            initialValues={{ gender: "male", timezone: "Europe/Moscow" }}
+            initialValues={{ gender: "male", timezone: DEFAULT_TIMEZONE }}
           >
             <Form.Item name="name" label="Имя" rules={[{ required: true, message: "Введите имя" }]}>
               <Input prefix={<UserOutlined />} placeholder="Иван" />
@@ -199,6 +181,7 @@ function RegisterContent() {
                 options={timezoneOptions}
                 placeholder="Выберите часовой пояс"
                 optionFilterProp="label"
+                filterOption={filterTimezoneOption}
                 suffixIcon={<GlobalOutlined />}
               />
             </Form.Item>

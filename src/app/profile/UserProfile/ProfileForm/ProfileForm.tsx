@@ -8,6 +8,11 @@ import { useEffect, useMemo, useState } from "react";
 import { BackButton } from "@/components/BackButton/BackButton";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
 import { PageHeader } from "@/components/PageHeader";
+import {
+  buildTimezoneOptions,
+  DEFAULT_TIMEZONE,
+  filterTimezoneOption,
+} from "@/shared/constants/timezones";
 import styles from "./ProfileForm.module.scss";
 
 type Gender = "male" | "female";
@@ -62,8 +67,6 @@ interface ProfileFormProps {
   userData: ProfileUserData;
 }
 
-const DEFAULT_TIMEZONE = "Europe/Moscow";
-
 const normalizeProfileValues = (values: ProfileFormValues) => ({
   name: values.name.trim(),
   lastName: values.lastName?.trim() ?? "",
@@ -112,32 +115,8 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
   const isEmailVerified = Boolean(session?.user?.emailVerified);
 
   const timezoneOptions = useMemo(() => {
-    try {
-      const timeZones = Intl.supportedValuesOf("timeZone");
-      const date = new Date();
-
-      return timeZones.map((timezone) => {
-        try {
-          const gmt =
-            new Intl.DateTimeFormat("en-US", {
-              timeZone: timezone,
-              timeZoneName: "longOffset",
-            })
-              .formatToParts(date)
-              .find((part) => part.type === "timeZoneName")?.value ?? "";
-
-          return { value: timezone, label: `${timezone} (${gmt})` };
-        } catch {
-          return { value: timezone, label: timezone };
-        }
-      });
-    } catch {
-      return [
-        { value: DEFAULT_TIMEZONE, label: "Europe/Moscow (GMT+3)" },
-        { value: "UTC", label: "UTC (GMT+0)" },
-      ];
-    }
-  }, []);
+    return buildTimezoneOptions(new Date(), [userData.timezone]);
+  }, [userData.timezone]);
 
   useEffect(() => {
     profileForm.setFieldsValue(initialValues);
@@ -384,7 +363,13 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
             name="timezone"
             rules={[{ required: true, message: "Выберите часовой пояс" }]}
           >
-            <Select showSearch suffixIcon={<GlobalOutlined />} options={timezoneOptions} />
+            <Select
+              showSearch
+              suffixIcon={<GlobalOutlined />}
+              options={timezoneOptions}
+              optionFilterProp="label"
+              filterOption={filterTimezoneOption}
+            />
           </Form.Item>
           <div className={styles.actions}>
             <Button
