@@ -47,7 +47,7 @@ export function EmailVerificationBanner() {
         title="Ваш Email не подтвержден"
         description={
           <div className={styles.description}>
-            <span>Подтвердите почту для доступа ко всем функциям и восстановления доступа.</span>
+            <span>Подтвердите почту для доступа ко всем функциям и восстановлению доступа.</span>
             <Button size="small" type="primary" onClick={handleResend} loading={loading}>
               Отправить письмо повторно
             </Button>

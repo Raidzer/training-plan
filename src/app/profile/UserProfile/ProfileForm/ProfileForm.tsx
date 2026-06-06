@@ -15,6 +15,7 @@ type Gender = "male" | "female";
 type ProfileUserData = {
   id: string;
   email: string;
+  login: string;
   name: string;
   lastName: string;
   gender: string;
@@ -34,6 +35,11 @@ type PasswordFormValues = {
   confirmPassword: string;
 };
 
+type EmailFormValues = {
+  email: string;
+  currentPassword: string;
+};
+
 type ProfileApiResponse = {
   success?: boolean;
   error?: string;
@@ -43,6 +49,13 @@ type ProfileApiResponse = {
 type PasswordApiResponse = {
   success?: boolean;
   error?: string;
+};
+
+type EmailApiResponse = {
+  success?: boolean;
+  emailSent?: boolean;
+  error?: string;
+  user?: ProfileUserData;
 };
 
 interface ProfileFormProps {
@@ -74,13 +87,16 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
   const { data: session, update } = useSession();
   const [profileForm] = Form.useForm<ProfileFormValues>();
   const [passwordForm] = Form.useForm<PasswordFormValues>();
+  const [emailForm] = Form.useForm<EmailFormValues>();
   const [userData, setUserData] = useState(initialUserData);
   const [formValues, setFormValues] = useState<ProfileFormValues>(
     toProfileFormValues(initialUserData)
   );
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
 
   const initialValues = useMemo(() => toProfileFormValues(userData), [userData]);
   const normalizedCurrent = useMemo(() => normalizeProfileValues(initialValues), [initialValues]);
@@ -177,9 +193,22 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
     setPasswordModalOpen(true);
   };
 
+  const openEmailModal = () => {
+    emailForm.setFieldsValue({
+      email: userData.email,
+      currentPassword: "",
+    });
+    setEmailModalOpen(true);
+  };
+
   const closePasswordModal = () => {
     setPasswordModalOpen(false);
     passwordForm.resetFields();
+  };
+
+  const closeEmailModal = () => {
+    setEmailModalOpen(false);
+    emailForm.resetFields();
   };
 
   const handleChangePassword = async () => {
@@ -218,6 +247,75 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
     }
   };
 
+  const handleChangeEmail = async () => {
+    const values = await emailForm.validateFields();
+    setSavingEmail(true);
+
+    try {
+      const response = await fetch("/api/profile/email", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await readJson<EmailApiResponse>(response);
+
+      if (response.status === 403 && data?.error === "invalid_current_password") {
+        emailForm.setFields([
+          {
+            name: "currentPassword",
+            errors: ["Неверный текущий пароль"],
+          },
+        ]);
+        return;
+      }
+
+      if (response.status === 409 && data?.error === "email_conflict") {
+        emailForm.setFields([
+          {
+            name: "email",
+            errors: ["Этот email или login уже используется"],
+          },
+        ]);
+        return;
+      }
+
+      if (response.status === 400 && data?.error === "email_unchanged") {
+        emailForm.setFields([
+          {
+            name: "email",
+            errors: ["Укажите новый email"],
+          },
+        ]);
+        return;
+      }
+
+      if (!response.ok || !data?.success || !data.user) {
+        message.error("Не удалось изменить почту");
+        return;
+      }
+
+      const updatedUser = {
+        ...data.user,
+        id: String(data.user.id),
+        lastName: data.user.lastName ?? "",
+      };
+
+      setUserData(updatedUser);
+      await update();
+      closeEmailModal();
+
+      if (data.emailSent) {
+        message.success("Почта обновлена. Отправили письмо для подтверждения.");
+      } else {
+        message.warning("Почта обновлена, но письмо не отправилось. Повторите отправку позже.");
+      }
+    } catch {
+      message.error("Произошла ошибка при изменении почты");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
   return (
     <main className={styles.profile}>
       <Card className={styles.panel}>
@@ -240,6 +338,22 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
           layout="vertical"
           onValuesChange={handleProfileValuesChange}
         >
+          <Form.Item label="Логин">
+            <Input value={userData.login} disabled />
+          </Form.Item>
+          <Form.Item
+            label="Имя"
+            name="name"
+            rules={[
+              { required: true, whitespace: true, message: "Имя обязательно для заполнения" },
+              { max: 255, message: "Слишком длинное имя" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item label="Фамилия" name="lastName" rules={[{ max: 255 }]}>
+            <Input />
+          </Form.Item>
           <Form.Item
             label={
               <span className={styles.emailLabel}>
@@ -256,19 +370,6 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
             }
           >
             <Input value={userData.email} disabled />
-          </Form.Item>
-          <Form.Item
-            label="Имя"
-            name="name"
-            rules={[
-              { required: true, whitespace: true, message: "Имя обязательно для заполнения" },
-              { max: 255, message: "Слишком длинное имя" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item label="Фамилия" name="lastName" rules={[{ max: 255 }]}>
-            <Input />
           </Form.Item>
           <Form.Item label="Пол" name="gender" rules={[{ required: true }]}>
             <Select
@@ -294,10 +395,42 @@ export const ProfileForm = ({ userData: initialUserData }: ProfileFormProps) => 
             >
               Сохранить
             </Button>
+            <Button onClick={openEmailModal}>Изменить почту</Button>
             <Button onClick={openPasswordModal}>Изменить пароль</Button>
           </div>
         </Form>
       </Card>
+
+      <Modal
+        title="Изменение почты"
+        open={emailModalOpen}
+        onCancel={closeEmailModal}
+        confirmLoading={savingEmail}
+        onOk={handleChangeEmail}
+        okText="Сохранить"
+        cancelText="Отмена"
+      >
+        <Form<EmailFormValues> layout="vertical" form={emailForm}>
+          <Form.Item
+            label="Новая почта"
+            name="email"
+            rules={[
+              { required: true, message: "Введите новую почту" },
+              { type: "email", message: "Некорректный email" },
+              { max: 255, message: "Слишком длинный email" },
+            ]}
+          >
+            <Input autoComplete="email" />
+          </Form.Item>
+          <Form.Item
+            label="Текущий пароль"
+            name="currentPassword"
+            rules={[{ required: true, message: "Введите текущий пароль" }]}
+          >
+            <Input.Password autoComplete="current-password" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <Modal
         title="Изменение пароля"

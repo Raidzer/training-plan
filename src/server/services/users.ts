@@ -44,6 +44,7 @@ export async function getUserProfileById(id: number) {
     .select({
       id: users.id,
       email: users.email,
+      login: users.login,
       name: users.name,
       lastName: users.lastName,
       gender: users.gender,
@@ -60,11 +61,44 @@ export async function updateUserProfileById(id: number, input: UserProfileUpdate
   const [user] = await db.update(users).set(input).where(eq(users.id, id)).returning({
     id: users.id,
     email: users.email,
+    login: users.login,
     name: users.name,
     lastName: users.lastName,
     gender: users.gender,
     timezone: users.timezone,
   });
+
+  return user || null;
+}
+
+export async function getUserEmailCredentialsById(id: number) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      passwordHash: users.passwordHash,
+    })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+
+  return user || null;
+}
+
+export async function updateUserEmailById(id: number, email: string) {
+  const [user] = await db
+    .update(users)
+    .set({ email, emailVerified: null })
+    .where(eq(users.id, id))
+    .returning({
+      id: users.id,
+      email: users.email,
+      login: users.login,
+      name: users.name,
+      lastName: users.lastName,
+      gender: users.gender,
+      timezone: users.timezone,
+    });
 
   return user || null;
 }

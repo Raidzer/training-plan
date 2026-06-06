@@ -3,6 +3,7 @@ import {
   generateVerificationToken,
   generatePasswordResetToken,
   getVerificationTokenByToken,
+  deleteVerificationTokensByIdentifierAndType,
 } from "@/server/tokens";
 import { db } from "@/server/db/client";
 
@@ -15,6 +16,9 @@ vi.mock("@/server/db/client", () => ({
       from: vi.fn(() => ({
         where: vi.fn(),
       })),
+    })),
+    delete: vi.fn(() => ({
+      where: vi.fn(),
     })),
   },
 }));
@@ -91,6 +95,18 @@ describe("tokens (Токены)", () => {
       const result = await getVerificationTokenByToken(tokenValue);
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe("deleteVerificationTokensByIdentifierAndType", () => {
+    it("должен удалять токены по identifier и типу", async () => {
+      const whereMock = vi.fn();
+      (db.delete as any).mockReturnValue({ where: whereMock });
+
+      await deleteVerificationTokensByIdentifierAndType("test@example.com", "verify-email");
+
+      expect(db.delete).toHaveBeenCalled();
+      expect(whereMock).toHaveBeenCalled();
     });
   });
 });

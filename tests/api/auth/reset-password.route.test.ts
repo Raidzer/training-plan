@@ -54,6 +54,7 @@ describe("POST /api/auth/reset-password", () => {
     getVerificationTokenByTokenMock.mockResolvedValue({
       id: 7,
       identifier: "user@example.com",
+      type: "reset-password",
       expires: new Date(Date.now() + 60_000).toISOString(),
     });
     getUserByEmailMock.mockResolvedValue({
@@ -91,10 +92,30 @@ describe("POST /api/auth/reset-password", () => {
     expect(getUserByEmailMock).not.toHaveBeenCalled();
   });
 
+  it("должен возвращать 400, когда токен не для сброса пароля", async () => {
+    getVerificationTokenByTokenMock.mockResolvedValue({
+      id: 7,
+      identifier: "test@example.com",
+      type: "verify-email",
+      expires: new Date(Date.now() + 60_000).toISOString(),
+    });
+
+    const response = await POST(
+      createResetPasswordRequest({
+        token: "wrong-type-token",
+        password: "new-password-123",
+      }) as any
+    );
+
+    await expectJsonError(response, 400, "Invalid token");
+    expect(getUserByEmailMock).not.toHaveBeenCalled();
+  });
+
   it("должен возвращать 400, когда токен просрочен", async () => {
     getVerificationTokenByTokenMock.mockResolvedValue({
       id: 7,
       identifier: "user@example.com",
+      type: "reset-password",
       expires: new Date(Date.now() - 60_000).toISOString(),
     });
 

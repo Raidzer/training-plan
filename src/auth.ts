@@ -54,6 +54,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         session.user.emailVerified = token.emailVerified;
         session.user.name = token.name ?? null;
+        session.user.email = token.email ?? null;
       }
       return session;
     },

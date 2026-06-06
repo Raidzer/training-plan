@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const existingToken = await getVerificationTokenByToken(token);
 
-    if (!existingToken) {
+    if (!existingToken || existingToken.type !== "reset-password") {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 });
     }
 
