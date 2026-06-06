@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 24px;
-  min-height: 100vh;
+  width: 100%;
+  min-width: 0;
 }
 
 .cardStyle {
@@ -11,52 +11,145 @@
 }
 
 .spaceStyle {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
   width: 100%;
-}
-
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.headerText {
-  flex: 1;
-  min-width: 220px;
-}
-
-.headerActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.typographyTitle {
-  margin-bottom: 8px;
-}
-
-.typographyParagraph {
-  margin-bottom: 0px;
+  min-width: 0;
 }
 
 .rangeRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
   gap: 12px;
+  grid-template-columns: minmax(260px, 1fr) auto auto auto;
+  align-items: center;
+}
+
+.rangeCard {
+  width: 100%;
+}
+
+.rangePicker {
+  width: 100%;
+  min-width: 0;
 }
 
 .summaryRow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   gap: 12px;
+}
+
+.summaryCard {
+  min-width: 0;
 }
 
 .summaryCard :global(.ant-card-body) {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.summaryCard :global(.ant-typography) {
+  margin: 0;
+}
+
+.periodTable {
+  width: 100%;
+  min-width: 0;
+}
+
+.periodTable :global(.ant-table-content) {
+  overflow-x: auto;
+}
+
+.mobilePeriodList {
+  display: none;
+}
+
+.periodDayCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-bg);
+}
+
+.periodDayHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.periodDayHeader :global(.ant-tag) {
+  margin-inline-end: 0;
+  flex: 0 0 auto;
+}
+
+.periodDayGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.metric :global(.ant-typography) {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1023px) {
+  .rangeRow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rangePicker {
+    grid-column: 1 / -1;
+  }
+
+  .desktopPeriodTable {
+    display: none;
+  }
+
+  .mobilePeriodList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cardStyle :global(.ant-card-body),
+  .rangeCard :global(.ant-card-body) {
+    padding: 12px !important;
+  }
+
+  .cardStyle :global(.ant-card-head),
+  .rangeCard :global(.ant-card-head) {
+    padding-inline: 12px !important;
+  }
+
+  .rangeRow {
+    grid-template-columns: 1fr;
+  }
+
+  .rangeRow :global(.ant-btn) {
+    width: 100%;
+  }
+
+  .periodDayGrid {
+    grid-template-columns: 1fr;
+  }
 }

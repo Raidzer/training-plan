@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Checkbox, Input, Typography } from "antd";
+import { Button, Checkbox, Input, Typography } from "antd";
 import type { RecoveryForm } from "../types/diaryTypes";
 import { normalizeStartTimeInput } from "../utils/diaryUtils";
 import styles from "../diary.module.scss";
@@ -37,7 +37,10 @@ export function RecoveryCard({
   onSave,
 }: RecoveryCardProps) {
   return (
-    <Card type="inner" title={title}>
+    <section className={styles.sectionPanel}>
+      <div className={styles.sectionHeader}>
+        <h3 className={styles.sectionTitle}>{title}</h3>
+      </div>
       <div className={styles.recoveryGrid}>
         <Checkbox
           checked={recoveryForm.hasBath}
@@ -75,6 +78,6 @@ export function RecoveryCard({
           {saveLabel}
         </Button>
       </div>
-    </Card>
+    </section>
   );
 }

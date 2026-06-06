@@ -1,13 +1,16 @@
 .page {
   display: grid;
-  place-items: center;
+  justify-items: center;
+  align-items: start;
   min-height: 70vh;
-  padding: 24px;
+  width: 100%;
+  min-width: 0;
 }
 
 .card {
   width: 100%;
-  max-width: 960px;
+  max-width: 1120px;
+  min-width: 0;
 }
 
 .header {
@@ -23,23 +26,54 @@
   margin: 0;
 }
 
-.alert {
-  margin: 16px 0;
+.helpBox {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 18px 0 20px;
+  padding: 14px 16px;
+  border: 1px solid rgba(22, 119, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(22, 119, 255, 0.06);
+}
+
+.helpIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #1677ff;
+  background: rgba(22, 119, 255, 0.12);
+  flex: 0 0 auto;
+}
+
+.helpContent {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.helpTitle {
+  line-height: 1.35;
+}
+
+.helpText {
+  margin: 0 !important;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .grid {
   display: grid;
-  gap: 8px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .gridHeader {
-  display: grid;
-  grid-template-columns:
-    120px minmax(120px, 1fr) 140px minmax(160px, 1fr) minmax(130px, 1fr)
-    minmax(180px, 1fr);
-  gap: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  display: none;
 }
 
 .gridLabel {
@@ -50,38 +84,55 @@
 
 .rows {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
 }
 
 .row {
   display: grid;
-  grid-template-columns:
-    120px minmax(120px, 1fr) 140px minmax(160px, 1fr) minmax(130px, 1fr)
-    minmax(180px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-bg);
+  min-width: 0;
 }
 
 .row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+  padding-bottom: 14px;
 }
 
 .distance {
+  grid-column: 1 / -1;
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .field {
   display: grid;
   gap: 6px;
+  min-width: 0;
+}
+
+.field :global(.ant-input),
+.field :global(.ant-picker),
+.field :global(.ant-input-affix-wrapper) {
+  min-width: 0;
+  width: 100%;
 }
 
 .fieldLabel {
-  display: none;
+  display: block;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-muted);
+}
+
+.field:last-child {
+  grid-column: 1 / -1;
 }
 
 .actions {
@@ -90,16 +141,35 @@
   margin-top: 16px;
 }
 
-@media (max-width: 720px) {
-  .gridHeader {
-    display: none;
+@media (max-width: 1023px) {
+  .rows {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
+
+  .helpBox {
+    gap: 10px;
+    padding: 12px;
   }
 
   .row {
     grid-template-columns: 1fr;
   }
 
-  .fieldLabel {
-    display: block;
+  .actions {
+    justify-content: stretch;
+  }
+
+  .actions :global(.ant-btn) {
+    width: 100%;
   }
 }

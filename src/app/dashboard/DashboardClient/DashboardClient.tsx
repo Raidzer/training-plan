@@ -8,8 +8,9 @@ import {
   TeamOutlined,
   TrophyOutlined,
 } from "@ant-design/icons";
-import { Card, Space, Typography } from "antd";
+import { Card, Typography } from "antd";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { Session } from "next-auth";
 import styles from "./dashboard.module.scss";
 import { SignOutButton } from "@/components/SingOutButton/SignOutButton";
@@ -20,7 +21,7 @@ type Props = { session: Session };
 export function DashboardClient({ session }: Props) {
   const isAdmin = session.user?.role === "admin";
   const adminCard = isAdmin ? (
-    <Link href="/admin/users" passHref>
+    <Link href="/admin/users" className={styles.cardLink}>
       <Card
         hoverable
         className={styles.card}
@@ -34,7 +35,7 @@ export function DashboardClient({ session }: Props) {
   ) : null;
 
   const templatesCard = isAdmin ? (
-    <Link href="/tools/templates" passHref>
+    <Link href="/tools/templates" className={styles.cardLink}>
       <Card
         hoverable
         className={styles.card}
@@ -48,10 +49,10 @@ export function DashboardClient({ session }: Props) {
   ) : null;
 
   return (
-    <Space size="middle" className={styles.wrapper}>
-      <Card>
+    <div className={styles.wrapper}>
+      <Card className={styles.panel}>
         <div className={styles.cardHeader}>
-          <div>
+          <div className={styles.headerText}>
             <Typography.Title level={3} className={styles.paragraphTight}>
               Привет, {session.user?.name ?? session.user?.email}
             </Typography.Title>
@@ -59,7 +60,7 @@ export function DashboardClient({ session }: Props) {
               Что планируем сегодня?
             </Typography.Paragraph>
           </div>
-          <div className={styles.buttonGroup}>
+          <div className={styles.headerAction}>
             <Link href="/profile">
               <ProfileButton />
             </Link>
@@ -69,7 +70,7 @@ export function DashboardClient({ session }: Props) {
         <div className={styles.cards}>
           {adminCard}
           {templatesCard}
-          <Link href="/plan" passHref>
+          <Link href="/plan" className={styles.cardLink}>
             <Card
               hoverable
               className={styles.card}
@@ -80,7 +81,7 @@ export function DashboardClient({ session }: Props) {
               </Typography.Text>
             </Card>
           </Link>
-          <Link href="/diary" passHref>
+          <Link href="/diary" className={styles.cardLink}>
             <Card
               hoverable
               className={styles.card}
@@ -91,7 +92,7 @@ export function DashboardClient({ session }: Props) {
               </Typography.Text>
             </Card>
           </Link>
-          <Link href="/profile/shoes" passHref>
+          <Link href="/profile/shoes" className={styles.cardLink}>
             <Card
               hoverable
               className={styles.card}
@@ -102,7 +103,7 @@ export function DashboardClient({ session }: Props) {
               </Typography.Text>
             </Card>
           </Link>
-          <Link href="/profile/records" passHref>
+          <Link href="/profile/records" className={styles.cardLink}>
             <Card
               hoverable
               className={styles.card}
@@ -113,7 +114,7 @@ export function DashboardClient({ session }: Props) {
               </Typography.Text>
             </Card>
           </Link>
-          <Link href="/verify-telegram" passHref>
+          <Link href="/verify-telegram" className={styles.cardLink}>
             <Card
               hoverable
               className={styles.card}
@@ -126,15 +127,17 @@ export function DashboardClient({ session }: Props) {
           </Link>
         </div>
       </Card>
-    </Space>
+    </div>
   );
 }
 
-function CardTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
+function CardTitle({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <Space size={8}>
-      {icon}
-      <Typography.Text strong>{title}</Typography.Text>
-    </Space>
+    <span className={styles.cardTitle}>
+      <span className={styles.cardTitleIcon}>{icon}</span>
+      <Typography.Text strong className={styles.cardTitleText}>
+        {title}
+      </Typography.Text>
+    </span>
   );
 }

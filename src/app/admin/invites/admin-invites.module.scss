@@ -1,40 +1,15 @@
 .page {
   width: 100%;
+  min-width: 0;
 }
 
 .card {
   width: 100%;
+  min-width: 0;
 }
 
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+.pageHeader {
   margin-bottom: 16px;
-}
-
-.headerText {
-  flex: 1;
-  min-width: 220px;
-  max-width: 720px;
-}
-
-.headerActions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.title {
-  margin: 0;
-}
-
-.subtitle {
-  margin: 0;
 }
 
 .formRow {
@@ -46,7 +21,13 @@
 }
 
 .formRow :global(.ant-form-item) {
+  flex: 0 1 260px;
   margin-bottom: 0;
+}
+
+.formRow :global(.ant-select),
+.formRow :global(.ant-btn) {
+  width: 100%;
 }
 
 .linkColumn {
@@ -57,6 +38,11 @@
   display: grid;
   gap: 8px;
   margin-bottom: 16px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-soft);
 }
 
 .linkRow {
@@ -67,6 +53,46 @@
 }
 
 .linkInput {
-  min-width: 260px;
+  min-width: 0;
   flex: 1;
+}
+
+.table {
+  min-width: 0;
+}
+
+.table :global(.ant-table-cell) {
+  vertical-align: top;
+}
+
+.userCell {
+  display: inline-block;
+  max-width: 160px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
+
+  .pageHeader :global(.ant-btn),
+  .formRow :global(.ant-btn),
+  .linkRow :global(.ant-btn) {
+    width: 100%;
+  }
+
+  .formRow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .formRow :global(.ant-form-item) {
+    width: 100%;
+  }
+
+  .linkRow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 }

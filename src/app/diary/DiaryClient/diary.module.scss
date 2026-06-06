@@ -2,44 +2,16 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 24px;
-  min-height: 100vh;
-}
-
-.cardStyle {
   width: 100%;
+  min-width: 0;
 }
 
-.spaceStyle {
-  width: 100%;
-}
-
-.headerRow {
+.pageStack {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 16px;
-  flex-wrap: wrap;
-}
-
-.headerText {
-  flex: 1;
-  min-width: 220px;
-}
-
-.headerActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.typographyTitle {
-  margin-bottom: 8px;
-}
-
-.typographyParagraph {
-  margin-bottom: 0px;
+  width: 100%;
+  min-width: 0;
 }
 
 .grid {
@@ -59,10 +31,22 @@
 
 .calendarCard {
   width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .dayCard {
   width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dayContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .quickActions {
@@ -90,6 +74,47 @@
   gap: 8px;
 }
 
+.statusPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.statusPanel :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.sectionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-bg);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .weightGrid {
   display: flex;
   flex-direction: column;
@@ -105,6 +130,7 @@
 .recoveryGrid {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .recoveryScores {
@@ -130,25 +156,43 @@
 }
 
 .workoutItem {
-  border: 1px solid #f0f0f0;
-  border-radius: 10px;
-  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-soft);
 }
 
 .workoutHeader {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
 }
 
+.workoutHeader > div {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
 .workoutInputs {
   display: grid;
   gap: 8px;
+  min-width: 0;
+}
+
+.workoutInputs :global(.ant-input),
+.workoutInputs :global(.ant-input-number),
+.workoutInputs :global(.ant-select),
+.workoutInputs :global(.ant-select-selector),
+.workoutInputs :global(.ant-select-single),
+.workoutInputs :global(.ant-select-multiple) {
+  width: 100%;
 }
 
 .workoutScores {
@@ -194,21 +238,44 @@
 .reportText {
   white-space: pre-wrap;
   margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+
+.reportModal :global(.ant-modal-content) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+
+.reportModal :global(.ant-modal-body) {
+  overflow-y: auto;
+  max-height: min(60vh, 560px);
+}
+
+.reportModal :global(.ant-modal-footer) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reportModal :global(.ant-modal-footer .ant-btn + .ant-btn) {
+  margin-inline-start: 0;
 }
 
 .dayLayout {
   display: flex;
   flex-direction: row;
-  gap: 16px;
+  gap: 14px;
   align-items: stretch;
 }
 
 .weightRecoveryBlock {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  flex: 0 0 260px;
-  max-width: 260px;
+  gap: 14px;
+  flex: 0 0 280px;
+  max-width: 280px;
   min-width: 220px;
 }
 
@@ -242,8 +309,61 @@
   }
 }
 
+@media (max-width: 640px) {
+  .dayCard :global(.ant-card-body),
+  .calendarCard :global(.ant-card-body) {
+    padding: 12px !important;
+  }
+
+  .dayCard :global(.ant-card-head),
+  .calendarCard :global(.ant-card-head) {
+    padding-inline: 12px !important;
+  }
+
+  .dayLayout {
+    gap: 12px;
+  }
+
+  .weightRecoveryBlock {
+    gap: 12px;
+  }
+
+  .weightRow {
+    grid-template-columns: 1fr;
+  }
+
+  .recoveryGrid {
+    flex-wrap: wrap;
+  }
+
+  .recoveryActions,
+  .workoutActions {
+    justify-content: stretch;
+  }
+
+  .recoveryActions :global(.ant-btn),
+  .workoutActions :global(.ant-btn) {
+    width: 100%;
+  }
+
+  .workoutItem {
+    padding: 12px;
+  }
+
+  .workoutHeader {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .workoutScores,
+  .workoutMetaGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .multilineText {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 

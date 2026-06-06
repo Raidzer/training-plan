@@ -4,6 +4,7 @@ import { Button, Card, List, Space, Typography, Upload, message, type UploadFile
 import { ArrowLeftOutlined, CloudUploadOutlined, InboxOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
 import styles from "./import.module.scss";
 
 const { Dragger } = Upload;
@@ -62,22 +63,20 @@ export default function PlanImportPage() {
       {contextHolder}
       <Card className={styles.cardStyle}>
         <Space orientation="vertical" size="large" className={styles.spaceStyle}>
-          <div className={styles.headerRow}>
-            <div className={styles.headerText}>
-              <Typography.Title level={3} className={styles.typographyTitle}>
-                Импорт плана из Excel
-              </Typography.Title>
-              <Typography.Paragraph type="secondary" className={styles.typographyParagraph}>
+          <PageHeader
+            title="Импорт плана из Excel"
+            subtitle={
+              <>
                 Файл должен содержать колонки «Дата», «Задание», «Комментарий» (первая строка —
                 заголовки). Используется только первый лист.
-              </Typography.Paragraph>
-            </div>
-            <div className={styles.headerActions}>
+              </>
+            }
+            actions={
               <Link href="/plan" passHref>
                 <Button icon={<ArrowLeftOutlined />}>Обратно к плану</Button>
               </Link>
-            </div>
-          </div>
+            }
+          />
           <Dragger
             name="file"
             maxCount={1}

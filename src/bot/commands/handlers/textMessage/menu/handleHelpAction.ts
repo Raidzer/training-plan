@@ -17,6 +17,7 @@ export const handleHelpMenuAction = async ({ ctx, userId }: HelpMenuActionArgs) 
     "- Время рассылки - установить время.",
     "- Таймзона - установить часовой пояс.",
     "- Отвязать - удалить связь с аккаунтом.",
+    "- Скрыть меню - убрать клавиатуру. Ее также можно свернуть жестом, вернуть - командой /menu.",
   ].join("\n");
   const subscription = await getSubscription(userId);
   await ctx.reply(helpMessage, {

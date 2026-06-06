@@ -13,6 +13,7 @@ export const TIME_BUTTON_TEXT = "Время рассылки";
 export const TIMEZONE_BUTTON_TEXT = "Часовой пояс";
 export const UNLINK_BUTTON_TEXT = "Отвязать";
 export const HELP_BUTTON_TEXT = "Помощь";
+export const HIDE_MENU_BUTTON_TEXT = "Скрыть меню";
 export const WEIGHT_BUTTON_TEXT = "Заполнить дневник";
 export const WEIGHT_TODAY_BUTTON_TEXT = "Сегодня";
 export const WEIGHT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
@@ -43,10 +44,10 @@ export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) =>
       ],
       [{ text: TIME_BUTTON_TEXT }, { text: TIMEZONE_BUTTON_TEXT }],
       [{ text: UNLINK_BUTTON_TEXT }, { text: HELP_BUTTON_TEXT }],
-      [{ text: ALICE_LINK_BUTTON_TEXT }],
+      [{ text: ALICE_LINK_BUTTON_TEXT }, { text: HIDE_MENU_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -54,7 +55,7 @@ export const buildLinkReplyKeyboard = () => {
   return {
     keyboard: [[{ text: LINK_BUTTON_TEXT }]],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -62,7 +63,7 @@ export const buildCancelLinkReplyKeyboard = () => {
   return {
     keyboard: [[{ text: CANCEL_LINK_BUTTON_TEXT }]],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -79,7 +80,7 @@ export const buildDateMenuReplyKeyboard = (params: { dateButtons: string[] }) =>
   return {
     keyboard: rows,
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -90,7 +91,7 @@ export const buildDailyReportMenuReplyKeyboard = () => {
       [{ text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -98,7 +99,7 @@ export const buildCancelReplyKeyboard = () => {
   return {
     keyboard: [[{ text: CANCEL_BUTTON_TEXT }]],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -109,7 +110,7 @@ export const buildWeightDateReplyKeyboard = () => {
       [{ text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -120,7 +121,7 @@ export const buildWeightPeriodReplyKeyboard = () => {
       [{ text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -132,7 +133,7 @@ export const buildWeightActionReplyKeyboard = () => {
       [{ text: REPORT_MAIN_MENU_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
 
@@ -171,6 +172,6 @@ export const buildRecoveryReplyKeyboard = (params: {
       [{ text: REPORT_MAIN_MENU_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,
-    is_persistent: true,
+    is_persistent: false,
   };
 };
