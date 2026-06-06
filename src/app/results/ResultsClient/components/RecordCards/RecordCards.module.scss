@@ -1,0 +1,65 @@
+.recordsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.recordCard {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  box-shadow: var(--surface-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.recordBadge {
+  align-self: flex-start;
+  background: var(--accent-color);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recordMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recordTime {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.recordAthlete {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.recordMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.protocolLink {
+  color: var(--accent-color);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.protocolLink:hover {
+  text-decoration: underline;
+}

@@ -1,21 +1,12 @@
 import type { ClubRecord } from "@/server/personalRecords";
 import type { PersonalRecordDistanceKey } from "@/shared/constants/personalRecords.constants";
-
-export type ResultsDistanceKey = "5k" | "10k" | "21k" | "42k";
-export type ResultsGender = "male" | "female";
-
-export type ResultsEntry = {
-  id: number;
-  distanceKey: ResultsDistanceKey;
-  athlete: string;
-  gender: ResultsGender | null;
-  timeText: string;
-  timeSeconds: number;
-  recordDate: string;
-  raceName: string | null;
-  raceCity: string | null;
-  protocolUrl: string | null;
-};
+import { RESULTS_TIME_EPSILON } from "../constants/resultsConstants";
+import type {
+  ResultsDistanceKey,
+  ResultsEntry,
+  ResultsGender,
+  SplitResults,
+} from "../types/resultsTypes";
 
 const formatAthleteName = (name: string, lastName: string | null) => {
   const trimmedName = name.trim();
@@ -29,7 +20,7 @@ const formatAthleteName = (name: string, lastName: string | null) => {
   return `${trimmedName} ${trimmedLastName}`;
 };
 
-const normalizeGender = (value: string) => {
+const normalizeGender = (value: string): ResultsGender | null => {
   const normalized = value.trim().toLowerCase();
   if (normalized === "male") {
     return "male";
@@ -135,4 +126,63 @@ export const groupResultsByDistance = (records: ResultsEntry[]) => {
     grouped[record.distanceKey].push(record);
   }
   return grouped;
+};
+
+export const formatResultDate = (value: string) => {
+  const [year, month, day] = value.split("-");
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}.${month}.${year}`;
+};
+
+export const buildMetaItems = (item: ResultsEntry) => {
+  const meta: string[] = [];
+
+  if (item.raceName) {
+    meta.push(item.raceName);
+  }
+
+  if (item.raceCity) {
+    meta.push(item.raceCity);
+  }
+
+  if (item.recordDate) {
+    meta.push(formatResultDate(item.recordDate));
+  }
+
+  return meta;
+};
+
+export const sortResults = (items: ResultsEntry[]) =>
+  [...items].sort((left, right) => {
+    if (left.timeSeconds !== right.timeSeconds) {
+      return left.timeSeconds - right.timeSeconds;
+    }
+
+    if (left.recordDate !== right.recordDate) {
+      return left.recordDate.localeCompare(right.recordDate);
+    }
+
+    if (left.athlete !== right.athlete) {
+      return left.athlete.localeCompare(right.athlete, "ru");
+    }
+
+    return left.id - right.id;
+  });
+
+export const splitRecords = (items: ResultsEntry[]): SplitResults => {
+  if (items.length === 0) {
+    return { records: [], rest: [] };
+  }
+
+  const bestTime = items[0].timeSeconds;
+  const records = items.filter(
+    (item) => Math.abs(item.timeSeconds - bestTime) <= RESULTS_TIME_EPSILON
+  );
+  const rest = items.filter((item) => Math.abs(item.timeSeconds - bestTime) > RESULTS_TIME_EPSILON);
+
+  return { records, rest };
 };
