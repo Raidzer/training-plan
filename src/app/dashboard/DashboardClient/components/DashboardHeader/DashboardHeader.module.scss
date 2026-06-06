@@ -1,0 +1,53 @@
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+
+.headerText {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.headerAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.paragraphTight {
+  margin: 0 !important;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .cardHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerText {
+    flex-basis: auto;
+  }
+
+  .headerAction {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .headerAction :global(.ant-btn) {
+    width: 100%;
+  }
+
+  .headerAction a {
+    flex: 1 1 0;
+  }
+}
