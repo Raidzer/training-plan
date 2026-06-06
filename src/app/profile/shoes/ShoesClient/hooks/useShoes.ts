@@ -1,11 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { App, Card, Typography } from "antd";
-import { ShoeCreateForm } from "./ShoeCreateForm/ShoeCreateForm";
-import { ShoeList } from "./ShoeList/ShoeList";
-import { shoesLabels } from "./shoes.constants";
-import type { ShoeFormState, ShoeFormUpdate, ShoeItem, ShoeMutationPayload } from "./shoes.types";
+import type { MessageInstance } from "antd/es/message/interface";
+import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
+import { shoesLabels } from "../constants/shoesConstants";
+import type {
+  ShoeFormState,
+  ShoeFormUpdate,
+  ShoeItem,
+  ShoeMutationPayload,
+} from "../types/shoesTypes";
 import {
   createEmptyForm,
   createFormFromShoe,
@@ -13,11 +17,14 @@ import {
   getShoesFromResponse,
   validateMileageLimit,
   validateName,
-} from "./shoes.utils";
-import styles from "./ShoesClient.module.scss";
+} from "../utils/shoesUtils";
 
-export function ShoesClient() {
-  const { message: messageApi, modal: modalApi } = App.useApp();
+type UseShoesParams = {
+  messageApi: MessageInstance;
+  modalApi: ModalHookAPI;
+};
+
+export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
   const [items, setItems] = useState<ShoeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,15 +38,17 @@ export function ShoesClient() {
     async (showError = true) => {
       setLoading(true);
       try {
-        const res = await fetch("/api/shoes", { cache: "no-store" });
-        const data = await res.json().catch(() => null);
-        if (!res.ok) {
+        const response = await fetch("/api/shoes", { cache: "no-store" });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
           if (showError) {
             messageApi.error(shoesLabels.loadFail);
           }
           setItems([]);
           return;
         }
+
         setItems(getShoesFromResponse(data));
       } catch (error) {
         if (showError) {
@@ -83,6 +92,7 @@ export function ShoesClient() {
       notifyOnLimitEmail: form.notifyOnLimitEmail,
       notifyOnLimitTelegram: form.notifyOnLimitTelegram,
     };
+
     if (mileageLimit.value !== undefined) {
       payload.mileageLimitKm = mileageLimit.value;
     }
@@ -98,21 +108,24 @@ export function ShoesClient() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/shoes", {
+      const response = await fetch("/api/shoes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
         messageApi.error(shoesLabels.saveFail);
         return;
       }
+
       const created = getShoeFromResponse(data);
       if (!created) {
         messageApi.error(shoesLabels.saveFail);
         return;
       }
+
       setItems((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
       setNewForm(createEmptyForm());
       messageApi.success(shoesLabels.saveOk);
@@ -146,21 +159,24 @@ export function ShoesClient() {
 
     setUpdatingId(editingId);
     try {
-      const res = await fetch(`/api/shoes/${editingId}`, {
+      const response = await fetch(`/api/shoes/${editingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
         messageApi.error(shoesLabels.updateFail);
         return;
       }
+
       const updated = getShoeFromResponse(data);
       if (!updated) {
         messageApi.error(shoesLabels.updateFail);
         return;
       }
+
       setItems((prev) => [updated, ...prev.filter((item) => item.id !== updated.id)]);
       messageApi.success(shoesLabels.updateOk);
       handleCancelEdit();
@@ -194,14 +210,17 @@ export function ShoesClient() {
     if (!confirmed) {
       return;
     }
+
     setDeletingId(item.id);
     try {
-      const res = await fetch(`/api/shoes/${item.id}`, { method: "DELETE" });
-      await res.json().catch(() => null);
-      if (!res.ok) {
+      const response = await fetch(`/api/shoes/${item.id}`, { method: "DELETE" });
+      await response.json().catch(() => null);
+
+      if (!response.ok) {
         messageApi.error(shoesLabels.deleteFail);
         return;
       }
+
       setItems((prev) => prev.filter((existing) => existing.id !== item.id));
       if (editingId === item.id) {
         handleCancelEdit();
@@ -215,33 +234,21 @@ export function ShoesClient() {
     }
   };
 
-  return (
-    <main className={styles.page}>
-      <Card className={styles.card}>
-        <Typography.Title level={3} className={styles.title}>
-          {shoesLabels.title}
-        </Typography.Title>
-        <ShoeCreateForm
-          form={newForm}
-          saving={saving}
-          onChange={updateNewForm}
-          onSubmit={handleCreate}
-        />
-        <ShoeList
-          items={items}
-          loading={loading}
-          saving={saving}
-          editingId={editingId}
-          editingForm={editingForm}
-          updatingId={updatingId}
-          deletingId={deletingId}
-          onStartEdit={handleStartEdit}
-          onChangeEdit={updateEditingForm}
-          onSaveEdit={handleSaveEdit}
-          onCancelEdit={handleCancelEdit}
-          onDelete={handleDelete}
-        />
-      </Card>
-    </main>
-  );
-}
+  return {
+    items,
+    loading,
+    saving,
+    newForm,
+    editingId,
+    editingForm,
+    updatingId,
+    deletingId,
+    updateNewForm,
+    updateEditingForm,
+    handleCreate,
+    handleStartEdit,
+    handleCancelEdit,
+    handleSaveEdit,
+    handleDelete,
+  };
+};

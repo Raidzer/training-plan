@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { RecordsClient } from "@/app/profile/records/RecordsClient";
+import { RecordsClient } from "@/app/profile/records/RecordsClient/RecordsClient";
 import { Button } from "antd";
 import Link from "next/link";
 import { ArrowLeftOutlined } from "@ant-design/icons";

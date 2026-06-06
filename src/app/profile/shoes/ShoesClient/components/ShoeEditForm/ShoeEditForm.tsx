@@ -1,7 +1,7 @@
 import { Button, Checkbox, Input, Typography } from "antd";
-import { shoesLabels } from "../shoes.constants";
-import type { ShoeFormState, ShoeFormUpdate } from "../shoes.types";
-import { formatMileageValue } from "../shoes.utils";
+import { shoesLabels } from "../../constants/shoesConstants";
+import type { ShoeFormState, ShoeFormUpdate } from "../../types/shoesTypes";
+import { formatMileageValue } from "../../utils/shoesUtils";
 import styles from "./ShoeEditForm.module.scss";
 
 type ShoeEditFormProps = {

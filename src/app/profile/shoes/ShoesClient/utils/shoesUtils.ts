@@ -1,5 +1,10 @@
-import { MAX_MILEAGE_KM, MAX_NAME_LENGTH, shoesLabels } from "./shoes.constants";
-import type { MileageValidation, NameValidation, ShoeFormState, ShoeItem } from "./shoes.types";
+import { MAX_MILEAGE_KM, MAX_NAME_LENGTH, shoesLabels } from "../constants/shoesConstants";
+import type {
+  MileageValidation,
+  NameValidation,
+  ShoeFormState,
+  ShoeItem,
+} from "../types/shoesTypes";
 
 export const validateName = (value: string): NameValidation => {
   const trimmed = value.trim();

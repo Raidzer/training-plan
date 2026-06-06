@@ -1,8 +1,8 @@
 import { Button, Typography } from "antd";
 import { ShoeEditForm } from "../ShoeEditForm/ShoeEditForm";
-import { shoesLabels } from "../shoes.constants";
-import type { ShoeFormState, ShoeFormUpdate, ShoeItem } from "../shoes.types";
-import { formatMileageValue, formatNotifications } from "../shoes.utils";
+import { shoesLabels } from "../../constants/shoesConstants";
+import type { ShoeFormState, ShoeFormUpdate, ShoeItem } from "../../types/shoesTypes";
+import { formatMileageValue, formatNotifications } from "../../utils/shoesUtils";
 import styles from "./ShoeListItem.module.scss";
 
 type ShoeListItemProps = {

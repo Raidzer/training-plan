@@ -1,7 +1,7 @@
 import { Typography } from "antd";
 import { ShoeListItem } from "../ShoeListItem/ShoeListItem";
-import { shoesLabels } from "../shoes.constants";
-import type { ShoeFormState, ShoeFormUpdate, ShoeItem } from "../shoes.types";
+import { shoesLabels } from "../../constants/shoesConstants";
+import type { ShoeFormState, ShoeFormUpdate, ShoeItem } from "../../types/shoesTypes";
 import styles from "./ShoeList.module.scss";
 
 type ShoeListProps = {

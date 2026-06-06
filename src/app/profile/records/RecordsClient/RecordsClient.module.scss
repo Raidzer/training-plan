@@ -66,89 +66,10 @@
   overflow-wrap: anywhere;
 }
 
-.grid {
-  display: grid;
-  gap: 12px;
-  min-width: 0;
-}
-
-.gridHeader {
-  display: none;
-}
-
-.gridLabel {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.rows {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  min-width: 0;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  align-items: start;
-  padding: 14px;
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  background: var(--surface-bg);
-  min-width: 0;
-}
-
-.row:last-child {
-  padding-bottom: 14px;
-}
-
-.distance {
-  grid-column: 1 / -1;
-  font-weight: 600;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.field {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
-.field :global(.ant-input),
-.field :global(.ant-picker),
-.field :global(.ant-input-affix-wrapper) {
-  min-width: 0;
-  width: 100%;
-}
-
-.fieldLabel {
-  display: block;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.field:last-child {
-  grid-column: 1 / -1;
-}
-
 .actions {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
-}
-
-@media (max-width: 1023px) {
-  .rows {
-    grid-template-columns: 1fr;
-  }
-
-  .row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 640px) {
@@ -159,10 +80,6 @@
   .helpBox {
     gap: 10px;
     padding: 12px;
-  }
-
-  .row {
-    grid-template-columns: 1fr;
   }
 
   .actions {

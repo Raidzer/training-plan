@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getUserProfileById } from "@/server/services/users";
-import { ProfileForm } from "./UserProfile/ProfileForm";
+import { ProfileClient } from "./ProfileClient/ProfileClient";
 
 export default async function Profile() {
   const session = await auth();
@@ -21,7 +21,7 @@ export default async function Profile() {
   }
 
   return (
-    <ProfileForm
+    <ProfileClient
       userData={{
         ...user,
         id: String(user.id),
