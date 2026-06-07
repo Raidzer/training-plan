@@ -174,7 +174,14 @@ describe("useDiaryPeriod", () => {
     });
 
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain("/api/diary/period-export?from=");
-    expect(downloadBlobMock).toHaveBeenCalledWith(expect.any(Blob), "period.xlsx");
+    expect(downloadBlobMock).toHaveBeenCalledTimes(1);
+    expect(downloadBlobMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        size: 4,
+        type: "text/plain;charset=utf-8",
+      })
+    );
+    expect(downloadBlobMock.mock.calls[0]?.[1]).toBe("period.xlsx");
   });
 
   it("shows API export error and does not download file", async () => {
