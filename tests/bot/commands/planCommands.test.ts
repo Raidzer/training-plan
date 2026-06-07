@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const planMocks = vi.hoisted(() => ({
   ensureLinkedMock: vi.fn(),
@@ -67,6 +67,10 @@ describe("registerPlanCommands", () => {
     planMocks.getDailyReportTextByDateMock.mockResolvedValue("Готовый отчет");
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("должен регистрировать команды плана", () => {
     const handlers = createBotHarness();
 
@@ -104,7 +108,7 @@ describe("registerPlanCommands", () => {
 
   it("должен показывать план на сегодня с учетом таймзоны или времени сервера", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-05-10T21:30:00.000Z"));
+    vi.setSystemTime(new Date("2026-05-11T09:30:00.000Z"));
 
     const handlers = createBotHarness();
     const timezoneCtx = createContext();
@@ -129,8 +133,6 @@ describe("registerPlanCommands", () => {
     expect(serverTimeCtx.reply).toHaveBeenCalledWith(
       "На 11-05-2026 нет тренировок.\n\nТаймзона не задана, использую время сервера."
     );
-
-    vi.useRealTimers();
   });
 
   it("должен валидировать дату и показывать план по дате", async () => {
@@ -167,7 +169,7 @@ describe("registerPlanCommands", () => {
 
   it("должен формировать дневной отчет по дате или за сегодня", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-05-10T21:30:00.000Z"));
+    vi.setSystemTime(new Date("2026-05-11T09:30:00.000Z"));
 
     const handlers = createBotHarness();
     const invalidCtx = createContext({ message: { text: "/report 32-12-2025" } });
@@ -204,7 +206,5 @@ describe("registerPlanCommands", () => {
     expect(serverTimeCtx.reply).toHaveBeenCalledWith(
       "Готовый отчет\n\nТаймзона не задана, использую время сервера."
     );
-
-    vi.useRealTimers();
   });
 });

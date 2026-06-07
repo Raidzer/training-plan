@@ -300,9 +300,18 @@ describe("TelegramLinkPanel", () => {
     expect(await screen.findByText("/link 999000")).toBeTruthy();
     expect(screen.getByText("Код действует до н/д.")).toBeTruthy();
 
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+    await waitFor(() => {
+      const issueButton = screen.getByRole("button", { name: "Получить код" }) as HTMLButtonElement;
+      expect(issueButton.disabled).toBe(false);
+    });
+
     fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
 
     await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(4);
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
     });
 
