@@ -8,10 +8,10 @@ const WARNING_THRESHOLD_PERCENT = 75;
 const FAILURE_THRESHOLD_PERCENT = 70;
 
 const COVERAGE_METRICS = [
-  { key: "statements", label: "Statements" },
-  { key: "branches", label: "Branches" },
-  { key: "functions", label: "Functions" },
-  { key: "lines", label: "Lines" },
+  { key: "statements", label: "Операторы" },
+  { key: "branches", label: "Ветвления" },
+  { key: "functions", label: "Функции" },
+  { key: "lines", label: "Строки" },
 ];
 
 function formatPercentage(percentage) {
@@ -20,36 +20,36 @@ function formatPercentage(percentage) {
 
 function getMetricStatus(percentage) {
   if (percentage >= GOOD_THRESHOLD_PERCENT) {
-    return "Good";
+    return "Хорошо";
   }
 
   if (percentage >= WARNING_THRESHOLD_PERCENT) {
-    return "Warning";
+    return "Предупреждение";
   }
 
   if (percentage >= FAILURE_THRESHOLD_PERCENT) {
-    return "At risk";
+    return "Риск";
   }
 
-  return "Fail";
+  return "Ошибка";
 }
 
 function getOverallStatus(metricResults) {
   const minimumCoverage = Math.min(...metricResults.map((metricResult) => metricResult.percentage));
 
   if (minimumCoverage >= GOOD_THRESHOLD_PERCENT) {
-    return `Good: all metrics are at least ${GOOD_THRESHOLD_PERCENT}%`;
+    return `Хорошо: все метрики не ниже ${GOOD_THRESHOLD_PERCENT}%`;
   }
 
   if (minimumCoverage >= WARNING_THRESHOLD_PERCENT) {
-    return `Warning: at least one metric is below ${GOOD_THRESHOLD_PERCENT}%`;
+    return `Предупреждение: минимум одна метрика ниже ${GOOD_THRESHOLD_PERCENT}%`;
   }
 
   if (minimumCoverage >= FAILURE_THRESHOLD_PERCENT) {
-    return `At risk: at least one metric is below ${WARNING_THRESHOLD_PERCENT}%`;
+    return `Риск: минимум одна метрика ниже ${WARNING_THRESHOLD_PERCENT}%`;
   }
 
-  return `Fail: at least one metric is below ${FAILURE_THRESHOLD_PERCENT}%`;
+  return `Ошибка: минимум одна метрика ниже ${FAILURE_THRESHOLD_PERCENT}%`;
 }
 
 function getMetricPercentage(totalCoverage, key) {
@@ -82,19 +82,19 @@ function buildMarkdown(metricResults) {
     .join("\n");
 
   return [
-    "## Coverage",
+    "## Покрытие тестами",
     "",
-    `Overall status: ${getOverallStatus(metricResults)}`,
+    `Общий статус: ${getOverallStatus(metricResults)}`,
     "",
-    "| Metric | Coverage | Status |",
+    "| Метрика | Покрытие | Статус |",
     "| --- | ---: | --- |",
     metricRows,
     "",
-    "Thresholds:",
-    `- Good: >= ${GOOD_THRESHOLD_PERCENT}%`,
-    `- Warning: >= ${WARNING_THRESHOLD_PERCENT}% and < ${GOOD_THRESHOLD_PERCENT}%`,
-    `- At risk: >= ${FAILURE_THRESHOLD_PERCENT}% and < ${WARNING_THRESHOLD_PERCENT}%`,
-    `- Fail: < ${FAILURE_THRESHOLD_PERCENT}%`,
+    "Пороги:",
+    `- Хорошо: >= ${GOOD_THRESHOLD_PERCENT}%`,
+    `- Предупреждение: >= ${WARNING_THRESHOLD_PERCENT}% и < ${GOOD_THRESHOLD_PERCENT}%`,
+    `- Риск: >= ${FAILURE_THRESHOLD_PERCENT}% и < ${WARNING_THRESHOLD_PERCENT}%`,
+    `- Ошибка: < ${FAILURE_THRESHOLD_PERCENT}%`,
     "",
   ].join("\n");
 }
@@ -110,21 +110,23 @@ function reportAnnotations(metricResults) {
 
     if (metricResult.percentage < FAILURE_THRESHOLD_PERCENT) {
       console.log(
-        `::error title=Coverage ${metricResult.label}::${metricResult.label} coverage is ${formattedPercentage}. Required minimum is ${FAILURE_THRESHOLD_PERCENT}%.`
+        `::error title=Покрытие ${metricResult.label}::Покрытие метрики "${metricResult.label}" равно ${formattedPercentage}. Минимальный порог: ${FAILURE_THRESHOLD_PERCENT}%.`
       );
       continue;
     }
 
     if (metricResult.percentage < GOOD_THRESHOLD_PERCENT) {
       console.log(
-        `::warning title=Coverage ${metricResult.label}::${metricResult.label} coverage is ${formattedPercentage}. Good threshold is ${GOOD_THRESHOLD_PERCENT}%.`
+        `::warning title=Покрытие ${metricResult.label}::Покрытие метрики "${metricResult.label}" равно ${formattedPercentage}. Хороший уровень: ${GOOD_THRESHOLD_PERCENT}%.`
       );
     }
   }
 }
 
 if (!existsSync(COVERAGE_SUMMARY_PATH)) {
-  const markdown = ["## Coverage", "", "Coverage summary was not generated.", ""].join("\n");
+  const markdown = ["## Покрытие тестами", "", "Сводка покрытия не была сгенерирована.", ""].join(
+    "\n"
+  );
 
   writeMarkdown(markdown);
   console.log(markdown);
