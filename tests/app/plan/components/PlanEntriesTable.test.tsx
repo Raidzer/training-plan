@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import { PlanEntriesTable } from "@/app/plan/PlanClient/components/PlanEntriesTable/PlanEntriesTable";
 import type { PlanDayEntry } from "@/app/plan/PlanClient/types/planTypes";
@@ -21,8 +21,19 @@ beforeAll(() => {
 
 vi.mock("next/link", () => {
   return {
-    default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-      <a href={href}>{children}</a>
+    default: ({
+      children,
+      href,
+      passHref: _passHref,
+      ...props
+    }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+      children: React.ReactNode;
+      href: string;
+      passHref?: boolean;
+    }) => (
+      <a href={href} {...props}>
+        {children}
+      </a>
     ),
   };
 });
@@ -75,11 +86,19 @@ describe("PlanEntriesTable", () => {
   });
 
   it("должен рендерить мобильные карточки с действиями", () => {
-    const { container } = render(<PlanEntriesTable {...defaultProps} />);
+    const onEditDay = vi.fn();
 
-    expect(container.querySelectorAll("article[data-plan-entry-key]")).toHaveLength(2);
+    render(<PlanEntriesTable {...defaultProps} onEditDay={onEditDay} />);
+
     expect(screen.getByText("Нет отчета")).toBeTruthy();
-    expect(screen.getAllByLabelText("Редактировать день 2023-10-01").length).toBeGreaterThan(0);
-    expect(screen.getAllByLabelText("Открыть дневник на 2023-10-01").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Редактировать день 2023-10-01" })[0]);
+
+    const diaryLinks = screen.getAllByRole("link", {
+      name: "Открыть дневник на 2023-10-01",
+    });
+
+    expect(onEditDay).toHaveBeenCalledWith("2023-10-01");
+    expect(diaryLinks[0].getAttribute("href")).toBe("/diary?date=2023-10-01");
   });
 });

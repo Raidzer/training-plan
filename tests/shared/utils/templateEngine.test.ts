@@ -292,6 +292,150 @@ describe("templateEngine", () => {
     });
 
     describe("Дополнительное покрытие", () => {
+      it("должен корректно обрабатывать пустые и битые выражения", () => {
+        const template = createTemplate(
+          [
+            "Empty: {{   }}",
+            "Unclosed: {{name",
+            "Unknown: {{#unknown value}}X{{/unknown}}",
+            "Mismatched: {{#if show}}Y{{/each}}",
+          ].join(" | ")
+        );
+        const values = { show: true };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe(
+          [
+            "Empty: ",
+            "Unclosed: {{name",
+            "Unknown: {{#unknown value}}X{{/unknown}}",
+            "Mismatched: {{#if show}}Y{{/each}}",
+          ].join(" | ")
+        );
+      });
+
+      it("должен возвращать пустые значения для невалидных функций и индексов", () => {
+        const template = createTemplate(
+          [
+            "Index: {{@index}}/{{@total}}",
+            "ByI: {{list[i]}}",
+            "ByNumber: {{value[1]}}",
+            "UnknownFn: {{UNKNOWN(value)}}",
+            "PaceNoArgs: {{PACE()}}",
+            "AvgHeightNoArgs: {{AVG_HEIGHT()}}",
+          ].join(" | ")
+        );
+        const values = {
+          list: ["A"],
+          value: "not-array",
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe(
+          [
+            "Index: 0/0",
+            "ByI: ",
+            "ByNumber: ",
+            "UnknownFn: ",
+            "PaceNoArgs: ",
+            "AvgHeightNoArgs: ",
+          ].join(" | ")
+        );
+      });
+
+      it("должен игнорировать пустые и нечисловые значения в агрегатах", () => {
+        const template = createTemplate(
+          [
+            "AvgTime: {{AVG_TIME(times)}}",
+            "SumTime: {{SUM_TIME(emptyTimes)}}",
+            "AvgNum: {{AVG_NUM(nums)}}",
+            "SumNum: {{SUM_NUM(nums)}}",
+          ].join(" | ")
+        );
+        const values = {
+          times: ["", null, undefined, "abc"],
+          emptyTimes: [],
+          nums: [Number.NaN, "bad", null],
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe("AvgTime:  | SumTime:  | AvgNum:  | SumNum: ");
+      });
+
+      it("должен округлять время с переносом секунд и часов", () => {
+        const template = createTemplate(
+          "Avg: {{AVG_TIME(times)}} | Sum: {{SUM_TIME(longTimes)}} | Hours: {{SUM_TIME(hours)}}"
+        );
+        const values = {
+          times: ["0:59.95", "0:59.95"],
+          longTimes: ["59:59.96"],
+          hours: ["1:02:03", "0:00:02"],
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe("Avg: 1:00 | Sum: 1:0:00 | Hours: 1:2:05");
+      });
+
+      it("должен поддерживать запятые внутри вложенных mustache-аргументов", () => {
+        const template = createTemplate(
+          "Pace: {{PACE({{SUM_TIME(t1, t2)}}, {{SUM_NUM(d1, d2)}})}}"
+        );
+        const values = {
+          t1: "10:00",
+          t2: "05:00",
+          d1: 2,
+          d2: 1,
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe("Pace: 5:00");
+      });
+
+      it("должен использовать локальный контекст внутри each и fallback на глобальный", () => {
+        const template = createTemplate(
+          "{{#each items}}{{name}}/{{globalName}}/{{missing[i]}};{{/each}}"
+        );
+        const values = {
+          name: "Global",
+          globalName: "Club",
+          missing: "not-array",
+          items: [{ name: "Local" }, {}],
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe("Local/Club/;Global/Club/;");
+      });
+
+      it("должен возвращать пустую строку для пустых each и repeat", () => {
+        const template = createTemplate(
+          "Each: {{#each list}}X{{/each}} | Repeat: {{#repeat missing}}Y{{/repeat}}"
+        );
+        const values = {
+          list: "not-array",
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe("Each:  | Repeat: ");
+      });
+
+      it("должен обрабатывать варианты list-полей и null weight", () => {
+        const template = createTemplate(
+          "{{#each arrayItems}}{{this}};{{/each}}|{{#each missingItems}}{{this}}{{/each}}|{{value_weight}}",
+          [
+            { key: "arrayItems", type: "list" },
+            { key: "missingItems", type: "list" },
+            { key: "value", type: "text", weight: null } as any,
+          ]
+        );
+        const values = {
+          arrayItems: ["A", "B"],
+          value: "x",
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe("A;B;||");
+      });
+
       it("должен обрабатывать дробную дистанцию в км с запятой для PACE", () => {
         const template = createTemplate("Pace: {{PACE(time, dist)}}");
         const values = { time: "10:00", dist: "2,5" };
@@ -332,6 +476,18 @@ describe("templateEngine", () => {
         const values = { height: "100", dist: "0" };
         const result = processTemplate(template, values);
         expect(result).toBe("Avg: ");
+      });
+
+      it("должен возвращать пустой PACE для пустой и нечисловой дистанции", () => {
+        const template = createTemplate("Empty: {{PACE(time, empty)}} | Bad: {{PACE(time, bad)}}");
+        const values = {
+          time: "10:00",
+          empty: "",
+          bad: "abc",
+        };
+        const result = processTemplate(template, values);
+
+        expect(result).toBe("Empty:  | Bad: ");
       });
 
       it("должен разбивать значение списка по точкам с запятой и переводам строк", () => {

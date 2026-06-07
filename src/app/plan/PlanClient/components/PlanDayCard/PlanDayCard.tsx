@@ -49,7 +49,11 @@ export function PlanDayCard({ entry, isToday, onEditDay }: PlanDayCardProps) {
             />
           </Tooltip>
           <Tooltip title={PLAN_TEXT.table.diaryTooltip}>
-            <Link href={`/diary?date=${entry.date}`} passHref>
+            <Link
+              href={`/diary?date=${entry.date}`}
+              passHref
+              aria-label={PLAN_TEXT.table.diaryAria(entry.date)}
+            >
               <Button
                 size="small"
                 type="text"

@@ -82,7 +82,11 @@ export function PlanEntriesTable({
               />
             </Tooltip>
             <Tooltip title={PLAN_TEXT.table.diaryTooltip}>
-              <Link href={`/diary?date=${record.date}`} passHref>
+              <Link
+                href={`/diary?date=${record.date}`}
+                passHref
+                aria-label={PLAN_TEXT.table.diaryAria(record.date)}
+              >
                 <Button
                   size="small"
                   type="text"

@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:open": "npm run test:coverage && node src/scripts/openCoverageReport.mjs",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "bot": "tsx src/bot/index.ts",
@@ -62,6 +65,7 @@
     "@typescript-eslint/eslint-plugin": "^8.52.0",
     "@typescript-eslint/parser": "^8.52.0",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.17",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
     "eslint-config-next": "^15.1.3",
