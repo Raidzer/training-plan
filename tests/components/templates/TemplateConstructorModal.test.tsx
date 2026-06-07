@@ -913,7 +913,7 @@ describe("TemplateConstructorModal", () => {
     await waitFor(() => {
       const valueNodes = Array.from(
         document.querySelectorAll(
-          ".ant-select-content-value[title], .ant-select-selection-item[title]"
+          ".ant-select-content[title], .ant-select-content-value[title], .ant-select-selection-item[title]"
         )
       );
       const expectedNames = [
