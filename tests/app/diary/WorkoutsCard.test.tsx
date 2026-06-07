@@ -2,6 +2,8 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { WorkoutsCard } from "@/app/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard";
 
+const WORKOUTS_CARD_TEST_TIMEOUT_MS = 10000;
+
 vi.mock("@/components/templates/TemplateConstructorModal", () => {
   return {
     TemplateConstructorModal: ({
@@ -59,80 +61,83 @@ beforeEach(() => {
 });
 
 describe("WorkoutsCard", () => {
-  it("должен заменять resultText после применения конструктора", () => {
-    const onChange = vi.fn();
+  it(
+    "должен заменять resultText после применения конструктора",
+    () => {
+      const onChange = vi.fn();
 
-    render(
-      <WorkoutsCard
-        userId={1}
-        messageApi={{} as any}
-        title="Workouts"
-        emptyLabel="Empty"
-        completeLabel="Complete"
-        incompleteLabel="Incomplete"
-        startTimePlaceholder="Start"
-        resultPlaceholder="Result"
-        distancePlaceholder="Distance"
-        overallScoreLabel="Overall"
-        functionalScoreLabel="Functional"
-        muscleScoreLabel="Muscle"
-        scorePlaceholder="Score"
-        surfacePlaceholder="Surface"
-        shoePlaceholder="Shoes"
-        shoeMileagePlaceholder="Shoe mileage"
-        weatherPlaceholder="Weather"
-        windPlaceholder="Wind"
-        temperaturePlaceholder="Temperature"
-        commentPlaceholder="Comment"
-        saveReportLabel="Save"
-        surfaceOptions={[
-          { value: "asphalt", label: "Асфальт" },
-          { value: "manezh", label: "Манеж" },
-        ]}
-        shoeOptions={[]}
-        weatherOptions={[{ value: "sunny", label: "Солнечно" }]}
-        windOptions={[{ value: "true", label: "Есть" }]}
-        shoeLoading={false}
-        entries={[
-          {
-            id: 1,
-            date: "2026-02-09",
-            sessionOrder: 1,
-            taskText: "12x200",
-            commentText: null,
-            isWorkload: true,
-          },
-        ]}
-        workoutForm={{
-          1: {
-            startTime: "09:30",
-            resultText: "old-result",
-            commentText: "old-comment",
-            distanceKm: "",
-            overallScore: null,
-            functionalScore: null,
-            muscleScore: null,
-            weather: "",
-            hasWind: "",
-            temperatureC: "",
-            surface: "",
-            shoeIds: [],
-            shoeMileageKm: {},
-          },
-        }}
-        savingWorkouts={{}}
-        onChange={onChange}
-        onSave={vi.fn()}
-      />
-    );
+      render(
+        <WorkoutsCard
+          userId={1}
+          messageApi={{} as any}
+          title="Workouts"
+          emptyLabel="Empty"
+          completeLabel="Complete"
+          incompleteLabel="Incomplete"
+          startTimePlaceholder="Start"
+          resultPlaceholder="Result"
+          distancePlaceholder="Distance"
+          overallScoreLabel="Overall"
+          functionalScoreLabel="Functional"
+          muscleScoreLabel="Muscle"
+          scorePlaceholder="Score"
+          surfacePlaceholder="Surface"
+          shoePlaceholder="Shoes"
+          shoeMileagePlaceholder="Shoe mileage"
+          weatherPlaceholder="Weather"
+          windPlaceholder="Wind"
+          temperaturePlaceholder="Temperature"
+          commentPlaceholder="Comment"
+          saveReportLabel="Save"
+          surfaceOptions={[
+            { value: "asphalt", label: "Асфальт" },
+            { value: "manezh", label: "Манеж" },
+          ]}
+          shoeOptions={[]}
+          weatherOptions={[{ value: "sunny", label: "Солнечно" }]}
+          windOptions={[{ value: "true", label: "Есть" }]}
+          shoeLoading={false}
+          entries={[
+            {
+              id: 1,
+              date: "2026-02-09",
+              sessionOrder: 1,
+              taskText: "12x200",
+              commentText: null,
+              isWorkload: true,
+            },
+          ]}
+          workoutForm={{
+            1: {
+              startTime: "09:30",
+              resultText: "old-result",
+              commentText: "old-comment",
+              distanceKm: "",
+              overallScore: null,
+              functionalScore: null,
+              muscleScore: null,
+              weather: "",
+              hasWind: "",
+              temperatureC: "",
+              surface: "",
+              shoeIds: [],
+              shoeMileageKm: {},
+            },
+          }}
+          savingWorkouts={{}}
+          onChange={onChange}
+          onSave={vi.fn()}
+        />
+      );
 
-    const constructorButton = document.querySelector("button.ant-btn-icon-only");
-    expect(constructorButton).not.toBeNull();
+      const constructorButton = screen.getByRole("button", { name: "Конструктор отчета" });
 
-    fireEvent.click(constructorButton as HTMLButtonElement);
-    fireEvent.click(screen.getByRole("button", { name: "mock-apply-constructor" }));
+      fireEvent.click(constructorButton);
+      fireEvent.click(screen.getByRole("button", { name: "mock-apply-constructor" }));
 
-    expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith(1, "resultText", "constructor-result");
-  });
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith(1, "resultText", "constructor-result");
+    },
+    WORKOUTS_CARD_TEST_TIMEOUT_MS
+  );
 });

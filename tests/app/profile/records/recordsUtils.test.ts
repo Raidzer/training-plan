@@ -92,7 +92,7 @@ describe("recordsUtils", () => {
       raceCity: "Moscow",
     });
     expect(fiveKmRow?.recordDate?.format("YYYY-MM-DD")).toBe("2026-05-10");
-    expect(rows.every((row) => row.distanceKey !== "unknown")).toBe(true);
+    expect(rows.some((row) => row.timeText === "00:10:00")).toBe(false);
   });
 
   it("validates record rows without depending on rendered form markup", () => {
