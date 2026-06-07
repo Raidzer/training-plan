@@ -8,10 +8,10 @@ const WARNING_THRESHOLD_PERCENT = 75;
 const FAILURE_THRESHOLD_PERCENT = 70;
 
 const COVERAGE_METRICS = [
-  { key: "statements", label: "Операторы" },
-  { key: "branches", label: "Ветвления" },
+  { key: "statements", label: "Инструкции" },
+  { key: "branches", label: "Условия" },
   { key: "functions", label: "Функции" },
-  { key: "lines", label: "Строки" },
+  { key: "lines", label: "Строки кода" },
 ];
 
 function formatPercentage(percentage) {
@@ -24,14 +24,14 @@ function getMetricStatus(percentage) {
   }
 
   if (percentage >= WARNING_THRESHOLD_PERCENT) {
-    return "Предупреждение";
+    return "Ниже цели";
   }
 
   if (percentage >= FAILURE_THRESHOLD_PERCENT) {
-    return "Риск";
+    return "На грани";
   }
 
-  return "Ошибка";
+  return "Ниже минимума";
 }
 
 function getOverallStatus(metricResults) {
@@ -42,14 +42,14 @@ function getOverallStatus(metricResults) {
   }
 
   if (minimumCoverage >= WARNING_THRESHOLD_PERCENT) {
-    return `Предупреждение: минимум одна метрика ниже ${GOOD_THRESHOLD_PERCENT}%`;
+    return `Ниже цели: минимум одна метрика ниже ${GOOD_THRESHOLD_PERCENT}%`;
   }
 
   if (minimumCoverage >= FAILURE_THRESHOLD_PERCENT) {
-    return `Риск: минимум одна метрика ниже ${WARNING_THRESHOLD_PERCENT}%`;
+    return `На грани: минимум одна метрика ниже ${WARNING_THRESHOLD_PERCENT}%`;
   }
 
-  return `Ошибка: минимум одна метрика ниже ${FAILURE_THRESHOLD_PERCENT}%`;
+  return `Ниже минимума: минимум одна метрика ниже ${FAILURE_THRESHOLD_PERCENT}%`;
 }
 
 function getMetricPercentage(totalCoverage, key) {
@@ -92,9 +92,9 @@ function buildMarkdown(metricResults) {
     "",
     "Пороги:",
     `- Хорошо: >= ${GOOD_THRESHOLD_PERCENT}%`,
-    `- Предупреждение: >= ${WARNING_THRESHOLD_PERCENT}% и < ${GOOD_THRESHOLD_PERCENT}%`,
-    `- Риск: >= ${FAILURE_THRESHOLD_PERCENT}% и < ${WARNING_THRESHOLD_PERCENT}%`,
-    `- Ошибка: < ${FAILURE_THRESHOLD_PERCENT}%`,
+    `- Ниже цели: >= ${WARNING_THRESHOLD_PERCENT}% и < ${GOOD_THRESHOLD_PERCENT}%`,
+    `- На грани: >= ${FAILURE_THRESHOLD_PERCENT}% и < ${WARNING_THRESHOLD_PERCENT}%`,
+    `- Ниже минимума: < ${FAILURE_THRESHOLD_PERCENT}%`,
     "",
   ].join("\n");
 }
