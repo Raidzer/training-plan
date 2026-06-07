@@ -8,6 +8,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:open": "npm run test:coverage && node src/scripts/openCoverageReport.mjs",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "bot": "tsx src/bot/index.ts",
