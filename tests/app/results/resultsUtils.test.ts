@@ -89,6 +89,57 @@ describe("resultsUtils", () => {
     });
   });
 
+  it("maps all supported distance keys and nullable athlete metadata", () => {
+    const results = mapClubRecordsToResults([
+      createClubRecord({
+        id: 5,
+        distanceKey: "10k",
+        userName: "  Анна  ",
+        userLastName: "",
+        userGender: "other",
+        timeText: "00:40:00",
+      }),
+      createClubRecord({
+        id: 6,
+        distanceKey: "marathon",
+        userName: "Мария",
+        userLastName: null,
+        userGender: " FEMALE ",
+        timeText: "03:10:00.25",
+      }),
+    ]);
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        id: 5,
+        athlete: "Анна",
+        gender: null,
+        distanceKey: "10k",
+        timeSeconds: 2400,
+      }),
+      expect.objectContaining({
+        id: 6,
+        athlete: "Мария",
+        gender: "female",
+        distanceKey: "42k",
+        timeSeconds: 11400.25,
+      }),
+    ]);
+  });
+
+  it("skips records with malformed time text", () => {
+    const results = mapClubRecordsToResults([
+      createClubRecord({ id: 10, timeText: "" }),
+      createClubRecord({ id: 11, timeText: "bad:10:10" }),
+      createClubRecord({ id: 12, timeText: "00:bad:10" }),
+      createClubRecord({ id: 13, timeText: "00:10:bad" }),
+      createClubRecord({ id: 14, timeText: "00:10:10." }),
+      createClubRecord({ id: 15, timeText: "00:10:10.2.3" }),
+    ]);
+
+    expect(results).toEqual([]);
+  });
+
   it("groups results by supported distance keys", () => {
     const grouped = groupResultsByDistance([
       createResult("5k", { id: 1 }),
@@ -115,6 +166,15 @@ describe("resultsUtils", () => {
         })
       )
     ).toEqual(["Spring Run", "Moscow", "10.05.2026"]);
+    expect(
+      buildMetaItems(
+        createResult("5k", {
+          raceName: null,
+          raceCity: null,
+          recordDate: "",
+        })
+      )
+    ).toEqual([]);
   });
 
   it("sorts results by time, date, athlete and id", () => {
@@ -148,6 +208,15 @@ describe("resultsUtils", () => {
     expect(sortResults(results).map((result) => result.id)).toEqual([1, 2, 3, 4]);
   });
 
+  it("sorts results by id when time, date and athlete match", () => {
+    const results = [
+      createResult("5k", { id: 2, athlete: "Анна", timeSeconds: 1000 }),
+      createResult("5k", { id: 1, athlete: "Анна", timeSeconds: 1000 }),
+    ];
+
+    expect(sortResults(results).map((result) => result.id)).toEqual([1, 2]);
+  });
+
   it("splits records into best records and other results using epsilon", () => {
     const { records, rest } = splitRecords([
       createResult("10k", {
@@ -166,5 +235,12 @@ describe("resultsUtils", () => {
 
     expect(records.map((result) => result.id)).toEqual([1, 2]);
     expect(rest.map((result) => result.id)).toEqual([3]);
+  });
+
+  it("returns empty split for empty results", () => {
+    expect(splitRecords([])).toEqual({
+      records: [],
+      rest: [],
+    });
   });
 });

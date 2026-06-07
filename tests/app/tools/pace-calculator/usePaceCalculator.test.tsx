@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import type { ChangeEvent } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { STORAGE_KEY } from "@/app/tools/pace-calculator/PaceCalculatorClient/constants/paceCalculatorConstants";
 import { usePaceCalculator } from "@/app/tools/pace-calculator/PaceCalculatorClient/hooks/usePaceCalculator";
@@ -58,5 +59,85 @@ describe("usePaceCalculator", () => {
 
     const persisted = localStorage.getItem(STORAGE_KEY);
     expect(persisted).toBe("[]");
+  });
+
+  it("должен синхронизировать результат из ручного результата и дистанции", async () => {
+    const { result } = renderHook(() => usePaceCalculator());
+
+    await waitFor(() => {
+      expect(result.current.resultTimeString).toBe("00:37:30");
+    });
+
+    act(() => {
+      result.current.handleResultTimeChange("00:45:00");
+    });
+    act(() => {
+      result.current.handleDistanceChange({
+        target: { value: "15000" },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(result.current.resultTimeString).toBe("00:45:00");
+    expect(result.current.distance).toBe(15000);
+    expect(result.current.paceTimeString).toBe("00:03:00");
+    expect(result.current.lapTimeString).toBe("00:01:12");
+  });
+
+  it("должен синхронизировать результат из круга и обрабатывать нулевые значения", async () => {
+    const { result } = renderHook(() => usePaceCalculator());
+
+    await waitFor(() => {
+      expect(result.current.canSave).toBe(true);
+    });
+
+    act(() => {
+      result.current.handleLapTimeChange("00:01:20");
+    });
+
+    expect(result.current.lapTimeString).toBe("00:01:20");
+    expect(result.current.paceTimeString).toBe("00:03:20");
+
+    act(() => {
+      result.current.handleDistancePreset(0);
+    });
+
+    expect(result.current.resultHours).toBe(0);
+    expect(result.current.resultMinutes).toBe(0);
+    expect(result.current.resultSeconds).toBe(0);
+    expect(result.current.splits).toEqual([]);
+    expect(result.current.splitGroups).toEqual([]);
+    expect(result.current.canSave).toBe(false);
+
+    act(() => {
+      result.current.handleSaveResult();
+    });
+
+    expect(result.current.savedResults).toEqual([]);
+  });
+
+  it("должен сбрасывать связанные поля при нулевом темпе и круге", async () => {
+    const { result } = renderHook(() => usePaceCalculator());
+
+    await waitFor(() => {
+      expect(result.current.canSave).toBe(true);
+    });
+
+    act(() => {
+      result.current.handlePaceTimeChange("00:00:00");
+    });
+
+    expect(result.current.resultHours).toBe(0);
+    expect(result.current.lapMinutes).toBe(0);
+    expect(result.current.canSave).toBe(false);
+
+    act(() => {
+      result.current.handleDistancePreset(5000);
+    });
+    act(() => {
+      result.current.handleLapTimeChange("00:00:00");
+    });
+
+    expect(result.current.paceMinutes).toBe(0);
+    expect(result.current.resultMinutes).toBe(0);
   });
 });

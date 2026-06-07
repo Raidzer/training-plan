@@ -100,6 +100,22 @@ describe("useShoes", () => {
     expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.nameRequired);
   });
 
+  it("validates mileage before create request", async () => {
+    const { hook, fetchMock, messageApi } = await renderUseShoes();
+
+    act(() => {
+      hook.result.current.updateNewForm("name", "Daily");
+      hook.result.current.updateNewForm("mileageLimitKm", "bad");
+    });
+
+    await act(async () => {
+      await hook.result.current.handleCreate();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.mileageInvalid);
+  });
+
   it("creates shoe and resets create form", async () => {
     const created = createShoe({
       id: 2,
@@ -160,6 +176,87 @@ describe("useShoes", () => {
     expect(messageApi.success).toHaveBeenCalledWith(shoesLabels.updateOk);
   });
 
+  it("ignores save edit without selected shoe and validates edit payload", async () => {
+    const shoe = createShoe();
+    const { hook, fetchMock, messageApi } = await renderUseShoes([shoe]);
+
+    await act(async () => {
+      await hook.result.current.handleSaveEdit();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      hook.result.current.handleStartEdit(shoe);
+      hook.result.current.updateEditingForm("mileageLimitKm", "bad");
+    });
+
+    await act(async () => {
+      await hook.result.current.handleSaveEdit();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.mileageInvalid);
+  });
+
+  it("shows errors for failed create and update responses", async () => {
+    const shoe = createShoe();
+    const { hook, fetchMock, messageApi } = await renderUseShoes([shoe]);
+
+    act(() => {
+      hook.result.current.updateNewForm("name", "Daily");
+    });
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500));
+
+    await act(async () => {
+      await hook.result.current.handleCreate();
+    });
+
+    act(() => {
+      hook.result.current.handleStartEdit(shoe);
+      hook.result.current.updateEditingForm("name", "Updated");
+    });
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ shoe: null }));
+
+    await act(async () => {
+      await hook.result.current.handleSaveEdit();
+    });
+
+    expect(messageApi.error).toHaveBeenCalledWith(shoesLabels.saveFail);
+    expect(messageApi.error).toHaveBeenCalledWith(shoesLabels.updateFail);
+  });
+
+  it("shows errors for network failures", async () => {
+    const shoe = createShoe();
+    const { hook, fetchMock, messageApi } = await renderUseShoes([shoe]);
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    act(() => {
+      hook.result.current.updateNewForm("name", "Daily");
+    });
+    fetchMock.mockRejectedValueOnce(new Error("create-network"));
+
+    await act(async () => {
+      await hook.result.current.handleCreate();
+    });
+
+    act(() => {
+      hook.result.current.handleStartEdit(shoe);
+      hook.result.current.updateEditingForm("name", "Updated");
+    });
+    fetchMock.mockRejectedValueOnce(new Error("update-network"));
+
+    await act(async () => {
+      await hook.result.current.handleSaveEdit();
+    });
+
+    expect(messageApi.error).toHaveBeenCalledWith(shoesLabels.saveFail);
+    expect(messageApi.error).toHaveBeenCalledWith(shoesLabels.updateFail);
+    expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it("deletes shoe only after confirmation", async () => {
     const shoe = createShoe();
     const { hook, fetchMock, messageApi, modalApi } = await renderUseShoes([shoe]);
@@ -192,5 +289,61 @@ describe("useShoes", () => {
     expect(deleteRequest.method).toBe("DELETE");
     expect(hook.result.current.items).toEqual([]);
     expect(messageApi.success).toHaveBeenCalledWith(shoesLabels.deleteOk);
+  });
+
+  it("shows delete errors and exits edit mode when deleted shoe was edited", async () => {
+    const shoe = createShoe();
+    const { hook, fetchMock, messageApi, modalApi } = await renderUseShoes([shoe]);
+    const confirmMock = modalApi.confirm as ReturnType<typeof vi.fn>;
+    confirmMock.mockImplementation((options) => {
+      options.onOk?.();
+      return undefined;
+    });
+
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500));
+
+    await act(async () => {
+      await hook.result.current.handleDelete(shoe);
+    });
+
+    expect(messageApi.error).toHaveBeenCalledWith(shoesLabels.deleteFail);
+    expect(hook.result.current.items).toEqual([shoe]);
+
+    act(() => {
+      hook.result.current.handleStartEdit(shoe);
+    });
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ success: true }));
+
+    await act(async () => {
+      await hook.result.current.handleDelete(shoe);
+    });
+
+    expect(hook.result.current.items).toEqual([]);
+    expect(hook.result.current.editingId).toBeNull();
+  });
+
+  it("handles failed initial load without showing silent mount error", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error("load-network"));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const messageApi = createMessageApi();
+    const modalApi = createModalApi();
+
+    const hook = renderHook(() =>
+      useShoes({
+        messageApi,
+        modalApi,
+      })
+    );
+
+    await waitFor(() => {
+      expect(hook.result.current.loading).toBe(false);
+    });
+
+    expect(hook.result.current.items).toEqual([]);
+    expect(messageApi.error).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+
+    consoleErrorSpy.mockRestore();
   });
 });
