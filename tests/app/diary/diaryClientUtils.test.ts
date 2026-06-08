@@ -14,8 +14,8 @@ import {
   parseDate,
   parseSleepTimeInput,
   toDefaultWorkoutForm,
-} from "@/app/diary/DiaryClient/utils/diaryUtils";
-import type { WorkoutReport } from "@/app/diary/DiaryClient/types/diaryTypes";
+} from "@/app/(protected)/diary/DiaryClient/utils/diaryUtils";
+import type { WorkoutReport } from "@/app/(protected)/diary/DiaryClient/types/diaryTypes";
 
 describe("DiaryClient diaryUtils", () => {
   it("должен форматировать и парсить даты дневника", () => {

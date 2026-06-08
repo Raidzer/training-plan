@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { shoesLabels } from "@/app/profile/shoes/ShoesClient/constants/shoesConstants";
+import { shoesLabels } from "@/app/(protected)/profile/shoes/ShoesClient/constants/shoesConstants";
 import {
   createEmptyForm,
   createFormFromShoe,
@@ -11,8 +11,8 @@ import {
   getShoesFromResponse,
   validateMileageLimit,
   validateName,
-} from "@/app/profile/shoes/ShoesClient/utils/shoesUtils";
-import type { ShoeItem } from "@/app/profile/shoes/ShoesClient/types/shoesTypes";
+} from "@/app/(protected)/profile/shoes/ShoesClient/utils/shoesUtils";
+import type { ShoeItem } from "@/app/(protected)/profile/shoes/ShoesClient/types/shoesTypes";
 
 function createShoe(overrides: Partial<ShoeItem> = {}): ShoeItem {
   return {

@@ -14,6 +14,19 @@ export type WorkoutReportShoe = {
   mileageKm: string | null;
 };
 
+export type WorkoutReportShoeLimitExceeded = {
+  id: number;
+  name: string;
+  mileageLimitKm: string;
+  currentMileageKm: string;
+  notifyOnLimitEmail: boolean;
+  notifyOnLimitTelegram: boolean;
+};
+
+export type WorkoutReportUpsertResult = {
+  limitExceededShoes: WorkoutReportShoeLimitExceeded[];
+};
+
 type WorkoutReportShoeUsage = {
   shoeId: number;
   mileageKm?: number | null;
@@ -190,7 +203,7 @@ export const upsertWorkoutReport = async (params: {
   surface?: string | null;
   shoeIds?: number[] | null;
   shoeUsages?: WorkoutReportShoeUsage[] | null;
-}) => {
+}): Promise<WorkoutReportUpsertResult> => {
   const now = new Date();
   const updateValues: {
     date: string;
@@ -317,9 +330,11 @@ export const upsertWorkoutReport = async (params: {
     });
   };
 
-  const upsertShoes = async (workoutReportId: number) => {
+  const upsertShoes = async (
+    workoutReportId: number
+  ): Promise<WorkoutReportShoeLimitExceeded[]> => {
     if (!shouldUpsertShoes) {
-      return;
+      return [];
     }
     const previousRows = await db
       .select({
@@ -339,7 +354,7 @@ export const upsertWorkoutReport = async (params: {
       }));
     if (shoeUsages.length === 0) {
       await updateShoeMileageTotals(previousRows, []);
-      return;
+      return [];
     }
     const values = shoeUsages.map((usage) => ({
       workoutReportId,
@@ -350,6 +365,7 @@ export const upsertWorkoutReport = async (params: {
     }));
     await db.insert(workoutReportShoes).values(values);
     await updateShoeMileageTotals(previousRows, shoeUsages);
+    return await loadLimitExceededShoes(shoeUsages.map((usage) => usage.shoeId));
   };
 
   const updateShoeMileageTotals = async (
@@ -391,6 +407,68 @@ export const upsertWorkoutReport = async (params: {
     }
   };
 
+  const parseMileage = (value: string | null) => {
+    if (value === null) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+
+    return parsed;
+  };
+
+  const loadLimitExceededShoes = async (
+    shoeIds: number[]
+  ): Promise<WorkoutReportShoeLimitExceeded[]> => {
+    const uniqueShoeIds = Array.from(new Set(shoeIds));
+    if (uniqueShoeIds.length === 0) {
+      return [];
+    }
+
+    const rows = await db
+      .select({
+        id: shoes.id,
+        name: shoes.name,
+        mileageLimitKm: shoes.mileageLimitKm,
+        currentMileageKm: shoes.currentMileageKm,
+        notifyOnLimitEmail: shoes.notifyOnLimitEmail,
+        notifyOnLimitTelegram: shoes.notifyOnLimitTelegram,
+      })
+      .from(shoes)
+      .where(and(eq(shoes.userId, params.userId), inArray(shoes.id, uniqueShoeIds)));
+
+    return rows.flatMap((row) => {
+      const mileageLimitValue = row.mileageLimitKm;
+      const currentMileageValue = row.currentMileageKm;
+      if (mileageLimitValue === null || currentMileageValue === null) {
+        return [];
+      }
+
+      const mileageLimitKm = parseMileage(mileageLimitValue);
+      const currentMileageKm = parseMileage(currentMileageValue);
+      if (mileageLimitKm === null || currentMileageKm === null) {
+        return [];
+      }
+      if (currentMileageKm <= mileageLimitKm) {
+        return [];
+      }
+
+      return [
+        {
+          id: row.id,
+          name: row.name,
+          mileageLimitKm: mileageLimitValue,
+          currentMileageKm: currentMileageValue,
+          notifyOnLimitEmail: row.notifyOnLimitEmail,
+          notifyOnLimitTelegram: row.notifyOnLimitTelegram,
+        },
+      ];
+    });
+  };
+
   const [existing] = await db
     .select({ id: workoutReports.id })
     .from(workoutReports)
@@ -404,8 +482,8 @@ export const upsertWorkoutReport = async (params: {
   if (existing) {
     await db.update(workoutReports).set(updateValues).where(eq(workoutReports.id, existing.id));
     await upsertConditions(existing.id);
-    await upsertShoes(existing.id);
-    return;
+    const limitExceededShoes = await upsertShoes(existing.id);
+    return { limitExceededShoes };
   }
 
   const [inserted] = await db
@@ -414,6 +492,9 @@ export const upsertWorkoutReport = async (params: {
     .returning({ id: workoutReports.id });
   if (inserted) {
     await upsertConditions(inserted.id);
-    await upsertShoes(inserted.id);
+    const limitExceededShoes = await upsertShoes(inserted.id);
+    return { limitExceededShoes };
   }
+
+  return { limitExceededShoes: [] };
 };

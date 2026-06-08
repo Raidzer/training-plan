@@ -13,7 +13,7 @@ import {
   formatWeightStatus,
   formatWorkoutStatus,
   getFilenameFromContentDisposition,
-} from "@/app/diary/period/DiaryPeriodClient/utils/periodUtils";
+} from "@/app/(protected)/diary/period/DiaryPeriodClient/utils/periodUtils";
 
 const originalCreateObjectURL = URL.createObjectURL;
 const originalRevokeObjectURL = URL.revokeObjectURL;

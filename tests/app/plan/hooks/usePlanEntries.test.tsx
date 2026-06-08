@@ -1,9 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { PLAN_TEXT } from "@/app/plan/PlanClient/constants/planText";
-import { usePlanEntries } from "@/app/plan/PlanClient/hooks/usePlanEntries";
-import type { PlanEntry } from "@/app/plan/PlanClient/types/planTypes";
+import { PLAN_TEXT } from "@/app/(protected)/plan/PlanClient/constants/planText";
+import { usePlanEntries } from "@/app/(protected)/plan/PlanClient/hooks/usePlanEntries";
+import type { PlanEntry } from "@/app/(protected)/plan/PlanClient/types/planTypes";
 import type { MessageInstance } from "antd/es/message/interface";
 
 function createMessageApi() {

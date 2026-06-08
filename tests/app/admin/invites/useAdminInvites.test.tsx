@@ -24,12 +24,12 @@ vi.mock("antd", async () => {
   };
 });
 
-import { ADMIN_INVITES_LABELS } from "@/app/admin/invites/AdminInvitesClient/constants/adminInvitesConstants";
-import { useAdminInvites } from "@/app/admin/invites/AdminInvitesClient/hooks/useAdminInvites";
+import { ADMIN_INVITES_LABELS } from "@/app/(protected)/admin/invites/AdminInvitesClient/constants/adminInvitesConstants";
+import { useAdminInvites } from "@/app/(protected)/admin/invites/AdminInvitesClient/hooks/useAdminInvites";
 import type {
   AdminInviteRow,
   InviteFormValues,
-} from "@/app/admin/invites/AdminInvitesClient/types/adminInvitesTypes";
+} from "@/app/(protected)/admin/invites/AdminInvitesClient/types/adminInvitesTypes";
 import type { MessageInstance } from "antd/es/message/interface";
 
 function createMessageApi() {

@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ADMIN_INVITES_LABELS } from "@/app/admin/invites/AdminInvitesClient/constants/adminInvitesConstants";
-import { InvitesTable } from "@/app/admin/invites/AdminInvitesClient/components/InvitesTable/InvitesTable";
-import type { AdminInviteRow } from "@/app/admin/invites/AdminInvitesClient/types/adminInvitesTypes";
+import { ADMIN_INVITES_LABELS } from "@/app/(protected)/admin/invites/AdminInvitesClient/constants/adminInvitesConstants";
+import { InvitesTable } from "@/app/(protected)/admin/invites/AdminInvitesClient/components/InvitesTable/InvitesTable";
+import type { AdminInviteRow } from "@/app/(protected)/admin/invites/AdminInvitesClient/types/adminInvitesTypes";
 
 function createInvite(overrides: Partial<AdminInviteRow> = {}): AdminInviteRow {
   return {

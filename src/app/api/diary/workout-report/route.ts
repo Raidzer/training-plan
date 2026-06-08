@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { isValidDateString } from "@/server/diary";
+import { sendShoeLimitNotifications } from "@/server/shoeLimitNotifications";
 import {
   areShoesOwnedByUser,
   getPlanEntrySummaryForUser,
@@ -303,7 +304,17 @@ export async function POST(req: Request) {
     upsertParams.shoeIds = shoeIds.value;
   }
 
-  await upsertWorkoutReport(upsertParams);
+  const upsertResult = await upsertWorkoutReport(upsertParams);
+  if (upsertResult.limitExceededShoes.length > 0) {
+    try {
+      await sendShoeLimitNotifications({
+        userId,
+        shoes: upsertResult.limitExceededShoes,
+      });
+    } catch (error) {
+      console.error("Failed to send shoe limit notifications", error);
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

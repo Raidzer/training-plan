@@ -11,9 +11,9 @@ vi.mock("next-auth/react", () => ({
   useSession: profileSessionMocks.useSessionMock,
 }));
 
-import { PROFILE_LABELS } from "@/app/profile/ProfileClient/constants/profileConstants";
-import { useProfileClient } from "@/app/profile/ProfileClient/hooks/useProfileClient";
-import type { ProfileUserData } from "@/app/profile/ProfileClient/types/profileTypes";
+import { PROFILE_LABELS } from "@/app/(protected)/profile/ProfileClient/constants/profileConstants";
+import { useProfileClient } from "@/app/(protected)/profile/ProfileClient/hooks/useProfileClient";
+import type { ProfileUserData } from "@/app/(protected)/profile/ProfileClient/types/profileTypes";
 
 function createMessageApi() {
   return {

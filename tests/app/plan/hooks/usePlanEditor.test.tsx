@@ -1,9 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PLAN_TEXT } from "@/app/plan/PlanClient/constants/planText";
-import type { PlanEntry } from "@/app/plan/PlanClient/types/planTypes";
-import { usePlanEditor } from "@/app/plan/PlanClient/hooks/usePlanEditor";
+import { PLAN_TEXT } from "@/app/(protected)/plan/PlanClient/constants/planText";
+import type { PlanEntry } from "@/app/(protected)/plan/PlanClient/types/planTypes";
+import { usePlanEditor } from "@/app/(protected)/plan/PlanClient/hooks/usePlanEditor";
 import type { Dispatch, SetStateAction } from "react";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";

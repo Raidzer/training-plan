@@ -2,12 +2,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DIARY_PERIOD_LABELS } from "@/app/diary/period/DiaryPeriodClient/constants/periodConstants";
-import { useDiaryPeriod } from "@/app/diary/period/DiaryPeriodClient/hooks/useDiaryPeriod";
+import { DIARY_PERIOD_LABELS } from "@/app/(protected)/diary/period/DiaryPeriodClient/constants/periodConstants";
+import { useDiaryPeriod } from "@/app/(protected)/diary/period/DiaryPeriodClient/hooks/useDiaryPeriod";
 import type {
   DayStatus,
   PeriodTotals,
-} from "@/app/diary/period/DiaryPeriodClient/types/periodTypes";
+} from "@/app/(protected)/diary/period/DiaryPeriodClient/types/periodTypes";
 
 const messageApiMock = vi.hoisted(() => ({
   error: vi.fn(),
@@ -27,10 +27,10 @@ vi.mock("antd", async () => {
   };
 });
 
-vi.mock("@/app/diary/period/DiaryPeriodClient/utils/periodUtils", async () => {
+vi.mock("@/app/(protected)/diary/period/DiaryPeriodClient/utils/periodUtils", async () => {
   const actual = await vi.importActual<
-    typeof import("@/app/diary/period/DiaryPeriodClient/utils/periodUtils")
-  >("@/app/diary/period/DiaryPeriodClient/utils/periodUtils");
+    typeof import("@/app/(protected)/diary/period/DiaryPeriodClient/utils/periodUtils")
+  >("@/app/(protected)/diary/period/DiaryPeriodClient/utils/periodUtils");
 
   return {
     ...actual,

@@ -7,12 +7,12 @@ import {
   normalizeProfileValues,
   readJson,
   toProfileFormValues,
-} from "@/app/profile/ProfileClient/utils/profileUtils";
+} from "@/app/(protected)/profile/ProfileClient/utils/profileUtils";
 import type {
   ProfileApiUserData,
   ProfileFormValues,
   ProfileUserData,
-} from "@/app/profile/ProfileClient/types/profileTypes";
+} from "@/app/(protected)/profile/ProfileClient/types/profileTypes";
 
 describe("profileUtils", () => {
   it("normalizes profile form values before submit", () => {

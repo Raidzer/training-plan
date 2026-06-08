@@ -1,0 +1,33 @@
+.form {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.formInput {
+  flex: 2 1 240px;
+  min-width: 0;
+}
+
+.limitInput {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .formRow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .formRow :global(.ant-btn) {
+    width: 100%;
+  }
+}

@@ -1,9 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { DayPayload } from "@/app/diary/DiaryClient/types/diaryTypes";
-import type { DiaryMessages } from "@/app/diary/DiaryClient/hooks/useDiaryData";
-import { useDiaryData } from "@/app/diary/DiaryClient/hooks/useDiaryData";
+import type { DayPayload } from "@/app/(protected)/diary/DiaryClient/types/diaryTypes";
+import type { DiaryMessages } from "@/app/(protected)/diary/DiaryClient/hooks/useDiaryData";
+import { useDiaryData } from "@/app/(protected)/diary/DiaryClient/hooks/useDiaryData";
 
 let queryDate: string | null = null;
 

@@ -1,9 +1,17 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { shoesLabels } from "@/app/profile/shoes/ShoesClient/constants/shoesConstants";
-import { useShoes } from "@/app/profile/shoes/ShoesClient/hooks/useShoes";
-import type { ShoeItem } from "@/app/profile/shoes/ShoesClient/types/shoesTypes";
+const { useSessionMock } = vi.hoisted(() => ({
+  useSessionMock: vi.fn(),
+}));
+
+vi.mock("next-auth/react", () => ({
+  useSession: useSessionMock,
+}));
+
+import { shoesLabels } from "@/app/(protected)/profile/shoes/ShoesClient/constants/shoesConstants";
+import { useShoes } from "@/app/(protected)/profile/shoes/ShoesClient/hooks/useShoes";
+import type { ShoeItem } from "@/app/(protected)/profile/shoes/ShoesClient/types/shoesTypes";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
 
@@ -44,8 +52,23 @@ function createShoe(overrides: Partial<ShoeItem> = {}): ShoeItem {
   };
 }
 
+function createInitialFetchMock(initialShoes: ShoeItem[] = [], telegramLinked = true) {
+  return vi.fn((input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = String(input);
+    if (url === "/api/shoes") {
+      return Promise.resolve(createJsonResponse({ shoes: initialShoes }));
+    }
+
+    if (url === "/api/telegram/status") {
+      return Promise.resolve(createJsonResponse({ linked: telegramLinked }));
+    }
+
+    return Promise.resolve(createJsonResponse({}));
+  });
+}
+
 async function renderUseShoes(initialShoes: ShoeItem[] = []) {
-  const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ shoes: initialShoes }));
+  const fetchMock = createInitialFetchMock(initialShoes);
   global.fetch = fetchMock as unknown as typeof fetch;
   const messageApi = createMessageApi();
   const modalApi = createModalApi();
@@ -60,6 +83,9 @@ async function renderUseShoes(initialShoes: ShoeItem[] = []) {
   await waitFor(() => {
     expect(hook.result.current.loading).toBe(false);
   });
+  await waitFor(() => {
+    expect(hook.result.current.notificationAvailability.telegramReady).toBe(true);
+  });
 
   return {
     hook,
@@ -72,6 +98,14 @@ async function renderUseShoes(initialShoes: ShoeItem[] = []) {
 describe("useShoes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSessionMock.mockReturnValue({
+      data: {
+        user: {
+          emailVerified: new Date("2026-05-01T00:00:00.000Z"),
+        },
+      },
+      status: "authenticated",
+    });
     global.fetch = vi.fn() as unknown as typeof fetch;
   });
 
@@ -80,6 +114,9 @@ describe("useShoes", () => {
     const { hook, fetchMock } = await renderUseShoes([shoe]);
 
     expect(fetchMock).toHaveBeenCalledWith("/api/shoes", {
+      cache: "no-store",
+    });
+    expect(fetchMock).toHaveBeenCalledWith("/api/telegram/status", {
       cache: "no-store",
     });
     expect(hook.result.current.items).toEqual([shoe]);
@@ -96,7 +133,7 @@ describe("useShoes", () => {
       await hook.result.current.handleCreate();
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.nameRequired);
   });
 
@@ -112,7 +149,7 @@ describe("useShoes", () => {
       await hook.result.current.handleCreate();
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.mileageInvalid);
   });
 
@@ -135,7 +172,7 @@ describe("useShoes", () => {
       await hook.result.current.handleCreate();
     });
 
-    const createRequest = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    const createRequest = fetchMock.mock.calls[2]?.[1] as RequestInit;
 
     expect(createRequest.method).toBe("POST");
     expect(JSON.parse(String(createRequest.body))).toEqual({
@@ -168,7 +205,7 @@ describe("useShoes", () => {
       await hook.result.current.handleSaveEdit();
     });
 
-    const updateRequest = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    const updateRequest = fetchMock.mock.calls[2]?.[1] as RequestInit;
 
     expect(updateRequest.method).toBe("PATCH");
     expect(hook.result.current.items).toEqual([updated]);
@@ -184,7 +221,7 @@ describe("useShoes", () => {
       await hook.result.current.handleSaveEdit();
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
 
     act(() => {
       hook.result.current.handleStartEdit(shoe);
@@ -195,7 +232,7 @@ describe("useShoes", () => {
       await hook.result.current.handleSaveEdit();
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.mileageInvalid);
   });
 
@@ -271,7 +308,7 @@ describe("useShoes", () => {
       await hook.result.current.handleDelete(shoe);
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(hook.result.current.items).toEqual([shoe]);
 
     confirmMock.mockImplementationOnce((options) => {
@@ -284,7 +321,7 @@ describe("useShoes", () => {
       await hook.result.current.handleDelete(shoe);
     });
 
-    const deleteRequest = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    const deleteRequest = fetchMock.mock.calls[2]?.[1] as RequestInit;
 
     expect(deleteRequest.method).toBe("DELETE");
     expect(hook.result.current.items).toEqual([]);
