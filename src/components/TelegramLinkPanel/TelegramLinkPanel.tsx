@@ -61,6 +61,23 @@ const getTelegramLabel = (status: StatusResponse | null) => {
   return "Связан";
 };
 
+const normalizeStatus = (status: StatusResponse) => {
+  const parsedCodeExpiresAt = parseDate(status.codeExpiresAt);
+  if (!status.codeExpiresAt || status.codeConsumedAt || !parsedCodeExpiresAt) {
+    return {
+      ...status,
+      codeExpiresAt: null,
+    };
+  }
+  if (parsedCodeExpiresAt.getTime() <= Date.now()) {
+    return {
+      ...status,
+      codeExpiresAt: null,
+    };
+  }
+  return status;
+};
+
 export function TelegramLinkPanel() {
   const [messageApi, contextHolder] = message.useMessage();
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -84,7 +101,7 @@ export function TelegramLinkPanel() {
           setStatus(null);
           return;
         }
-        setStatus(data as StatusResponse);
+        setStatus(normalizeStatus(data as StatusResponse));
       } catch (error) {
         if (showError) {
           messageApi.error("Не удалось загрузить статус");
@@ -98,8 +115,35 @@ export function TelegramLinkPanel() {
   );
 
   useEffect(() => {
-    void loadStatus(false);
-  }, [loadStatus]);
+    let active = true;
+    fetch("/api/telegram/status")
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!active) {
+          return;
+        }
+        if (!res.ok) {
+          setStatus(null);
+          return;
+        }
+        setStatus(normalizeStatus(data as StatusResponse));
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
+        console.error(error);
+      })
+      .finally(() => {
+        if (active) {
+          setLoadingStatus(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const linked = Boolean(status?.linked);
   const telegramLabel = getTelegramLabel(status);
@@ -118,12 +162,8 @@ export function TelegramLinkPanel() {
     if (!status?.codeExpiresAt || status.codeConsumedAt) {
       return "";
     }
-    const parsed = parseDate(status.codeExpiresAt);
-    if (!parsed || parsed.getTime() <= Date.now()) {
-      return "";
-    }
     return `Последний код действует до ${formatDate(status.codeExpiresAt)}.`;
-  }, [status?.codeExpiresAt, status?.codeConsumedAt]);
+  }, [status]);
 
   const handleIssueCode = async () => {
     setSending(true);
@@ -215,7 +255,7 @@ export function TelegramLinkPanel() {
 
           {!linked && (
             <div className={styles.actions}>
-              <Button onClick={handleIssueCode} loading={sending}>
+              <Button aria-label="Получить код" onClick={handleIssueCode} loading={sending}>
                 Получить код
               </Button>
               <Typography.Text type="secondary">

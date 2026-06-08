@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { PersonalRecordDistanceKey } from "@/shared/constants/personalRecords.constants";
 import { RECORDS_LABELS } from "../constants/recordsConstants";
@@ -24,39 +24,38 @@ export const useRecords = ({ apiUrl, messageApi }: UseRecordsParams) => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, RecordFieldErrors>>({});
 
-  const loadRecords = useCallback(
-    async (showError = true) => {
-      setLoading(true);
-      try {
-        const response = await fetch(apiUrl, { cache: "no-store" });
+  useEffect(() => {
+    let active = true;
+    fetch(apiUrl, { cache: "no-store" })
+      .then(async (response) => {
         const data = await response.json().catch(() => null);
-
+        if (!active) {
+          return;
+        }
         if (!response.ok) {
-          if (showError) {
-            messageApi.error(RECORDS_LABELS.loadFail);
-          }
           setRows(buildDefaultRows());
           return;
         }
-
         const records = getRecordsFromResponse(data);
         setRows(mapRecordsToRows(records));
-      } catch (error) {
-        if (showError) {
-          messageApi.error(RECORDS_LABELS.loadFail);
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
         }
         console.error(error);
         setRows(buildDefaultRows());
-      } finally {
-        setLoading(false);
-      }
-    },
-    [apiUrl, messageApi]
-  );
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
 
-  useEffect(() => {
-    void loadRecords(false);
-  }, [loadRecords]);
+    return () => {
+      active = false;
+    };
+  }, [apiUrl]);
 
   const handleFieldChange = (distanceKey: PersonalRecordDistanceKey, patch: Partial<RecordRow>) => {
     setRows((prev) =>

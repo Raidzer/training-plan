@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
 import { shoesLabels } from "../constants/shoesConstants";
@@ -34,37 +34,36 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const loadShoes = useCallback(
-    async (showError = true) => {
-      setLoading(true);
-      try {
-        const response = await fetch("/api/shoes", { cache: "no-store" });
+  useEffect(() => {
+    let active = true;
+    fetch("/api/shoes", { cache: "no-store" })
+      .then(async (response) => {
         const data = await response.json().catch(() => null);
-
+        if (!active) {
+          return;
+        }
         if (!response.ok) {
-          if (showError) {
-            messageApi.error(shoesLabels.loadFail);
-          }
           setItems([]);
           return;
         }
-
         setItems(getShoesFromResponse(data));
-      } catch (error) {
-        if (showError) {
-          messageApi.error(shoesLabels.loadFail);
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
         }
         console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [messageApi]
-  );
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
 
-  useEffect(() => {
-    void loadShoes(false);
-  }, [loadShoes]);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const updateNewForm: ShoeFormUpdate = (key, value) => {
     setNewForm((prev) => ({ ...prev, [key]: value }));

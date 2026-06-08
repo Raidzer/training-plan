@@ -15,6 +15,16 @@ import {
   parseTimeInputToSeconds,
 } from "../utils/paceCalculatorUtils";
 
+const DEFAULT_RESULT_SECONDS = 37 * 60 + 30;
+const DEFAULT_INPUT_VALUE = formatTime(DEFAULT_RESULT_SECONDS);
+
+const readSavedResults = () => {
+  if (typeof window === "undefined") {
+    return [];
+  }
+  return safeParseSaved(window.localStorage.getItem(STORAGE_KEY));
+};
+
 export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   const [distance, setDistance] = useState(10000);
   const [resultHours, setResultHours] = useState(0);
@@ -25,16 +35,8 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   const [lapMinutes, setLapMinutes] = useState(1);
   const [lapSeconds, setLapSeconds] = useState(30);
   const [lastEdited, setLastEdited] = useState<LastEdited>("result");
-  const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
-  const [inputValue, setInputValue] = useState<string>("");
-
-  useEffect(() => {
-    const stored = safeParseSaved(localStorage.getItem(STORAGE_KEY));
-    setSavedResults(stored);
-
-    // Initialize inputValue based on default result
-    setInputValue(formatTime(37 * 60 + 30));
-  }, []);
+  const [savedResults, setSavedResults] = useState<SavedResult[]>(readSavedResults);
+  const [inputValue, setInputValue] = useState<string>(DEFAULT_INPUT_VALUE);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(savedResults));

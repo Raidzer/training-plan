@@ -10,29 +10,6 @@ import {
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const MAX_SHOE_MILEAGE_KM = 99999.99;
 
-const WEATHER_OPTIONS = new Set(["cloudy", "sunny", "rain", "snow"]);
-const SURFACE_OPTIONS = new Set(["ground", "asphalt", "manezh", "treadmill", "stadium"]);
-
-const parseOptionalEnum = (value: unknown, options: Set<string>) => {
-  if (value === undefined) {
-    return { value: undefined, valid: true };
-  }
-  if (value === null || value === "") {
-    return { value: null, valid: true };
-  }
-  if (typeof value !== "string") {
-    return { value: null, valid: false };
-  }
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return { value: null, valid: true };
-  }
-  if (!options.has(trimmed)) {
-    return { value: null, valid: false };
-  }
-  return { value: trimmed, valid: true };
-};
-
 const parseOptionalBoolean = (value: unknown) => {
   if (value === undefined) {
     return { value: undefined, valid: true };
