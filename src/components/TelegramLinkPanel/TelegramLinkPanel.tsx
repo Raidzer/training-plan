@@ -215,7 +215,7 @@ export function TelegramLinkPanel() {
 
           {!linked && (
             <div className={styles.actions}>
-              <Button onClick={handleIssueCode} loading={sending}>
+              <Button aria-label="Получить код" onClick={handleIssueCode} loading={sending}>
                 Получить код
               </Button>
               <Typography.Text type="secondary">
