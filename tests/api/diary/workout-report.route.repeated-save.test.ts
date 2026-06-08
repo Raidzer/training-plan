@@ -7,6 +7,7 @@ const {
   getPlanEntrySummaryForUserMock,
   areShoesOwnedByUserMock,
   upsertWorkoutReportMock,
+  sendShoeLimitNotificationsMock,
 } = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
     getPlanEntrySummaryForUserMock: vi.fn(),
     areShoesOwnedByUserMock: vi.fn(),
     upsertWorkoutReportMock: vi.fn(),
+    sendShoeLimitNotificationsMock: vi.fn(),
   };
 });
 
@@ -34,6 +36,12 @@ vi.mock("@/server/workoutReports", () => {
     getPlanEntrySummaryForUser: getPlanEntrySummaryForUserMock,
     areShoesOwnedByUser: areShoesOwnedByUserMock,
     upsertWorkoutReport: upsertWorkoutReportMock,
+  };
+});
+
+vi.mock("@/server/shoeLimitNotifications", () => {
+  return {
+    sendShoeLimitNotifications: sendShoeLimitNotificationsMock,
   };
 });
 
@@ -59,7 +67,8 @@ describe("POST /api/diary/workout-report (repeat save)", () => {
       date: "2026-01-03",
     });
     areShoesOwnedByUserMock.mockResolvedValue(true);
-    upsertWorkoutReportMock.mockResolvedValue(undefined);
+    upsertWorkoutReportMock.mockResolvedValue({ limitExceededShoes: [] });
+    sendShoeLimitNotificationsMock.mockResolvedValue({ targets: 0, sent: 0, failed: 0 });
   });
 
   it("should pass new resultText on repeated saves for same planEntryId", async () => {
