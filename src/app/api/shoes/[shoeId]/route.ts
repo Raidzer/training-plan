@@ -7,6 +7,7 @@ import {
   parseOptionalMileageKm,
   type ShoePayload,
 } from "../shoePayload";
+import { validateShoeNotificationAccess } from "../notificationAccess";
 
 type Params = {
   shoeId: string;
@@ -50,6 +51,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
   }
   if (!notifyOnLimitTelegram.valid) {
     return NextResponse.json({ error: "invalid_notify_on_limit_telegram" }, { status: 400 });
+  }
+
+  const notificationAccess = await validateShoeNotificationAccess({
+    userId,
+    emailVerified: session.user.emailVerified,
+    notifyOnLimitEmail: notifyOnLimitEmail.value,
+    notifyOnLimitTelegram: notifyOnLimitTelegram.value,
+  });
+  if (!notificationAccess.valid) {
+    return NextResponse.json({ error: notificationAccess.error }, { status: 400 });
   }
 
   const updateParams: Parameters<typeof updateShoe>[0] = {

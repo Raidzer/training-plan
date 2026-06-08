@@ -6,13 +6,15 @@ import {
   expectJsonSuccess,
 } from "@tests/helpers";
 
-const { authMock, listShoesByUserMock, createShoeMock } = vi.hoisted(() => {
-  return {
-    authMock: vi.fn(),
-    listShoesByUserMock: vi.fn(),
-    createShoeMock: vi.fn(),
-  };
-});
+const { authMock, listShoesByUserMock, createShoeMock, getTelegramAccountIdByUserIdMock } =
+  vi.hoisted(() => {
+    return {
+      authMock: vi.fn(),
+      listShoesByUserMock: vi.fn(),
+      createShoeMock: vi.fn(),
+      getTelegramAccountIdByUserIdMock: vi.fn(),
+    };
+  });
 
 vi.mock("@/auth", () => {
   return {
@@ -27,12 +29,24 @@ vi.mock("@/server/shoes", () => {
   };
 });
 
+vi.mock("@/server/telegram", () => {
+  return {
+    getTelegramAccountIdByUserId: getTelegramAccountIdByUserIdMock,
+  };
+});
+
 import { GET, POST } from "@/app/api/shoes/route";
 
 describe("API /api/shoes route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authMock.mockResolvedValue(createSession({ id: "13" }));
+    authMock.mockResolvedValue(
+      createSession({
+        id: "13",
+        emailVerified: new Date("2026-01-01T00:00:00.000Z"),
+      })
+    );
+    getTelegramAccountIdByUserIdMock.mockResolvedValue(10);
     listShoesByUserMock.mockResolvedValue([
       {
         id: 1,
@@ -175,6 +189,40 @@ describe("API /api/shoes route", () => {
         notifyOnLimitEmail: true,
         notifyOnLimitTelegram: false,
       });
+      expect(getTelegramAccountIdByUserIdMock).not.toHaveBeenCalled();
+    });
+
+    it("должен запрещать Email-уведомление без подтвержденной почты", async () => {
+      authMock.mockResolvedValue(createSession({ id: "13", emailVerified: null }));
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes",
+        body: {
+          name: "Vaporfly",
+          notifyOnLimitEmail: true,
+        },
+      });
+
+      const response = await POST(request);
+
+      await expectJsonError(response, 400, "email_notifications_unavailable");
+      expect(createShoeMock).not.toHaveBeenCalled();
+    });
+
+    it("должен запрещать Telegram-уведомление без привязанного аккаунта", async () => {
+      getTelegramAccountIdByUserIdMock.mockResolvedValue(null);
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes",
+        body: {
+          name: "Vaporfly",
+          notifyOnLimitTelegram: true,
+        },
+      });
+
+      const response = await POST(request);
+
+      await expectJsonError(response, 400, "telegram_notifications_unavailable");
+      expect(getTelegramAccountIdByUserIdMock).toHaveBeenCalledWith(13);
+      expect(createShoeMock).not.toHaveBeenCalled();
     });
 
     it("должен возвращать 400 при невалидном лимите пробега", async () => {
