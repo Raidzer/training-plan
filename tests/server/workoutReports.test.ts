@@ -148,6 +148,7 @@ describe("server/workoutReports", () => {
   it("upsertWorkoutReport должен вставлять отчет, условия и кроссовки", async () => {
     dbSelectMock
       .mockReturnValueOnce(createSelectWhereBuilder([]))
+      .mockReturnValueOnce(createSelectWhereBuilder([]))
       .mockReturnValueOnce(createSelectWhereBuilder([]));
 
     const insertReportReturningMock = vi.fn().mockResolvedValue([{ id: 20 }]);
@@ -206,12 +207,34 @@ describe("server/workoutReports", () => {
   });
 
   it("upsertWorkoutReport должен сохранять пробег обуви и обновлять текущий пробег дельтой", async () => {
-    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }])).mockReturnValueOnce(
-      createSelectWhereBuilder([
-        { shoeId: 1, mileageKm: "3" },
-        { shoeId: 2, mileageKm: "5" },
-      ])
-    );
+    dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          { shoeId: 1, mileageKm: "3" },
+          { shoeId: 2, mileageKm: "5" },
+        ])
+      )
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          {
+            id: 1,
+            name: "Pegasus",
+            mileageLimitKm: "4",
+            currentMileageKm: "4.5",
+            notifyOnLimitEmail: true,
+            notifyOnLimitTelegram: false,
+          },
+          {
+            id: 3,
+            name: "Boston",
+            mileageLimitKm: "10",
+            currentMileageKm: "2",
+            notifyOnLimitEmail: true,
+            notifyOnLimitTelegram: true,
+          },
+        ])
+      );
 
     const updateSetCalls: unknown[] = [];
     const updateWhereMock = vi.fn().mockResolvedValue(undefined);
@@ -235,7 +258,7 @@ describe("server/workoutReports", () => {
       values: insertShoesValuesMock,
     });
 
-    await upsertWorkoutReport({
+    const result = await upsertWorkoutReport({
       userId: 1,
       planEntryId: 11,
       date: "2026-02-09",
@@ -260,5 +283,70 @@ describe("server/workoutReports", () => {
       })
     );
     expect(updateSetCalls.slice(1)).toHaveLength(3);
+    expect(result.limitExceededShoes).toEqual([
+      {
+        id: 1,
+        name: "Pegasus",
+        mileageLimitKm: "4",
+        currentMileageKm: "4.5",
+        notifyOnLimitEmail: true,
+        notifyOnLimitTelegram: false,
+      },
+    ]);
+  });
+
+  it("upsertWorkoutReport должен возвращать превышение лимита при повторном сохранении без дельты", async () => {
+    dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ shoeId: 1, mileageKm: "4.5" }]))
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          {
+            id: 1,
+            name: "Pegasus",
+            mileageLimitKm: "4",
+            currentMileageKm: "4.5",
+            notifyOnLimitEmail: true,
+            notifyOnLimitTelegram: true,
+          },
+        ])
+      );
+
+    const updateSetMock = vi.fn(() => {
+      return {
+        where: vi.fn().mockResolvedValue(undefined),
+      };
+    });
+    dbUpdateMock.mockReturnValue({
+      set: updateSetMock,
+    });
+
+    dbDeleteMock.mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    });
+    dbInsertMock.mockReturnValue({
+      values: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const result = await upsertWorkoutReport({
+      userId: 1,
+      planEntryId: 11,
+      date: "2026-02-09",
+      startTime: "08:00",
+      resultText: "OK",
+      shoeUsages: [{ shoeId: 1, mileageKm: 4.5 }],
+    });
+
+    expect(updateSetMock).toHaveBeenCalledTimes(1);
+    expect(result.limitExceededShoes).toEqual([
+      {
+        id: 1,
+        name: "Pegasus",
+        mileageLimitKm: "4",
+        currentMileageKm: "4.5",
+        notifyOnLimitEmail: true,
+        notifyOnLimitTelegram: true,
+      },
+    ]);
   });
 });
