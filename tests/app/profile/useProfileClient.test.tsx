@@ -278,7 +278,7 @@ describe("useProfileClient", () => {
   });
 
   it("должен менять email и обрабатывать специальные ошибки", async () => {
-    const { result, messageApi } = renderProfileHook();
+    const { result } = renderProfileHook();
     const setEmailFieldsSpy = vi.spyOn(result.current.emailForm, "setFields");
 
     vi.spyOn(result.current.emailForm, "validateFields").mockResolvedValue({

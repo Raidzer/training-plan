@@ -21,21 +21,23 @@ import {
 export const useDiaryPeriod = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [range, setRange] = useState<PeriodRange>(() => createPeriodRange(14));
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [days, setDays] = useState<DayStatus[]>([]);
   const [totals, setTotals] = useState<PeriodTotals>(INITIAL_PERIOD_TOTALS);
 
-  const loadPeriod = useCallback(
-    async (fromDate: PeriodRange[0], toDate: PeriodRange[1]) => {
-      setLoading(true);
+  useEffect(() => {
+    let active = true;
+    const from = formatPeriodApiDate(range[0]);
+    const to = formatPeriodApiDate(range[1]);
 
-      try {
-        const from = formatPeriodApiDate(fromDate);
-        const to = formatPeriodApiDate(toDate);
-        const response = await fetch(`/api/diary/period?from=${from}&to=${to}`);
+    fetch(`/api/diary/period?from=${from}&to=${to}`)
+      .then(async (response) => {
         const data = (await response.json().catch(() => null)) as DiaryPeriodApiResponse | null;
 
+        if (!active) {
+          return;
+        }
         if (!response.ok || !data?.days || !data?.totals) {
           messageApi.error(data?.error ?? DIARY_PERIOD_LABELS.loadFail);
           return;
@@ -43,25 +45,32 @@ export const useDiaryPeriod = () => {
 
         setDays(data.days);
         setTotals(data.totals);
-      } catch (error) {
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
         console.error(error);
         messageApi.error(DIARY_PERIOD_LABELS.loadFail);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [messageApi]
-  );
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
 
-  useEffect(() => {
-    void loadPeriod(range[0], range[1]);
-  }, [loadPeriod, range]);
+    return () => {
+      active = false;
+    };
+  }, [messageApi, range]);
 
   const handleRangeChange = (nextRange: PeriodRange) => {
+    setLoading(true);
     setRange(nextRange);
   };
 
   const handlePresetRange = (daysCount: number) => {
+    setLoading(true);
     setRange(createPeriodRange(daysCount));
   };
 

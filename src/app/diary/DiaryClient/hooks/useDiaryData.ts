@@ -91,13 +91,20 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const selectedDateRef = useRef<Dayjs>(selectedDate);
   const marksRequestIdRef = useRef(0);
   const dayRequestIdRef = useRef(0);
+  const panelDateKey = formatDate(panelDate);
+  const selectedDateKey = formatDate(selectedDate);
   const [marks, setMarks] = useState<DiaryDayMap>({});
-  const [loadingMarks, setLoadingMarks] = useState(false);
+  const [completedMarksKey, setCompletedMarksKey] = useState<string | null>(null);
+  const [refreshingMarksCount, setRefreshingMarksCount] = useState(0);
+  const loadingMarks = refreshingMarksCount > 0 || completedMarksKey !== panelDateKey;
 
-  const [loadingDay, setLoadingDay] = useState(false);
   const [dayData, setDayData] = useState<DayPayload | null>(null);
+  const [completedDayKey, setCompletedDayKey] = useState<string | null>(null);
+  const [refreshingDayCount, setRefreshingDayCount] = useState(0);
+  const loadingDay = refreshingDayCount > 0 || completedDayKey !== selectedDateKey;
   const [shoes, setShoes] = useState<ShoeItem[]>([]);
-  const [loadingShoes, setLoadingShoes] = useState(false);
+  const [shoesLoaded, setShoesLoaded] = useState(false);
+  const loadingShoes = !shoesLoaded;
 
   const [weightForm, setWeightForm] = useState<WeightFormState>({
     morning: "",
@@ -121,34 +128,49 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     selectedDateRef.current = selectedDate;
   }, [selectedDate]);
 
-  const loadShoes = useCallback(async () => {
-    setLoadingShoes(true);
-    try {
-      const res = await fetch("/api/shoes", { cache: "no-store" });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/shoes", { cache: "no-store" })
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!active) {
+          return;
+        }
+
+        if (!res.ok) {
+          messageApi.error(messages.shoesLoadFailed);
+          setShoes([]);
+          return;
+        }
+
+        const parsed = parseShoesResponse(data);
+        if (parsed.length === 0) {
+          setShoes([]);
+          return;
+        }
+
+        setShoes(parsed);
+      })
+      .catch((err) => {
+        if (!active) {
+          return;
+        }
+
+        console.error(err);
         messageApi.error(messages.shoesLoadFailed);
         setShoes([]);
-        return;
-      }
-      const parsed = parseShoesResponse(data);
-      if (parsed.length === 0) {
-        setShoes([]);
-        return;
-      }
-      setShoes(parsed);
-    } catch (err) {
-      console.error(err);
-      messageApi.error(messages.shoesLoadFailed);
-      setShoes([]);
-    } finally {
-      setLoadingShoes(false);
-    }
-  }, [messageApi, messages.shoesLoadFailed]);
+      })
+      .finally(() => {
+        if (active) {
+          setShoesLoaded(true);
+        }
+      });
 
-  useEffect(() => {
-    loadShoes();
-  }, [loadShoes]);
+    return () => {
+      active = false;
+    };
+  }, [messageApi, messages.shoesLoadFailed]);
 
   useEffect(() => {
     const queryDate = searchParams.get("date");
@@ -165,11 +187,42 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     }
   }, [searchParams]);
 
+  const applyDayData = useCallback((data: DayPayload, options?: LoadDayOptions) => {
+    setDayData(data);
+    if (options?.preserveForms) {
+      return;
+    }
+    const nextWeight = { morning: "", evening: "" };
+    data.weightEntries.forEach((entry) => {
+      if (entry.period === "morning") {
+        nextWeight.morning = formatWeightValue(entry.weightKg);
+      }
+      if (entry.period === "evening") {
+        nextWeight.evening = formatWeightValue(entry.weightKg);
+      }
+    });
+    setWeightForm(nextWeight);
+    const nextRecovery = {
+      hasBath: Boolean(data.recoveryEntry?.hasBath),
+      hasMfr: Boolean(data.recoveryEntry?.hasMfr),
+      hasMassage: Boolean(data.recoveryEntry?.hasMassage),
+      sleepHours: formatSleepTimeValue(data.recoveryEntry?.sleepHours),
+    };
+    setRecoveryForm(nextRecovery);
+    const reportMap = new Map(data.workoutReports.map((report) => [report.planEntryId, report]));
+    const nextWorkoutForm: WorkoutFormState = {};
+    data.planEntries.forEach((entry) => {
+      nextWorkoutForm[entry.id] = toDefaultWorkoutForm(reportMap.get(entry.id));
+    });
+    setWorkoutForm(nextWorkoutForm);
+  }, []);
+
   const loadMarks = useCallback(
     async (value: Dayjs) => {
       const { from, to } = getMonthRange(value);
+      const dateKey = formatDate(value);
       const requestId = ++marksRequestIdRef.current;
-      setLoadingMarks(true);
+      setRefreshingMarksCount((prev) => prev + 1);
       try {
         const res = await fetch(`/api/diary/marks?from=${from}&to=${to}`);
         const data = (await res.json().catch(() => null)) as {
@@ -179,7 +232,11 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         if (marksRequestIdRef.current !== requestId) {
           return;
         }
-        if (!res.ok || !data?.days) {
+        if (!res.ok) {
+          messageApi.error(data?.error ?? messages.marksLoadFailed);
+          return;
+        }
+        if (!data?.days) {
           messageApi.error(data?.error ?? messages.marksLoadFailed);
           return;
         }
@@ -196,18 +253,19 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         messageApi.error(messages.marksLoadFailed);
       } finally {
         if (marksRequestIdRef.current === requestId) {
-          setLoadingMarks(false);
+          setCompletedMarksKey(dateKey);
         }
+        setRefreshingMarksCount((prev) => Math.max(0, prev - 1));
       }
     },
-    [messageApi, messages]
+    [messageApi, messages.marksLoadFailed]
   );
 
   const loadDay = useCallback(
     async (value: Dayjs, options?: LoadDayOptions) => {
       const date = formatDate(value);
       const requestId = ++dayRequestIdRef.current;
-      setLoadingDay(true);
+      setRefreshingDayCount((prev) => prev + 1);
       try {
         const res = await fetch(`/api/diary/day?date=${date}`);
         const data = (await res.json().catch(() => null)) as
@@ -220,35 +278,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           messageApi.error(data?.error ?? messages.dayLoadFailed);
           return;
         }
-        setDayData(data);
-        if (options?.preserveForms) {
-          return;
-        }
-        const nextWeight = { morning: "", evening: "" };
-        data.weightEntries.forEach((entry) => {
-          if (entry.period === "morning") {
-            nextWeight.morning = formatWeightValue(entry.weightKg);
-          }
-          if (entry.period === "evening") {
-            nextWeight.evening = formatWeightValue(entry.weightKg);
-          }
-        });
-        setWeightForm(nextWeight);
-        const nextRecovery = {
-          hasBath: Boolean(data.recoveryEntry?.hasBath),
-          hasMfr: Boolean(data.recoveryEntry?.hasMfr),
-          hasMassage: Boolean(data.recoveryEntry?.hasMassage),
-          sleepHours: formatSleepTimeValue(data.recoveryEntry?.sleepHours),
-        };
-        setRecoveryForm(nextRecovery);
-        const reportMap = new Map(
-          data.workoutReports.map((report) => [report.planEntryId, report])
-        );
-        const nextWorkoutForm: WorkoutFormState = {};
-        data.planEntries.forEach((entry) => {
-          nextWorkoutForm[entry.id] = toDefaultWorkoutForm(reportMap.get(entry.id));
-        });
-        setWorkoutForm(nextWorkoutForm);
+        applyDayData(data, options);
       } catch (err) {
         if (dayRequestIdRef.current !== requestId) {
           return;
@@ -257,20 +287,97 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         messageApi.error(messages.dayLoadFailed);
       } finally {
         if (dayRequestIdRef.current === requestId) {
-          setLoadingDay(false);
+          setCompletedDayKey(date);
         }
+        setRefreshingDayCount((prev) => Math.max(0, prev - 1));
       }
     },
-    [messageApi, messages]
+    [applyDayData, messageApi, messages.dayLoadFailed]
   );
 
   useEffect(() => {
-    loadMarks(panelDate);
-  }, [panelDate, loadMarks]);
+    let active = true;
+    const { from, to } = getMonthRange(panelDate);
+    const requestId = ++marksRequestIdRef.current;
+
+    fetch(`/api/diary/marks?from=${from}&to=${to}`)
+      .then(async (res) => {
+        const data = (await res.json().catch(() => null)) as {
+          days?: DayStatus[];
+          error?: string;
+        } | null;
+        if (!active || marksRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        if (!res.ok || !data?.days) {
+          messageApi.error(data?.error ?? messages.marksLoadFailed);
+          return;
+        }
+
+        const nextMarks: DiaryDayMap = {};
+        data.days.forEach((day) => {
+          nextMarks[day.date] = day;
+        });
+        setMarks(nextMarks);
+      })
+      .catch((err) => {
+        if (!active || marksRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        console.error(err);
+        messageApi.error(messages.marksLoadFailed);
+      })
+      .finally(() => {
+        if (active && marksRequestIdRef.current === requestId) {
+          setCompletedMarksKey(panelDateKey);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [messageApi, messages.marksLoadFailed, panelDate, panelDateKey]);
 
   useEffect(() => {
-    loadDay(selectedDate);
-  }, [selectedDate, loadDay]);
+    let active = true;
+    const requestId = ++dayRequestIdRef.current;
+
+    fetch(`/api/diary/day?date=${selectedDateKey}`)
+      .then(async (res) => {
+        const data = (await res.json().catch(() => null)) as
+          | (DayPayload & { error?: string })
+          | null;
+        if (!active || dayRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        if (!res.ok || !data?.status) {
+          messageApi.error(data?.error ?? messages.dayLoadFailed);
+          return;
+        }
+
+        applyDayData(data);
+      })
+      .catch((err) => {
+        if (!active || dayRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        console.error(err);
+        messageApi.error(messages.dayLoadFailed);
+      })
+      .finally(() => {
+        if (active && dayRequestIdRef.current === requestId) {
+          setCompletedDayKey(selectedDateKey);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [applyDayData, messageApi, messages.dayLoadFailed, selectedDateKey]);
 
   const updateSelectedDate = useCallback((value: Dayjs) => {
     setSelectedDate(value);

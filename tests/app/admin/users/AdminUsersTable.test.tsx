@@ -20,6 +20,23 @@ function createUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
   };
 }
 
+const ROLE_ACTION_INDEX = 1;
+const PASSWORD_ACTION_INDEX = 2;
+const STATUS_ACTION_INDEX = 3;
+
+function clickRowAction(container: HTMLElement, rowIndex: number, actionIndex: number) {
+  const row = container.querySelectorAll("tbody tr.ant-table-row")[rowIndex];
+  if (!row) {
+    throw new Error(`Table row not found: ${rowIndex}`);
+  }
+
+  const button = row.querySelectorAll("button")[actionIndex];
+  if (!button) {
+    throw new Error(`Row action not found: ${rowIndex}/${actionIndex}`);
+  }
+  fireEvent.click(button);
+}
+
 describe("AdminUsersTable", () => {
   it("должен показывать пользователей и отправлять действия по строке", () => {
     const activeUser = createUser();
@@ -37,7 +54,7 @@ describe("AdminUsersTable", () => {
     const onOpenPasswordModal = vi.fn();
     const onStatusToggle = vi.fn();
 
-    render(
+    const { container } = render(
       <AdminUsersTable
         rows={[activeUser, disabledUser]}
         savingStatusId={null}
@@ -47,10 +64,10 @@ describe("AdminUsersTable", () => {
       />
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: /Роль/ })[0]);
-    fireEvent.click(screen.getAllByRole("button", { name: /Пароль/ })[0]);
-    fireEvent.click(screen.getByRole("button", { name: /Отключить/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Включить/ }));
+    clickRowAction(container, 0, ROLE_ACTION_INDEX);
+    clickRowAction(container, 0, PASSWORD_ACTION_INDEX);
+    clickRowAction(container, 0, STATUS_ACTION_INDEX);
+    clickRowAction(container, 1, STATUS_ACTION_INDEX);
 
     expect(screen.getByText("Иван Петров")).toBeTruthy();
     expect(screen.getByText("runner@example.com")).toBeTruthy();

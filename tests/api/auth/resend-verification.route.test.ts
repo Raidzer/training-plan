@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createJsonRequest,
-  createSession,
-  expectJsonError,
-  expectJsonSuccess,
-} from "@tests/helpers";
+import { createSession, expectJsonError, expectJsonSuccess } from "@tests/helpers";
 
 const { getServerSessionMock, generateVerificationTokenMock, sendVerificationEmailMock } =
   vi.hoisted(() => {
@@ -41,13 +36,6 @@ vi.mock("@/server/email", () => {
 
 import { POST } from "@/app/api/auth/resend-verification/route";
 
-function createResendVerificationRequest() {
-  return createJsonRequest({
-    url: "http://localhost/api/auth/resend-verification",
-    body: {},
-  });
-}
-
 describe("POST /api/auth/resend-verification", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -64,7 +52,7 @@ describe("POST /api/auth/resend-verification", () => {
   it("должен возвращать 401, когда сессия отсутствует", async () => {
     getServerSessionMock.mockResolvedValue(null);
 
-    const response = await POST(createResendVerificationRequest() as any);
+    const response = await POST();
 
     await expectJsonError(response, 401, "Unauthorized");
     expect(generateVerificationTokenMock).not.toHaveBeenCalled();
@@ -77,7 +65,7 @@ describe("POST /api/auth/resend-verification", () => {
       })
     );
 
-    const response = await POST(createResendVerificationRequest() as any);
+    const response = await POST();
 
     await expectJsonError(response, 401, "Unauthorized");
     expect(generateVerificationTokenMock).not.toHaveBeenCalled();
@@ -91,14 +79,14 @@ describe("POST /api/auth/resend-verification", () => {
       })
     );
 
-    const response = await POST(createResendVerificationRequest() as any);
+    const response = await POST();
 
     await expectJsonError(response, 400, "Email already verified");
     expect(generateVerificationTokenMock).not.toHaveBeenCalled();
   });
 
   it("должен отправлять письмо подтверждения для неподтвержденного пользователя", async () => {
-    const response = await POST(createResendVerificationRequest() as any);
+    const response = await POST();
     const payload = await expectJsonSuccess<{ success: boolean }>(response, 200);
 
     expect(payload.success).toBe(true);
@@ -109,7 +97,7 @@ describe("POST /api/auth/resend-verification", () => {
   it("должен возвращать 500, когда генерация токена завершается ошибкой", async () => {
     generateVerificationTokenMock.mockRejectedValue(new Error("token-failed"));
 
-    const response = await POST(createResendVerificationRequest() as any);
+    const response = await POST();
 
     await expectJsonError(response, 500, "Failed to send email");
   });
@@ -117,7 +105,7 @@ describe("POST /api/auth/resend-verification", () => {
   it("должен возвращать 500, когда отправка email завершается ошибкой", async () => {
     sendVerificationEmailMock.mockRejectedValue(new Error("smtp-failed"));
 
-    const response = await POST(createResendVerificationRequest() as any);
+    const response = await POST();
 
     await expectJsonError(response, 500, "Failed to send email");
   });

@@ -1,7 +1,7 @@
 "use client";
 
 import { Input, type InputProps } from "antd";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type TimeInputProps = Omit<InputProps, "onChange" | "value"> & {
   value?: string;
@@ -9,17 +9,14 @@ type TimeInputProps = Omit<InputProps, "onChange" | "value"> & {
 };
 
 export function TimeInput({ value, onChange, onBlur, ...props }: TimeInputProps) {
-  const [internalValue, setInternalValue] = useState(value || "");
-
-  useEffect(() => {
-    setInternalValue(value || "");
-  }, [value]);
+  const [draftValue, setDraftValue] = useState("");
+  const currentValue = value ?? draftValue;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
 
-    if (inputValue.length < internalValue.length) {
-      setInternalValue(inputValue);
+    if (inputValue.length < currentValue.length) {
+      setDraftValue(inputValue);
       onChange?.(inputValue);
       return;
     }
@@ -47,7 +44,7 @@ export function TimeInput({ value, onChange, onBlur, ...props }: TimeInputProps)
       finalValue += "." + cleanFraction;
     }
 
-    setInternalValue(finalValue);
+    setDraftValue(finalValue);
     onChange?.(finalValue);
   };
 
@@ -56,11 +53,11 @@ export function TimeInput({ value, onChange, onBlur, ...props }: TimeInputProps)
 
     if (/^\d{2}:\d{2}$/.test(val)) {
       val = "00:" + val;
-      setInternalValue(val);
+      setDraftValue(val);
       onChange?.(val);
     } else if (/^\d{2}:\d{2}\.\d{1,2}$/.test(val)) {
       val = "00:" + val;
-      setInternalValue(val);
+      setDraftValue(val);
       onChange?.(val);
     }
 
@@ -70,7 +67,7 @@ export function TimeInput({ value, onChange, onBlur, ...props }: TimeInputProps)
   return (
     <Input
       {...props}
-      value={internalValue}
+      value={currentValue}
       onChange={handleChange}
       onBlur={handleBlur}
       inputMode="numeric"

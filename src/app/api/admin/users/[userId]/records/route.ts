@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { isValidDateString } from "@/server/diary";
 import {

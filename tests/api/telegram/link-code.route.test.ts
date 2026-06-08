@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createSession,
-  expectJsonError,
-  expectJsonSuccess,
-  readJsonResponse,
-} from "@tests/helpers";
+import { createSession, expectJsonError, readJsonResponse } from "@tests/helpers";
 
 const { authMock, issueTelegramLinkCodeMock, getTelegramAccountIdByUserIdMock } = vi.hoisted(() => {
   return {

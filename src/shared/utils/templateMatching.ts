@@ -95,7 +95,7 @@ export function matchTemplatesWithDetails<T extends TemplateWithPattern>(
         while ((match = regex.exec(taskText)) !== null) {
           addMatch(match.index, match[0].length);
         }
-      } catch (e) {}
+      } catch {}
     });
   });
 

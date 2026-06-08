@@ -24,14 +24,19 @@ type UsePlanEntriesResult = {
   currentPage: number;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   onlyWithoutReports: boolean;
-  setOnlyWithoutReports: Dispatch<SetStateAction<boolean>>;
+  setOnlyWithoutReports: (value: boolean) => void;
   today: string;
   loadEntries: () => Promise<void>;
 };
 
+const getTodayPage = (items: PlanDayEntry[], today: string) => {
+  const todayIndex = items.findIndex((entry) => entry.date === today);
+  return todayIndex < 0 ? 1 : Math.floor(todayIndex / PLAN_PAGE_SIZE) + 1;
+};
+
 export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntriesResult => {
   const [entries, setEntries] = useState<PlanEntry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [onlyWithoutReports, setOnlyWithoutReports] = useState(false);
   const scrolledToTodayRef = useRef(false);
@@ -63,43 +68,59 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
         return;
       }
 
+      const nextGroupedEntries = buildPlanDays(data.entries);
       setEntries(data.entries);
+      setCurrentPage(onlyWithoutReports ? 1 : getTodayPage(nextGroupedEntries, today));
     } catch (error) {
       console.error(error);
       msgApi.error(PLAN_TEXT.messages.loadError);
     } finally {
       setLoading(false);
     }
-  }, [msgApi]);
+  }, [msgApi, onlyWithoutReports, today]);
 
   useEffect(() => {
-    loadEntries();
-  }, [loadEntries]);
-
-  useEffect(() => {
-    scrolledToTodayRef.current = false;
-
-    if (onlyWithoutReports) {
-      setCurrentPage((prev) => {
-        if (prev === 1) {
-          return prev;
+    let active = true;
+    fetch("/api/plans")
+      .then(async (response) => {
+        const data = (await response.json().catch(() => null)) as PlansApiResponse | null;
+        if (!active) {
+          return;
         }
-
-        return 1;
+        if (!response.ok || !data?.entries) {
+          msgApi.error(data?.error ?? PLAN_TEXT.messages.loadFailed);
+          return;
+        }
+        const nextGroupedEntries = buildPlanDays(data.entries);
+        setEntries(data.entries);
+        setCurrentPage(getTodayPage(nextGroupedEntries, today));
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
+        console.error(error);
+        msgApi.error(PLAN_TEXT.messages.loadError);
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
       });
-      return;
-    }
 
-    const todayIndex = filteredEntries.findIndex((entry) => entry.date === today);
-    const nextPage = todayIndex < 0 ? 1 : Math.floor(todayIndex / PLAN_PAGE_SIZE) + 1;
-    setCurrentPage((prev) => {
-      if (prev === nextPage) {
-        return prev;
-      }
+    return () => {
+      active = false;
+    };
+  }, [msgApi, today]);
 
-      return nextPage;
-    });
-  }, [filteredEntries, onlyWithoutReports, today]);
+  const handleOnlyWithoutReportsChange = useCallback(
+    (value: boolean) => {
+      scrolledToTodayRef.current = false;
+      setOnlyWithoutReports(value);
+      setCurrentPage(value ? 1 : getTodayPage(groupedEntries, today));
+    },
+    [groupedEntries, today]
+  );
 
   useEffect(() => {
     if (!todayEntryId || scrolledToTodayRef.current) {
@@ -128,7 +149,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
     currentPage,
     setCurrentPage,
     onlyWithoutReports,
-    setOnlyWithoutReports,
+    setOnlyWithoutReports: handleOnlyWithoutReportsChange,
     today,
     loadEntries,
   };

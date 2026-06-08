@@ -3,7 +3,7 @@
 import { Form } from "antd";
 import type { MessageInstance } from "antd/es/message/interface";
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { buildTimezoneOptions } from "@/shared/constants/timezones";
 import { PROFILE_LABELS } from "../constants/profileConstants";
 import type {
@@ -54,10 +54,16 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
     return buildTimezoneOptions(new Date(), [userData.timezone]);
   }, [userData.timezone]);
 
-  useEffect(() => {
-    profileForm.setFieldsValue(initialValues);
-    setFormValues(initialValues);
-  }, [initialValues, profileForm]);
+  const applyUserData = (nextUserData: ProfileApiResponse["user"]) => {
+    if (!nextUserData) {
+      return;
+    }
+    const normalizedUserData = normalizeProfileUserData(nextUserData);
+    const nextFormValues = toProfileFormValues(normalizedUserData);
+    setUserData(normalizedUserData);
+    setFormValues(nextFormValues);
+    profileForm.setFieldsValue(nextFormValues);
+  };
 
   const handleProfileValuesChange = (
     _changedValues: Partial<ProfileFormValues>,
@@ -87,7 +93,7 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
         return;
       }
 
-      setUserData(normalizeProfileUserData(data.user));
+      applyUserData(data.user);
       await update();
       messageApi.success(PROFILE_LABELS.profileUpdateOk);
     } catch {
@@ -203,7 +209,7 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
         return;
       }
 
-      setUserData(normalizeProfileUserData(data.user));
+      applyUserData(data.user);
       await update();
       closeEmailModal();
 
