@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ShoeCreateForm } from "@/app/profile/shoes/ShoesClient/components/ShoeCreateForm/ShoeCreateForm";
-import { ShoeEditForm } from "@/app/profile/shoes/ShoesClient/components/ShoeEditForm/ShoeEditForm";
-import type { ShoeFormState } from "@/app/profile/shoes/ShoesClient/types/shoesTypes";
+import { ShoeCreateForm } from "@/app/(protected)/profile/shoes/ShoesClient/components/ShoeCreateForm/ShoeCreateForm";
+import { ShoeEditForm } from "@/app/(protected)/profile/shoes/ShoesClient/components/ShoeEditForm/ShoeEditForm";
+import type { ShoeFormState } from "@/app/(protected)/profile/shoes/ShoesClient/types/shoesTypes";
 
 const form: ShoeFormState = {
   name: "Pegasus",

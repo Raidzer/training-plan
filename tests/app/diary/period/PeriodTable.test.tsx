@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { PeriodTable } from "@/app/diary/period/DiaryPeriodClient/components/PeriodTable/PeriodTable";
-import type { DayStatus } from "@/app/diary/period/DiaryPeriodClient/types/periodTypes";
+import { PeriodTable } from "@/app/(protected)/diary/period/DiaryPeriodClient/components/PeriodTable/PeriodTable";
+import type { DayStatus } from "@/app/(protected)/diary/period/DiaryPeriodClient/types/periodTypes";
 
 function createDay(overrides: Partial<DayStatus> = {}): DayStatus {
   return {

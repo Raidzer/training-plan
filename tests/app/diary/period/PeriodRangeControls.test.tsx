@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import dayjs from "dayjs";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { PeriodRangeControls } from "@/app/diary/period/DiaryPeriodClient/components/PeriodRangeControls/PeriodRangeControls";
+import { PeriodRangeControls } from "@/app/(protected)/diary/period/DiaryPeriodClient/components/PeriodRangeControls/PeriodRangeControls";
 
 vi.mock("antd", () => {
   const RangePicker = ({

@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { WorkoutsCard } from "@/app/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard";
+import { WorkoutsCard } from "@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard";
 
 const WORKOUTS_CARD_TEST_TIMEOUT_MS = 10000;
 

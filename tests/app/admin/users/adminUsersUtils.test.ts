@@ -6,9 +6,9 @@ import {
   getGenderLabel,
   getRoleMeta,
   getUserLabel,
-} from "@/app/admin/users/AdminUsersClient/utils/adminUsersUtils";
-import { ADMIN_USERS_LABELS } from "@/app/admin/users/AdminUsersClient/constants/adminUsersConstants";
-import type { AdminUserRow } from "@/app/admin/users/AdminUsersClient/types/adminUsersTypes";
+} from "@/app/(protected)/admin/users/AdminUsersClient/utils/adminUsersUtils";
+import { ADMIN_USERS_LABELS } from "@/app/(protected)/admin/users/AdminUsersClient/constants/adminUsersConstants";
+import type { AdminUserRow } from "@/app/(protected)/admin/users/AdminUsersClient/types/adminUsersTypes";
 
 const baseUser: AdminUserRow = {
   id: 10,

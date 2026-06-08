@@ -14,8 +14,11 @@ import {
   mapRecordsToRows,
   normalizeTimeText,
   validateRows,
-} from "@/app/profile/records/RecordsClient/utils/recordsUtils";
-import type { ApiRecord, RecordRow } from "@/app/profile/records/RecordsClient/types/recordsTypes";
+} from "@/app/(protected)/profile/records/RecordsClient/utils/recordsUtils";
+import type {
+  ApiRecord,
+  RecordRow,
+} from "@/app/(protected)/profile/records/RecordsClient/types/recordsTypes";
 
 function createRecordRow(overrides: Partial<RecordRow> = {}): RecordRow {
   return {

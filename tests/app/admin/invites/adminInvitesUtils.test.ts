@@ -6,9 +6,9 @@ import {
   getApiErrorMessage,
   getCreatedInviteData,
   getUserLabel,
-} from "@/app/admin/invites/AdminInvitesClient/utils/adminInvitesUtils";
-import { ADMIN_INVITES_LABELS } from "@/app/admin/invites/AdminInvitesClient/constants/adminInvitesConstants";
-import type { AdminInviteRow } from "@/app/admin/invites/AdminInvitesClient/types/adminInvitesTypes";
+} from "@/app/(protected)/admin/invites/AdminInvitesClient/utils/adminInvitesUtils";
+import { ADMIN_INVITES_LABELS } from "@/app/(protected)/admin/invites/AdminInvitesClient/constants/adminInvitesConstants";
+import type { AdminInviteRow } from "@/app/(protected)/admin/invites/AdminInvitesClient/types/adminInvitesTypes";
 
 const invite: AdminInviteRow = {
   id: 1,

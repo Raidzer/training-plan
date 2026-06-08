@@ -68,9 +68,9 @@ vi.mock("antd", async () => {
   };
 });
 
-import { ADMIN_USERS_LABELS } from "@/app/admin/users/AdminUsersClient/constants/adminUsersConstants";
-import { useAdminUsers } from "@/app/admin/users/AdminUsersClient/hooks/useAdminUsers";
-import type { AdminUserRow } from "@/app/admin/users/AdminUsersClient/types/adminUsersTypes";
+import { ADMIN_USERS_LABELS } from "@/app/(protected)/admin/users/AdminUsersClient/constants/adminUsersConstants";
+import { useAdminUsers } from "@/app/(protected)/admin/users/AdminUsersClient/hooks/useAdminUsers";
+import type { AdminUserRow } from "@/app/(protected)/admin/users/AdminUsersClient/types/adminUsersTypes";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
 

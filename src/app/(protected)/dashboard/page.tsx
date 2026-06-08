@@ -1,12 +1,8 @@
-import { redirect } from "next/navigation";
-import { auth } from "../../auth";
+import { requireAuth } from "@/server/authGuards";
 import { DashboardClient } from "./DashboardClient/DashboardClient";
 
 export default async function Dashboard() {
-  const session = await auth();
-  if (!session) {
-    redirect("/login");
-  }
+  const session = await requireAuth();
 
   return <DashboardClient session={session} />;
 }

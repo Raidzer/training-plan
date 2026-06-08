@@ -1,17 +1,9 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { getTemplates } from "@/app/actions/diaryTemplates";
+import { requireAdmin } from "@/server/authGuards";
 import { TemplatesClient } from "./TemplatesClient/TemplatesClient";
 
 export default async function TemplatesPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/dashboard");
-  }
+  const session = await requireAdmin();
 
   const userId = Number(session.user.id);
   const templates = await getTemplates(userId);

@@ -29,15 +29,15 @@ vi.mock("antd", async () => {
   };
 });
 
-vi.mock("@/app/diary/DiaryClient/hooks/useDiaryData", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/hooks/useDiaryData", () => ({
   useDiaryData: diaryClientMocks.useDiaryDataMock,
 }));
 
-vi.mock("@/app/diary/DiaryClient/components/DiaryHeader/DiaryHeader", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/components/DiaryHeader/DiaryHeader", () => ({
   DiaryHeader: ({ title }: { title: string }) => <header>{title}</header>,
 }));
 
-vi.mock("@/app/diary/DiaryClient/components/DiaryCalendar/DiaryCalendar", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/components/DiaryCalendar/DiaryCalendar", () => ({
   DiaryCalendar: ({ onPanelChange, onSelectDate, selectedDate, title }: any) => (
     <section>
       <h3>{title}</h3>
@@ -51,7 +51,7 @@ vi.mock("@/app/diary/DiaryClient/components/DiaryCalendar/DiaryCalendar", () => 
   ),
 }));
 
-vi.mock("@/app/diary/DiaryClient/components/DiaryStatusBlock/DiaryStatusBlock", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/components/DiaryStatusBlock/DiaryStatusBlock", () => ({
   DiaryStatusBlock: ({ disabledReport, onOpenReport }: any) => (
     <button type="button" disabled={disabledReport} onClick={onOpenReport}>
       open-report
@@ -59,7 +59,7 @@ vi.mock("@/app/diary/DiaryClient/components/DiaryStatusBlock/DiaryStatusBlock", 
   ),
 }));
 
-vi.mock("@/app/diary/DiaryClient/components/WeightCard/WeightCard", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/components/WeightCard/WeightCard", () => ({
   WeightCard: ({ onChange, onSave }: any) => (
     <section>
       <button type="button" onClick={() => onChange("morning", "72")}>
@@ -72,7 +72,7 @@ vi.mock("@/app/diary/DiaryClient/components/WeightCard/WeightCard", () => ({
   ),
 }));
 
-vi.mock("@/app/diary/DiaryClient/components/RecoveryCard/RecoveryCard", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/components/RecoveryCard/RecoveryCard", () => ({
   RecoveryCard: ({ onSave, onSleepChange, onToggle }: any) => (
     <section>
       <button type="button" onClick={() => onToggle("hasBath", true)}>
@@ -88,7 +88,7 @@ vi.mock("@/app/diary/DiaryClient/components/RecoveryCard/RecoveryCard", () => ({
   ),
 }));
 
-vi.mock("@/app/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard", () => ({
   WorkoutsCard: ({ onChange, onSave }: any) => (
     <section>
       <button type="button" onClick={() => onChange(101, "resultText", "готово")}>
@@ -119,7 +119,7 @@ vi.mock("@/app/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard", () => ({
   ),
 }));
 
-vi.mock("@/app/diary/DiaryClient/components/DailyReportModal/DailyReportModal", () => ({
+vi.mock("@/app/(protected)/diary/DiaryClient/components/DailyReportModal/DailyReportModal", () => ({
   DailyReportModal: ({ onClose, open, reportText, title }: any) => {
     if (!open) {
       return null;
@@ -137,7 +137,7 @@ vi.mock("@/app/diary/DiaryClient/components/DailyReportModal/DailyReportModal", 
   },
 }));
 
-import { DiaryClient } from "@/app/diary/DiaryClient/DiaryClient";
+import { DiaryClient } from "@/app/(protected)/diary/DiaryClient/DiaryClient";
 
 function createDiaryData(overrides: Record<string, unknown> = {}) {
   let weightState = {

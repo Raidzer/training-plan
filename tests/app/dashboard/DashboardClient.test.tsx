@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { Session } from "next-auth";
 import { describe, expect, it, vi } from "vitest";
-import { DashboardClient } from "@/app/dashboard/DashboardClient/DashboardClient";
-import { DASHBOARD_CARDS } from "@/app/dashboard/DashboardClient/constants/dashboardConstants";
+import { DashboardClient } from "@/app/(protected)/dashboard/DashboardClient/DashboardClient";
+import { DASHBOARD_CARDS } from "@/app/(protected)/dashboard/DashboardClient/constants/dashboardConstants";
 
 vi.mock("next/link", () => {
   return {
