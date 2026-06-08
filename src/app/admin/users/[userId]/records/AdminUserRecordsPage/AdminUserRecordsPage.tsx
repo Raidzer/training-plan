@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import Link from "next/link";

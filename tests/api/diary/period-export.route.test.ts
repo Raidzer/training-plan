@@ -300,4 +300,46 @@ describe("GET /api/diary/period-export", () => {
     expect(getStringCellValue(sheet, 3, 13)).toBe("55.55 км");
     expect(getStringCellValue(sheet, 11, 13)).toBe("66.66 км");
   });
+
+  it("должен сохранять html-разметку задачи и комментария как rich text", async () => {
+    getDiaryExportRowsMock.mockResolvedValue([
+      createExportRow({
+        dateTime: "26.01.2026(Пн)",
+        task: "Кросс &amp; ОФП",
+        comment:
+          '<b>Важно</b><br/><span style="color: #ff0000;">Красный</span><span style="font-weight: 600;">Без цвета</span>',
+      }),
+    ]);
+
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { from: "2026-01-26", to: "2026-01-26" },
+    });
+    const response = await GET(request);
+    const workbook = await loadWorkbookFromResponse(response);
+    const sheet = workbook.getWorksheet(1);
+
+    expect(sheet).toBeTruthy();
+    if (!sheet) {
+      return;
+    }
+
+    expect(getStringCellValue(sheet, 2, 2)).toBe("Кросс & ОФП");
+
+    const commentValue = sheet.getRow(2).getCell(4).value;
+    expect(commentValue).toEqual({
+      richText: expect.arrayContaining([
+        expect.objectContaining({
+          text: "Важно",
+          font: expect.objectContaining({ bold: true }),
+        }),
+        expect.objectContaining({ text: "\n" }),
+        expect.objectContaining({
+          text: "Красный",
+          font: expect.objectContaining({ color: { argb: "FFFF0000" } }),
+        }),
+        expect.objectContaining({ text: "Без цвета" }),
+      ]),
+    });
+  });
 });

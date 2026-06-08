@@ -51,4 +51,59 @@ describe("useSpeedToPace", () => {
     expect(result.current.paceKmMinutes).toBe(0);
     expect(result.current.paceMileMinutes).toBe(0);
   });
+
+  it("должен пересчитывать состояние из m/s, mph и pace на милю", () => {
+    const { result } = renderHook(() => useSpeedToPace());
+
+    act(() => {
+      result.current.handleSpeedMpsChange({
+        target: { value: "3.5" },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(result.current.speedMpsString).toBe("3,5");
+    expect(result.current.speedKmh).toBeCloseTo(12.6, 1);
+
+    act(() => {
+      result.current.handleSpeedMphChange({
+        target: { value: "8" },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(result.current.speedMphString).toBe("8");
+    expect(result.current.speedKmh).toBeCloseTo(12.87, 2);
+
+    act(() => {
+      result.current.handlePaceMileTimeChange("07:30");
+    });
+
+    expect(result.current.paceMileTimeString).toBe("07:30");
+    expect(result.current.speedMph).toBe(8);
+  });
+
+  it("должен сбрасывать значения при нечисловом и отрицательном вводе", () => {
+    const { result } = renderHook(() => useSpeedToPace());
+
+    act(() => {
+      result.current.handleSpeedMpsChange({
+        target: { value: "abc" },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(result.current.speedKmh).toBe(0);
+
+    act(() => {
+      result.current.handleSpeedMphChange({
+        target: { value: "-5" },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(result.current.speedMph).toBe(0);
+
+    act(() => {
+      result.current.handlePaceMileTimeChange("00:00");
+    });
+
+    expect(result.current.paceMileMinutes).toBe(0);
+  });
 });

@@ -228,6 +228,7 @@ export function WorkoutsCard({
                     />
                     <Tooltip title="Конструктор отчета">
                       <Button
+                        aria-label="Конструктор отчета"
                         icon={<BuildOutlined />}
                         size="small"
                         type="text"

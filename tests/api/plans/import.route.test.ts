@@ -65,16 +65,23 @@ async function createWorkbookBuffer(params: {
   return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer as ArrayLike<number>);
 }
 
+async function writeWorkbookBuffer(workbook: ExcelJS.Workbook): Promise<ArrayBuffer | Uint8Array> {
+  const buffer = await workbook.xlsx.writeBuffer();
+  return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer as ArrayLike<number>);
+}
+
 function createImportRequest(
   fileBuffer?: ArrayBuffer | Uint8Array,
-  filename = "plan-import.xlsx"
+  filename: string | null = "plan-import.xlsx"
 ): Request {
   let file: (Blob & { name?: string; arrayBuffer?: () => Promise<ArrayBuffer> }) | null = null;
   if (fileBuffer) {
     file = new Blob([fileBuffer as unknown as BlobPart], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }) as Blob & { name?: string; arrayBuffer?: () => Promise<ArrayBuffer> };
-    file.name = filename;
+    if (filename !== null) {
+      file.name = filename;
+    }
     file.arrayBuffer = async () =>
       fileBuffer instanceof ArrayBuffer
         ? fileBuffer
@@ -151,6 +158,51 @@ describe("POST /api/plans/import", () => {
     expect(payload.error).toContain("даты должны идти подряд");
   });
 
+  it("должен возвращать 400, когда workbook не содержит валидных строк", async () => {
+    const buffer = await createWorkbookBuffer({
+      rows: [],
+    });
+
+    const response = await POST(createImportRequest(buffer));
+
+    await expectJsonError(response, 400, "Файл пуст или не содержит валидных строк");
+  });
+
+  it("должен включать ошибки строк в сводку импорта", async () => {
+    createPlanImportMock.mockResolvedValue({ id: 99, insertedCount: 1 });
+    const buffer = await createWorkbookBuffer({
+      rows: [
+        { date: "", task: "Нет даты" },
+        { date: "02.01.2026", task: "" },
+        { date: "01.01.2026", task: "Run" },
+      ],
+    });
+
+    const response = await POST(createImportRequest(buffer));
+    const payload = await expectJsonSuccess<{
+      importId: number;
+      inserted: number;
+      skipped: number;
+      errors: Array<{ row: number; message: string }>;
+    }>(response, 200);
+
+    expect(payload).toEqual({
+      importId: 99,
+      inserted: 1,
+      skipped: 2,
+      errors: [
+        { row: 2, message: "Некорректная дата" },
+        { row: 3, message: "Пустое задание" },
+      ],
+    });
+    expect(createPlanImportMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rowCount: 1,
+        errorsCount: 2,
+      })
+    );
+  });
+
   it("должен возвращать 400, когда импортируемый диапазон не продолжает существующий план", async () => {
     getExistingPlanEntryDatesMock.mockResolvedValue(new Set<string>());
     getLatestPlanEntryDateMock.mockResolvedValue("2026-01-01");
@@ -163,6 +215,216 @@ describe("POST /api/plans/import", () => {
     const payload = await readJsonResponse<{ error: string }>(response);
 
     expect(payload.error).toContain("новые даты должны начинаться");
+  });
+
+  it("должен возвращать 400, когда последняя дата плана некорректна", async () => {
+    getExistingPlanEntryDatesMock.mockResolvedValue(new Set<string>());
+    getLatestPlanEntryDateMock.mockResolvedValue("bad-date");
+    const buffer = await createWorkbookBuffer({
+      rows: [{ date: "01.01.2026", task: "Run" }],
+    });
+
+    const response = await POST(createImportRequest(buffer));
+    const payload = await readJsonResponse<{ error: string }>(response);
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toContain("некорректный формат даты");
+  });
+
+  it("должен парсить числовую дату, формулу и файл без колонки комментария", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Plan");
+    const excelEpoch = Date.UTC(1899, 11, 30);
+    const dateSerial = (Date.UTC(2026, 0, 1) - excelEpoch) / (24 * 60 * 60 * 1000);
+
+    sheet.addRow(["date", "workout"]);
+    const row = sheet.addRow([dateSerial, ""]);
+    row.getCell(2).value = { formula: "1+1", result: "Run from formula" } as any;
+
+    const response = await POST(createImportRequest(await writeWorkbookBuffer(workbook)));
+
+    await expectJsonSuccess(response, 200);
+
+    const importArg = createPlanImportMock.mock.calls[0][0] as {
+      entries: Array<{ date: string; taskText: string; commentText: string | null }>;
+    };
+    expect(importArg.entries).toEqual([
+      expect.objectContaining({
+        date: "2026-01-01",
+        taskText: "Run from formula",
+        commentText: null,
+      }),
+    ]);
+  });
+
+  it("должен разделять rich text с нумерованными тренировками и комментариями", async () => {
+    createPlanImportMock.mockResolvedValue({ id: 55, insertedCount: 2 });
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Plan");
+    sheet.addRow(["Дата", "Задание", "Комментарий"]);
+    const row = sheet.addRow([new Date(Date.UTC(2026, 0, 1)), "", ""]);
+
+    row.getCell(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF00FF00" },
+    } as any;
+    row.getCell(2).value = {
+      richText: [
+        {
+          font: {
+            bold: true,
+            color: { argb: "80FF0000" },
+          },
+          text: "1) Быстрый <кросс>\n",
+        },
+        {
+          text: "2) Заминка",
+        },
+      ],
+    } as any;
+    row.getCell(3).value = "1) Тяжело\n2) Легко";
+
+    const response = await POST(createImportRequest(await writeWorkbookBuffer(workbook)));
+
+    await expectJsonSuccess(response, 200);
+
+    const importArg = createPlanImportMock.mock.calls[0][0] as {
+      entries: Array<{
+        date: string;
+        sessionOrder: number;
+        taskText: string;
+        commentText: string | null;
+        isWorkload: boolean;
+      }>;
+    };
+    expect(importArg.entries).toHaveLength(2);
+    expect(importArg.entries[0]).toEqual(
+      expect.objectContaining({
+        date: "2026-01-01",
+        sessionOrder: 1,
+        commentText: "Тяжело",
+        isWorkload: true,
+      })
+    );
+    expect(importArg.entries[0].taskText).toContain("Быстрый");
+    expect(importArg.entries[0].taskText).toContain("&lt;кросс&gt;");
+    expect(importArg.entries[1]).toEqual(
+      expect.objectContaining({
+        sessionOrder: 2,
+        taskText: "Заминка",
+        commentText: "Легко",
+        isWorkload: true,
+      })
+    );
+  });
+
+  it("должен объединять префикс, общий комментарий и считать gradient fill нагрузкой", async () => {
+    createPlanImportMock.mockResolvedValue({ id: 56, insertedCount: 2 });
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Plan");
+    sheet.addRow(["Дата", "Задание", "Комментарий"]);
+    const row = sheet.addRow([
+      "02.01.2026",
+      "Разминка\n1) Основная работа\n2) Заминка",
+      "общий комментарий",
+    ]);
+
+    row.getCell(3).fill = {
+      type: "gradient",
+      gradient: "angle",
+      degree: 0,
+      stops: [
+        {
+          position: 0,
+          color: { argb: "FFDCE6F1" },
+        },
+      ],
+    } as any;
+
+    const response = await POST(createImportRequest(await writeWorkbookBuffer(workbook)));
+
+    await expectJsonSuccess(response, 200);
+
+    const importArg = createPlanImportMock.mock.calls[0][0] as {
+      entries: Array<{
+        taskText: string;
+        commentText: string | null;
+        isWorkload: boolean;
+      }>;
+    };
+    expect(importArg.entries).toEqual([
+      expect.objectContaining({
+        taskText: "Разминка Основная работа",
+        commentText: "общий комментарий",
+        isWorkload: true,
+      }),
+      expect.objectContaining({
+        taskText: "Заминка",
+        commentText: "общий комментарий",
+        isWorkload: true,
+      }),
+    ]);
+  });
+
+  it("должен сохранять rich text стили после удаления нумерованного префикса", async () => {
+    createPlanImportMock.mockResolvedValue({ id: 57, insertedCount: 1 });
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Plan");
+    sheet.addRow(["Дата", "Задание"]);
+    const row = sheet.addRow(["03.01.2026", ""]);
+    row.getCell(2).value = {
+      richText: [
+        {
+          font: {
+            bold: true,
+            color: { argb: "FF00AA11" },
+          },
+          text: "1) Цветная работа",
+        },
+      ],
+    } as any;
+
+    const response = await POST(createImportRequest(await writeWorkbookBuffer(workbook)));
+
+    await expectJsonSuccess(response, 200);
+
+    const importArg = createPlanImportMock.mock.calls[0][0] as {
+      entries: Array<{ taskText: string }>;
+    };
+    expect(importArg.entries[0].taskText).toContain("Цветная работа");
+    expect(importArg.entries[0].taskText).toContain("font-weight: bold;");
+    expect(importArg.entries[0].taskText).toContain("color: #00AA11;");
+  });
+
+  it("должен создавать импорт без новых записей, если все даты уже существуют", async () => {
+    getExistingPlanEntryDatesMock.mockResolvedValue(new Set(["2026-01-04"]));
+    createPlanImportMock.mockResolvedValue({ id: 58, insertedCount: 0 });
+    const buffer = await createWorkbookBuffer({
+      rows: [{ date: "04.01.2026", task: "Существующий день" }],
+    });
+
+    const response = await POST(createImportRequest(buffer, null));
+    const payload = await expectJsonSuccess<{
+      importId: number;
+      inserted: number;
+      skipped: number;
+      errors: Array<{ row: number; message: string }>;
+    }>(response, 200);
+
+    expect(payload).toEqual({
+      importId: 58,
+      inserted: 0,
+      skipped: 1,
+      errors: [],
+    });
+    expect(getLatestPlanEntryDateMock).not.toHaveBeenCalled();
+    expect(createPlanImportMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filename: "plan.xlsx",
+        newEntries: [],
+      })
+    );
   });
 
   it("должен парсить workbook и создавать сводку импорта", async () => {

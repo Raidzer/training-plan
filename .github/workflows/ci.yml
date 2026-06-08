@@ -32,6 +32,11 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      code-quality: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,7 +51,72 @@ jobs:
         run: npm ci
 
       - name: Run Tests
-        run: npm run test
+        run: npm run test:coverage
+
+      - name: Create Coverage Summary
+        if: always()
+        run: node src/scripts/writeCoverageSummary.mjs
+
+      - name: Publish Coverage Summary
+        if: ${{ always() && hashFiles('coverage/coverage-summary.md') != '' }}
+        run: cat coverage/coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Coverage Report
+        if: ${{ always() && hashFiles('coverage/cobertura-coverage.xml') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage/cobertura-coverage.xml
+          language: TypeScript
+          label: code-coverage/vitest
+          fail-on-error: false
+
+      - name: Upload Coverage HTML
+        if: ${{ always() && hashFiles('coverage/index.html') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage
+          retention-days: 14
+
+      - name: Comment Coverage Summary
+        if: ${{ always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && hashFiles('coverage/coverage-summary.md') != '' }}
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- coverage-summary -->";
+            const body = `${marker}\n${fs.readFileSync("coverage/coverage-summary.md", "utf8")}`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+            });
+            const previousComment = comments.find((comment) => {
+              return comment.user?.type === "Bot" && (comment.body || "").includes(marker);
+            });
+
+            try {
+              if (previousComment) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: previousComment.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body,
+                });
+              }
+            } catch (error) {
+              core.warning(`Unable to publish coverage PR comment: ${error.message}`);
+            }
 
   build:
     name: Build Check

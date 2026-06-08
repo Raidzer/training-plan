@@ -194,7 +194,7 @@ const toDateString = (value: unknown): string | null => {
     }
     const match = trimmed.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
     if (match) {
-      const [_, dd, mm, yy] = match;
+      const [, dd, mm, yy] = match;
       const year = yy.length === 2 ? Number(`20${yy}`) : Number(yy);
       const month = Number(mm) - 1;
       const day = Number(dd);

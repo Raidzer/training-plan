@@ -273,62 +273,74 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
   const [templates, setTemplates] = useState<DiaryResultTemplate[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const loadKey = visible && userId ? `${userId}:${taskText}` : null;
+  const [completedLoadKey, setCompletedLoadKey] = useState<string | null>(null);
+  const loading = Boolean(loadKey && completedLoadKey !== loadKey);
 
   const [templateToAdd, setTemplateToAdd] = useState<number | null>(null);
 
   useEffect(() => {
-    if (visible && userId) {
-      setLoading(true);
-      form.resetFields();
-
-      Promise.all([getTemplates(userId), findMatchingTemplateWithDetails(userId, taskText)])
-        .then(([allTemplates, matchesWithDetails]) => {
-          setTemplates(allTemplates);
-
-          if (matchesWithDetails.length > 0) {
-            const sortedMatchesWithDetails = [...matchesWithDetails].sort(
-              (a, b) => a.index - b.index
-            );
-            let previousMatchEnd = 0;
-            const newBlocks = sortedMatchesWithDetails.map((match: MatchedTemplateWithDetails) => {
-              const autoListSize = detectRepeatCountForMatch(taskText, match, previousMatchEnd);
-              previousMatchEnd = Math.max(previousMatchEnd, match.index + match.length);
-
-              return {
-                id: Math.random().toString(36).substr(2, 9),
-                templateId: match.template.id,
-                values: buildDefaultValuesFromSchema(
-                  (match.template.schema as TemplateSchemaField[]) || []
-                ),
-                autoListSize,
-              };
-            });
-            setBlocks(newBlocks);
-
-            const defaultFormValues = newBlocks.reduce(
-              (acc, block) => ({
-                ...acc,
-                ...buildFormValuesForBlock(block.id, block.values),
-              }),
-              {} as Record<string, any>
-            );
-            if (Object.keys(defaultFormValues).length > 0) {
-              form.setFieldsValue(defaultFormValues);
-            }
-
-            messageApi.success(`Найдено подходящих шаблонов: ${sortedMatchesWithDetails.length}`);
-          } else {
-            setBlocks([]);
-          }
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
-      setBlocks([]);
+    if (!loadKey) {
+      return;
     }
-  }, [visible, userId, taskText, messageApi, form]);
+
+    let active = true;
+    form.resetFields();
+
+    Promise.all([getTemplates(userId), findMatchingTemplateWithDetails(userId, taskText)])
+      .then(([allTemplates, matchesWithDetails]) => {
+        if (!active) {
+          return;
+        }
+
+        setTemplates(allTemplates);
+
+        if (matchesWithDetails.length > 0) {
+          const sortedMatchesWithDetails = [...matchesWithDetails].sort(
+            (a, b) => a.index - b.index
+          );
+          let previousMatchEnd = 0;
+          const newBlocks = sortedMatchesWithDetails.map((match: MatchedTemplateWithDetails) => {
+            const autoListSize = detectRepeatCountForMatch(taskText, match, previousMatchEnd);
+            previousMatchEnd = Math.max(previousMatchEnd, match.index + match.length);
+
+            return {
+              id: Math.random().toString(36).substr(2, 9),
+              templateId: match.template.id,
+              values: buildDefaultValuesFromSchema(
+                (match.template.schema as TemplateSchemaField[]) || []
+              ),
+              autoListSize,
+            };
+          });
+          setBlocks(newBlocks);
+
+          const defaultFormValues = newBlocks.reduce(
+            (acc, block) => ({
+              ...acc,
+              ...buildFormValuesForBlock(block.id, block.values),
+            }),
+            {} as Record<string, any>
+          );
+          if (Object.keys(defaultFormValues).length > 0) {
+            form.setFieldsValue(defaultFormValues);
+          }
+
+          messageApi.success(`Найдено подходящих шаблонов: ${sortedMatchesWithDetails.length}`);
+        } else {
+          setBlocks([]);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setCompletedLoadKey(loadKey);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadKey, userId, taskText, messageApi, form]);
 
   const addBlock = (templateId: number) => {
     const blockId = Math.random().toString(36).substr(2, 9);
@@ -555,7 +567,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
       }}
       destroyOnHidden
     >
-      <Spin spinning={loading} tip="Подбираем шаблоны...">
+      <Spin spinning={loading} description="Подбираем шаблоны...">
         <Form form={form} layout="vertical">
           <div className={styles.modalContent}>
             {blocks.map((block, index) => {

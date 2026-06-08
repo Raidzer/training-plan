@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Session } from "next-auth";
 import { describe, expect, it, vi } from "vitest";
 import { DashboardClient } from "@/app/dashboard/DashboardClient/DashboardClient";
+import { DASHBOARD_CARDS } from "@/app/dashboard/DashboardClient/constants/dashboardConstants";
 
 vi.mock("next/link", () => {
   return {
@@ -38,20 +39,25 @@ const createSession = (role: "admin" | "user", email = "test@example.com"): Sess
 
 describe("DashboardClient", () => {
   it("показывает admin-only карточки администратору", () => {
-    const { container } = render(<DashboardClient session={createSession("admin")} />);
+    render(<DashboardClient session={createSession("admin")} />);
 
-    expect(container.querySelectorAll("a .ant-card")).toHaveLength(6);
-    expect(screen.getByText("Администрирование")).toBeTruthy();
-    expect(screen.getByText("Шаблоны")).toBeTruthy();
+    for (const card of DASHBOARD_CARDS) {
+      const link = screen.getByRole("link", { name: new RegExp(card.title) });
+
+      expect(link.getAttribute("href")).toBe(card.href);
+    }
   });
 
   it("скрывает admin-only карточки для обычного пользователя", () => {
-    const { container } = render(<DashboardClient session={createSession("user")} />);
+    render(<DashboardClient session={createSession("user")} />);
 
-    expect(container.querySelectorAll("a .ant-card")).toHaveLength(4);
     expect(screen.queryByText("Администрирование")).toBeNull();
     expect(screen.queryByText("Шаблоны")).toBeNull();
-    expect(screen.getByText("План")).toBeTruthy();
-    expect(screen.getByText("Дневник")).toBeTruthy();
+
+    for (const card of DASHBOARD_CARDS.filter((item) => !item.adminOnly)) {
+      const link = screen.getByRole("link", { name: new RegExp(card.title) });
+
+      expect(link.getAttribute("href")).toBe(card.href);
+    }
   });
 });
