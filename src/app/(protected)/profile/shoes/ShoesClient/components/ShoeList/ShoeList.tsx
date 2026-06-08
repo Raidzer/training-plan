@@ -1,7 +1,12 @@
 import { Typography } from "antd";
 import { ShoeListItem } from "../ShoeListItem/ShoeListItem";
 import { shoesLabels } from "../../constants/shoesConstants";
-import type { ShoeFormState, ShoeFormUpdate, ShoeItem } from "../../types/shoesTypes";
+import type {
+  ShoeFormState,
+  ShoeFormUpdate,
+  ShoeItem,
+  ShoeNotificationAvailability,
+} from "../../types/shoesTypes";
 import styles from "./ShoeList.module.scss";
 
 type ShoeListProps = {
@@ -10,6 +15,7 @@ type ShoeListProps = {
   saving: boolean;
   editingId: number | null;
   editingForm: ShoeFormState;
+  notificationAvailability: ShoeNotificationAvailability;
   updatingId: number | null;
   deletingId: number | null;
   onStartEdit: (item: ShoeItem) => void;
@@ -25,6 +31,7 @@ export function ShoeList({
   saving,
   editingId,
   editingForm,
+  notificationAvailability,
   updatingId,
   deletingId,
   onStartEdit,
@@ -53,6 +60,7 @@ export function ShoeList({
                     item={item}
                     isEditing={editingId === item.id}
                     editingForm={editingForm}
+                    notificationAvailability={notificationAvailability}
                     updating={updatingId === item.id}
                     deleting={deletingId === item.id}
                     actionsDisabled={saving || updatingId !== null || deletingId !== null}

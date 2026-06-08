@@ -1,6 +1,11 @@
-import { Button, Checkbox, Input, Typography } from "antd";
+import { Button, Input, Typography } from "antd";
+import { ShoeNotificationOptions } from "../ShoeNotificationOptions/ShoeNotificationOptions";
 import { shoesLabels } from "../../constants/shoesConstants";
-import type { ShoeFormState, ShoeFormUpdate } from "../../types/shoesTypes";
+import type {
+  ShoeFormState,
+  ShoeFormUpdate,
+  ShoeNotificationAvailability,
+} from "../../types/shoesTypes";
 import { formatMileageValue } from "../../utils/shoesUtils";
 import styles from "./ShoeEditForm.module.scss";
 
@@ -8,6 +13,7 @@ type ShoeEditFormProps = {
   form: ShoeFormState;
   currentMileageKm: string | null;
   updating: boolean;
+  notificationAvailability: ShoeNotificationAvailability;
   onChange: ShoeFormUpdate;
   onSave: () => void;
   onCancel: () => void;
@@ -17,6 +23,7 @@ export function ShoeEditForm({
   form,
   currentMileageKm,
   updating,
+  notificationAvailability,
   onChange,
   onSave,
   onCancel,
@@ -46,26 +53,12 @@ export function ShoeEditForm({
       <Typography.Text type="secondary" className={styles.itemMetaText}>
         {shoesLabels.currentMileageLabel}: {formatMileageValue(currentMileageKm)}
       </Typography.Text>
-      <div className={styles.settingsRow}>
-        <Checkbox
-          checked={form.notifyOnLimitEmail}
-          disabled={updating}
-          onChange={(event) => {
-            onChange("notifyOnLimitEmail", event.target.checked);
-          }}
-        >
-          {shoesLabels.emailNotification}
-        </Checkbox>
-        <Checkbox
-          checked={form.notifyOnLimitTelegram}
-          disabled={updating}
-          onChange={(event) => {
-            onChange("notifyOnLimitTelegram", event.target.checked);
-          }}
-        >
-          {shoesLabels.telegramNotification}
-        </Checkbox>
-      </div>
+      <ShoeNotificationOptions
+        form={form}
+        disabled={updating}
+        notificationAvailability={notificationAvailability}
+        onChange={onChange}
+      />
       <div className={styles.editActions}>
         <Button type="primary" onClick={onSave} loading={updating}>
           {shoesLabels.saveButton}

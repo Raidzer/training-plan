@@ -16,6 +16,7 @@ export function ShoesClient() {
     newForm,
     editingId,
     editingForm,
+    notificationAvailability,
     updatingId,
     deletingId,
     updateNewForm,
@@ -36,6 +37,7 @@ export function ShoesClient() {
         <ShoeCreateForm
           form={newForm}
           saving={saving}
+          notificationAvailability={notificationAvailability}
           onChange={updateNewForm}
           onSubmit={handleCreate}
         />
@@ -45,6 +47,7 @@ export function ShoesClient() {
           saving={saving}
           editingId={editingId}
           editingForm={editingForm}
+          notificationAvailability={notificationAvailability}
           updatingId={updatingId}
           deletingId={deletingId}
           onStartEdit={handleStartEdit}

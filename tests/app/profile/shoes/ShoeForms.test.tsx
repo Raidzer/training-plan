@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ShoeCreateForm } from "@/app/(protected)/profile/shoes/ShoesClient/components/ShoeCreateForm/ShoeCreateForm";
 import { ShoeEditForm } from "@/app/(protected)/profile/shoes/ShoesClient/components/ShoeEditForm/ShoeEditForm";
-import type { ShoeFormState } from "@/app/(protected)/profile/shoes/ShoesClient/types/shoesTypes";
+import type {
+  ShoeFormState,
+  ShoeNotificationAvailability,
+} from "@/app/(protected)/profile/shoes/ShoesClient/types/shoesTypes";
 
 const form: ShoeFormState = {
   name: "Pegasus",
@@ -11,12 +14,27 @@ const form: ShoeFormState = {
   notifyOnLimitTelegram: false,
 };
 
+const availableNotifications: ShoeNotificationAvailability = {
+  emailAvailable: true,
+  emailReady: true,
+  telegramAvailable: true,
+  telegramReady: true,
+};
+
 describe("Shoe forms", () => {
   it("ShoeCreateForm отправляет изменения полей и submit", () => {
     const onChange = vi.fn();
     const onSubmit = vi.fn();
 
-    render(<ShoeCreateForm form={form} saving={false} onChange={onChange} onSubmit={onSubmit} />);
+    render(
+      <ShoeCreateForm
+        form={form}
+        saving={false}
+        notificationAvailability={availableNotifications}
+        onChange={onChange}
+        onSubmit={onSubmit}
+      />
+    );
 
     fireEvent.change(screen.getByDisplayValue("Pegasus"), { target: { value: "Boston" } });
     fireEvent.change(screen.getByDisplayValue("800"), { target: { value: "600" } });
@@ -41,6 +59,7 @@ describe("Shoe forms", () => {
         form={form}
         currentMileageKm="123.456"
         updating={false}
+        notificationAvailability={availableNotifications}
         onChange={onChange}
         onSave={onSave}
         onCancel={onCancel}
@@ -64,5 +83,32 @@ describe("Shoe forms", () => {
     expect(onChange).toHaveBeenNthCalledWith(4, "notifyOnLimitTelegram", true);
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("ShoeCreateForm блокирует недоступные каналы уведомлений", () => {
+    const onChange = vi.fn();
+    const onSubmit = vi.fn();
+
+    render(
+      <ShoeCreateForm
+        form={form}
+        saving={false}
+        notificationAvailability={{
+          emailAvailable: false,
+          emailReady: true,
+          telegramAvailable: true,
+          telegramReady: true,
+        }}
+        onChange={onChange}
+        onSubmit={onSubmit}
+      />
+    );
+
+    expect((screen.getByRole("checkbox", { name: "Email" }) as HTMLInputElement).disabled).toBe(
+      true
+    );
+    expect((screen.getByRole("checkbox", { name: "Telegram" }) as HTMLInputElement).disabled).toBe(
+      false
+    );
   });
 });

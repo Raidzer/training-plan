@@ -1,7 +1,12 @@
 import { Button, Typography } from "antd";
 import { ShoeEditForm } from "../ShoeEditForm/ShoeEditForm";
 import { shoesLabels } from "../../constants/shoesConstants";
-import type { ShoeFormState, ShoeFormUpdate, ShoeItem } from "../../types/shoesTypes";
+import type {
+  ShoeFormState,
+  ShoeFormUpdate,
+  ShoeItem,
+  ShoeNotificationAvailability,
+} from "../../types/shoesTypes";
 import { formatMileageValue, formatNotifications } from "../../utils/shoesUtils";
 import styles from "./ShoeListItem.module.scss";
 
@@ -9,6 +14,7 @@ type ShoeListItemProps = {
   item: ShoeItem;
   isEditing: boolean;
   editingForm: ShoeFormState;
+  notificationAvailability: ShoeNotificationAvailability;
   updating: boolean;
   deleting: boolean;
   actionsDisabled: boolean;
@@ -23,6 +29,7 @@ export function ShoeListItem({
   item,
   isEditing,
   editingForm,
+  notificationAvailability,
   updating,
   deleting,
   actionsDisabled,
@@ -39,6 +46,7 @@ export function ShoeListItem({
           form={editingForm}
           currentMileageKm={item.currentMileageKm}
           updating={updating}
+          notificationAvailability={notificationAvailability}
           onChange={onChangeEdit}
           onSave={onSaveEdit}
           onCancel={onCancelEdit}

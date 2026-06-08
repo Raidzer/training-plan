@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
+import { useSession } from "next-auth/react";
 import { shoesLabels } from "../constants/shoesConstants";
 import type {
   ShoeFormState,
   ShoeFormUpdate,
   ShoeItem,
   ShoeMutationPayload,
+  ShoeNotificationAvailability,
 } from "../types/shoesTypes";
 import {
   createEmptyForm,
   createFormFromShoe,
   getShoeFromResponse,
   getShoesFromResponse,
+  getTelegramLinkedFromResponse,
+  sanitizeNotificationForm,
   validateMileageLimit,
   validateName,
 } from "../utils/shoesUtils";
@@ -25,6 +29,7 @@ type UseShoesParams = {
 };
 
 export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
+  const { data: session, status: sessionStatus } = useSession();
   const [items, setItems] = useState<ShoeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,6 +38,20 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
   const [editingForm, setEditingForm] = useState<ShoeFormState>(() => createEmptyForm());
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [telegramStatus, setTelegramStatus] = useState({
+    available: false,
+    ready: false,
+  });
+
+  const notificationAvailability = useMemo<ShoeNotificationAvailability>(
+    () => ({
+      emailAvailable: sessionStatus === "authenticated" && Boolean(session?.user?.emailVerified),
+      emailReady: sessionStatus !== "loading",
+      telegramAvailable: telegramStatus.available,
+      telegramReady: telegramStatus.ready,
+    }),
+    [session?.user?.emailVerified, sessionStatus, telegramStatus.available, telegramStatus.ready]
+  );
 
   useEffect(() => {
     let active = true;
@@ -65,12 +84,99 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    fetch("/api/telegram/status", { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!active) {
+          return;
+        }
+        setTelegramStatus({
+          available: response.ok && getTelegramLinkedFromResponse(data),
+          ready: true,
+        });
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
+        console.error(error);
+        setTelegramStatus({
+          available: false,
+          ready: true,
+        });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const canEnableNotification = (key: keyof ShoeFormState) => {
+    if (key === "notifyOnLimitEmail") {
+      if (!notificationAvailability.emailReady) {
+        messageApi.warning(shoesLabels.notificationAvailabilityLoading);
+        return false;
+      }
+      if (!notificationAvailability.emailAvailable) {
+        messageApi.warning(shoesLabels.emailNotificationUnavailable);
+        return false;
+      }
+    }
+
+    if (key === "notifyOnLimitTelegram") {
+      if (!notificationAvailability.telegramReady) {
+        messageApi.warning(shoesLabels.notificationAvailabilityLoading);
+        return false;
+      }
+      if (!notificationAvailability.telegramAvailable) {
+        messageApi.warning(shoesLabels.telegramNotificationUnavailable);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const updateNewForm: ShoeFormUpdate = (key, value) => {
+    if (value === true && !canEnableNotification(key)) {
+      return;
+    }
     setNewForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const updateEditingForm: ShoeFormUpdate = (key, value) => {
+    if (value === true && !canEnableNotification(key)) {
+      return;
+    }
     setEditingForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const validateNotificationAvailability = (form: ShoeFormState) => {
+    if (form.notifyOnLimitEmail) {
+      if (!notificationAvailability.emailReady) {
+        messageApi.warning(shoesLabels.notificationAvailabilityLoading);
+        return false;
+      }
+      if (!notificationAvailability.emailAvailable) {
+        messageApi.warning(shoesLabels.emailNotificationUnavailable);
+        return false;
+      }
+    }
+
+    if (form.notifyOnLimitTelegram) {
+      if (!notificationAvailability.telegramReady) {
+        messageApi.warning(shoesLabels.notificationAvailabilityLoading);
+        return false;
+      }
+      if (!notificationAvailability.telegramAvailable) {
+        messageApi.warning(shoesLabels.telegramNotificationUnavailable);
+        return false;
+      }
+    }
+
+    return true;
   };
 
   const buildPayload = (form: ShoeFormState, emptyMileageValue: null | undefined) => {
@@ -86,10 +192,15 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
       return null;
     }
 
+    const sanitizedForm = sanitizeNotificationForm(form, notificationAvailability);
+    if (!validateNotificationAvailability(sanitizedForm)) {
+      return null;
+    }
+
     const payload: ShoeMutationPayload = {
       name: name.value,
-      notifyOnLimitEmail: form.notifyOnLimitEmail,
-      notifyOnLimitTelegram: form.notifyOnLimitTelegram,
+      notifyOnLimitEmail: sanitizedForm.notifyOnLimitEmail,
+      notifyOnLimitTelegram: sanitizedForm.notifyOnLimitTelegram,
     };
 
     if (mileageLimit.value !== undefined) {
@@ -138,7 +249,7 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
 
   const handleStartEdit = (item: ShoeItem) => {
     setEditingId(item.id);
-    setEditingForm(createFormFromShoe(item));
+    setEditingForm(sanitizeNotificationForm(createFormFromShoe(item), notificationAvailability));
   };
 
   const handleCancelEdit = () => {
@@ -240,6 +351,7 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     newForm,
     editingId,
     editingForm,
+    notificationAvailability,
     updatingId,
     deletingId,
     updateNewForm,

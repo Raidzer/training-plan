@@ -16,6 +16,13 @@ export type ShoeFormState = {
   notifyOnLimitTelegram: boolean;
 };
 
+export type ShoeNotificationAvailability = {
+  emailAvailable: boolean;
+  emailReady: boolean;
+  telegramAvailable: boolean;
+  telegramReady: boolean;
+};
+
 export type ShoeFormUpdate = <Key extends keyof ShoeFormState>(
   key: Key,
   value: ShoeFormState[Key]
