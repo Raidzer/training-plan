@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DailyReportModal } from "@/app/diary/DiaryClient/components/DailyReportModal/DailyReportModal";
-import { DiaryStatusBlock } from "@/app/diary/DiaryClient/components/DiaryStatusBlock/DiaryStatusBlock";
-import { RecoveryCard } from "@/app/diary/DiaryClient/components/RecoveryCard/RecoveryCard";
-import { WeightCard } from "@/app/diary/DiaryClient/components/WeightCard/WeightCard";
-import { WorkoutShoeMileageFields } from "@/app/diary/DiaryClient/components/WorkoutShoeMileageFields/WorkoutShoeMileageFields";
+import { DailyReportModal } from "@/app/(protected)/diary/DiaryClient/components/DailyReportModal/DailyReportModal";
+import { DiaryStatusBlock } from "@/app/(protected)/diary/DiaryClient/components/DiaryStatusBlock/DiaryStatusBlock";
+import { RecoveryCard } from "@/app/(protected)/diary/DiaryClient/components/RecoveryCard/RecoveryCard";
+import { WeightCard } from "@/app/(protected)/diary/DiaryClient/components/WeightCard/WeightCard";
+import { WorkoutShoeMileageFields } from "@/app/(protected)/diary/DiaryClient/components/WorkoutShoeMileageFields/WorkoutShoeMileageFields";
 
 describe("DiaryClient components", () => {
   beforeEach(() => {

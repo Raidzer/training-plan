@@ -1,6 +1,5 @@
 import { desc, inArray } from "drizzle-orm";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/server/authGuards";
 import { db } from "@/server/db/client";
 import { registrationInvites, users } from "@/server/db/schema";
 import { AdminInvitesClient } from "./AdminInvitesClient/AdminInvitesClient";
@@ -24,15 +23,7 @@ const getInviteStatus = (
 };
 
 export default async function AdminInvitesPage() {
-  const session = await auth();
-  if (!session) {
-    redirect("/login");
-  }
-
-  const role = (session.user as { role?: string } | undefined)?.role;
-  if (role !== "admin") {
-    redirect("/dashboard");
-  }
+  await requireAdmin();
 
   const rows = await db
     .select({

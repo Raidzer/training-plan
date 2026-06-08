@@ -1,9 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { shoesLabels } from "@/app/profile/shoes/ShoesClient/constants/shoesConstants";
-import { useShoes } from "@/app/profile/shoes/ShoesClient/hooks/useShoes";
-import type { ShoeItem } from "@/app/profile/shoes/ShoesClient/types/shoesTypes";
+import { shoesLabels } from "@/app/(protected)/profile/shoes/ShoesClient/constants/shoesConstants";
+import { useShoes } from "@/app/(protected)/profile/shoes/ShoesClient/hooks/useShoes";
+import type { ShoeItem } from "@/app/(protected)/profile/shoes/ShoesClient/types/shoesTypes";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
 

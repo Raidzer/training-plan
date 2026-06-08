@@ -3,7 +3,7 @@
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import Link from "next/link";
-import { RecordsClient } from "@/app/profile/records/RecordsClient/RecordsClient";
+import { RecordsClient } from "@/app/(protected)/profile/records/RecordsClient/RecordsClient";
 import { ADMIN_USER_RECORDS_LABELS } from "./constants/adminUserRecordsConstants";
 import styles from "./AdminUserRecordsPage.module.scss";
 

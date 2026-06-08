@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ADMIN_USERS_LABELS } from "@/app/admin/users/AdminUsersClient/constants/adminUsersConstants";
-import { AdminUsersTable } from "@/app/admin/users/AdminUsersClient/components/AdminUsersTable/AdminUsersTable";
-import type { AdminUserRow } from "@/app/admin/users/AdminUsersClient/types/adminUsersTypes";
+import { ADMIN_USERS_LABELS } from "@/app/(protected)/admin/users/AdminUsersClient/constants/adminUsersConstants";
+import { AdminUsersTable } from "@/app/(protected)/admin/users/AdminUsersClient/components/AdminUsersTable/AdminUsersTable";
+import type { AdminUserRow } from "@/app/(protected)/admin/users/AdminUsersClient/types/adminUsersTypes";
 
 function createUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
   return {

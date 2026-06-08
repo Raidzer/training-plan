@@ -1,6 +1,5 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { getTemplateById } from "@/app/actions/diaryTemplates";
+import { requireAdmin } from "@/server/authGuards";
 import { TemplateEditorClient } from "../TemplateEditorClient/TemplateEditorClient";
 
 type Props = {
@@ -10,14 +9,7 @@ type Props = {
 export default async function Page({ params }: Props) {
   const { templateId } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/dashboard");
-  }
+  const session = await requireAdmin();
 
   const userId = Number(session.user.id);
   let template = null;

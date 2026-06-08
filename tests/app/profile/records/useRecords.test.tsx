@@ -2,9 +2,9 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { RECORDS_LABELS } from "@/app/profile/records/RecordsClient/constants/recordsConstants";
-import { useRecords } from "@/app/profile/records/RecordsClient/hooks/useRecords";
-import type { ApiRecord } from "@/app/profile/records/RecordsClient/types/recordsTypes";
+import { RECORDS_LABELS } from "@/app/(protected)/profile/records/RecordsClient/constants/recordsConstants";
+import { useRecords } from "@/app/(protected)/profile/records/RecordsClient/hooks/useRecords";
+import type { ApiRecord } from "@/app/(protected)/profile/records/RecordsClient/types/recordsTypes";
 import type { MessageInstance } from "antd/es/message/interface";
 
 function createMessageApi() {

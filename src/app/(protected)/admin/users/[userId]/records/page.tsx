@@ -1,6 +1,4 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-
+import { requireAdmin } from "@/server/authGuards";
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
@@ -11,10 +9,7 @@ type Props = {
 };
 
 export default async function AdminUserRecordsPage({ params }: Props) {
-  const session = await auth();
-  if (!session || session.user?.role !== "admin") {
-    redirect("/dashboard");
-  }
+  await requireAdmin();
 
   const { userId: userIdParam } = await params;
   const userId = Number(userIdParam);

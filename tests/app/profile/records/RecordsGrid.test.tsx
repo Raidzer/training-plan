@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import dayjs from "dayjs";
 import { describe, expect, it, vi } from "vitest";
-import { RecordsGrid } from "@/app/profile/records/RecordsClient/components/RecordsGrid/RecordsGrid";
-import type { RecordRow } from "@/app/profile/records/RecordsClient/types/recordsTypes";
+import { RecordsGrid } from "@/app/(protected)/profile/records/RecordsClient/components/RecordsGrid/RecordsGrid";
+import type { RecordRow } from "@/app/(protected)/profile/records/RecordsClient/types/recordsTypes";
 
 function createRow(overrides: Partial<RecordRow> = {}): RecordRow {
   return {

@@ -1,21 +1,12 @@
 import { desc } from "drizzle-orm";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/server/authGuards";
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { AdminUsersClient } from "./AdminUsersClient/AdminUsersClient";
 import type { AdminUserRow } from "./AdminUsersClient/types/adminUsersTypes";
 
 export default async function AdminUsersPage() {
-  const session = await auth();
-  if (!session) {
-    redirect("/login");
-  }
-
-  const role = (session.user as { role?: string } | undefined)?.role;
-  if (role !== "admin") {
-    redirect("/dashboard");
-  }
+  await requireAdmin();
 
   const rows = await db
     .select({
