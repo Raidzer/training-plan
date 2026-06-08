@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { sendVerificationEmail, sendPasswordResetEmail } from "@/server/email";
+import { sendPasswordResetEmail, sendShoeLimitEmail, sendVerificationEmail } from "@/server/email";
 
 const { sendMailMock } = vi.hoisted(() => {
   return { sendMailMock: vi.fn() };
@@ -51,6 +51,29 @@ describe("email (Отправка писем)", () => {
       expect(callArgs.subject).toBe("Сброс пароля");
       expect(callArgs.html).toContain(token);
       expect(callArgs.html).toContain("/auth/reset-password");
+    });
+  });
+
+  describe("sendShoeLimitEmail", () => {
+    it("должен отправить письмо о превышении лимита пробега обуви", async () => {
+      const email = "runner@example.com";
+
+      await sendShoeLimitEmail({
+        email,
+        shoeName: 'Pegasus "Fast" <script>',
+        currentMileageKm: "801",
+        mileageLimitKm: "800",
+      });
+
+      expect(sendMailMock).toHaveBeenCalledTimes(1);
+
+      const callArgs = sendMailMock.mock.calls[0][0];
+      expect(callArgs.to).toBe(email);
+      expect(callArgs.subject).toBe("Пора проверить беговую обувь");
+      expect(callArgs.html).toContain("Pegasus &quot;Fast&quot; &lt;script&gt;");
+      expect(callArgs.html).not.toContain("<script>");
+      expect(callArgs.html).toContain("801");
+      expect(callArgs.html).toContain("800");
     });
   });
 });

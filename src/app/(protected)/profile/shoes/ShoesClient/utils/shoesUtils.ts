@@ -4,6 +4,7 @@ import type {
   NameValidation,
   ShoeFormState,
   ShoeItem,
+  ShoeNotificationAvailability,
 } from "../types/shoesTypes";
 
 export const validateName = (value: string): NameValidation => {
@@ -82,6 +83,39 @@ export const createFormFromShoe = (item: ShoeItem): ShoeFormState => ({
   notifyOnLimitEmail: item.notifyOnLimitEmail,
   notifyOnLimitTelegram: item.notifyOnLimitTelegram,
 });
+
+export const sanitizeNotificationForm = (
+  form: ShoeFormState,
+  availability: ShoeNotificationAvailability
+): ShoeFormState => {
+  const notifyOnLimitEmail =
+    availability.emailReady && !availability.emailAvailable ? false : form.notifyOnLimitEmail;
+  const notifyOnLimitTelegram =
+    availability.telegramReady && !availability.telegramAvailable
+      ? false
+      : form.notifyOnLimitTelegram;
+
+  if (
+    notifyOnLimitEmail === form.notifyOnLimitEmail &&
+    notifyOnLimitTelegram === form.notifyOnLimitTelegram
+  ) {
+    return form;
+  }
+
+  return {
+    ...form,
+    notifyOnLimitEmail,
+    notifyOnLimitTelegram,
+  };
+};
+
+export const getTelegramLinkedFromResponse = (data: unknown) => {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+
+  return Boolean((data as { linked?: unknown }).linked);
+};
 
 export const getShoesFromResponse = (data: unknown): ShoeItem[] => {
   if (!data || typeof data !== "object") {

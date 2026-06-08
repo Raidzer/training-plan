@@ -6,13 +6,16 @@ import {
   expectJsonSuccess,
 } from "@tests/helpers";
 
-const { authMock, updateShoeMock, deleteShoeMock } = vi.hoisted(() => {
-  return {
-    authMock: vi.fn(),
-    updateShoeMock: vi.fn(),
-    deleteShoeMock: vi.fn(),
-  };
-});
+const { authMock, updateShoeMock, deleteShoeMock, getTelegramAccountIdByUserIdMock } = vi.hoisted(
+  () => {
+    return {
+      authMock: vi.fn(),
+      updateShoeMock: vi.fn(),
+      deleteShoeMock: vi.fn(),
+      getTelegramAccountIdByUserIdMock: vi.fn(),
+    };
+  }
+);
 
 vi.mock("@/auth", () => {
   return {
@@ -27,6 +30,12 @@ vi.mock("@/server/shoes", () => {
   };
 });
 
+vi.mock("@/server/telegram", () => {
+  return {
+    getTelegramAccountIdByUserId: getTelegramAccountIdByUserIdMock,
+  };
+});
+
 import { DELETE, PATCH } from "@/app/api/shoes/[shoeId]/route";
 
 function createRouteContext(shoeId: string) {
@@ -38,7 +47,13 @@ function createRouteContext(shoeId: string) {
 describe("API /api/shoes/[shoeId] route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authMock.mockResolvedValue(createSession({ id: "44" }));
+    authMock.mockResolvedValue(
+      createSession({
+        id: "44",
+        emailVerified: new Date("2026-01-01T00:00:00.000Z"),
+      })
+    );
+    getTelegramAccountIdByUserIdMock.mockResolvedValue(10);
     updateShoeMock.mockResolvedValue({
       id: 7,
       name: "Pegasus",
@@ -156,6 +171,36 @@ describe("API /api/shoes/[shoeId] route", () => {
         notifyOnLimitEmail: true,
         notifyOnLimitTelegram: false,
       });
+      expect(getTelegramAccountIdByUserIdMock).not.toHaveBeenCalled();
+    });
+
+    it("должен запрещать Email-уведомление без подтвержденной почты", async () => {
+      authMock.mockResolvedValue(createSession({ id: "44", emailVerified: null }));
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes/7",
+        method: "PATCH",
+        body: { notifyOnLimitEmail: true },
+      });
+
+      const response = await PATCH(request, createRouteContext("7"));
+
+      await expectJsonError(response, 400, "email_notifications_unavailable");
+      expect(updateShoeMock).not.toHaveBeenCalled();
+    });
+
+    it("должен запрещать Telegram-уведомление без привязанного аккаунта", async () => {
+      getTelegramAccountIdByUserIdMock.mockResolvedValue(null);
+      const request = createJsonRequest({
+        url: "http://localhost/api/shoes/7",
+        method: "PATCH",
+        body: { notifyOnLimitTelegram: true },
+      });
+
+      const response = await PATCH(request, createRouteContext("7"));
+
+      await expectJsonError(response, 400, "telegram_notifications_unavailable");
+      expect(getTelegramAccountIdByUserIdMock).toHaveBeenCalledWith(44);
+      expect(updateShoeMock).not.toHaveBeenCalled();
     });
 
     it("должен возвращать 400 при пустом обновлении", async () => {

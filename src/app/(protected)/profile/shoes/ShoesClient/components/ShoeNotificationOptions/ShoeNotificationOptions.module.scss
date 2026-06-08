@@ -1,0 +1,11 @@
+.settingsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  min-width: 0;
+}
+
+.checkboxWrapper {
+  display: inline-flex;
+}

@@ -12,6 +12,7 @@ const {
   getPlanEntrySummaryForUserMock,
   areShoesOwnedByUserMock,
   upsertWorkoutReportMock,
+  sendShoeLimitNotificationsMock,
 } = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
@@ -19,6 +20,7 @@ const {
     getPlanEntrySummaryForUserMock: vi.fn(),
     areShoesOwnedByUserMock: vi.fn(),
     upsertWorkoutReportMock: vi.fn(),
+    sendShoeLimitNotificationsMock: vi.fn(),
   };
 });
 
@@ -39,6 +41,12 @@ vi.mock("@/server/workoutReports", () => {
     getPlanEntrySummaryForUser: getPlanEntrySummaryForUserMock,
     areShoesOwnedByUser: areShoesOwnedByUserMock,
     upsertWorkoutReport: upsertWorkoutReportMock,
+  };
+});
+
+vi.mock("@/server/shoeLimitNotifications", () => {
+  return {
+    sendShoeLimitNotifications: sendShoeLimitNotificationsMock,
   };
 });
 
@@ -65,7 +73,8 @@ describe("POST /api/diary/workout-report", () => {
       date: "2026-01-03",
     });
     areShoesOwnedByUserMock.mockResolvedValue(true);
-    upsertWorkoutReportMock.mockResolvedValue(undefined);
+    upsertWorkoutReportMock.mockResolvedValue({ limitExceededShoes: [] });
+    sendShoeLimitNotificationsMock.mockResolvedValue({ targets: 0, sent: 0, failed: 0 });
   });
 
   it("должен возвращать 401 без сессии", async () => {
@@ -284,6 +293,7 @@ describe("POST /api/diary/workout-report", () => {
       temperatureC: -3.4,
       shoeIds: [1, 2],
     });
+    expect(sendShoeLimitNotificationsMock).not.toHaveBeenCalled();
   });
 
   it("должен сохранять отчет с пробегом по каждой выбранной паре обуви", async () => {
@@ -314,6 +324,68 @@ describe("POST /api/diary/workout-report", () => {
         ],
       })
     );
+  });
+
+  it("должен отправлять уведомления, когда после сохранения превышен лимит обуви", async () => {
+    const limitExceededShoe = {
+      id: 1,
+      name: "Pegasus",
+      mileageLimitKm: "800",
+      currentMileageKm: "801",
+      notifyOnLimitEmail: true,
+      notifyOnLimitTelegram: true,
+    };
+    upsertWorkoutReportMock.mockResolvedValueOnce({
+      limitExceededShoes: [limitExceededShoe],
+    });
+    const request = createJsonRequest({
+      url: "http://localhost/api/diary/workout-report",
+      body: createValidPayload({
+        shoeUsages: [{ shoeId: 1, mileageKm: 10 }],
+      }),
+    });
+
+    const response = await POST(request);
+    const payload = await expectJsonSuccess<{ ok: boolean }>(response, 200);
+
+    expect(payload.ok).toBe(true);
+    expect(sendShoeLimitNotificationsMock).toHaveBeenCalledWith({
+      userId: 15,
+      shoes: [limitExceededShoe],
+    });
+  });
+
+  it("не должен проваливать сохранение, если отправка уведомлений завершилась ошибкой", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const limitExceededShoe = {
+      id: 1,
+      name: "Pegasus",
+      mileageLimitKm: "800",
+      currentMileageKm: "801",
+      notifyOnLimitEmail: true,
+      notifyOnLimitTelegram: false,
+    };
+    upsertWorkoutReportMock.mockResolvedValueOnce({
+      limitExceededShoes: [limitExceededShoe],
+    });
+    sendShoeLimitNotificationsMock.mockRejectedValueOnce(new Error("send-failed"));
+    const request = createJsonRequest({
+      url: "http://localhost/api/diary/workout-report",
+      body: createValidPayload({
+        shoeUsages: [{ shoeId: 1, mileageKm: 10 }],
+      }),
+    });
+
+    const response = await POST(request);
+    const payload = await expectJsonSuccess<{ ok: boolean }>(response, 200);
+
+    expect(payload.ok).toBe(true);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Failed to send shoe limit notifications",
+      expect.any(Error)
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   it("должен сбрасывать погодные поля для поверхности в помещении", async () => {

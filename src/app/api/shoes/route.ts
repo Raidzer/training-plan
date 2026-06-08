@@ -7,6 +7,7 @@ import {
   parseOptionalMileageKm,
   type ShoePayload,
 } from "./shoePayload";
+import { validateShoeNotificationAccess } from "./notificationAccess";
 
 export async function GET() {
   const session = await auth();
@@ -56,6 +57,16 @@ export async function POST(req: Request) {
   }
   if (!notifyOnLimitTelegram.valid) {
     return NextResponse.json({ error: "invalid_notify_on_limit_telegram" }, { status: 400 });
+  }
+
+  const notificationAccess = await validateShoeNotificationAccess({
+    userId,
+    emailVerified: session.user.emailVerified,
+    notifyOnLimitEmail: notifyOnLimitEmail.value,
+    notifyOnLimitTelegram: notifyOnLimitTelegram.value,
+  });
+  if (!notificationAccess.valid) {
+    return NextResponse.json({ error: notificationAccess.error }, { status: 400 });
   }
 
   const createParams: Parameters<typeof createShoe>[0] = {

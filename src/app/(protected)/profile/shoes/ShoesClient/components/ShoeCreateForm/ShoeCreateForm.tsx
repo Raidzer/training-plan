@@ -1,16 +1,28 @@
-import { Button, Checkbox, Input, Typography } from "antd";
+import { Button, Input, Typography } from "antd";
+import { ShoeNotificationOptions } from "../ShoeNotificationOptions/ShoeNotificationOptions";
 import { shoesLabels } from "../../constants/shoesConstants";
-import type { ShoeFormState, ShoeFormUpdate } from "../../types/shoesTypes";
+import type {
+  ShoeFormState,
+  ShoeFormUpdate,
+  ShoeNotificationAvailability,
+} from "../../types/shoesTypes";
 import styles from "./ShoeCreateForm.module.scss";
 
 type ShoeCreateFormProps = {
   form: ShoeFormState;
   saving: boolean;
+  notificationAvailability: ShoeNotificationAvailability;
   onChange: ShoeFormUpdate;
   onSubmit: () => void;
 };
 
-export function ShoeCreateForm({ form, saving, onChange, onSubmit }: ShoeCreateFormProps) {
+export function ShoeCreateForm({
+  form,
+  saving,
+  notificationAvailability,
+  onChange,
+  onSubmit,
+}: ShoeCreateFormProps) {
   return (
     <div className={styles.form}>
       <Typography.Text type="secondary">{shoesLabels.helperText}</Typography.Text>
@@ -38,26 +50,12 @@ export function ShoeCreateForm({ form, saving, onChange, onSubmit }: ShoeCreateF
           {shoesLabels.addButton}
         </Button>
       </div>
-      <div className={styles.settingsRow}>
-        <Checkbox
-          checked={form.notifyOnLimitEmail}
-          disabled={saving}
-          onChange={(event) => {
-            onChange("notifyOnLimitEmail", event.target.checked);
-          }}
-        >
-          {shoesLabels.emailNotification}
-        </Checkbox>
-        <Checkbox
-          checked={form.notifyOnLimitTelegram}
-          disabled={saving}
-          onChange={(event) => {
-            onChange("notifyOnLimitTelegram", event.target.checked);
-          }}
-        >
-          {shoesLabels.telegramNotification}
-        </Checkbox>
-      </div>
+      <ShoeNotificationOptions
+        form={form}
+        disabled={saving}
+        notificationAvailability={notificationAvailability}
+        onChange={onChange}
+      />
     </div>
   );
 }

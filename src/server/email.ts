@@ -14,6 +14,14 @@ const transporter = nodemailer.createTransport(smtpConfig);
 
 const FROM_EMAIL = process.env.SMTP_FROM || '"Training Plan" <noreply@training-plan.com>';
 
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
 export async function sendVerificationEmail(email: string, token: string) {
   const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}`;
 
@@ -44,6 +52,30 @@ export async function sendPasswordResetEmail(email: string, token: string) {
       <p>Чтобы сбросить пароль, перейдите по ссылке:</p>
       <a href="${resetLink}">${resetLink}</a>
       <p>Эта ссылка действительна в течение 1 часа.</p>
+    `,
+  });
+}
+
+export async function sendShoeLimitEmail(params: {
+  email: string;
+  shoeName: string;
+  currentMileageKm: string;
+  mileageLimitKm: string;
+}) {
+  const shoeName = escapeHtml(params.shoeName);
+  const currentMileageKm = escapeHtml(params.currentMileageKm);
+  const mileageLimitKm = escapeHtml(params.mileageLimitKm);
+
+  await transporter.sendMail({
+    from: FROM_EMAIL,
+    to: params.email,
+    subject: "Пора проверить беговую обувь",
+    html: `
+      <h1>Пора проверить беговую обувь</h1>
+      <p>Пара "${shoeName}" превысила заданный лимит пробега.</p>
+      <p>Текущий пробег: ${currentMileageKm} км.</p>
+      <p>Лимит: ${mileageLimitKm} км.</p>
+      <p>Проверьте состояние обуви и при необходимости замените пару.</p>
     `,
   });
 }
