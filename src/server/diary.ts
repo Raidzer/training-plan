@@ -203,6 +203,9 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      overallScore: recoveryEntries.overallScore,
+      functionalScore: recoveryEntries.functionalScore,
+      muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
@@ -623,6 +626,9 @@ export const getDiaryExportRows = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      overallScore: recoveryEntries.overallScore,
+      functionalScore: recoveryEntries.functionalScore,
+      muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)

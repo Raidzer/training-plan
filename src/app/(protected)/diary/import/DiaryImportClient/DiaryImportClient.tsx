@@ -4,29 +4,29 @@ import { ArrowLeftOutlined, CloudUploadOutlined, InboxOutlined } from "@ant-desi
 import { Button, Card, Space, Upload, message } from "antd";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { PLAN_TEXT } from "../../constants/planText";
-import { usePlanImport } from "../../hooks/usePlanImport";
-import { PlanImportResult } from "../PlanImportResult/PlanImportResult";
-import styles from "./PlanImportClient.module.scss";
+import { DIARY_IMPORT_TEXT } from "./constants/diaryImportConstants";
+import { DiaryImportResult } from "./components/DiaryImportResult/DiaryImportResult";
+import { useDiaryImport } from "./hooks/useDiaryImport";
+import styles from "./DiaryImportClient.module.scss";
 
 const { Dragger } = Upload;
 
-export function PlanImportClient() {
-  const [msgApi, contextHolder] = message.useMessage();
+export function DiaryImportClient() {
+  const [messageApi, contextHolder] = message.useMessage();
   const { fileList, loading, result, handleFileChange, handleFileRemove, handleUpload } =
-    usePlanImport({ msgApi });
+    useDiaryImport({ messageApi });
 
   return (
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
+        <Space direction="vertical" size="large" className={styles.spaceStyle}>
           <PageHeader
-            title={PLAN_TEXT.importPage.title}
-            subtitle={PLAN_TEXT.importPage.description}
+            title={DIARY_IMPORT_TEXT.page.title}
+            subtitle={DIARY_IMPORT_TEXT.page.description}
             actions={
               <Link href="/plan" passHref>
-                <Button icon={<ArrowLeftOutlined />}>{PLAN_TEXT.actions.backToPlan}</Button>
+                <Button icon={<ArrowLeftOutlined />}>{DIARY_IMPORT_TEXT.actions.backToPlan}</Button>
               </Link>
             }
           />
@@ -44,8 +44,8 @@ export function PlanImportClient() {
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
-            <p className="ant-upload-text">{PLAN_TEXT.importPage.dragText}</p>
-            <p className="ant-upload-hint">{PLAN_TEXT.importPage.dragHint}</p>
+            <p className="ant-upload-text">{DIARY_IMPORT_TEXT.page.dragText}</p>
+            <p className="ant-upload-hint">{DIARY_IMPORT_TEXT.page.dragHint}</p>
           </Dragger>
           <Button
             type="primary"
@@ -54,9 +54,9 @@ export function PlanImportClient() {
             loading={loading}
             disabled={!fileList.length}
           >
-            {PLAN_TEXT.actions.upload}
+            {DIARY_IMPORT_TEXT.actions.upload}
           </Button>
-          {result ? <PlanImportResult result={result} /> : null}
+          {result ? <DiaryImportResult result={result} /> : null}
         </Space>
       </Card>
     </main>

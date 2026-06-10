@@ -9,6 +9,7 @@ export const PLAN_TEXT = {
     addDay: "Добавить день",
     reload: "Обновить план",
     importExcel: "Загрузить план из Excel",
+    importDiary: "Загрузить дневник из Excel",
     backToPlan: "Обратно к плану",
     upload: "Загрузить",
   },
@@ -61,8 +62,8 @@ export const PLAN_TEXT = {
     fileRequired: "Выберите файл Excel",
     importFailed: "Не удалось загрузить план",
     importRequestError: "Ошибка запроса",
-    importWithErrors: (inserted: number, errorsCount: number) =>
-      `Загружено: ${inserted}, пропущено: ${errorsCount}`,
+    importWithErrors: (inserted: number, issuesCount: number) =>
+      `Загружено: ${inserted}, замечаний: ${issuesCount}`,
     importSuccess: (inserted: number) => `Загружено строк: ${inserted}`,
     dateRequired: "Укажите дату",
     dateExists: "Эта дата уже есть в плане",
@@ -81,11 +82,16 @@ export const PLAN_TEXT = {
     description:
       "Файл должен содержать колонки «Дата», «Задание», «Комментарий» (первая строка — заголовки). Используется только первый лист.",
     dragText: "Перетащите файл сюда или кликните для выбора",
-    dragHint: "При повторной загрузке строки добавятся как новая версия (старые не обновляются).",
+    dragHint:
+      "Поддерживается .xlsx. При повторной загрузке строки добавятся как новая версия (старые не обновляются).",
     resultTitle: "Результат импорта",
     resultSummary: (importId: number, inserted: number, skipped: number) =>
       `Импорт #${importId}: добавлено ${inserted}, пропущено ${skipped}.`,
+    failedTitle: "Импорт не выполнен",
+    detailsTitle: "Детали:",
+    headersTitle: "Найденные заголовки:",
     rowErrors: "Ошибки строк:",
+    rowWarnings: "Предупреждения:",
     rowError: (row: number, message: string) => `Строка ${row}: ${message}`,
   },
 } as const;
