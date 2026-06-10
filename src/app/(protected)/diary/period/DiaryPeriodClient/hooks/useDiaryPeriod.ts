@@ -11,6 +11,7 @@ import type {
   PeriodTotals,
 } from "../types/periodTypes";
 import {
+  createFullDiaryExportFilename,
   createPeriodExportFilename,
   createPeriodRange,
   downloadBlob,
@@ -23,6 +24,7 @@ export const useDiaryPeriod = () => {
   const [range, setRange] = useState<PeriodRange>(() => createPeriodRange(14));
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   const [days, setDays] = useState<DayStatus[]>([]);
   const [totals, setTotals] = useState<PeriodTotals>(INITIAL_PERIOD_TOTALS);
 
@@ -74,42 +76,70 @@ export const useDiaryPeriod = () => {
     setRange(createPeriodRange(daysCount));
   };
 
+  const downloadExport = useCallback(
+    async (params: {
+      url: string;
+      fallbackFilename: string;
+      setExportingState: (exporting: boolean) => void;
+    }) => {
+      params.setExportingState(true);
+
+      try {
+        const response = await fetch(params.url);
+
+        if (!response.ok) {
+          const data = (await response
+            .json()
+            .catch(() => null)) as PeriodExportErrorResponse | null;
+          messageApi.error(data?.error ?? DIARY_PERIOD_LABELS.exportFail);
+          return;
+        }
+
+        const blob = await response.blob();
+        const filename =
+          getFilenameFromContentDisposition(response.headers.get("content-disposition")) ??
+          params.fallbackFilename;
+        downloadBlob(blob, filename);
+      } catch (error) {
+        console.error(error);
+        messageApi.error(DIARY_PERIOD_LABELS.exportFail);
+      } finally {
+        params.setExportingState(false);
+      }
+    },
+    [messageApi]
+  );
+
   const handleExport = useCallback(async () => {
     const from = formatPeriodApiDate(range[0]);
     const to = formatPeriodApiDate(range[1]);
-    setExporting(true);
 
-    try {
-      const response = await fetch(`/api/diary/period-export?from=${from}&to=${to}`);
+    await downloadExport({
+      url: `/api/diary/period-export?from=${from}&to=${to}`,
+      fallbackFilename: createPeriodExportFilename(from, to),
+      setExportingState: setExporting,
+    });
+  }, [downloadExport, range]);
 
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as PeriodExportErrorResponse | null;
-        messageApi.error(data?.error ?? DIARY_PERIOD_LABELS.exportFail);
-        return;
-      }
-
-      const blob = await response.blob();
-      const filename =
-        getFilenameFromContentDisposition(response.headers.get("content-disposition")) ??
-        createPeriodExportFilename(from, to);
-      downloadBlob(blob, filename);
-    } catch (error) {
-      console.error(error);
-      messageApi.error(DIARY_PERIOD_LABELS.exportFail);
-    } finally {
-      setExporting(false);
-    }
-  }, [messageApi, range]);
+  const handleExportAll = useCallback(async () => {
+    await downloadExport({
+      url: "/api/diary/period-export?scope=all",
+      fallbackFilename: createFullDiaryExportFilename(),
+      setExportingState: setExportingAll,
+    });
+  }, [downloadExport]);
 
   return {
     contextHolder,
     range,
     loading,
     exporting,
+    exportingAll,
     days,
     totals,
     handleRangeChange,
     handlePresetRange,
     handleExport,
+    handleExportAll,
   };
 };

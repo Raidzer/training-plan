@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import {
   createPlanImport,
   getExistingPlanEntryDates,
-  getLatestPlanEntryDate,
+  type PlanImportEntry,
 } from "@/server/planImports";
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
@@ -20,6 +20,7 @@ const escapeHtml = (text: string) =>
 export const runtime = "nodejs";
 
 type ParsedRow = {
+  rowNumber: number;
   date: string;
   taskText: string;
   commentText: string | null;
@@ -27,10 +28,53 @@ type ParsedRow = {
   rawRow: { date: string; task: string; comment?: string; isWorkload: boolean };
 };
 
+type PlanImportIssue = { row: number; message: string };
+
 type ParseResult = {
   rows: ParsedRow[];
-  errors: { row: number; message: string }[];
+  errors: PlanImportIssue[];
+  sheetName: string;
+  foundHeaders: string[];
+  totalRows: number;
 };
+
+type PlanImportErrorMeta = {
+  details?: string[] | undefined;
+  errors?: PlanImportIssue[] | undefined;
+  warnings?: PlanImportIssue[] | undefined;
+  foundHeaders?: string[] | undefined;
+  sheetName?: string | undefined;
+  totalRows?: number | undefined;
+};
+
+type ValidationError = {
+  message: string;
+  details?: string[];
+};
+
+type ImportEntryWithRowNumber = PlanImportEntry & {
+  rowNumber: number;
+};
+
+class PlanImportError extends Error {
+  details: string[] | undefined;
+  errors: PlanImportIssue[] | undefined;
+  warnings: PlanImportIssue[] | undefined;
+  foundHeaders: string[] | undefined;
+  sheetName: string | undefined;
+  totalRows: number | undefined;
+
+  constructor(message: string, meta: PlanImportErrorMeta = {}) {
+    super(message);
+    this.name = "PlanImportError";
+    this.details = meta.details;
+    this.errors = meta.errors;
+    this.warnings = meta.warnings;
+    this.foundHeaders = meta.foundHeaders;
+    this.sheetName = meta.sheetName;
+    this.totalRows = meta.totalRows;
+  }
+}
 
 const normalizeHeader = (value: unknown) =>
   String(value ?? "")
@@ -147,14 +191,23 @@ const cellToString = (value: unknown): string => {
   return String(value ?? "");
 };
 
+const getHeaderLabels = (row: ExcelJS.Row) => {
+  const headers: string[] = [];
+  row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+    const text = cellToString(cell.value ?? cell.text).trim();
+    if (text) {
+      headers.push(`${colNumber}: ${text}`);
+    }
+  });
+  return headers;
+};
+
 const isHeader = (value: string, candidates: string[]) => candidates.some((c) => value.includes(c));
 
 const excelSerialToDate = (serial: number) => {
   const excelEpoch = Date.UTC(1899, 11, 30);
   return new Date(excelEpoch + serial * 24 * 60 * 60 * 1000);
 };
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const toUtcMs = (value: string): number | null => {
   const [yy, mm, dd] = value.split("-").map((part) => Number(part));
@@ -164,17 +217,26 @@ const toUtcMs = (value: string): number | null => {
   return Date.UTC(yy, mm - 1, dd);
 };
 
-const validateSequentialDates = (dates: string[]): string | null => {
-  const uniqueDates = Array.from(new Set(dates)).sort();
-  for (let i = 1; i < uniqueDates.length; i++) {
-    const prev = toUtcMs(uniqueDates[i - 1]);
-    const next = toUtcMs(uniqueDates[i]);
+const validateDateOrder = (rows: ParsedRow[]): ValidationError | null => {
+  for (let i = 1; i < rows.length; i++) {
+    const previousRow = rows[i - 1];
+    const currentRow = rows[i];
+    const prev = toUtcMs(previousRow.date);
+    const next = toUtcMs(currentRow.date);
     if (prev === null || next === null) {
-      return "Ошибка импорта: некорректный формат даты. Проверьте даты.";
+      return {
+        message: "Ошибка импорта: некорректный формат даты.",
+        details: ["Проверьте значения в колонке «Дата»."],
+      };
     }
-    const diffDays = (next - prev) / DAY_MS;
-    if (diffDays !== 1) {
-      return "Ошибка импорта: даты должны идти подряд без пропусков. Проверьте последовательность дат.";
+    if (next < prev) {
+      return {
+        message: "Ошибка импорта: даты должны идти по порядку.",
+        details: [
+          `Строка ${currentRow.rowNumber}: дата ${currentRow.date} идет после ${previousRow.date} из строки ${previousRow.rowNumber}.`,
+          "Разрывы между датами допустимы, но даты в файле должны идти по возрастанию.",
+        ],
+      };
     }
   }
   return null;
@@ -273,13 +335,26 @@ const splitNumberedText = (value: string) => {
 
 async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  try {
+    await workbook.xlsx.load(buffer);
+  } catch (error) {
+    const technicalMessage = error instanceof Error ? error.message : "неизвестная ошибка чтения";
+    throw new PlanImportError("Не удалось прочитать Excel-файл.", {
+      details: [
+        "Проверьте, что файл сохранен в формате .xlsx и не поврежден.",
+        `Техническая ошибка: ${technicalMessage}`,
+      ],
+    });
+  }
   const sheet = workbook.worksheets[0];
   if (!sheet) {
-    throw new Error("Файл не содержит листов");
+    throw new PlanImportError("Файл не содержит листов.", {
+      details: ["Откройте файл в Excel и убедитесь, что в книге есть хотя бы один лист."],
+    });
   }
 
   const headerRow = sheet.getRow(1);
+  const foundHeaders = getHeaderLabels(headerRow);
   let dateCol = 0;
   let taskCol = 0;
   let commentCol = 0;
@@ -297,7 +372,22 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   });
 
   if (!dateCol || !taskCol) {
-    throw new Error("Не найдены колонки Дата/Задание в первой строке");
+    const missingHeaders: string[] = [];
+    if (!dateCol) {
+      missingHeaders.push("Дата");
+    }
+    if (!taskCol) {
+      missingHeaders.push("Задание");
+    }
+    throw new PlanImportError("Не найдены колонки Дата/Задание в первой строке.", {
+      sheetName: sheet.name,
+      foundHeaders,
+      details: [
+        `Не найдены колонки: ${missingHeaders.join(", ")}.`,
+        "Колонка даты должна содержать в заголовке «Дата» или «date».",
+        "Колонка задания должна содержать в заголовке «Задан», «task» или «workout».",
+      ],
+    });
   }
 
   const rows: ParsedRow[] = [];
@@ -354,6 +444,7 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
       }
       const normalizedComment = comment.trim();
       rows.push({
+        rowNumber,
         date,
         taskText: task,
         commentText: normalizedComment.length ? normalizedComment : null,
@@ -368,8 +459,27 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
     }
   }
 
-  return { rows, errors };
+  return {
+    rows,
+    errors,
+    sheetName: sheet.name,
+    foundHeaders,
+    totalRows: Math.max(0, sheet.rowCount - 1),
+  };
 }
+
+const createErrorPayload = (message: string, meta: PlanImportErrorMeta = {}) => ({
+  error: message,
+  ...(meta.details ? { details: meta.details } : {}),
+  ...(meta.errors ? { errors: meta.errors } : {}),
+  ...(meta.warnings ? { warnings: meta.warnings } : {}),
+  ...(meta.foundHeaders ? { foundHeaders: meta.foundHeaders } : {}),
+  ...(meta.sheetName ? { sheetName: meta.sheetName } : {}),
+  ...(typeof meta.totalRows === "number" ? { totalRows: meta.totalRows } : {}),
+});
+
+const stripRowNumbers = (entries: ImportEntryWithRowNumber[]): PlanImportEntry[] =>
+  entries.map(({ rowNumber: _rowNumber, ...entry }) => entry);
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -388,34 +498,85 @@ export async function POST(req: Request) {
   }
 
   const filename = (file as any).name ?? "plan.xlsx";
+  const normalizedFilename = filename.toLowerCase();
+  if (normalizedFilename.endsWith(".xls") && !normalizedFilename.endsWith(".xlsx")) {
+    return NextResponse.json(
+      createErrorPayload("Формат .xls не поддерживается для импорта плана.", {
+        details: [
+          "Сохраните файл в Excel как «Книга Excel (*.xlsx)» и загрузите его повторно.",
+          `Выбранный файл: ${filename}.`,
+        ],
+      }),
+      { status: 400 }
+    );
+  }
+
   const buffer = await file.arrayBuffer();
 
   let parsed: ParseResult;
   try {
     parsed = await parseExcel(buffer);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Не удалось прочитать файл";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
+    if (err instanceof PlanImportError) {
+      return NextResponse.json(
+        createErrorPayload(err.message, {
+          details: err.details,
+          errors: err.errors,
+          foundHeaders: err.foundHeaders,
+          sheetName: err.sheetName,
+          totalRows: err.totalRows,
+        }),
+        { status: 400 }
+      );
+    }
 
-  if (parsed.rows.length === 0) {
+    const message = err instanceof Error ? err.message : "Не удалось прочитать файл";
     return NextResponse.json(
-      { error: "Файл пуст или не содержит валидных строк" },
+      createErrorPayload(message, {
+        details: ["Файл не удалось обработать. Проверьте формат и структуру книги."],
+      }),
       { status: 400 }
     );
   }
 
-  const dateSequenceError = validateSequentialDates(parsed.rows.map((row) => row.date));
-  if (dateSequenceError) {
-    return NextResponse.json({ error: dateSequenceError }, { status: 400 });
+  if (parsed.rows.length === 0) {
+    return NextResponse.json(
+      createErrorPayload("Файл пуст или не содержит валидных строк", {
+        errors: parsed.errors,
+        foundHeaders: parsed.foundHeaders,
+        sheetName: parsed.sheetName,
+        totalRows: parsed.totalRows,
+        details: [
+          `Лист: ${parsed.sheetName}.`,
+          `Строк после заголовка: ${parsed.totalRows}.`,
+          "Для импорта нужны заполненные колонки «Дата» и «Задание».",
+        ],
+      }),
+      { status: 400 }
+    );
+  }
+
+  const dateOrderError = validateDateOrder(parsed.rows);
+  if (dateOrderError) {
+    return NextResponse.json(
+      createErrorPayload(dateOrderError.message, {
+        details: dateOrderError.details,
+        errors: parsed.errors,
+        foundHeaders: parsed.foundHeaders,
+        sheetName: parsed.sheetName,
+        totalRows: parsed.totalRows,
+      }),
+      { status: 400 }
+    );
   }
 
   const sessionCounter = new Map<string, number>();
-  const entries = parsed.rows.map((row) => {
+  const entries: ImportEntryWithRowNumber[] = parsed.rows.map((row) => {
     const current = sessionCounter.get(row.date) ?? 0;
     const next = current + 1;
     sessionCounter.set(row.date, next);
     return {
+      rowNumber: row.rowNumber,
       userId,
       date: row.date,
       sessionOrder: next,
@@ -429,45 +590,23 @@ export async function POST(req: Request) {
   const dates = Array.from(sessionCounter.keys());
   const existingDates = await getExistingPlanEntryDates(userId, dates);
   const newEntries = entries.filter((entry) => !existingDates.has(entry.date));
-
-  const uniqueNewDates = Array.from(new Set(newEntries.map((entry) => entry.date))).sort();
-  if (uniqueNewDates.length > 0) {
-    const lastDate = await getLatestPlanEntryDate(userId);
-    if (lastDate) {
-      const lastMs = toUtcMs(lastDate);
-      const firstMs = toUtcMs(uniqueNewDates[0]);
-      if (lastMs === null || firstMs === null) {
-        return NextResponse.json(
-          { error: "Ошибка импорта: некорректный формат даты. Проверьте даты." },
-          { status: 400 }
-        );
-      }
-      const diffDays = (firstMs - lastMs) / DAY_MS;
-      if (diffDays !== 1) {
-        return NextResponse.json(
-          {
-            error:
-              "Ошибка импорта: новые даты должны начинаться на следующий день после последней даты плана. Проверьте даты.",
-          },
-          { status: 400 }
-        );
-      }
-    }
-  }
   const createdImport = await createPlanImport({
     userId,
     filename,
     rowCount: parsed.rows.length,
-    entries,
-    newEntries,
+    entries: stripRowNumbers(entries),
+    newEntries: stripRowNumbers(newEntries),
     errorsCount: parsed.errors.length,
   });
 
   const skippedDates = entries.length - createdImport.insertedCount;
-  return NextResponse.json({
+  const payload = {
     importId: createdImport.id,
     inserted: createdImport.insertedCount,
     skipped: parsed.errors.length + Math.max(0, skippedDates),
     errors: parsed.errors,
-  });
+    sheetName: parsed.sheetName,
+    totalRows: parsed.totalRows,
+  };
+  return NextResponse.json(payload);
 }

@@ -8,6 +8,7 @@ export const DIARY_PERIOD_LABELS = {
   lastSevenDays: "Последние 7 дней",
   lastThirtyDays: "Последние 30 дней",
   exportExcel: "Выгрузить Excel",
+  exportAllExcel: "Выгрузить весь дневник",
   loadFail: "Не удалось загрузить дневник за период.",
   exportFail: "Не удалось выгрузить отчет.",
   completedStatus: "Заполнено",

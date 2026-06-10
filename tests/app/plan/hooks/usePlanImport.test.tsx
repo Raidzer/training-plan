@@ -130,4 +130,27 @@ describe("usePlanImport", () => {
 
     expect(msgApi.warning).toHaveBeenCalledWith(PLAN_TEXT.messages.importWithErrors(3, 1));
   });
+
+  it("stores failed import details from server response", async () => {
+    const failedResult = {
+      error: "Не найдены колонки Дата/Задание в первой строке.",
+      details: ["Не найдены колонки: Дата."],
+      foundHeaders: ["1: Foo", "2: Bar"],
+    };
+    const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(failedResult, 400));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const msgApi = createMessageApi();
+    const { result } = renderHook(() => usePlanImport({ msgApi }));
+
+    act(() => {
+      result.current.handleFileChange([createUploadFile()]);
+    });
+
+    await act(async () => {
+      await result.current.handleUpload();
+    });
+
+    expect(result.current.result).toEqual(failedResult);
+    expect(msgApi.error).toHaveBeenCalledWith(failedResult.error);
+  });
 });

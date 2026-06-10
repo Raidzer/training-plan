@@ -2,7 +2,7 @@
 
 import { Button } from "antd";
 import Link from "next/link";
-import { CalendarOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, CalendarOutlined } from "@ant-design/icons";
 import { PageHeader } from "@/components/PageHeader";
 
 type DiaryHeaderProps = {

@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createFullDiaryExportFilename,
   createPeriodExportFilename,
   createPeriodRange,
   downloadBlob,
@@ -58,6 +59,7 @@ describe("periodUtils", () => {
     expect(createPeriodExportFilename("2026-05-01", "2026-05-10")).toBe(
       "diary_2026-05-01_2026-05-10.xlsx"
     );
+    expect(createFullDiaryExportFilename()).toBe("diary_all.xlsx");
 
     expect(getFilenameFromContentDisposition('attachment; filename="diary.xlsx"')).toBe(
       "diary.xlsx"

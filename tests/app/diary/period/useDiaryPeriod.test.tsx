@@ -184,6 +184,40 @@ describe("useDiaryPeriod", () => {
     expect(downloadBlobMock.mock.calls[0]?.[1]).toBe("period.xlsx");
   });
 
+  it("exports full diary through scope all", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          days: [],
+          totals: createTotals(),
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response("xlsx", {
+          status: 200,
+          headers: {
+            "content-disposition": 'attachment; filename="diary_all.xlsx"',
+          },
+        })
+      );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useDiaryPeriod());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.handleExportAll();
+    });
+
+    expect(fetchMock.mock.calls[1]?.[0]).toBe("/api/diary/period-export?scope=all");
+    expect(downloadBlobMock).toHaveBeenCalledTimes(1);
+    expect(downloadBlobMock.mock.calls[0]?.[1]).toBe("diary_all.xlsx");
+  });
+
   it("shows API export error and does not download file", async () => {
     const fetchMock = vi
       .fn()

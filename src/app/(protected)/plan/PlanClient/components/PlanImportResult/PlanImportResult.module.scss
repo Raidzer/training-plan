@@ -1,7 +1,17 @@
+.resultStack {
+  width: 100%;
+}
+
 .resultParagraph {
   margin-bottom: 4px;
 }
 
-.errorList {
+.itemList {
   margin-top: 8px;
+  margin-bottom: 0;
+  padding-left: 20px;
+}
+
+.itemList li + li {
+  margin-top: 4px;
 }

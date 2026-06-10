@@ -45,14 +45,17 @@ describe("PeriodRangeControls", () => {
     const onRangeChange = vi.fn();
     const onPresetRange = vi.fn();
     const onExport = vi.fn();
+    const onExportAll = vi.fn();
 
     render(
       <PeriodRangeControls
         range={[dayjs("2026-06-01"), dayjs("2026-06-07")]}
         exporting={false}
+        exportingAll={false}
         onRangeChange={onRangeChange}
         onPresetRange={onPresetRange}
         onExport={onExport}
+        onExportAll={onExportAll}
       />
     );
 
@@ -66,8 +69,10 @@ describe("PeriodRangeControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Последние 7 дней" }));
     fireEvent.click(screen.getByRole("button", { name: "Последние 30 дней" }));
     fireEvent.click(screen.getByRole("button", { name: "Выгрузить Excel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Выгрузить весь дневник" }));
 
     expect(onPresetRange.mock.calls.map(([value]) => value)).toEqual([7, 30]);
     expect(onExport).toHaveBeenCalledTimes(1);
+    expect(onExportAll).toHaveBeenCalledTimes(1);
   });
 });

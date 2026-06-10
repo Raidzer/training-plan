@@ -7,17 +7,11 @@ import {
   readJsonResponse,
 } from "@tests/helpers";
 
-const {
-  authMock,
-  createPlanImportMock,
-  getExistingPlanEntryDatesMock,
-  getLatestPlanEntryDateMock,
-} = vi.hoisted(() => {
+const { authMock, createPlanImportMock, getExistingPlanEntryDatesMock } = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
     createPlanImportMock: vi.fn(),
     getExistingPlanEntryDatesMock: vi.fn(),
-    getLatestPlanEntryDateMock: vi.fn(),
   };
 });
 
@@ -31,7 +25,6 @@ vi.mock("@/server/planImports", () => {
   return {
     createPlanImport: createPlanImportMock,
     getExistingPlanEntryDates: getExistingPlanEntryDatesMock,
-    getLatestPlanEntryDate: getLatestPlanEntryDateMock,
   };
 });
 
@@ -104,7 +97,6 @@ describe("POST /api/plans/import", () => {
     vi.clearAllMocks();
     authMock.mockResolvedValue(createSession({ id: "21" }));
     getExistingPlanEntryDatesMock.mockResolvedValue(new Set<string>());
-    getLatestPlanEntryDateMock.mockResolvedValue(null);
     createPlanImportMock.mockResolvedValue({ id: 88, insertedCount: 2 });
   });
 
@@ -138,12 +130,30 @@ describe("POST /api/plans/import", () => {
 
     const response = await POST(createImportRequest(buffer));
     expect(response.status).toBe(400);
-    const payload = await readJsonResponse<{ error: string }>(response);
+    const payload = await readJsonResponse<{
+      error: string;
+      details: string[];
+      foundHeaders: string[];
+      sheetName: string;
+    }>(response);
 
     expect(payload.error).toContain("Не найдены колонки");
+    expect(payload.details).toContain("Не найдены колонки: Дата, Задание.");
+    expect(payload.foundHeaders).toEqual(["1: Foo", "2: Bar", "3: Baz"]);
+    expect(payload.sheetName).toBe("Plan");
   });
 
-  it("должен возвращать 400, когда даты непоследовательны", async () => {
+  it("должен возвращать понятную ошибку для старого формата xls", async () => {
+    const response = await POST(createImportRequest(new ArrayBuffer(8), "plan.xls"));
+    const payload = await readJsonResponse<{ error: string; details: string[] }>(response);
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe("Формат .xls не поддерживается для импорта плана.");
+    expect(payload.details[0]).toContain(".xlsx");
+  });
+
+  it("должен импортировать план с разрывом между датами", async () => {
+    createPlanImportMock.mockResolvedValue({ id: 90, insertedCount: 2 });
     const buffer = await createWorkbookBuffer({
       rows: [
         { date: "01.01.2026", task: "Run" },
@@ -152,10 +162,35 @@ describe("POST /api/plans/import", () => {
     });
 
     const response = await POST(createImportRequest(buffer));
-    expect(response.status).toBe(400);
-    const payload = await readJsonResponse<{ error: string }>(response);
+    const payload = await expectJsonSuccess<{
+      importId: number;
+      inserted: number;
+      skipped: number;
+      errors: Array<{ row: number; message: string }>;
+    }>(response, 200);
 
-    expect(payload.error).toContain("даты должны идти подряд");
+    expect(payload).toMatchObject({
+      importId: 90,
+      inserted: 2,
+      skipped: 0,
+      errors: [],
+    });
+  });
+
+  it("должен возвращать 400, когда даты идут не по порядку", async () => {
+    const buffer = await createWorkbookBuffer({
+      rows: [
+        { date: "03.01.2026", task: "Bike" },
+        { date: "01.01.2026", task: "Run" },
+      ],
+    });
+
+    const response = await POST(createImportRequest(buffer));
+    expect(response.status).toBe(400);
+    const payload = await readJsonResponse<{ error: string; details: string[] }>(response);
+
+    expect(payload.error).toContain("даты должны идти по порядку");
+    expect(payload.details[0]).toContain("Строка 3");
   });
 
   it("должен возвращать 400, когда workbook не содержит валидных строк", async () => {
@@ -186,7 +221,7 @@ describe("POST /api/plans/import", () => {
       errors: Array<{ row: number; message: string }>;
     }>(response, 200);
 
-    expect(payload).toEqual({
+    expect(payload).toMatchObject({
       importId: 99,
       inserted: 1,
       skipped: 2,
@@ -203,32 +238,87 @@ describe("POST /api/plans/import", () => {
     );
   });
 
-  it("должен возвращать 400, когда импортируемый диапазон не продолжает существующий план", async () => {
+  it("должен разрешать разрыв после последней даты существующего плана", async () => {
     getExistingPlanEntryDatesMock.mockResolvedValue(new Set<string>());
-    getLatestPlanEntryDateMock.mockResolvedValue("2026-01-01");
+    createPlanImportMock.mockResolvedValue({ id: 91, insertedCount: 1 });
     const buffer = await createWorkbookBuffer({
       rows: [{ date: "03.01.2026", task: "Run" }],
     });
 
     const response = await POST(createImportRequest(buffer));
-    expect(response.status).toBe(400);
-    const payload = await readJsonResponse<{ error: string }>(response);
+    const payload = await expectJsonSuccess<{
+      importId: number;
+      inserted: number;
+      skipped: number;
+    }>(response, 200);
 
-    expect(payload.error).toContain("новые даты должны начинаться");
+    expect(payload).toMatchObject({
+      importId: 91,
+      inserted: 1,
+      skipped: 0,
+    });
   });
 
-  it("должен возвращать 400, когда последняя дата плана некорректна", async () => {
+  it("должен импортировать отсутствующую дату внутри текущего диапазона плана", async () => {
     getExistingPlanEntryDatesMock.mockResolvedValue(new Set<string>());
-    getLatestPlanEntryDateMock.mockResolvedValue("bad-date");
+    createPlanImportMock.mockResolvedValue({ id: 92, insertedCount: 1 });
     const buffer = await createWorkbookBuffer({
-      rows: [{ date: "01.01.2026", task: "Run" }],
+      rows: [{ date: "05.01.2026", task: "Run" }],
     });
 
     const response = await POST(createImportRequest(buffer));
-    const payload = await readJsonResponse<{ error: string }>(response);
+    const payload = await expectJsonSuccess<{
+      importId: number;
+      inserted: number;
+      skipped: number;
+      errors: Array<{ row: number; message: string }>;
+      warnings?: Array<{ row: number; message: string }>;
+    }>(response, 200);
 
-    expect(response.status).toBe(400);
-    expect(payload.error).toContain("некорректный формат даты");
+    expect(payload).toMatchObject({
+      importId: 92,
+      inserted: 1,
+      skipped: 0,
+      errors: [],
+    });
+    expect(payload.warnings).toBeUndefined();
+  });
+
+  it("должен импортировать только новые даты при повторной загрузке полного файла", async () => {
+    getExistingPlanEntryDatesMock.mockResolvedValue(new Set(["2026-01-05", "2026-01-09"]));
+    createPlanImportMock.mockResolvedValue({ id: 93, insertedCount: 1 });
+    const buffer = await createWorkbookBuffer({
+      rows: [
+        { date: "05.01.2026", task: "Старая дата вне БД, но внутри диапазона" },
+        { date: "09.01.2026", task: "Существующая дата" },
+        { date: "15.01.2026", task: "Новая дата" },
+      ],
+    });
+
+    const response = await POST(createImportRequest(buffer));
+    const payload = await expectJsonSuccess<{
+      importId: number;
+      inserted: number;
+      skipped: number;
+      errors: Array<{ row: number; message: string }>;
+    }>(response, 200);
+
+    expect(payload).toMatchObject({
+      importId: 93,
+      inserted: 1,
+      skipped: 2,
+      errors: [],
+    });
+
+    const importArg = createPlanImportMock.mock.calls[0][0] as {
+      newEntries: Array<{ date: string; taskText: string }>;
+    };
+    expect(importArg.newEntries).toEqual([
+      expect.objectContaining({
+        date: "2026-01-15",
+        taskText: "Новая дата",
+      }),
+    ]);
   });
 
   it("должен парсить числовую дату, формулу и файл без колонки комментария", async () => {
@@ -412,13 +502,13 @@ describe("POST /api/plans/import", () => {
       errors: Array<{ row: number; message: string }>;
     }>(response, 200);
 
-    expect(payload).toEqual({
+    expect(payload).toMatchObject({
       importId: 58,
       inserted: 0,
       skipped: 1,
       errors: [],
     });
-    expect(getLatestPlanEntryDateMock).not.toHaveBeenCalled();
+    expect(payload).not.toHaveProperty("warnings");
     expect(createPlanImportMock).toHaveBeenCalledWith(
       expect.objectContaining({
         filename: "plan.xlsx",
@@ -429,7 +519,6 @@ describe("POST /api/plans/import", () => {
 
   it("должен парсить workbook и создавать сводку импорта", async () => {
     getExistingPlanEntryDatesMock.mockResolvedValue(new Set(["2026-01-01"]));
-    getLatestPlanEntryDateMock.mockResolvedValue("2026-01-01");
     createPlanImportMock.mockResolvedValue({ id: 77, insertedCount: 1 });
 
     const buffer = await createWorkbookBuffer({
@@ -447,12 +536,13 @@ describe("POST /api/plans/import", () => {
       errors: Array<{ row: number; message: string }>;
     }>(response, 200);
 
-    expect(payload).toEqual({
+    expect(payload).toMatchObject({
       importId: 77,
       inserted: 1,
       skipped: 1,
       errors: [],
     });
+    expect(payload).not.toHaveProperty("warnings");
 
     expect(getExistingPlanEntryDatesMock).toHaveBeenCalledWith(21, ["2026-01-01", "2026-01-02"]);
     expect(createPlanImportMock).toHaveBeenCalledWith(

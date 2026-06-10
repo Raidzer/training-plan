@@ -4,11 +4,44 @@ import { auth } from "@/auth";
 import { buildDateRange } from "@/shared/utils/diaryUtils";
 import {
   getDiaryExportRows,
+  getFullDiaryDateRange,
   getDiaryWeeklyVolumesBySunday,
   isValidDateString,
 } from "@/server/diary";
 
 export const runtime = "nodejs";
+
+const DIARY_HEADER_ROW_HEIGHT = 105;
+const DIARY_TASK_COLUMN_WIDTH = 101.125;
+
+const DIARY_HEADER_FONT: Partial<ExcelJS.Font> = {
+  bold: true,
+  size: 20,
+  color: { argb: "FF000000" },
+  name: "Ink Free",
+  family: 4,
+  charset: 204,
+};
+
+const DIARY_HEADER_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FF92D050" },
+  bgColor: { argb: "FFFFFF00" },
+};
+
+const DIARY_HEADER_BORDER: Partial<ExcelJS.Borders> = {
+  top: { style: "medium" },
+  left: { style: "medium" },
+  bottom: { style: "medium" },
+  right: { style: "medium" },
+};
+
+const DIARY_HEADER_ALIGNMENT: Partial<ExcelJS.Alignment> = {
+  horizontal: "center",
+  vertical: "middle",
+  wrapText: true,
+};
 
 const htmlToRichText = (html: string | null | undefined): ExcelJS.RichText[] | string => {
   if (!html) return "";
@@ -91,6 +124,17 @@ const isSundayDate = (value: string) => {
   return date.getUTCDay() === 0;
 };
 
+const applyDiaryHeaderStyle = (sheet: ExcelJS.Worksheet) => {
+  const headerRow = sheet.getRow(1);
+  headerRow.height = DIARY_HEADER_ROW_HEIGHT;
+  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+    cell.font = DIARY_HEADER_FONT;
+    cell.fill = DIARY_HEADER_FILL;
+    cell.border = DIARY_HEADER_BORDER;
+    cell.alignment = DIARY_HEADER_ALIGNMENT;
+  });
+};
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session) {
@@ -103,8 +147,28 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const from = searchParams.get("from") ?? "";
-  const to = searchParams.get("to") ?? "";
+  const scope = searchParams.get("scope") ?? "period";
+  const requestedFrom = searchParams.get("from") ?? "";
+  const requestedTo = searchParams.get("to") ?? "";
+  let from = requestedFrom;
+  let to = requestedTo;
+  let filenamePrefix = "diary";
+
+  if (scope === "all") {
+    const fullRange = await getFullDiaryDateRange({ userId });
+    if (!fullRange) {
+      return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
+    }
+
+    from = fullRange.from;
+    to = fullRange.to;
+    filenamePrefix = "diary_all";
+  }
+
+  if (scope !== "all" && scope !== "period") {
+    return NextResponse.json({ error: "invalid_scope" }, { status: 400 });
+  }
+
   if (!isValidDateString(from) || !isValidDateString(to) || from > to) {
     return NextResponse.json({ error: "invalid_range" }, { status: 400 });
   }
@@ -117,17 +181,18 @@ export async function GET(req: Request) {
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Дневник");
+  sheet.views = [{ state: "frozen", ySplit: 1, topLeftCell: "A2" }];
 
   sheet.columns = [
     { header: "Дата, время", key: "dateTime", width: 22 },
-    { header: "Задание", key: "task", width: 60 },
+    { header: "Задание", key: "task", width: DIARY_TASK_COLUMN_WIDTH },
     { header: "Результат", key: "result", width: 30 },
     { header: "Комментарий", key: "comment", width: 30 },
     { header: "Оценка", key: "score", width: 14 },
-    { header: "", key: "empty1", width: 1 },
-    { header: "", key: "empty2", width: 1 },
-    { header: "", key: "empty3", width: 1 },
-    { header: "", key: "empty4", width: 1 },
+    { header: "", key: "empty1", width: 1, hidden: true },
+    { header: "", key: "empty2", width: 1, hidden: true },
+    { header: "", key: "empty3", width: 1, hidden: true },
+    { header: "", key: "empty4", width: 1, hidden: true },
     { header: "Сон", key: "sleep", width: 10 },
     { header: "Вес", key: "weight", width: 14 },
     { header: "Массаж, баня", key: "recovery", width: 20 },
@@ -205,22 +270,14 @@ export async function GET(req: Request) {
       });
     }
   });
-  sheet.getRow(1).font = { bold: true };
-  sheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
-    cell.border = {
-      top: { style: "thin" },
-      left: { style: "thin" },
-      bottom: { style: "thin" },
-      right: { style: "thin" },
-    };
-  });
   sheet.columns?.forEach((column) => {
     column.alignment = { vertical: "top", wrapText: true };
   });
+  applyDiaryHeaderStyle(sheet);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer as ArrayLike<number>);
-  const filename = `diary_${from}_${to}.xlsx`;
+  const filename = `${filenamePrefix}_${from}_${to}.xlsx`;
 
   return new NextResponse(body, {
     headers: {

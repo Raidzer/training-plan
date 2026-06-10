@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   planEntries,
@@ -89,6 +89,11 @@ export type DiaryExportRow = {
   hasWorkload: boolean;
 };
 
+export type DiaryDateRange = {
+  from: string;
+  to: string;
+};
+
 type DayAggregation = {
   date: string;
   planEntryIds: number[];
@@ -155,6 +160,56 @@ const formatShoeLabel = (shoe: { name: string; mileageKm?: string | null }) => {
 
 export { type DiaryDayStatus, isValidDateString };
 
+export const getFullDiaryDateRange = async (params: {
+  userId: number;
+}): Promise<DiaryDateRange | null> => {
+  const [planRange, reportRange, weightRange, recoveryRange] = await Promise.all([
+    db
+      .select({
+        minDate: sql<string | null>`min(${planEntries.date})`,
+        maxDate: sql<string | null>`max(${planEntries.date})`,
+      })
+      .from(planEntries)
+      .where(eq(planEntries.userId, params.userId)),
+    db
+      .select({
+        minDate: sql<string | null>`min(${workoutReports.date})`,
+        maxDate: sql<string | null>`max(${workoutReports.date})`,
+      })
+      .from(workoutReports)
+      .where(eq(workoutReports.userId, params.userId)),
+    db
+      .select({
+        minDate: sql<string | null>`min(${weightEntries.date})`,
+        maxDate: sql<string | null>`max(${weightEntries.date})`,
+      })
+      .from(weightEntries)
+      .where(eq(weightEntries.userId, params.userId)),
+    db
+      .select({
+        minDate: sql<string | null>`min(${recoveryEntries.date})`,
+        maxDate: sql<string | null>`max(${recoveryEntries.date})`,
+      })
+      .from(recoveryEntries)
+      .where(eq(recoveryEntries.userId, params.userId)),
+  ]);
+
+  const dates = [planRange, reportRange, weightRange, recoveryRange]
+    .flatMap((range) => [range[0]?.minDate, range[0]?.maxDate])
+    .filter((date): date is string => Boolean(date));
+
+  if (dates.length === 0) {
+    return null;
+  }
+
+  dates.sort((firstDate, secondDate) => firstDate.localeCompare(secondDate));
+
+  return {
+    from: dates[0],
+    to: dates[dates.length - 1],
+  };
+};
+
 export const getDiaryDayData = async (params: { userId: number; date: string }) => {
   const previousDate = shiftDate(params.date, -1);
   const planEntriesRows = await db
@@ -203,6 +258,9 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      overallScore: recoveryEntries.overallScore,
+      functionalScore: recoveryEntries.functionalScore,
+      muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
@@ -623,6 +681,9 @@ export const getDiaryExportRows = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      overallScore: recoveryEntries.overallScore,
+      functionalScore: recoveryEntries.functionalScore,
+      muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)

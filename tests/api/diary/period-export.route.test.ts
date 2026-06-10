@@ -18,12 +18,14 @@ type ExportRowFixture = {
 const {
   authMock,
   getDiaryExportRowsMock,
+  getFullDiaryDateRangeMock,
   getDiaryWeeklyVolumesBySundayMock,
   isValidDateStringMock,
 } = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
     getDiaryExportRowsMock: vi.fn(),
+    getFullDiaryDateRangeMock: vi.fn(),
     getDiaryWeeklyVolumesBySundayMock: vi.fn(),
     isValidDateStringMock: vi.fn(),
   };
@@ -38,6 +40,7 @@ vi.mock("@/auth", () => {
 vi.mock("@/server/diary", () => {
   return {
     getDiaryExportRows: getDiaryExportRowsMock,
+    getFullDiaryDateRange: getFullDiaryDateRangeMock,
     getDiaryWeeklyVolumesBySunday: getDiaryWeeklyVolumesBySundayMock,
     isValidDateString: isValidDateStringMock,
   };
@@ -98,6 +101,10 @@ describe("GET /api/diary/period-export", () => {
       }),
     ]);
     getDiaryWeeklyVolumesBySundayMock.mockResolvedValue(new Map([["2026-01-25", 42.5]]));
+    getFullDiaryDateRangeMock.mockResolvedValue({
+      from: "2025-10-13",
+      to: "2026-06-15",
+    });
   });
 
   it("должен возвращать 401 без сессии", async () => {
@@ -150,6 +157,57 @@ describe("GET /api/diary/period-export", () => {
     expect(getDiaryWeeklyVolumesBySundayMock).not.toHaveBeenCalled();
   });
 
+  it("должен возвращать 400 при неизвестном режиме выгрузки", async () => {
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { scope: "bad", from: "2026-01-23", to: "2026-01-25" },
+    });
+    const response = await GET(request);
+
+    await expectJsonError(response, 400, "invalid_scope");
+    expect(getFullDiaryDateRangeMock).not.toHaveBeenCalled();
+    expect(getDiaryExportRowsMock).not.toHaveBeenCalled();
+    expect(getDiaryWeeklyVolumesBySundayMock).not.toHaveBeenCalled();
+  });
+
+  it("должен выгружать весь дневник по полному диапазону данных", async () => {
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { scope: "all" },
+    });
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-disposition")).toBe(
+      'attachment; filename="diary_all_2025-10-13_2026-06-15.xlsx"'
+    );
+    expect(getFullDiaryDateRangeMock).toHaveBeenCalledWith({ userId: 9 });
+    expect(getDiaryExportRowsMock).toHaveBeenCalledWith({
+      userId: 9,
+      from: "2025-10-13",
+      to: "2026-06-15",
+    });
+    expect(getDiaryWeeklyVolumesBySundayMock).toHaveBeenCalledWith({
+      userId: 9,
+      from: "2025-10-13",
+      to: "2026-06-15",
+    });
+  });
+
+  it("должен возвращать 404 при выгрузке всего дневника без данных", async () => {
+    getFullDiaryDateRangeMock.mockResolvedValue(null);
+
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { scope: "all" },
+    });
+    const response = await GET(request);
+
+    await expectJsonError(response, 404, "Нет данных для выгрузки");
+    expect(getDiaryExportRowsMock).not.toHaveBeenCalled();
+    expect(getDiaryWeeklyVolumesBySundayMock).not.toHaveBeenCalled();
+  });
+
   it("должен выставлять корректное имя файла в content-disposition", async () => {
     const request = createRequestWithQuery({
       path: "/api/diary/period-export",
@@ -195,6 +253,59 @@ describe("GET /api/diary/period-export", () => {
 
     expect(getStringCellValue(sheet, 5, 13)).toBe("42.50 км");
     expect(getStringCellValue(sheet, 5, 13)).not.toBe("12.00 км");
+  });
+
+  it("должен оформлять шапку дневника как в исходном Excel", async () => {
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { from: "2026-01-23", to: "2026-01-25" },
+    });
+    const response = await GET(request);
+    const workbook = await loadWorkbookFromResponse(response);
+    const sheet = workbook.getWorksheet(1);
+
+    expect(sheet).toBeTruthy();
+    if (!sheet) {
+      return;
+    }
+
+    const headerRow = sheet.getRow(1);
+    const headerCell = headerRow.getCell(1);
+
+    expect(sheet.views).toEqual([expect.objectContaining({ state: "frozen", ySplit: 1 })]);
+    expect(sheet.getColumn(2).width).toBe(101.125);
+    expect(headerRow.height).toBe(105);
+    expect(headerCell.font).toEqual(
+      expect.objectContaining({
+        bold: true,
+        size: 20,
+        name: "Ink Free",
+        color: { argb: "FF000000" },
+      })
+    );
+    expect(headerCell.fill).toEqual(
+      expect.objectContaining({
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF92D050" },
+        bgColor: { argb: "FFFFFF00" },
+      })
+    );
+    expect(headerCell.alignment).toEqual(
+      expect.objectContaining({
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
+      })
+    );
+    expect(headerCell.border).toEqual(
+      expect.objectContaining({
+        top: expect.objectContaining({ style: "medium" }),
+        left: expect.objectContaining({ style: "medium" }),
+        bottom: expect.objectContaining({ style: "medium" }),
+        right: expect.objectContaining({ style: "medium" }),
+      })
+    );
   });
 
   it("должен добавлять синюю строку по календарному воскресенью, даже если текст дня ошибочный", async () => {
