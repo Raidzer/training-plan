@@ -14,7 +14,12 @@ vi.mock("@/server/db/client", () => {
   };
 });
 
-import { getDiaryDayData, getDiaryDaysInRange, getDiaryExportRows } from "@/server/diary";
+import {
+  getDiaryDayData,
+  getDiaryDaysInRange,
+  getDiaryExportRows,
+  getFullDiaryDateRange,
+} from "@/server/diary";
 
 function createSelectWhereBuilder(rows: unknown[]) {
   const whereMock = vi.fn().mockResolvedValue(rows);
@@ -82,6 +87,48 @@ function createSelectInnerJoinWhereBuilder(rows: unknown[]) {
     from: fromMock,
   };
 }
+
+describe("server/diary getFullDiaryDateRange", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("должен собирать общий диапазон дневника из плана, отчетов, веса и восстановления", async () => {
+    dbSelectMock
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([{ minDate: "2025-10-13", maxDate: "2026-06-15" }])
+      )
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([{ minDate: "2025-10-15", maxDate: "2026-06-10" }])
+      )
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([{ minDate: "2025-10-12", maxDate: "2026-06-12" }])
+      )
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([{ minDate: "2025-10-14", maxDate: "2026-06-16" }])
+      );
+
+    const result = await getFullDiaryDateRange({ userId: 7 });
+
+    expect(result).toEqual({
+      from: "2025-10-12",
+      to: "2026-06-16",
+    });
+    expect(dbSelectMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("должен возвращать null, если в дневнике нет дат", async () => {
+    dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ minDate: null, maxDate: null }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ minDate: null, maxDate: null }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ minDate: null, maxDate: null }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ minDate: null, maxDate: null }]));
+
+    const result = await getFullDiaryDateRange({ userId: 7 });
+
+    expect(result).toBeNull();
+  });
+});
 
 describe("server/diary getDiaryDayData", () => {
   beforeEach(() => {

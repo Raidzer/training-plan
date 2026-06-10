@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { buildDateRange } from "@/shared/utils/diaryUtils";
 import {
   getDiaryExportRows,
+  getFullDiaryDateRange,
   getDiaryWeeklyVolumesBySunday,
   isValidDateString,
 } from "@/server/diary";
@@ -103,8 +104,28 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const from = searchParams.get("from") ?? "";
-  const to = searchParams.get("to") ?? "";
+  const scope = searchParams.get("scope") ?? "period";
+  const requestedFrom = searchParams.get("from") ?? "";
+  const requestedTo = searchParams.get("to") ?? "";
+  let from = requestedFrom;
+  let to = requestedTo;
+  let filenamePrefix = "diary";
+
+  if (scope === "all") {
+    const fullRange = await getFullDiaryDateRange({ userId });
+    if (!fullRange) {
+      return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
+    }
+
+    from = fullRange.from;
+    to = fullRange.to;
+    filenamePrefix = "diary_all";
+  }
+
+  if (scope !== "all" && scope !== "period") {
+    return NextResponse.json({ error: "invalid_scope" }, { status: 400 });
+  }
+
   if (!isValidDateString(from) || !isValidDateString(to) || from > to) {
     return NextResponse.json({ error: "invalid_range" }, { status: 400 });
   }
@@ -124,10 +145,10 @@ export async function GET(req: Request) {
     { header: "Результат", key: "result", width: 30 },
     { header: "Комментарий", key: "comment", width: 30 },
     { header: "Оценка", key: "score", width: 14 },
-    { header: "", key: "empty1", width: 1 },
-    { header: "", key: "empty2", width: 1 },
-    { header: "", key: "empty3", width: 1 },
-    { header: "", key: "empty4", width: 1 },
+    { header: "", key: "empty1", width: 1, hidden: true },
+    { header: "", key: "empty2", width: 1, hidden: true },
+    { header: "", key: "empty3", width: 1, hidden: true },
+    { header: "", key: "empty4", width: 1, hidden: true },
     { header: "Сон", key: "sleep", width: 10 },
     { header: "Вес", key: "weight", width: 14 },
     { header: "Массаж, баня", key: "recovery", width: 20 },
@@ -220,7 +241,7 @@ export async function GET(req: Request) {
 
   const buffer = await workbook.xlsx.writeBuffer();
   const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer as ArrayLike<number>);
-  const filename = `diary_${from}_${to}.xlsx`;
+  const filename = `${filenamePrefix}_${from}_${to}.xlsx`;
 
   return new NextResponse(body, {
     headers: {
