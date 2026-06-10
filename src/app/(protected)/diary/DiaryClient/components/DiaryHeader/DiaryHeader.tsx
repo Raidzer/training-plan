@@ -10,7 +10,7 @@ type DiaryHeaderProps = {
   subtitle: string;
   periodHref: string;
   periodLabel: string;
-  dashboardHref: string;
+  onBack: () => void;
   dashboardLabel: string;
 };
 
@@ -19,7 +19,7 @@ export function DiaryHeader({
   subtitle,
   periodHref,
   periodLabel,
-  dashboardHref,
+  onBack,
   dashboardLabel,
 }: DiaryHeaderProps) {
   return (
@@ -31,9 +31,9 @@ export function DiaryHeader({
           <Link href={periodHref} passHref>
             <Button icon={<CalendarOutlined />}>{periodLabel}</Button>
           </Link>
-          <Link href={dashboardHref} passHref>
-            <Button icon={<ArrowLeftOutlined />}>{dashboardLabel}</Button>
-          </Link>
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
+            {dashboardLabel}
+          </Button>
         </>
       }
     />

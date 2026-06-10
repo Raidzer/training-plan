@@ -40,7 +40,7 @@ export const HEADER_LABELS = {
   title: "Дневник за день",
   subtitle: "Отмечайте вес и отчеты о тренировках за выбранный день.",
   periodLabel: "Просмотр периода",
-  dashboardLabel: "Назад к панели",
+  dashboardLabel: "Назад",
 } as const;
 
 export const CALENDAR_LABELS = {

@@ -9,6 +9,7 @@ const diaryClientMocks = vi.hoisted(() => ({
   handleSaveWorkoutMock: vi.fn(),
   setPanelDateMock: vi.fn(),
   updateSelectedDateMock: vi.fn(),
+  routerBackMock: vi.fn(),
 }));
 
 vi.mock("antd", async () => {
@@ -31,6 +32,12 @@ vi.mock("antd", async () => {
 
 vi.mock("@/app/(protected)/diary/DiaryClient/hooks/useDiaryData", () => ({
   useDiaryData: diaryClientMocks.useDiaryDataMock,
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    back: diaryClientMocks.routerBackMock,
+  }),
 }));
 
 vi.mock("@/app/(protected)/diary/DiaryClient/components/DiaryHeader/DiaryHeader", () => ({

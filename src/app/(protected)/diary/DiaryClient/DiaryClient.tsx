@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card, message } from "antd";
+import { useRouter } from "next/navigation";
 import styles from "./DiaryClient.module.scss";
 import { buildDailyReportText } from "@/shared/utils/dailyReport";
 import { formatDate } from "./utils/diaryUtils";
@@ -28,6 +29,7 @@ import {
 } from "./constants/diaryConstants";
 
 export function DiaryClient({ userId }: { userId: number }) {
+  const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const {
     selectedDate,
@@ -160,7 +162,7 @@ export function DiaryClient({ userId }: { userId: number }) {
           subtitle={HEADER_LABELS.subtitle}
           periodHref="/diary/period"
           periodLabel={HEADER_LABELS.periodLabel}
-          dashboardHref="/dashboard"
+          onBack={() => router.back()}
           dashboardLabel={HEADER_LABELS.dashboardLabel}
         />
         <div className={styles.grid}>
