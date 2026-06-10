@@ -255,6 +255,59 @@ describe("GET /api/diary/period-export", () => {
     expect(getStringCellValue(sheet, 5, 13)).not.toBe("12.00 км");
   });
 
+  it("должен оформлять шапку дневника как в исходном Excel", async () => {
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { from: "2026-01-23", to: "2026-01-25" },
+    });
+    const response = await GET(request);
+    const workbook = await loadWorkbookFromResponse(response);
+    const sheet = workbook.getWorksheet(1);
+
+    expect(sheet).toBeTruthy();
+    if (!sheet) {
+      return;
+    }
+
+    const headerRow = sheet.getRow(1);
+    const headerCell = headerRow.getCell(1);
+
+    expect(sheet.views).toEqual([expect.objectContaining({ state: "frozen", ySplit: 1 })]);
+    expect(sheet.getColumn(2).width).toBe(101.125);
+    expect(headerRow.height).toBe(105);
+    expect(headerCell.font).toEqual(
+      expect.objectContaining({
+        bold: true,
+        size: 20,
+        name: "Ink Free",
+        color: { argb: "FF000000" },
+      })
+    );
+    expect(headerCell.fill).toEqual(
+      expect.objectContaining({
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF92D050" },
+        bgColor: { argb: "FFFFFF00" },
+      })
+    );
+    expect(headerCell.alignment).toEqual(
+      expect.objectContaining({
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
+      })
+    );
+    expect(headerCell.border).toEqual(
+      expect.objectContaining({
+        top: expect.objectContaining({ style: "medium" }),
+        left: expect.objectContaining({ style: "medium" }),
+        bottom: expect.objectContaining({ style: "medium" }),
+        right: expect.objectContaining({ style: "medium" }),
+      })
+    );
+  });
+
   it("должен добавлять синюю строку по календарному воскресенью, даже если текст дня ошибочный", async () => {
     getDiaryExportRowsMock.mockResolvedValue([
       createExportRow({ dateTime: "23.01.2026(Пт)", volume: "3.00" }),

@@ -11,6 +11,38 @@ import {
 
 export const runtime = "nodejs";
 
+const DIARY_HEADER_ROW_HEIGHT = 105;
+const DIARY_TASK_COLUMN_WIDTH = 101.125;
+
+const DIARY_HEADER_FONT: Partial<ExcelJS.Font> = {
+  bold: true,
+  size: 20,
+  color: { argb: "FF000000" },
+  name: "Ink Free",
+  family: 4,
+  charset: 204,
+};
+
+const DIARY_HEADER_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FF92D050" },
+  bgColor: { argb: "FFFFFF00" },
+};
+
+const DIARY_HEADER_BORDER: Partial<ExcelJS.Borders> = {
+  top: { style: "medium" },
+  left: { style: "medium" },
+  bottom: { style: "medium" },
+  right: { style: "medium" },
+};
+
+const DIARY_HEADER_ALIGNMENT: Partial<ExcelJS.Alignment> = {
+  horizontal: "center",
+  vertical: "middle",
+  wrapText: true,
+};
+
 const htmlToRichText = (html: string | null | undefined): ExcelJS.RichText[] | string => {
   if (!html) return "";
 
@@ -92,6 +124,17 @@ const isSundayDate = (value: string) => {
   return date.getUTCDay() === 0;
 };
 
+const applyDiaryHeaderStyle = (sheet: ExcelJS.Worksheet) => {
+  const headerRow = sheet.getRow(1);
+  headerRow.height = DIARY_HEADER_ROW_HEIGHT;
+  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+    cell.font = DIARY_HEADER_FONT;
+    cell.fill = DIARY_HEADER_FILL;
+    cell.border = DIARY_HEADER_BORDER;
+    cell.alignment = DIARY_HEADER_ALIGNMENT;
+  });
+};
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session) {
@@ -138,10 +181,11 @@ export async function GET(req: Request) {
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Дневник");
+  sheet.views = [{ state: "frozen", ySplit: 1, topLeftCell: "A2" }];
 
   sheet.columns = [
     { header: "Дата, время", key: "dateTime", width: 22 },
-    { header: "Задание", key: "task", width: 60 },
+    { header: "Задание", key: "task", width: DIARY_TASK_COLUMN_WIDTH },
     { header: "Результат", key: "result", width: 30 },
     { header: "Комментарий", key: "comment", width: 30 },
     { header: "Оценка", key: "score", width: 14 },
@@ -226,18 +270,10 @@ export async function GET(req: Request) {
       });
     }
   });
-  sheet.getRow(1).font = { bold: true };
-  sheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
-    cell.border = {
-      top: { style: "thin" },
-      left: { style: "thin" },
-      bottom: { style: "thin" },
-      right: { style: "thin" },
-    };
-  });
   sheet.columns?.forEach((column) => {
     column.alignment = { vertical: "top", wrapText: true };
   });
+  applyDiaryHeaderStyle(sheet);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const body = buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer as ArrayLike<number>);
