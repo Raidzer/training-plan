@@ -170,7 +170,7 @@ describe("GET /api/diary/period-export", () => {
     expect(getDiaryWeeklyVolumesBySundayMock).not.toHaveBeenCalled();
   });
 
-  it("должен выгружать весь дневник по полному диапазону данных", async () => {
+  it("должен выгружать весь дневник по диапазону плана", async () => {
     const request = createRequestWithQuery({
       path: "/api/diary/period-export",
       query: { scope: "all" },
