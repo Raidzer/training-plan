@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DailyReportModal } from "@/app/(protected)/diary/DiaryClient/components/DailyReportModal/DailyReportModal";
+import { DiaryHeader } from "@/app/(protected)/diary/DiaryClient/components/DiaryHeader/DiaryHeader";
 import { DiaryStatusBlock } from "@/app/(protected)/diary/DiaryClient/components/DiaryStatusBlock/DiaryStatusBlock";
 import { RecoveryCard } from "@/app/(protected)/diary/DiaryClient/components/RecoveryCard/RecoveryCard";
 import { WeightCard } from "@/app/(protected)/diary/DiaryClient/components/WeightCard/WeightCard";
@@ -38,6 +39,25 @@ describe("DiaryClient components", () => {
     expect(onChange).toHaveBeenNthCalledWith(2, "evening", "73");
     expect(onSave).toHaveBeenNthCalledWith(1, "morning");
     expect(onSave).toHaveBeenNthCalledWith(2, "evening");
+  });
+
+  it("DiaryHeader должен выполнять переход назад через обработчик", () => {
+    const onBack = vi.fn();
+
+    render(
+      <DiaryHeader
+        title="Дневник"
+        subtitle="Описание"
+        periodHref="/diary/period"
+        periodLabel="Период"
+        onBack={onBack}
+        dashboardLabel="Назад"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Назад/ }));
+
+    expect(onBack).toHaveBeenCalled();
   });
 
   it("RecoveryCard должен отправлять отметки, нормализованный сон и сохранение", () => {
