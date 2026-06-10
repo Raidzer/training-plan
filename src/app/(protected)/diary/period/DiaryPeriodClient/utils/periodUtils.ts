@@ -25,6 +25,8 @@ export const formatDistanceMetric = (distanceKm: number) => `${formatDistanceVal
 
 export const createPeriodExportFilename = (from: string, to: string) => `diary_${from}_${to}.xlsx`;
 
+export const createFullDiaryExportFilename = () => "diary_all.xlsx";
+
 export const getFilenameFromContentDisposition = (contentDisposition: string | null) => {
   if (!contentDisposition) {
     return null;

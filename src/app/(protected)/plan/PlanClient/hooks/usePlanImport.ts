@@ -53,18 +53,22 @@ export const usePlanImport = ({ msgApi }: UsePlanImportParams): UsePlanImportRes
       const data = (await response.json().catch(() => null)) as PlanImportResult | null;
 
       if (!response.ok || !data) {
+        if (data) {
+          setResult(data);
+        }
         msgApi.error(data?.error ?? PLAN_TEXT.messages.importFailed);
         return;
       }
 
       setResult(data);
 
-      if (data.errors && data.errors.length > 0) {
-        msgApi.warning(PLAN_TEXT.messages.importWithErrors(data.inserted, data.errors.length));
+      const issuesCount = (data.errors?.length ?? 0) + (data.warnings?.length ?? 0);
+      if (issuesCount > 0) {
+        msgApi.warning(PLAN_TEXT.messages.importWithErrors(data.inserted ?? 0, issuesCount));
         return;
       }
 
-      msgApi.success(PLAN_TEXT.messages.importSuccess(data.inserted));
+      msgApi.success(PLAN_TEXT.messages.importSuccess(data.inserted ?? 0));
     } catch (error) {
       console.error(error);
       msgApi.error(PLAN_TEXT.messages.importRequestError);

@@ -18,11 +18,13 @@ export function DiaryPeriodClient() {
     range,
     loading,
     exporting,
+    exportingAll,
     days,
     totals,
     handleRangeChange,
     handlePresetRange,
     handleExport,
+    handleExportAll,
   } = useDiaryPeriod();
 
   return (
@@ -48,9 +50,11 @@ export function DiaryPeriodClient() {
           <PeriodRangeControls
             range={range}
             exporting={exporting}
+            exportingAll={exportingAll}
             onRangeChange={handleRangeChange}
             onPresetRange={handlePresetRange}
             onExport={handleExport}
+            onExportAll={handleExportAll}
           />
 
           <PeriodSummaryCards totals={totals} />

@@ -33,12 +33,22 @@ export type PlanDraft = {
   entries: PlanDraftEntry[];
 };
 
+export type PlanImportIssue = {
+  row: number;
+  message: string;
+};
+
 export type PlanImportResult = {
-  importId: number;
-  inserted: number;
-  skipped: number;
-  errors?: { row: number; message: string }[];
+  importId?: number;
+  inserted?: number;
+  skipped?: number;
+  errors?: PlanImportIssue[];
+  warnings?: PlanImportIssue[];
   error?: string;
+  details?: string[];
+  foundHeaders?: string[];
+  sheetName?: string;
+  totalRows?: number;
 };
 
 export type PlanImportFile = UploadFile;

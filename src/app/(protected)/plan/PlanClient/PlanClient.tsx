@@ -63,11 +63,16 @@ function PlanClientContent() {
               </>
             }
           />
-          <Link href="/plan/import" passHref>
-            <Button type="primary" block>
-              {PLAN_TEXT.actions.importExcel}
-            </Button>
-          </Link>
+          <div className={styles.importActions}>
+            <Link href="/plan/import" passHref>
+              <Button type="primary" block>
+                {PLAN_TEXT.actions.importExcel}
+              </Button>
+            </Link>
+            <Link href="/diary/import" passHref>
+              <Button block>{PLAN_TEXT.actions.importDiary}</Button>
+            </Link>
+          </div>
           <Space size="small" align="center">
             <Switch checked={onlyWithoutReports} onChange={setOnlyWithoutReports} />
             <Typography.Text>{PLAN_TEXT.filter.onlyWithoutReports}</Typography.Text>

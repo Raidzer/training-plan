@@ -11,17 +11,21 @@ const { RangePicker } = DatePicker;
 type PeriodRangeControlsProps = {
   range: PeriodRange;
   exporting: boolean;
+  exportingAll: boolean;
   onRangeChange: (range: PeriodRange) => void;
   onPresetRange: (daysCount: number) => void;
   onExport: () => void;
+  onExportAll: () => void;
 };
 
 export function PeriodRangeControls({
   range,
   exporting,
+  exportingAll,
   onRangeChange,
   onPresetRange,
   onExport,
+  onExportAll,
 }: PeriodRangeControlsProps) {
   return (
     <Card type="inner" className={styles.rangeCard}>
@@ -58,8 +62,22 @@ export function PeriodRangeControls({
         >
           {DIARY_PERIOD_LABELS.lastThirtyDays}
         </Button>
-        <Button type="primary" icon={<DownloadOutlined />} loading={exporting} onClick={onExport}>
+        <Button
+          type="primary"
+          icon={<DownloadOutlined />}
+          loading={exporting}
+          disabled={exportingAll}
+          onClick={onExport}
+        >
           {DIARY_PERIOD_LABELS.exportExcel}
+        </Button>
+        <Button
+          icon={<DownloadOutlined />}
+          loading={exportingAll}
+          disabled={exporting}
+          onClick={onExportAll}
+        >
+          {DIARY_PERIOD_LABELS.exportAllExcel}
         </Button>
       </div>
     </Card>
