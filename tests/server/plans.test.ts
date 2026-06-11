@@ -27,6 +27,7 @@ vi.mock("@/server/db/client", () => {
 import {
   deletePlanEntriesForDate,
   getPlanEntriesWithReportFlags,
+  updatePlanEntryText,
   upsertPlanEntriesForDate,
 } from "@/server/plans";
 
@@ -246,6 +247,49 @@ describe("server/plans", () => {
 
     expect(insertValuesMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ entries: updatedEntries });
+  });
+
+  it("updatePlanEntryText должен обновлять текст существующей тренировки", async () => {
+    const selectFactory = createSelectFactory([[{ id: 10 }]]);
+    const updateWhereMock = vi.fn().mockResolvedValue(undefined);
+    const updateSetMock = vi.fn(() => {
+      return {
+        where: updateWhereMock,
+      };
+    });
+    dbSelectMock.mockImplementation(selectFactory);
+    dbUpdateMock.mockReturnValue({
+      set: updateSetMock,
+    });
+
+    const result = await updatePlanEntryText({
+      userId: 5,
+      entryId: 10,
+      taskText: "Run",
+      commentText: "note",
+    });
+
+    expect(result).toEqual({ updated: true });
+    expect(updateSetMock).toHaveBeenCalledWith({
+      taskText: "Run",
+      commentText: "note",
+    });
+    expect(updateWhereMock).toHaveBeenCalled();
+  });
+
+  it("updatePlanEntryText должен возвращать not_found для отсутствующей тренировки", async () => {
+    const selectFactory = createSelectFactory([[]]);
+    dbSelectMock.mockImplementation(selectFactory);
+
+    const result = await updatePlanEntryText({
+      userId: 5,
+      entryId: 99,
+      taskText: "Run",
+      commentText: null,
+    });
+
+    expect(result).toEqual({ error: "not_found" });
+    expect(dbUpdateMock).not.toHaveBeenCalled();
   });
 
   it("deletePlanEntriesForDate должен возвращать not_found, если день отсутствует", async () => {

@@ -90,6 +90,12 @@ export type WorkoutFormEntry = {
 
 export type WorkoutFormState = Record<number, WorkoutFormEntry>;
 
+export type WorkoutEditForm = {
+  entryId: number | null;
+  taskText: string;
+  commentText: string;
+};
+
 export type WeightFormState = {
   morning: string;
   evening: string;

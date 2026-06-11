@@ -12,7 +12,7 @@ import {
   Typography,
   Tooltip,
 } from "antd";
-import { BuildOutlined } from "@ant-design/icons";
+import { BuildOutlined, EditOutlined } from "@ant-design/icons";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { PlanEntry, SavingWorkoutsState, WorkoutFormState } from "../../types/diaryTypes";
 import { normalizeStartTimeInput } from "../../utils/diaryUtils";
@@ -57,6 +57,7 @@ type WorkoutsCardProps = {
   temperaturePlaceholder: string;
   commentPlaceholder: string;
   saveReportLabel: string;
+  editWorkoutLabel?: string;
   surfaceOptions: readonly { value: string; label: string }[];
   shoeOptions: readonly { value: number; label: string }[];
   weatherOptions: readonly { value: string; label: string }[];
@@ -71,6 +72,7 @@ type WorkoutsCardProps = {
     value: string | number | number[] | Record<number, string> | null
   ) => void;
   onSave: (entryId: number) => void;
+  onEditWorkout?: (entryId: number) => void;
 };
 
 const normalizeOptions = (options: readonly { value: string | number; label: string }[]) =>
@@ -98,6 +100,7 @@ export function WorkoutsCard({
   temperaturePlaceholder,
   commentPlaceholder,
   saveReportLabel,
+  editWorkoutLabel,
   surfaceOptions,
   shoeOptions,
   weatherOptions,
@@ -108,6 +111,7 @@ export function WorkoutsCard({
   savingWorkouts,
   onChange,
   onSave,
+  onEditWorkout,
 }: WorkoutsCardProps) {
   const getDisplayValue = (
     val: string | null | undefined,
@@ -188,7 +192,7 @@ export function WorkoutsCard({
             return (
               <div key={entry.id} className={styles.workoutItem}>
                 <div className={styles.workoutHeader}>
-                  <div>
+                  <div className={styles.workoutTextBlock}>
                     <Typography.Text strong>
                       {entry.sessionOrder}.{" "}
                       <span
@@ -205,9 +209,22 @@ export function WorkoutsCard({
                       </Typography.Paragraph>
                     ) : null}
                   </div>
-                  <Tag color={isComplete ? "green" : "default"}>
-                    {isComplete ? completeLabel : incompleteLabel}
-                  </Tag>
+                  <div className={styles.workoutHeaderActions}>
+                    {onEditWorkout && editWorkoutLabel ? (
+                      <Tooltip title={editWorkoutLabel}>
+                        <Button
+                          aria-label={`${editWorkoutLabel} ${entry.sessionOrder}`}
+                          icon={<EditOutlined />}
+                          size="small"
+                          type="text"
+                          onClick={() => onEditWorkout(entry.id)}
+                        />
+                      </Tooltip>
+                    ) : null}
+                    <Tag color={isComplete ? "green" : "default"}>
+                      {isComplete ? completeLabel : incompleteLabel}
+                    </Tag>
+                  </div>
                 </div>
                 <div className={styles.workoutInputs}>
                   <Input

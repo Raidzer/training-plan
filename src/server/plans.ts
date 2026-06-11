@@ -28,6 +28,8 @@ export type PlanEntriesUpdateResult =
   | { entries: PlanEntryWithReport[] }
   | { error: "date_exists" | "not_found" | "invalid_entry_id" };
 
+export type PlanEntryTextUpdateResult = { updated: true } | { error: "not_found" };
+
 export async function getPlanEntriesWithReportFlags(
   userId: number,
   limit: number
@@ -201,6 +203,32 @@ export async function upsertPlanEntriesForDate(params: {
   });
 
   return updated;
+}
+
+export async function updatePlanEntryText(params: {
+  userId: number;
+  entryId: number;
+  taskText: string;
+  commentText: string | null;
+}): Promise<PlanEntryTextUpdateResult> {
+  const existingRows = await db
+    .select({ id: planEntries.id })
+    .from(planEntries)
+    .where(and(eq(planEntries.userId, params.userId), eq(planEntries.id, params.entryId)));
+
+  if (existingRows.length === 0) {
+    return { error: "not_found" };
+  }
+
+  await db
+    .update(planEntries)
+    .set({
+      taskText: params.taskText,
+      commentText: params.commentText,
+    })
+    .where(and(eq(planEntries.userId, params.userId), eq(planEntries.id, params.entryId)));
+
+  return { updated: true };
 }
 
 export async function deletePlanEntriesForDate(params: {
