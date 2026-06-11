@@ -7,8 +7,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { PLAN_TEXT } from "./constants/planText";
 import { PlanEditorModal } from "./components/PlanEditorModal/PlanEditorModal";
 import { PlanEntriesTable } from "./components/PlanEntriesTable/PlanEntriesTable";
+import { PlanShiftModal } from "./components/PlanShiftModal/PlanShiftModal";
 import { usePlanEditor } from "./hooks/usePlanEditor";
 import { usePlanEntries } from "./hooks/usePlanEntries";
+import { usePlanShift } from "./hooks/usePlanShift";
 import styles from "./PlanClient.module.scss";
 
 function PlanClientContent() {
@@ -41,6 +43,18 @@ function PlanClientContent() {
     handleSaveDraft,
     handleDeleteDay,
   } = usePlanEditor({ entries, setEntries, msgApi, modalApi });
+  const {
+    shiftOpen,
+    shiftSaving,
+    shiftDraft,
+    shiftDateValue,
+    openShiftModal,
+    handleCancelShift,
+    handleShiftDateChange,
+    handleShiftDirectionChange,
+    handleShiftDaysChange,
+    handleSaveShift,
+  } = usePlanShift({ msgApi, loadEntries });
 
   return (
     <main className={styles.mainContainer}>
@@ -91,12 +105,24 @@ function PlanClientContent() {
             onRemoveEntry={confirmRemoveEntry}
             onDeleteDay={handleDeleteDay}
           />
+          <PlanShiftModal
+            open={shiftOpen}
+            draft={shiftDraft}
+            saving={shiftSaving}
+            dateValue={shiftDateValue}
+            onCancel={handleCancelShift}
+            onSave={handleSaveShift}
+            onDateChange={handleShiftDateChange}
+            onDirectionChange={handleShiftDirectionChange}
+            onDaysChange={handleShiftDaysChange}
+          />
           <PlanEntriesTable
             entries={filteredEntries}
             loading={loading}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
             onEditDay={openEditModal}
+            onShiftPlanFromDate={openShiftModal}
             today={today}
           />
         </Space>

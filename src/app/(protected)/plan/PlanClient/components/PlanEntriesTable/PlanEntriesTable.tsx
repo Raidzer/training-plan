@@ -1,4 +1,4 @@
-import { BookOutlined, CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
+import { BookOutlined, CheckCircleOutlined, EditOutlined, SwapOutlined } from "@ant-design/icons";
 import { Button, Empty, Pagination, Spin, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
@@ -16,6 +16,7 @@ type PlanEntriesTableProps = {
   currentPage: number;
   onPageChange: (page: number) => void;
   onEditDay: (date: string) => void;
+  onShiftPlanFromDate: (date: string) => void;
   today: string;
 };
 
@@ -25,6 +26,7 @@ export function PlanEntriesTable({
   currentPage,
   onPageChange,
   onEditDay,
+  onShiftPlanFromDate,
   today,
 }: PlanEntriesTableProps) {
   const columns: ColumnsType<PlanDayEntry> = useMemo(
@@ -68,7 +70,7 @@ export function PlanEntriesTable({
       {
         title: PLAN_TEXT.table.actions,
         key: "actions",
-        width: 112,
+        width: 152,
         onHeaderCell: () => ({ className: styles.actionsHeaderCell }),
         render: (_, record) => (
           <div className={styles.tableActions}>
@@ -79,6 +81,15 @@ export function PlanEntriesTable({
                 icon={<EditOutlined />}
                 onClick={() => onEditDay(record.date)}
                 aria-label={PLAN_TEXT.table.editAria(record.date)}
+              />
+            </Tooltip>
+            <Tooltip title={PLAN_TEXT.table.shiftTooltip}>
+              <Button
+                size="small"
+                type="text"
+                icon={<SwapOutlined />}
+                onClick={() => onShiftPlanFromDate(record.date)}
+                aria-label={PLAN_TEXT.table.shiftAria(record.date)}
               />
             </Tooltip>
             <Tooltip title={PLAN_TEXT.table.diaryTooltip}>
@@ -99,7 +110,7 @@ export function PlanEntriesTable({
         ),
       },
     ],
-    [onEditDay]
+    [onEditDay, onShiftPlanFromDate]
   );
 
   const pagedEntries = useMemo(() => {
@@ -117,7 +128,7 @@ export function PlanEntriesTable({
         dataSource={entries}
         loading={loading}
         rowKey="date"
-        scroll={{ x: 900 }}
+        scroll={{ x: 940 }}
         onRow={(record) =>
           ({
             "data-plan-entry-key": record.date,
@@ -154,6 +165,7 @@ export function PlanEntriesTable({
                   entry={entry}
                   isToday={entry.date === today}
                   onEditDay={onEditDay}
+                  onShiftPlanFromDate={onShiftPlanFromDate}
                 />
               ))}
             </div>

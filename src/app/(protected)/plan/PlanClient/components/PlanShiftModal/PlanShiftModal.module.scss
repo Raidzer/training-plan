@@ -1,0 +1,21 @@
+.shiftForm {
+  width: 100%;
+}
+
+.shiftField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.directionLabel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.daysInput {
+  width: 100%;
+}

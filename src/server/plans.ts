@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   planEntries,
@@ -6,6 +6,7 @@ import {
   workoutReportShoes,
   workoutReports,
 } from "@/server/db/schema";
+import { shiftDate } from "@/shared/utils/diaryUtils";
 
 export type PlanEntryWithReport = {
   id: number;
@@ -29,6 +30,18 @@ export type PlanEntriesUpdateResult =
   | { error: "date_exists" | "not_found" | "invalid_entry_id" | "date_locked_by_report" };
 
 export type PlanEntryTextUpdateResult = { updated: true } | { error: "not_found" };
+
+export type PlanShiftResult =
+  | {
+      shifted: true;
+      shiftedEntriesCount: number;
+      shiftedDaysCount: number;
+      fromDate: string;
+      offsetDays: number;
+    }
+  | { error: "not_found" | "date_locked_by_report" | "target_date_exists" | "invalid_shift" };
+
+const PLAN_SHIFT_MAX_ABS_DAYS = 30;
 
 export async function getPlanEntriesWithReportFlags(
   userId: number,
@@ -248,6 +261,88 @@ export async function updatePlanEntryText(params: {
     .where(and(eq(planEntries.userId, params.userId), eq(planEntries.id, params.entryId)));
 
   return { updated: true };
+}
+
+export async function shiftPlanEntriesFromDate(params: {
+  userId: number;
+  fromDate: string;
+  offsetDays: number;
+}): Promise<PlanShiftResult> {
+  if (
+    !Number.isInteger(params.offsetDays) ||
+    params.offsetDays === 0 ||
+    Math.abs(params.offsetDays) > PLAN_SHIFT_MAX_ABS_DAYS
+  ) {
+    return { error: "invalid_shift" };
+  }
+
+  const shiftedFromDate = shiftDate(params.fromDate, params.offsetDays);
+  if (!shiftedFromDate) {
+    return { error: "invalid_shift" };
+  }
+
+  const shifted = await db.transaction(async (tx) => {
+    const shiftedEntries = await tx
+      .select({ id: planEntries.id, date: planEntries.date })
+      .from(planEntries)
+      .where(and(eq(planEntries.userId, params.userId), gte(planEntries.date, params.fromDate)));
+
+    if (shiftedEntries.length === 0) {
+      return { error: "not_found" as const };
+    }
+
+    const shiftedEntryIds = shiftedEntries.map((entry) => entry.id);
+    const existingReports = await tx
+      .select({ id: workoutReports.id })
+      .from(workoutReports)
+      .where(
+        and(
+          eq(workoutReports.userId, params.userId),
+          inArray(workoutReports.planEntryId, shiftedEntryIds)
+        )
+      );
+
+    if (existingReports.length > 0) {
+      return { error: "date_locked_by_report" as const };
+    }
+
+    if (params.offsetDays < 0) {
+      const targetRangeEnd = shiftDate(params.fromDate, -1);
+      if (!targetRangeEnd) {
+        return { error: "invalid_shift" as const };
+      }
+
+      const conflictRows = await tx
+        .select({ id: planEntries.id })
+        .from(planEntries)
+        .where(
+          and(
+            eq(planEntries.userId, params.userId),
+            gte(planEntries.date, shiftedFromDate),
+            lte(planEntries.date, targetRangeEnd)
+          )
+        );
+
+      if (conflictRows.length > 0) {
+        return { error: "target_date_exists" as const };
+      }
+    }
+
+    await tx
+      .update(planEntries)
+      .set({ date: sql`${planEntries.date} + ${params.offsetDays}::integer` })
+      .where(and(eq(planEntries.userId, params.userId), inArray(planEntries.id, shiftedEntryIds)));
+
+    return {
+      shifted: true as const,
+      shiftedEntriesCount: shiftedEntries.length,
+      shiftedDaysCount: new Set(shiftedEntries.map((entry) => entry.date)).size,
+      fromDate: params.fromDate,
+      offsetDays: params.offsetDays,
+    };
+  });
+
+  return shifted;
 }
 
 export async function deletePlanEntriesForDate(params: {
