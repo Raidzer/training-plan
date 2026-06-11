@@ -73,6 +73,7 @@ describe("DiaryClient diaryUtils", () => {
       },
     });
     expect(toDefaultWorkoutForm({ ...report, hasWind: true }).hasWind).toBe("true");
+    expect(toDefaultWorkoutForm({ ...report, startTime: null }).startTime).toBe("");
     expect(toDefaultWorkoutForm(null)).toMatchObject({
       startTime: "",
       resultText: "",

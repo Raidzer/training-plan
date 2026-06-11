@@ -24,7 +24,7 @@ export const DIARY_MESSAGES = {
   weightInvalid: "Введите корректный вес.",
   weightSaveFailed: "Не удалось сохранить вес.",
   weightSaved: "Вес сохранен.",
-  workoutRequired: "Время начала и результат обязательны.",
+  workoutRequired: "Результат тренировки обязателен.",
   workoutDistanceInvalid: "Введите корректную дистанцию тренировки.",
   workoutShoeMileageInvalid: "Введите корректный пробег обуви.",
   workoutTemperatureInvalid: "Введите корректную температуру воздуха.",

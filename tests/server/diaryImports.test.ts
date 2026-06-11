@@ -221,6 +221,53 @@ describe("server/diaryImports", () => {
     ]);
   });
 
+  it("должен сохранять null, если в импорте нет времени старта", async () => {
+    parseDiaryWorkbookMock.mockResolvedValue({
+      sheetName: "Дневник(2026)",
+      rows: [
+        createParsedRow({
+          rawDate: "01.02.2026(Вс)",
+          startTime: null,
+          resultText: "10 км: 50:00",
+          commentText: null,
+          distanceKm: null,
+          sleepHours: null,
+          morningWeightKg: null,
+          eveningWeightKg: null,
+          hasBath: false,
+          hasMfr: false,
+          hasMassage: false,
+        }),
+      ],
+      errors: [],
+      warnings: [],
+    });
+    mockImportSelects({
+      planRows: [{ id: 11, date: "2026-02-01", sessionOrder: 1, taskText: "10 км" }],
+    });
+    const { tx, valuesMock } = createTx();
+    dbTransactionMock.mockImplementation(async (callback: (innerTx: typeof tx) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await importDiaryFromWorkbook({
+      userId: 7,
+      buffer: new ArrayBuffer(8),
+    });
+
+    expect(result).toMatchObject({
+      matchedRows: 1,
+      reportsUpserted: 1,
+      warnings: [],
+    });
+    expect(valuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startTime: null,
+        resultText: "10 км: 50:00",
+      })
+    );
+  });
+
   it("должен пропускать заполненный день с существующим отчетом", async () => {
     mockImportSelects({
       planRows: [{ id: 11, date: "2026-02-01", sessionOrder: 1, taskText: "10 км" }],

@@ -39,8 +39,6 @@ type ImportAccumulator = {
 
 type DiaryImportTransaction = Pick<typeof db, "insert">;
 
-const DEFAULT_START_TIME = "00:00";
-
 const formatDecimal = (value: number, digits: number) => {
   return (Math.round(value * 10 ** digits) / 10 ** digits).toFixed(digits);
 };
@@ -94,7 +92,6 @@ const insertWorkoutReportFromDiary = async (params: {
   row: ParsedDiaryImportRow;
 }) => {
   const now = new Date();
-  const startTime = params.row.startTime ?? DEFAULT_START_TIME;
   const distanceKm =
     params.row.distanceKm === null ? null : formatDecimal(params.row.distanceKm, 2);
   const commentText = params.row.commentText?.trim() ? params.row.commentText.trim() : null;
@@ -105,7 +102,7 @@ const insertWorkoutReportFromDiary = async (params: {
       userId: params.userId,
       planEntryId: params.planEntryId,
       date: params.row.date,
-      startTime,
+      startTime: params.row.startTime,
       resultText: params.row.resultText.trim() || "-",
       commentText,
       distanceKm,
@@ -242,12 +239,6 @@ const importMatchedRows = async (params: {
 
     accumulator.matchedRows += 1;
     if (hasWorkoutReportPayload(row)) {
-      if (!row.startTime) {
-        accumulator.warnings.push({
-          row: row.rowNumber,
-          message: `Не найдено время старта, использовано ${DEFAULT_START_TIME}.`,
-        });
-      }
       await insertWorkoutReportFromDiary({
         tx: params.tx,
         userId: params.userId,

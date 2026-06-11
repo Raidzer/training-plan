@@ -43,7 +43,7 @@ export type DiaryWorkoutReport = {
   id: number;
   planEntryId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
@@ -681,7 +681,7 @@ export const getDiaryExportRows = async (params: {
     number,
     {
       id: number;
-      startTime: string;
+      startTime: string | null;
       resultText: string;
       commentText: string | null;
       distanceKm: string | null;
@@ -769,8 +769,9 @@ export const getDiaryExportRows = async (params: {
 
     for (const entry of dayEntries) {
       const report = reportByPlan.get(entry.id);
-      if (report?.startTime) {
-        startTimes.push(report.startTime);
+      const startTime = report?.startTime?.trim();
+      if (startTime) {
+        startTimes.push(startTime);
       }
       const taskText = entry.taskText?.trim() ? entry.taskText : "-";
       const resultText = report?.resultText?.trim() ? report.resultText : "-";
