@@ -73,6 +73,8 @@ export const RECOVERY_LABELS = {
   bathLabel: "Баня",
   mfrLabel: "МФР",
   massageLabel: "Массаж",
+  otherLabel: "Другое",
+  otherPlaceholder: "Что еще помогло восстановиться",
   overallLabel: "Общая оценка",
   functionalLabel: "Функциональная оценка",
   muscleLabel: "Мышечная оценка",

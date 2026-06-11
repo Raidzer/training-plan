@@ -40,6 +40,7 @@ describe("shared/utils/dailyReport", () => {
         hasBath: true,
         hasMfr: false,
         hasMassage: true,
+        recoveryOther: "Контрастный душ",
         sleepHours: "7.5",
       },
       status: {
@@ -71,7 +72,7 @@ describe("shared/utils/dailyReport", () => {
         "",
         "70.8; 70.4",
         "",
-        "Баня, Массаж",
+        "Баня, Массаж, Контрастный душ",
         "",
         "10.00 км",
       ].join("\n")

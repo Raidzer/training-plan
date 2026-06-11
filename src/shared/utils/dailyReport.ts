@@ -29,6 +29,7 @@ type DailyReportRecoveryEntry = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther?: string | null;
   sleepHours: string | null;
 };
 
@@ -146,6 +147,7 @@ const formatRecoveryFlags = (entry: DailyReportRecoveryEntry) => {
     entry.hasBath ? "Баня" : null,
     entry.hasMfr ? "МФР" : null,
     entry.hasMassage ? "Массаж" : null,
+    entry.recoveryOther?.trim() ? entry.recoveryOther.trim() : null,
   ].filter(Boolean);
   return flags.length ? flags.join(", ") : "";
 };

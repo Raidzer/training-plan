@@ -819,6 +819,7 @@ describe("useDiaryData (extended)", () => {
         hasBath: true,
         hasMfr: true,
         hasMassage: false,
+        recoveryOther: "  Контрастный душ  ",
         sleepHours: "07:30",
       }));
     });
@@ -830,6 +831,7 @@ describe("useDiaryData (extended)", () => {
     expect(recoveryBody.sleepHours).toBe(7.5);
     expect(recoveryBody.hasBath).toBe(true);
     expect(recoveryBody.hasMfr).toBe(true);
+    expect(recoveryBody.recoveryOther).toBe("Контрастный душ");
     expect(messageApi.success).toHaveBeenCalledWith(messages.recoverySaved);
   });
 

@@ -251,6 +251,7 @@ export const recoveryEntries = pgTable(
     hasBath: boolean("has_bath").notNull().default(false),
     hasMfr: boolean("has_mfr").notNull().default(false),
     hasMassage: boolean("has_massage").notNull().default(false),
+    recoveryOther: text("recovery_other"),
     overallScore: integer("overall_score"),
     functionalScore: integer("functional_score"),
     muscleScore: integer("muscle_score"),

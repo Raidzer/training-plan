@@ -85,10 +85,13 @@ vi.mock("@/app/(protected)/diary/DiaryClient/components/WeightCard/WeightCard", 
 }));
 
 vi.mock("@/app/(protected)/diary/DiaryClient/components/RecoveryCard/RecoveryCard", () => ({
-  RecoveryCard: ({ onSave, onSleepChange, onToggle }: any) => (
+  RecoveryCard: ({ onOtherChange, onSave, onSleepChange, onToggle }: any) => (
     <section>
       <button type="button" onClick={() => onToggle("hasBath", true)}>
         toggle-recovery
+      </button>
+      <button type="button" onClick={() => onOtherChange("Контрастный душ")}>
+        other-recovery
       </button>
       <button type="button" onClick={() => onSleepChange("07:30")}>
         sleep-recovery
@@ -188,6 +191,7 @@ function createDiaryData(overrides: Record<string, unknown> = {}) {
     hasBath: false,
     hasMfr: false,
     hasMassage: false,
+    recoveryOther: "",
     sleepHours: "",
   };
   let workoutState: Record<number, any> = {};
@@ -309,6 +313,7 @@ describe("DiaryClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "change-weight" }));
     fireEvent.click(screen.getByRole("button", { name: "save-weight" }));
     fireEvent.click(screen.getByRole("button", { name: "toggle-recovery" }));
+    fireEvent.click(screen.getByRole("button", { name: "other-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "sleep-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "save-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-result" }));
@@ -331,6 +336,7 @@ describe("DiaryClient", () => {
     expect(diaryData.getRecoveryState()).toEqual(
       expect.objectContaining({
         hasBath: true,
+        recoveryOther: "Контрастный душ",
         sleepHours: "07:30",
       })
     );

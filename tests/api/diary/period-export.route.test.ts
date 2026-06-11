@@ -274,6 +274,7 @@ describe("GET /api/diary/period-export", () => {
 
     expect(sheet.views).toEqual([expect.objectContaining({ state: "frozen", ySplit: 1 })]);
     expect(sheet.getColumn(2).width).toBe(101.125);
+    expect(getStringCellValue(sheet, 1, 12)).toBe("Восстановление");
     expect(headerRow.height).toBe(105);
     expect(headerCell.font).toEqual(
       expect.objectContaining({

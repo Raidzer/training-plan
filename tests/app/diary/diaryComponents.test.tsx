@@ -62,6 +62,7 @@ describe("DiaryClient components", () => {
 
   it("RecoveryCard должен отправлять отметки, нормализованный сон и сохранение", () => {
     const onToggle = vi.fn();
+    const onOtherChange = vi.fn();
     const onSleepChange = vi.fn();
     const onSave = vi.fn();
 
@@ -71,6 +72,8 @@ describe("DiaryClient components", () => {
         bathLabel="Баня"
         mfrLabel="МФР"
         massageLabel="Массаж"
+        otherLabel="Другое"
+        otherPlaceholder="Свое восстановление"
         sleepLabel="Сон"
         sleepPlaceholder="07:30"
         saveLabel="Сохранить"
@@ -78,10 +81,12 @@ describe("DiaryClient components", () => {
           hasBath: false,
           hasMfr: false,
           hasMassage: false,
+          recoveryOther: "",
           sleepHours: "",
         }}
         savingRecovery={false}
         onToggle={onToggle}
+        onOtherChange={onOtherChange}
         onSleepChange={onSleepChange}
         onSave={onSave}
       />
@@ -89,11 +94,15 @@ describe("DiaryClient components", () => {
 
     fireEvent.click(screen.getByLabelText("Баня"));
     fireEvent.click(screen.getByLabelText("МФР"));
+    fireEvent.change(screen.getByPlaceholderText("Свое восстановление"), {
+      target: { value: "Контрастный душ" },
+    });
     fireEvent.change(screen.getByPlaceholderText("07:30"), { target: { value: "0730" } });
     fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
 
     expect(onToggle).toHaveBeenNthCalledWith(1, "hasBath", true);
     expect(onToggle).toHaveBeenNthCalledWith(2, "hasMfr", true);
+    expect(onOtherChange).toHaveBeenCalledWith("Контрастный душ");
     expect(onSleepChange).toHaveBeenCalledWith("07:30");
     expect(onSave).toHaveBeenCalled();
   });

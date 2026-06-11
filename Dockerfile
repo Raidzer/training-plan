@@ -33,9 +33,10 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/wait-for-db.js ./wait-for-db.js
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/src ./src
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node wait-for-db.js && npm run db:push && npm run start"]
+CMD ["sh", "-c", "node wait-for-db.js && npm run db:migrate && npm run start"]

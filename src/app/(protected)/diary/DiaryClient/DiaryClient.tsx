@@ -82,6 +82,10 @@ export function DiaryClient({ userId }: { userId: number }) {
     setRecoveryForm((prev) => ({ ...prev, sleepHours: value }));
   };
 
+  const handleRecoveryOtherChange = (value: string) => {
+    setRecoveryForm((prev) => ({ ...prev, recoveryOther: value }));
+  };
+
   const handleWorkoutChange = (
     entryId: number,
     field:
@@ -216,12 +220,15 @@ export function DiaryClient({ userId }: { userId: number }) {
                       bathLabel={RECOVERY_LABELS.bathLabel}
                       mfrLabel={RECOVERY_LABELS.mfrLabel}
                       massageLabel={RECOVERY_LABELS.massageLabel}
+                      otherLabel={RECOVERY_LABELS.otherLabel}
+                      otherPlaceholder={RECOVERY_LABELS.otherPlaceholder}
                       sleepLabel={RECOVERY_LABELS.sleepLabel}
                       sleepPlaceholder={RECOVERY_LABELS.sleepPlaceholder}
                       saveLabel={RECOVERY_LABELS.saveLabel}
                       recoveryForm={recoveryForm}
                       savingRecovery={savingRecovery}
                       onToggle={handleRecoveryToggle}
+                      onOtherChange={handleRecoveryOtherChange}
                       onSleepChange={handleRecoverySleepChange}
                       onSave={handleSaveRecovery}
                     />
