@@ -655,6 +655,7 @@ export const getDiaryExportRows = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      recoveryOther: recoveryEntries.recoveryOther,
       overallScore: recoveryEntries.overallScore,
       functionalScore: recoveryEntries.functionalScore,
       muscleScore: recoveryEntries.muscleScore,
@@ -723,6 +724,7 @@ export const getDiaryExportRows = async (params: {
       hasBath: boolean;
       hasMfr: boolean;
       hasMassage: boolean;
+      recoveryOther: string | null;
       sleepHours: string | null;
     }
   >();
@@ -731,6 +733,7 @@ export const getDiaryExportRows = async (params: {
       hasBath: entry.hasBath,
       hasMfr: entry.hasMfr,
       hasMassage: entry.hasMassage,
+      recoveryOther: entry.recoveryOther,
       sleepHours: entry.sleepHours ? String(entry.sleepHours) : null,
     });
   }

@@ -69,16 +69,6 @@ export function RecoveryCard({
       </div>
       <div className={styles.recoveryScores}>
         <div className={styles.recoveryField}>
-          <Typography.Text>{sleepLabel}</Typography.Text>
-          <Input
-            className={styles.recoveryInput}
-            maxLength={5}
-            placeholder={sleepPlaceholder}
-            value={recoveryForm.sleepHours}
-            onChange={(event) => onSleepChange(normalizeStartTimeInput(event.target.value))}
-          />
-        </div>
-        <div className={styles.recoveryField}>
           <Typography.Text>{otherLabel}</Typography.Text>
           <Input
             className={styles.recoveryInput}
@@ -86,6 +76,16 @@ export function RecoveryCard({
             placeholder={otherPlaceholder}
             value={recoveryForm.recoveryOther}
             onChange={(event) => onOtherChange(event.target.value)}
+          />
+        </div>
+        <div className={styles.recoveryField}>
+          <Typography.Text>{sleepLabel}</Typography.Text>
+          <Input
+            className={styles.recoveryInput}
+            maxLength={5}
+            placeholder={sleepPlaceholder}
+            value={recoveryForm.sleepHours}
+            onChange={(event) => onSleepChange(normalizeStartTimeInput(event.target.value))}
           />
         </div>
       </div>
