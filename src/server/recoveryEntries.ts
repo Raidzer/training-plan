@@ -8,6 +8,7 @@ export const upsertRecoveryEntry = async (params: {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther?: string | null;
   overallScore?: number | null;
   functionalScore?: number | null;
   muscleScore?: number | null;
@@ -18,6 +19,7 @@ export const upsertRecoveryEntry = async (params: {
     hasBath: boolean;
     hasMfr: boolean;
     hasMassage: boolean;
+    recoveryOther?: string | null;
     updatedAt: Date;
     overallScore?: number | null;
     functionalScore?: number | null;
@@ -41,6 +43,9 @@ export const upsertRecoveryEntry = async (params: {
   if (params.sleepHours !== undefined) {
     updates.sleepHours = params.sleepHours === null ? null : String(params.sleepHours);
   }
+  if (params.recoveryOther !== undefined) {
+    updates.recoveryOther = params.recoveryOther;
+  }
 
   const insertValues: {
     userId: number;
@@ -48,6 +53,7 @@ export const upsertRecoveryEntry = async (params: {
     hasBath: boolean;
     hasMfr: boolean;
     hasMassage: boolean;
+    recoveryOther?: string | null;
     createdAt: Date;
     updatedAt: Date;
     overallScore?: number | null;
@@ -75,6 +81,9 @@ export const upsertRecoveryEntry = async (params: {
   if (params.sleepHours !== undefined) {
     insertValues.sleepHours = params.sleepHours === null ? null : String(params.sleepHours);
   }
+  if (params.recoveryOther !== undefined) {
+    insertValues.recoveryOther = params.recoveryOther;
+  }
   const [existing] = await db
     .select({ id: recoveryEntries.id })
     .from(recoveryEntries)
@@ -96,6 +105,7 @@ export const getRecoveryEntryByDate = async (params: { userId: number; date: str
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      recoveryOther: recoveryEntries.recoveryOther,
       overallScore: recoveryEntries.overallScore,
       functionalScore: recoveryEntries.functionalScore,
       muscleScore: recoveryEntries.muscleScore,

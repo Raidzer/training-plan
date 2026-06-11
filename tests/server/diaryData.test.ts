@@ -216,6 +216,7 @@ describe("server/diary getDiaryDayData", () => {
             hasBath: true,
             hasMfr: true,
             hasMassage: false,
+            recoveryOther: "Контрастный душ",
             sleepHours: "7.5",
           },
         ])
@@ -262,6 +263,7 @@ describe("server/diary getDiaryDayData", () => {
       hasBath: true,
       hasMfr: true,
       hasMassage: false,
+      recoveryOther: "Контрастный душ",
     });
     expect(result.previousEveningWeightKg).toBe("72.30");
     expect(result.workoutReports[0]).toMatchObject({

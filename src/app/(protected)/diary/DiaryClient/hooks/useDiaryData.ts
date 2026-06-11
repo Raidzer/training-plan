@@ -644,6 +644,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           hasBath: recoveryForm.hasBath,
           hasMfr: recoveryForm.hasMfr,
           hasMassage: recoveryForm.hasMassage,
+          recoveryOther: recoveryForm.recoveryOther.trim() || null,
           sleepHours: sleepTime.value,
         }),
       });
