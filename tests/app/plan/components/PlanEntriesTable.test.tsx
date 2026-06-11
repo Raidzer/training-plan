@@ -111,4 +111,18 @@ describe("PlanEntriesTable", () => {
     expect(onShiftPlanFromDate).toHaveBeenCalledWith("2023-10-01");
     expect(diaryLinks[0].getAttribute("href")).toBe("/diary?date=2023-10-01");
   });
+
+  it("должен отключать сдвиг для дня с заполненным отчетом", () => {
+    const onShiftPlanFromDate = vi.fn();
+
+    render(<PlanEntriesTable {...defaultProps} onShiftPlanFromDate={onShiftPlanFromDate} />);
+
+    const disabledShiftButtons = screen.getAllByRole("button", {
+      name: "Сдвинуть план с 2023-10-02",
+    });
+
+    expect(disabledShiftButtons[0]).toHaveProperty("disabled", true);
+    fireEvent.click(disabledShiftButtons[0]);
+    expect(onShiftPlanFromDate).not.toHaveBeenCalledWith("2023-10-02");
+  });
 });

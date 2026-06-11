@@ -30,6 +30,7 @@ export const PLAN_TEXT = {
     editTooltip: "Редактировать день",
     editAria: (date: string) => `Редактировать день ${date}`,
     shiftTooltip: "Сдвинуть план с этой даты",
+    shiftDisabledTooltip: "Сдвиг недоступен: по этому дню уже заполнен дневник",
     shiftAria: (date: string) => `Сдвинуть план с ${date}`,
     diaryTooltip: "Открыть дневник",
     diaryAria: (date: string) => `Открыть дневник на ${date}`,

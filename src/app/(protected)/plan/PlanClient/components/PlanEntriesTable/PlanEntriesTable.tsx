@@ -83,12 +83,19 @@ export function PlanEntriesTable({
                 aria-label={PLAN_TEXT.table.editAria(record.date)}
               />
             </Tooltip>
-            <Tooltip title={PLAN_TEXT.table.shiftTooltip}>
+            <Tooltip
+              title={
+                record.hasReport
+                  ? PLAN_TEXT.table.shiftDisabledTooltip
+                  : PLAN_TEXT.table.shiftTooltip
+              }
+            >
               <Button
                 size="small"
                 type="text"
                 icon={<SwapOutlined />}
                 onClick={() => onShiftPlanFromDate(record.date)}
+                disabled={record.hasReport}
                 aria-label={PLAN_TEXT.table.shiftAria(record.date)}
               />
             </Tooltip>

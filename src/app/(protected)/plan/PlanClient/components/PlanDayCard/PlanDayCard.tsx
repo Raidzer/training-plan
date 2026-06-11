@@ -49,12 +49,17 @@ export function PlanDayCard({ entry, isToday, onEditDay, onShiftPlanFromDate }: 
               aria-label={PLAN_TEXT.table.editAria(entry.date)}
             />
           </Tooltip>
-          <Tooltip title={PLAN_TEXT.table.shiftTooltip}>
+          <Tooltip
+            title={
+              entry.hasReport ? PLAN_TEXT.table.shiftDisabledTooltip : PLAN_TEXT.table.shiftTooltip
+            }
+          >
             <Button
               size="small"
               type="text"
               icon={<SwapOutlined />}
               onClick={() => onShiftPlanFromDate(entry.date)}
+              disabled={entry.hasReport}
               aria-label={PLAN_TEXT.table.shiftAria(entry.date)}
             />
           </Tooltip>
