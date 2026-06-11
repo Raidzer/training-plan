@@ -399,7 +399,7 @@ describe("server/diary getDiaryExportRows", () => {
           {
             id: 11,
             planEntryId: 2,
-            startTime: "",
+            startTime: null,
             resultText: "",
             commentText: null,
             distanceKm: null,
@@ -465,6 +465,7 @@ describe("server/diary getDiaryExportRows", () => {
       hasWorkload: true,
     });
     expect(result[0].dateTime).toContain("08:30");
+    expect(result[0].dateTime).not.toContain("null");
     expect(result[0].comment).toContain("18.2°C");
     expect(result[0].comment).toContain("Солнечно");
     expect(result[0].comment).toContain("ветер");

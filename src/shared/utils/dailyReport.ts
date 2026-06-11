@@ -197,8 +197,9 @@ export const buildDailyReportText = (params: { date: string; day: DailyReportDay
     const scoreText = formatWorkoutScore(report);
 
     pushWithSpacer(taskText);
-    if (report?.startTime?.trim()) {
-      pushWithSpacer(report.startTime);
+    const startTime = report?.startTime?.trim();
+    if (startTime) {
+      pushWithSpacer(startTime);
     }
     pushWithSpacer(resultText);
     pushWithSpacer(commentText);
