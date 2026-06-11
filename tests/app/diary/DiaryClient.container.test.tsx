@@ -7,6 +7,11 @@ const diaryClientMocks = vi.hoisted(() => ({
   handleSaveRecoveryMock: vi.fn(),
   handleSaveWeightMock: vi.fn(),
   handleSaveWorkoutMock: vi.fn(),
+  handleSaveWorkoutEditMock: vi.fn(),
+  openWorkoutEditMock: vi.fn(),
+  closeWorkoutEditMock: vi.fn(),
+  updateWorkoutEditTaskTextMock: vi.fn(),
+  updateWorkoutEditCommentTextMock: vi.fn(),
   setPanelDateMock: vi.fn(),
   updateSelectedDateMock: vi.fn(),
   routerBackMock: vi.fn(),
@@ -96,7 +101,7 @@ vi.mock("@/app/(protected)/diary/DiaryClient/components/RecoveryCard/RecoveryCar
 }));
 
 vi.mock("@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard", () => ({
-  WorkoutsCard: ({ onChange, onSave }: any) => (
+  WorkoutsCard: ({ onChange, onEditWorkout, onSave }: any) => (
     <section>
       <button type="button" onClick={() => onChange(101, "resultText", "готово")}>
         workout-result
@@ -122,8 +127,36 @@ vi.mock("@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCar
       <button type="button" onClick={() => onSave(101)}>
         save-workout
       </button>
+      <button type="button" onClick={() => onEditWorkout(101)}>
+        edit-workout
+      </button>
     </section>
   ),
+}));
+
+vi.mock("@/app/(protected)/diary/DiaryClient/components/WorkoutEditModal/WorkoutEditModal", () => ({
+  WorkoutEditModal: ({ onCancel, onCommentTextChange, onSave, onTaskTextChange, open }: any) => {
+    if (!open) {
+      return null;
+    }
+
+    return (
+      <section>
+        <button type="button" onClick={() => onTaskTextChange("новое задание")}>
+          edit-task
+        </button>
+        <button type="button" onClick={() => onCommentTextChange("новый комментарий")}>
+          edit-comment
+        </button>
+        <button type="button" onClick={onSave}>
+          save-workout-edit
+        </button>
+        <button type="button" onClick={onCancel}>
+          close-workout-edit
+        </button>
+      </section>
+    );
+  },
 }));
 
 vi.mock("@/app/(protected)/diary/DiaryClient/components/DailyReportModal/DailyReportModal", () => ({
@@ -235,11 +268,22 @@ function createDiaryData(overrides: Record<string, unknown> = {}) {
     workoutForm: workoutState,
     setWorkoutForm,
     savingWorkouts: {},
+    workoutEditForm: {
+      entryId: null,
+      taskText: "",
+      commentText: "",
+    },
+    savingWorkoutEdit: false,
     shoes: [{ id: 1, name: "Pegasus" }],
     loadingShoes: false,
     updateSelectedDate: diaryClientMocks.updateSelectedDateMock,
+    openWorkoutEdit: diaryClientMocks.openWorkoutEditMock,
+    closeWorkoutEdit: diaryClientMocks.closeWorkoutEditMock,
+    updateWorkoutEditTaskText: diaryClientMocks.updateWorkoutEditTaskTextMock,
+    updateWorkoutEditCommentText: diaryClientMocks.updateWorkoutEditCommentTextMock,
     handleSaveWeight: diaryClientMocks.handleSaveWeightMock,
     handleSaveWorkout: diaryClientMocks.handleSaveWorkoutMock,
+    handleSaveWorkoutEdit: diaryClientMocks.handleSaveWorkoutEditMock,
     handleSaveRecovery: diaryClientMocks.handleSaveRecoveryMock,
     getWeightState: () => weightState,
     getRecoveryState: () => recoveryState,
@@ -275,6 +319,7 @@ describe("DiaryClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "workout-mileage-reset" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-outdoor" }));
     fireEvent.click(screen.getByRole("button", { name: "save-workout" }));
+    fireEvent.click(screen.getByRole("button", { name: "edit-workout" }));
 
     expect(diaryClientMocks.updateSelectedDateMock.mock.calls[0]?.[0].format("YYYY-MM-DD")).toBe(
       "2026-05-12"
@@ -301,6 +346,33 @@ describe("DiaryClient", () => {
     expect(diaryClientMocks.handleSaveWeightMock).toHaveBeenCalledWith("morning");
     expect(diaryClientMocks.handleSaveRecoveryMock).toHaveBeenCalled();
     expect(diaryClientMocks.handleSaveWorkoutMock).toHaveBeenCalledWith(101);
+    expect(diaryClientMocks.openWorkoutEditMock).toHaveBeenCalledWith(101);
+  });
+
+  it("должен связывать модалку редактирования тренировки с обработчиками дневника", () => {
+    diaryClientMocks.useDiaryDataMock.mockReturnValue(
+      createDiaryData({
+        workoutEditForm: {
+          entryId: 101,
+          taskText: "Кросс",
+          commentText: "",
+        },
+      })
+    );
+
+    render(<DiaryClient userId={20} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "edit-task" }));
+    fireEvent.click(screen.getByRole("button", { name: "edit-comment" }));
+    fireEvent.click(screen.getByRole("button", { name: "save-workout-edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "close-workout-edit" }));
+
+    expect(diaryClientMocks.updateWorkoutEditTaskTextMock).toHaveBeenCalledWith("новое задание");
+    expect(diaryClientMocks.updateWorkoutEditCommentTextMock).toHaveBeenCalledWith(
+      "новый комментарий"
+    );
+    expect(diaryClientMocks.handleSaveWorkoutEditMock).toHaveBeenCalled();
+    expect(diaryClientMocks.closeWorkoutEditMock).toHaveBeenCalled();
   });
 
   it("должен открывать и закрывать отчет только для загруженного дня", () => {
