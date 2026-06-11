@@ -96,6 +96,7 @@ const createDayPayload = (params: {
     hasBath: params.hasBath,
     hasMfr: false,
     hasMassage: false,
+    recoveryOther: "",
     overallScore: null,
     functionalScore: null,
     muscleScore: null,

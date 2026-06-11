@@ -124,6 +124,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     hasBath: false,
     hasMfr: false,
     hasMassage: false,
+    recoveryOther: "",
     sleepHours: "",
   });
   const [savingWeight, setSavingWeight] = useState<SavingWeightState>({
@@ -218,6 +219,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       hasBath: Boolean(data.recoveryEntry?.hasBath),
       hasMfr: Boolean(data.recoveryEntry?.hasMfr),
       hasMassage: Boolean(data.recoveryEntry?.hasMassage),
+      recoveryOther: data.recoveryEntry?.recoveryOther ?? "",
       sleepHours: formatSleepTimeValue(data.recoveryEntry?.sleepHours),
     };
     setRecoveryForm(nextRecovery);

@@ -12,12 +12,15 @@ type RecoveryCardProps = {
   bathLabel: string;
   mfrLabel: string;
   massageLabel: string;
+  otherLabel: string;
+  otherPlaceholder: string;
   sleepLabel: string;
   sleepPlaceholder: string;
   saveLabel: string;
   recoveryForm: RecoveryForm;
   savingRecovery: boolean;
   onToggle: (field: RecoveryToggleField, checked: boolean) => void;
+  onOtherChange: (value: string) => void;
   onSleepChange: (value: string) => void;
   onSave: () => void;
 };
@@ -27,12 +30,15 @@ export function RecoveryCard({
   bathLabel,
   mfrLabel,
   massageLabel,
+  otherLabel,
+  otherPlaceholder,
   sleepLabel,
   sleepPlaceholder,
   saveLabel,
   recoveryForm,
   savingRecovery,
   onToggle,
+  onOtherChange,
   onSleepChange,
   onSave,
 }: RecoveryCardProps) {
@@ -70,6 +76,16 @@ export function RecoveryCard({
             placeholder={sleepPlaceholder}
             value={recoveryForm.sleepHours}
             onChange={(event) => onSleepChange(normalizeStartTimeInput(event.target.value))}
+          />
+        </div>
+        <div className={styles.recoveryField}>
+          <Typography.Text>{otherLabel}</Typography.Text>
+          <Input
+            className={styles.recoveryInput}
+            maxLength={255}
+            placeholder={otherPlaceholder}
+            value={recoveryForm.recoveryOther}
+            onChange={(event) => onOtherChange(event.target.value)}
           />
         </div>
       </div>

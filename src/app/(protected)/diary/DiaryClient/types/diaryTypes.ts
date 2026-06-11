@@ -38,6 +38,7 @@ export type RecoveryEntry = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther?: string | null;
   overallScore: number | null;
   functionalScore: number | null;
   muscleScore: number | null;
@@ -69,6 +70,7 @@ export type RecoveryForm = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther: string;
   sleepHours: string;
 };
 
