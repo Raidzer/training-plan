@@ -46,6 +46,28 @@ const parseOptionalSleepHours = (value: unknown) => {
   return { value: parsed, valid: true };
 };
 
+const parseOptionalRecoveryOther = (value: unknown) => {
+  if (value === undefined) {
+    return { value: undefined, valid: true };
+  }
+  if (value === null) {
+    return { value: null, valid: true };
+  }
+  if (typeof value !== "string") {
+    return { value: null, valid: false };
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { value: null, valid: true };
+  }
+  if (trimmed.length > 255) {
+    return { value: null, valid: false };
+  }
+
+  return { value: trimmed, valid: true };
+};
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) {
@@ -66,6 +88,7 @@ export async function POST(req: Request) {
     functionalScore?: number | string | null;
     muscleScore?: number | string | null;
     sleepHours?: number | string | null;
+    recoveryOther?: string | null;
   } | null;
 
   const date = body?.date ?? null;
@@ -80,6 +103,7 @@ export async function POST(req: Request) {
   const functionalScore = parseOptionalScore(body?.functionalScore);
   const muscleScore = parseOptionalScore(body?.muscleScore);
   const sleepHours = parseOptionalSleepHours(body?.sleepHours);
+  const recoveryOther = parseOptionalRecoveryOther(body?.recoveryOther);
 
   if (
     hasBath === null ||
@@ -88,7 +112,8 @@ export async function POST(req: Request) {
     !overallScore.valid ||
     !functionalScore.valid ||
     !muscleScore.valid ||
-    !sleepHours.valid
+    !sleepHours.valid ||
+    !recoveryOther.valid
   ) {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
   }
@@ -111,6 +136,9 @@ export async function POST(req: Request) {
   }
   if (sleepHours.value !== undefined) {
     upsertParams.sleepHours = sleepHours.value;
+  }
+  if (recoveryOther.value !== undefined) {
+    upsertParams.recoveryOther = recoveryOther.value;
   }
 
   await upsertRecoveryEntry(upsertParams);

@@ -13,6 +13,7 @@ import { DiaryStatusBlock } from "./components/DiaryStatusBlock/DiaryStatusBlock
 import { WeightCard } from "./components/WeightCard/WeightCard";
 import { RecoveryCard } from "./components/RecoveryCard/RecoveryCard";
 import { WorkoutsCard } from "./components/WorkoutsCard/WorkoutsCard";
+import { WorkoutEditModal } from "./components/WorkoutEditModal/WorkoutEditModal";
 import { DailyReportModal } from "./components/DailyReportModal/DailyReportModal";
 import {
   CALENDAR_LABELS,
@@ -25,6 +26,7 @@ import {
   WEATHER_OPTIONS,
   WEIGHT_LABELS,
   WIND_OPTIONS,
+  WORKOUT_EDIT_LABELS,
   WORKOUT_LABELS,
 } from "./constants/diaryConstants";
 
@@ -47,11 +49,18 @@ export function DiaryClient({ userId }: { userId: number }) {
     workoutForm,
     setWorkoutForm,
     savingWorkouts,
+    workoutEditForm,
+    savingWorkoutEdit,
     shoes,
     loadingShoes,
     updateSelectedDate,
+    openWorkoutEdit,
+    closeWorkoutEdit,
+    updateWorkoutEditTaskText,
+    updateWorkoutEditCommentText,
     handleSaveWeight,
     handleSaveWorkout,
+    handleSaveWorkoutEdit,
     handleSaveRecovery,
   } = useDiaryData({ messageApi, messages: DIARY_MESSAGES });
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -71,6 +80,10 @@ export function DiaryClient({ userId }: { userId: number }) {
 
   const handleRecoverySleepChange = (value: string) => {
     setRecoveryForm((prev) => ({ ...prev, sleepHours: value }));
+  };
+
+  const handleRecoveryOtherChange = (value: string) => {
+    setRecoveryForm((prev) => ({ ...prev, recoveryOther: value }));
   };
 
   const handleWorkoutChange = (
@@ -207,12 +220,15 @@ export function DiaryClient({ userId }: { userId: number }) {
                       bathLabel={RECOVERY_LABELS.bathLabel}
                       mfrLabel={RECOVERY_LABELS.mfrLabel}
                       massageLabel={RECOVERY_LABELS.massageLabel}
+                      otherLabel={RECOVERY_LABELS.otherLabel}
+                      otherPlaceholder={RECOVERY_LABELS.otherPlaceholder}
                       sleepLabel={RECOVERY_LABELS.sleepLabel}
                       sleepPlaceholder={RECOVERY_LABELS.sleepPlaceholder}
                       saveLabel={RECOVERY_LABELS.saveLabel}
                       recoveryForm={recoveryForm}
                       savingRecovery={savingRecovery}
                       onToggle={handleRecoveryToggle}
+                      onOtherChange={handleRecoveryOtherChange}
                       onSleepChange={handleRecoverySleepChange}
                       onSave={handleSaveRecovery}
                     />
@@ -240,6 +256,7 @@ export function DiaryClient({ userId }: { userId: number }) {
                       temperaturePlaceholder={WORKOUT_LABELS.temperaturePlaceholder}
                       commentPlaceholder={WORKOUT_LABELS.commentPlaceholder}
                       saveReportLabel={WORKOUT_LABELS.saveReportLabel}
+                      editWorkoutLabel={WORKOUT_LABELS.editWorkoutLabel}
                       surfaceOptions={SURFACE_OPTIONS}
                       shoeOptions={shoeOptions}
                       weatherOptions={WEATHER_OPTIONS}
@@ -250,6 +267,7 @@ export function DiaryClient({ userId }: { userId: number }) {
                       savingWorkouts={savingWorkouts}
                       onChange={handleWorkoutChange}
                       onSave={handleSaveWorkout}
+                      onEditWorkout={openWorkoutEdit}
                     />
                   </div>
                 </div>
@@ -264,6 +282,16 @@ export function DiaryClient({ userId }: { userId: number }) {
         closeLabel={REPORT_LABELS.closeLabel}
         reportText={reportText}
         onClose={() => setIsReportOpen(false)}
+      />
+      <WorkoutEditModal
+        open={workoutEditForm.entryId !== null}
+        saving={savingWorkoutEdit}
+        form={workoutEditForm}
+        labels={WORKOUT_EDIT_LABELS}
+        onTaskTextChange={updateWorkoutEditTaskText}
+        onCommentTextChange={updateWorkoutEditCommentText}
+        onCancel={closeWorkoutEdit}
+        onSave={handleSaveWorkoutEdit}
       />
     </main>
   );

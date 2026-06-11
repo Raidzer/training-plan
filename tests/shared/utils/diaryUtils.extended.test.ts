@@ -72,6 +72,21 @@ describe("shared/utils/diaryUtils (extended)", () => {
     expect(formatWeight({ morning: "70.15", evening: "70.2" })).toBe("70.2 / 70.2");
     expect(formatWeight()).toBe("-");
     expect(formatNumberedLines(["A", " ", null])).toBe("1) A\n2) -\n3) -");
-    expect(formatRecovery({ hasBath: true, hasMfr: true, hasMassage: false })).toBe("Баня, МФР");
+    expect(
+      formatRecovery({
+        hasBath: true,
+        hasMfr: true,
+        hasMassage: false,
+        recoveryOther: "Контрастный душ",
+      })
+    ).toBe("Баня, МФР, Контрастный душ");
+    expect(
+      formatRecovery({
+        hasBath: false,
+        hasMfr: false,
+        hasMassage: false,
+        recoveryOther: "  Растяжка  ",
+      })
+    ).toBe("Растяжка");
   });
 });

@@ -43,7 +43,7 @@ export type DiaryWorkoutReport = {
   id: number;
   planEntryId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
@@ -70,6 +70,7 @@ export type DiaryRecoveryEntry = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther: string | null;
   overallScore: number | null;
   functionalScore: number | null;
   muscleScore: number | null;
@@ -229,6 +230,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      recoveryOther: recoveryEntries.recoveryOther,
       overallScore: recoveryEntries.overallScore,
       functionalScore: recoveryEntries.functionalScore,
       muscleScore: recoveryEntries.muscleScore,
@@ -331,6 +333,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
     hasBath: false,
     hasMfr: false,
     hasMassage: false,
+    recoveryOther: null,
     overallScore: null,
     functionalScore: null,
     muscleScore: null,
@@ -652,6 +655,7 @@ export const getDiaryExportRows = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      recoveryOther: recoveryEntries.recoveryOther,
       overallScore: recoveryEntries.overallScore,
       functionalScore: recoveryEntries.functionalScore,
       muscleScore: recoveryEntries.muscleScore,
@@ -681,7 +685,7 @@ export const getDiaryExportRows = async (params: {
     number,
     {
       id: number;
-      startTime: string;
+      startTime: string | null;
       resultText: string;
       commentText: string | null;
       distanceKm: string | null;
@@ -720,6 +724,7 @@ export const getDiaryExportRows = async (params: {
       hasBath: boolean;
       hasMfr: boolean;
       hasMassage: boolean;
+      recoveryOther: string | null;
       sleepHours: string | null;
     }
   >();
@@ -728,6 +733,7 @@ export const getDiaryExportRows = async (params: {
       hasBath: entry.hasBath,
       hasMfr: entry.hasMfr,
       hasMassage: entry.hasMassage,
+      recoveryOther: entry.recoveryOther,
       sleepHours: entry.sleepHours ? String(entry.sleepHours) : null,
     });
   }
@@ -769,8 +775,9 @@ export const getDiaryExportRows = async (params: {
 
     for (const entry of dayEntries) {
       const report = reportByPlan.get(entry.id);
-      if (report?.startTime) {
-        startTimes.push(report.startTime);
+      const startTime = report?.startTime?.trim();
+      if (startTime) {
+        startTimes.push(startTime);
       }
       const taskText = entry.taskText?.trim() ? entry.taskText : "-";
       const resultText = report?.resultText?.trim() ? report.resultText : "-";

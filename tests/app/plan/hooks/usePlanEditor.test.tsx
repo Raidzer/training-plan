@@ -101,6 +101,24 @@ describe("usePlanEditor", () => {
     expect(hook.result.current.draft?.isWorkload).toBe(false);
   });
 
+  it("не должен менять дату черновика, если по дню уже есть отчет", () => {
+    const entries = [
+      createPlanEntry({
+        id: 10,
+        date: "2026-01-10",
+        hasReport: true,
+      }),
+    ];
+    const { hook } = createHookHarness({ entries });
+
+    act(() => {
+      hook.result.current.openEditModal("2026-01-10");
+      hook.result.current.handleDateChange(dayjs("2026-01-11"));
+    });
+
+    expect(hook.result.current.draft?.date).toBe("2026-01-10");
+  });
+
   it("должен показывать ошибку при сохранении дня с уже существующей датой", async () => {
     const today = dayjs().format("YYYY-MM-DD");
     const { hook, msgApi } = createHookHarness({
@@ -161,6 +179,12 @@ describe("usePlanEditor", () => {
         })
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "date_locked_by_report" }), {
+          status: 409,
+          headers: { "content-type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify({ error: "unknown" }), {
           status: 500,
           headers: { "content-type": "application/json" },
@@ -170,7 +194,7 @@ describe("usePlanEditor", () => {
 
     const { hook, msgApi } = createHookHarness({ entries: [] });
 
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 6; i += 1) {
       act(() => {
         hook.result.current.openCreateModal();
         hook.result.current.handleDateChange(dayjs(`2030-01-0${i + 1}`));
@@ -186,6 +210,7 @@ describe("usePlanEditor", () => {
     expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.dayNotFound);
     expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.invalidWorkouts);
     expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.fillWorkouts);
+    expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.dateLockedByReport);
     expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.saveFailed);
   });
 

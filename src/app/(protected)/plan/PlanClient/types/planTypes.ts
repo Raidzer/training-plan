@@ -33,6 +33,14 @@ export type PlanDraft = {
   entries: PlanDraftEntry[];
 };
 
+export type PlanShiftDirection = "forward" | "backward";
+
+export type PlanShiftDraft = {
+  fromDate: string;
+  direction: PlanShiftDirection;
+  days: number;
+};
+
 export type PlanImportIssue = {
   row: number;
   message: string;

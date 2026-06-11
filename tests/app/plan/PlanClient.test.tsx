@@ -5,6 +5,7 @@ import { PlanClient } from "@/app/(protected)/plan/PlanClient/PlanClient";
 const planClientMocks = vi.hoisted(() => ({
   usePlanEntriesMock: vi.fn(),
   usePlanEditorMock: vi.fn(),
+  usePlanShiftMock: vi.fn(),
 }));
 
 vi.mock("next/link", () => {
@@ -34,8 +35,16 @@ vi.mock("@/app/(protected)/plan/PlanClient/hooks/usePlanEditor", () => ({
   usePlanEditor: planClientMocks.usePlanEditorMock,
 }));
 
+vi.mock("@/app/(protected)/plan/PlanClient/hooks/usePlanShift", () => ({
+  usePlanShift: planClientMocks.usePlanShiftMock,
+}));
+
 vi.mock("@/app/(protected)/plan/PlanClient/components/PlanEditorModal/PlanEditorModal", () => ({
   PlanEditorModal: () => <div data-testid="plan-editor-modal" />,
+}));
+
+vi.mock("@/app/(protected)/plan/PlanClient/components/PlanShiftModal/PlanShiftModal", () => ({
+  PlanShiftModal: () => <div data-testid="plan-shift-modal" />,
 }));
 
 vi.mock("@/app/(protected)/plan/PlanClient/components/PlanEntriesTable/PlanEntriesTable", () => ({
@@ -88,6 +97,18 @@ describe("PlanClient", () => {
       confirmRemoveEntry: vi.fn(),
       handleSaveDraft: vi.fn(),
       handleDeleteDay: vi.fn(),
+    });
+    planClientMocks.usePlanShiftMock.mockReturnValue({
+      shiftOpen: false,
+      shiftSaving: false,
+      shiftDraft: null,
+      shiftDateValue: null,
+      openShiftModal: vi.fn(),
+      handleCancelShift: vi.fn(),
+      handleShiftDateChange: vi.fn(),
+      handleShiftDirectionChange: vi.fn(),
+      handleShiftDaysChange: vi.fn(),
+      handleSaveShift: vi.fn(),
     });
   });
 

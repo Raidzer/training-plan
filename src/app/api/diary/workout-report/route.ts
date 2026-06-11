@@ -11,6 +11,23 @@ import {
 const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const MAX_SHOE_MILEAGE_KM = 99999.99;
 
+const parseOptionalStartTime = (value: unknown) => {
+  if (value === undefined || value === null || value === "") {
+    return { value: null, valid: true };
+  }
+  if (typeof value !== "string") {
+    return { value: null, valid: false };
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { value: null, valid: true };
+  }
+  if (!TIME_REGEX.test(trimmed)) {
+    return { value: null, valid: false };
+  }
+  return { value: trimmed, valid: true };
+};
+
 const parseOptionalBoolean = (value: unknown) => {
   if (value === undefined) {
     return { value: undefined, valid: true };
@@ -167,7 +184,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
     planEntryId?: number | string;
     date?: string;
-    startTime?: string;
+    startTime?: string | null;
     resultText?: string;
     commentText?: string | null;
     distanceKm?: number | string | null;
@@ -184,7 +201,7 @@ export async function POST(req: Request) {
 
   const planEntryId = Number(body?.planEntryId);
   const date = body?.date ?? null;
-  const startTime = typeof body?.startTime === "string" ? body.startTime.trim() : "";
+  const startTime = parseOptionalStartTime(body?.startTime);
   const resultText = typeof body?.resultText === "string" ? body.resultText : "";
   const trimmedResultText = resultText.trim();
   const commentText = typeof body?.commentText === "string" ? body.commentText.trim() : null;
@@ -222,7 +239,7 @@ export async function POST(req: Request) {
   if (!isValidDateString(date)) {
     return NextResponse.json({ error: "invalid_date" }, { status: 400 });
   }
-  if (!TIME_REGEX.test(startTime)) {
+  if (!startTime.valid) {
     return NextResponse.json({ error: "invalid_time" }, { status: 400 });
   }
   if (!trimmedResultText) {
@@ -270,7 +287,7 @@ export async function POST(req: Request) {
     userId,
     planEntryId,
     date: entry.date,
-    startTime,
+    startTime: startTime.value,
     resultText,
     commentText: commentText && commentText.length > 0 ? commentText : null,
   };

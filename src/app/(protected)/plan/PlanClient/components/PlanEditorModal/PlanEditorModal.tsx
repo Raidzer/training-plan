@@ -41,6 +41,7 @@ export function PlanEditorModal({
     return null;
   }
   const isEditing = Boolean(draft.originalDate);
+  const isDateLocked = isEditing && draft.entries.some((entry) => entry.hasReport);
 
   return (
     <Modal
@@ -70,7 +71,13 @@ export function PlanEditorModal({
               onChange={onDateChange}
               format={PLAN_DATE_DISPLAY_FORMAT}
               allowClear={false}
+              disabled={isDateLocked}
             />
+            {isDateLocked ? (
+              <Typography.Text type="secondary">
+                {PLAN_TEXT.editor.dateLockedByReport}
+              </Typography.Text>
+            ) : null}
           </div>
           <Space size="small" align="center">
             <Switch checked={draft.isWorkload} onChange={onWorkloadChange} />

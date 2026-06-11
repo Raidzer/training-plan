@@ -140,4 +140,83 @@ describe("WorkoutsCard", () => {
     },
     WORKOUTS_CARD_TEST_TIMEOUT_MS
   );
+
+  it(
+    "должен показывать отдельную кнопку редактирования для каждой тренировки",
+    () => {
+      const onEditWorkout = vi.fn();
+
+      render(
+        <WorkoutsCard
+          userId={1}
+          messageApi={{} as any}
+          title="Workouts"
+          emptyLabel="Empty"
+          completeLabel="Complete"
+          incompleteLabel="Incomplete"
+          startTimePlaceholder="Start"
+          resultPlaceholder="Result"
+          distancePlaceholder="Distance"
+          overallScoreLabel="Overall"
+          functionalScoreLabel="Functional"
+          muscleScoreLabel="Muscle"
+          scorePlaceholder="Score"
+          surfacePlaceholder="Surface"
+          shoePlaceholder="Shoes"
+          shoeMileagePlaceholder="Shoe mileage"
+          weatherPlaceholder="Weather"
+          windPlaceholder="Wind"
+          temperaturePlaceholder="Temperature"
+          commentPlaceholder="Comment"
+          saveReportLabel="Save"
+          editWorkoutLabel="Редактировать тренировку"
+          surfaceOptions={[
+            { value: "asphalt", label: "Асфальт" },
+            { value: "manezh", label: "Манеж" },
+          ]}
+          shoeOptions={[]}
+          weatherOptions={[{ value: "sunny", label: "Солнечно" }]}
+          windOptions={[{ value: "true", label: "Есть" }]}
+          shoeLoading={false}
+          entries={[
+            {
+              id: 1,
+              date: "2026-02-09",
+              sessionOrder: 1,
+              taskText: "Кросс 8 км",
+              commentText: null,
+              isWorkload: true,
+            },
+            {
+              id: 2,
+              date: "2026-02-09",
+              sessionOrder: 2,
+              taskText: "ОФП",
+              commentText: "зал",
+              isWorkload: true,
+            },
+          ]}
+          workoutForm={{}}
+          savingWorkouts={{}}
+          onChange={vi.fn()}
+          onSave={vi.fn()}
+          onEditWorkout={onEditWorkout}
+        />
+      );
+
+      const firstButton = screen.getByRole("button", {
+        name: "Редактировать тренировку 1",
+      });
+      const secondButton = screen.getByRole("button", {
+        name: "Редактировать тренировку 2",
+      });
+
+      fireEvent.click(secondButton);
+      fireEvent.click(firstButton);
+
+      expect(onEditWorkout).toHaveBeenNthCalledWith(1, 2);
+      expect(onEditWorkout).toHaveBeenNthCalledWith(2, 1);
+    },
+    WORKOUTS_CARD_TEST_TIMEOUT_MS
+  );
 });

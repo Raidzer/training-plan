@@ -41,6 +41,10 @@ const messages: DiaryMessages = {
   workoutTemperatureInvalid: "workoutTemperatureInvalid",
   workoutSaveFailed: "workoutSaveFailed",
   workoutSaved: "workoutSaved",
+  workoutEditRequired: "workoutEditRequired",
+  workoutEditNotFound: "workoutEditNotFound",
+  workoutEditSaveFailed: "workoutEditSaveFailed",
+  workoutEditSaved: "workoutEditSaved",
   recoveryInvalidSleep: "recoveryInvalidSleep",
   recoverySaveFailed: "recoverySaveFailed",
   recoverySaved: "recoverySaved",
@@ -383,7 +387,7 @@ describe("useDiaryData (extended)", () => {
     expect(messageApi.success).not.toHaveBeenCalledWith(messages.weightSaved);
   });
 
-  it("должен требовать обязательные поля отчета тренировки", async () => {
+  it("должен требовать результат отчета тренировки", async () => {
     const dayPayload = createDayPayload({
       totalDistanceKm: 10,
       workoutResult: "ok",
@@ -406,7 +410,6 @@ describe("useDiaryData (extended)", () => {
         ...prev,
         1: {
           ...prev[1],
-          startTime: "",
           resultText: "   ",
         },
       }));
@@ -421,6 +424,62 @@ describe("useDiaryData (extended)", () => {
       "/api/diary/workout-report",
       expect.objectContaining({ method: "POST" })
     );
+  });
+
+  it("должен разрешать пустое время начала тренировки", async () => {
+    const dayPayload = createDayPayload({
+      totalDistanceKm: 10,
+      workoutResult: "ok",
+      hasBath: false,
+      sleepHours: "8",
+      weightMorning: "70",
+    });
+
+    let savedWorkoutBody: Record<string, unknown> = {};
+
+    setFetchHandler(async (url, init) => {
+      if (url.startsWith("/api/shoes")) {
+        return createJsonResponse({ shoes: [] });
+      }
+      if (url.startsWith("/api/diary/marks")) {
+        return createJsonResponse({ days: [dayPayload.status] });
+      }
+      if (url.startsWith("/api/diary/day")) {
+        return createJsonResponse(dayPayload);
+      }
+      if (url === "/api/diary/workout-report" && init?.method === "POST") {
+        savedWorkoutBody = JSON.parse(String(init.body)) as Record<string, unknown>;
+        return createJsonResponse({ ok: true });
+      }
+      throw new Error(`Unexpected fetch call: ${url}`);
+    });
+
+    const messageApi = createMessageApiMock();
+    const { result } = renderHook(() => useDiaryData({ messageApi, messages }));
+
+    await waitFor(() => {
+      expect(result.current.workoutForm[1]).toBeDefined();
+    });
+
+    act(() => {
+      result.current.setWorkoutForm((prev) => ({
+        ...prev,
+        1: {
+          ...prev[1],
+          startTime: "",
+          resultText: "done",
+        },
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSaveWorkout(1);
+    });
+
+    expect(savedWorkoutBody.startTime).toBeNull();
+    expect(savedWorkoutBody.resultText).toBe("done");
+    expect(messageApi.error).not.toHaveBeenCalledWith(messages.workoutRequired);
+    expect(messageApi.success).toHaveBeenCalledWith(messages.workoutSaved);
   });
 
   it("должен очищать погодные поля для закрытого помещения и дедуплицировать shoeIds", async () => {
@@ -622,6 +681,103 @@ describe("useDiaryData (extended)", () => {
     );
   });
 
+  it("должен сохранять редактирование тренировки и не сбрасывать черновик отчета", async () => {
+    const initialDay = createDayPayload({
+      totalDistanceKm: 10,
+      workoutResult: "server-initial",
+      hasBath: false,
+      sleepHours: "8",
+      weightMorning: "70",
+    });
+    const refreshedDay = {
+      ...initialDay,
+      planEntries: [
+        {
+          ...initialDay.planEntries[0],
+          taskText: "Серверное обновление",
+          commentText: "server-comment",
+        },
+      ],
+      status: {
+        ...initialDay.status,
+        totalDistanceKm: 11,
+      },
+    };
+    let savedBody: Record<string, unknown> = {};
+    let dayRequestCount = 0;
+
+    setFetchHandler(async (url, init) => {
+      if (url.startsWith("/api/shoes")) {
+        return createJsonResponse({ shoes: [] });
+      }
+
+      if (url.startsWith("/api/diary/marks")) {
+        return createJsonResponse({ days: [refreshedDay.status] });
+      }
+
+      if (url.startsWith("/api/diary/day")) {
+        dayRequestCount += 1;
+        if (dayRequestCount === 1) {
+          return createJsonResponse(initialDay);
+        }
+        return createJsonResponse(refreshedDay);
+      }
+
+      if (url === "/api/plans/entries/1" && init?.method === "PATCH") {
+        savedBody = JSON.parse(String(init.body)) as Record<string, unknown>;
+        return createJsonResponse({ updated: true });
+      }
+
+      throw new Error(`Unexpected fetch call: ${url}`);
+    });
+
+    const messageApi = createMessageApiMock();
+    const { result } = renderHook(() => useDiaryData({ messageApi, messages }));
+
+    await waitFor(() => {
+      expect(result.current.dayData?.status.totalDistanceKm).toBe(10);
+      expect(result.current.workoutForm[1]?.resultText).toBe("server-initial");
+    });
+
+    act(() => {
+      result.current.openWorkoutEdit(1);
+    });
+
+    expect(result.current.workoutEditForm).toEqual({
+      entryId: 1,
+      taskText: "Интервалы",
+      commentText: "",
+    });
+
+    act(() => {
+      result.current.updateWorkoutEditTaskText("  Новая тренировка  ");
+      result.current.updateWorkoutEditCommentText("  новый комментарий  ");
+      result.current.setWorkoutForm((prev) => ({
+        ...prev,
+        1: {
+          ...prev[1],
+          resultText: "draft-report",
+        },
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSaveWorkoutEdit();
+    });
+
+    await waitFor(() => {
+      expect(result.current.dayData?.status.totalDistanceKm).toBe(11);
+    });
+
+    expect(savedBody).toEqual({
+      taskText: "Новая тренировка",
+      commentText: "новый комментарий",
+    });
+    expect(result.current.workoutEditForm.entryId).toBeNull();
+    expect(result.current.workoutForm[1]?.resultText).toBe("draft-report");
+    expect(messageApi.success).toHaveBeenCalledWith(messages.workoutEditSaved);
+  });
+
   it("должен сохранять восстановление с нормализованным sleepHours", async () => {
     const dayPayload = createDayPayload({
       totalDistanceKm: 10,
@@ -663,6 +819,7 @@ describe("useDiaryData (extended)", () => {
         hasBath: true,
         hasMfr: true,
         hasMassage: false,
+        recoveryOther: "  Контрастный душ  ",
         sleepHours: "07:30",
       }));
     });
@@ -674,6 +831,7 @@ describe("useDiaryData (extended)", () => {
     expect(recoveryBody.sleepHours).toBe(7.5);
     expect(recoveryBody.hasBath).toBe(true);
     expect(recoveryBody.hasMfr).toBe(true);
+    expect(recoveryBody.recoveryOther).toBe("Контрастный душ");
     expect(messageApi.success).toHaveBeenCalledWith(messages.recoverySaved);
   });
 

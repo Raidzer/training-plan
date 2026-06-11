@@ -24,12 +24,16 @@ export const DIARY_MESSAGES = {
   weightInvalid: "Введите корректный вес.",
   weightSaveFailed: "Не удалось сохранить вес.",
   weightSaved: "Вес сохранен.",
-  workoutRequired: "Время начала и результат обязательны.",
+  workoutRequired: "Результат тренировки обязателен.",
   workoutDistanceInvalid: "Введите корректную дистанцию тренировки.",
   workoutShoeMileageInvalid: "Введите корректный пробег обуви.",
   workoutTemperatureInvalid: "Введите корректную температуру воздуха.",
   workoutSaveFailed: "Не удалось сохранить отчет о тренировке.",
   workoutSaved: "Отчет о тренировке сохранен.",
+  workoutEditRequired: "Заполните задание тренировки.",
+  workoutEditNotFound: "Тренировка не найдена.",
+  workoutEditSaveFailed: "Не удалось сохранить тренировку.",
+  workoutEditSaved: "Тренировка сохранена.",
   recoveryInvalidSleep: "Введите время сна в формате ЧЧ:ММ.",
   recoverySaveFailed: "Не удалось сохранить отметки восстановления.",
   recoverySaved: "Отметки восстановления сохранены.",
@@ -69,6 +73,8 @@ export const RECOVERY_LABELS = {
   bathLabel: "Баня",
   mfrLabel: "МФР",
   massageLabel: "Массаж",
+  otherLabel: "Другое",
+  otherPlaceholder: "Что еще помогло восстановиться",
   overallLabel: "Общая оценка",
   functionalLabel: "Функциональная оценка",
   muscleLabel: "Мышечная оценка",
@@ -98,6 +104,15 @@ export const WORKOUT_LABELS = {
   temperaturePlaceholder: "Температура, °C",
   commentPlaceholder: "Комментарий",
   saveReportLabel: "Сохранить отчет",
+  editWorkoutLabel: "Редактировать тренировку",
+} as const;
+
+export const WORKOUT_EDIT_LABELS = {
+  title: "Редактировать тренировку",
+  taskLabel: "Задание",
+  commentLabel: "Комментарий",
+  saveLabel: "Сохранить",
+  cancelLabel: "Отмена",
 } as const;
 
 export const REPORT_LABELS = {

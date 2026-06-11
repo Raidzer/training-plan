@@ -55,6 +55,7 @@ describe("server/recoveryEntries", () => {
       hasBath: true,
       hasMfr: false,
       hasMassage: true,
+      recoveryOther: "Контрастный душ",
       sleepHours: 7.5,
     });
 
@@ -63,6 +64,7 @@ describe("server/recoveryEntries", () => {
         hasBath: true,
         hasMfr: false,
         hasMassage: true,
+        recoveryOther: "Контрастный душ",
         sleepHours: "7.5",
       })
     );
@@ -82,6 +84,7 @@ describe("server/recoveryEntries", () => {
       hasBath: false,
       hasMfr: true,
       hasMassage: false,
+      recoveryOther: null,
       sleepHours: null,
     });
 
@@ -92,6 +95,7 @@ describe("server/recoveryEntries", () => {
         hasBath: false,
         hasMfr: true,
         hasMassage: false,
+        recoveryOther: null,
         sleepHours: null,
       })
     );
@@ -105,6 +109,7 @@ describe("server/recoveryEntries", () => {
         hasBath: true,
         hasMfr: false,
         hasMassage: true,
+        recoveryOther: "Контрастный душ",
         sleepHours: "8",
       },
     ]);
@@ -119,6 +124,7 @@ describe("server/recoveryEntries", () => {
       hasBath: true,
       hasMfr: false,
       hasMassage: true,
+      recoveryOther: "Контрастный душ",
       sleepHours: "8",
     });
 

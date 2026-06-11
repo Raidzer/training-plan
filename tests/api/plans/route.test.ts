@@ -176,6 +176,7 @@ describe("API /api/plans route", () => {
       upsertPlanEntriesForDateMock.mockResolvedValueOnce({ error: "date_exists" });
       upsertPlanEntriesForDateMock.mockResolvedValueOnce({ error: "not_found" });
       upsertPlanEntriesForDateMock.mockResolvedValueOnce({ error: "invalid_entry_id" });
+      upsertPlanEntriesForDateMock.mockResolvedValueOnce({ error: "date_locked_by_report" });
 
       const requestBase = {
         url: "http://localhost/api/plans",
@@ -193,6 +194,9 @@ describe("API /api/plans route", () => {
 
       const responseInvalidEntry = await POST(createJsonRequest(requestBase));
       await expectJsonError(responseInvalidEntry, 400, "invalid_entry_id");
+
+      const responseDateLocked = await POST(createJsonRequest(requestBase));
+      await expectJsonError(responseDateLocked, 409, "date_locked_by_report");
     });
 
     it("должен нормализовать пейлоад и вызывать upsertPlanEntriesForDate", async () => {

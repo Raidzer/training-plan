@@ -208,6 +208,7 @@ export const formatRecovery = (entry?: {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther?: string | null;
 }) => {
   if (!entry) {
     return "-";
@@ -216,6 +217,7 @@ export const formatRecovery = (entry?: {
     entry.hasBath ? "Баня" : null,
     entry.hasMfr ? "МФР" : null,
     entry.hasMassage ? "Массаж" : null,
+    entry.recoveryOther?.trim() ? entry.recoveryOther.trim() : null,
   ].filter(Boolean);
   return flags.length ? flags.join(", ") : "-";
 };

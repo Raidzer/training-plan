@@ -117,6 +117,7 @@ describe("POST /api/diary/recovery", () => {
         functionalScore: "",
         muscleScore: null,
         sleepHours: "7.5",
+        recoveryOther: "  Контрастный душ  ",
       },
     });
 
@@ -134,6 +135,23 @@ describe("POST /api/diary/recovery", () => {
       functionalScore: null,
       muscleScore: null,
       sleepHours: 7.5,
+      recoveryOther: "Контрастный душ",
     });
+  });
+
+  it("должен возвращать 400 при слишком длинном поле другого восстановления", async () => {
+    const request = createJsonRequest({
+      url: "http://localhost/api/diary/recovery",
+      body: {
+        date: "2026-01-02",
+        hasBath: true,
+        hasMfr: false,
+        hasMassage: false,
+        recoveryOther: "x".repeat(256),
+      },
+    });
+
+    const response = await POST(request);
+    await expectJsonError(response, 400, "invalid_payload");
   });
 });

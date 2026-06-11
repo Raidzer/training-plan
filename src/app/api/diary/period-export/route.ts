@@ -195,7 +195,7 @@ export async function GET(req: Request) {
     { header: "", key: "empty4", width: 1, hidden: true },
     { header: "Сон", key: "sleep", width: 10 },
     { header: "Вес", key: "weight", width: 14 },
-    { header: "Массаж, баня", key: "recovery", width: 20 },
+    { header: "Восстановление", key: "recovery", width: 20 },
     { header: "Объём", key: "volume", width: 12 },
   ];
 

@@ -11,7 +11,7 @@ export type WorkoutReport = {
   id: number;
   planEntryId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
@@ -38,6 +38,7 @@ export type RecoveryEntry = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther?: string | null;
   overallScore: number | null;
   functionalScore: number | null;
   muscleScore: number | null;
@@ -69,6 +70,7 @@ export type RecoveryForm = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther: string;
   sleepHours: string;
 };
 
@@ -89,6 +91,12 @@ export type WorkoutFormEntry = {
 };
 
 export type WorkoutFormState = Record<number, WorkoutFormEntry>;
+
+export type WorkoutEditForm = {
+  entryId: number | null;
+  taskText: string;
+  commentText: string;
+};
 
 export type WeightFormState = {
   morning: string;

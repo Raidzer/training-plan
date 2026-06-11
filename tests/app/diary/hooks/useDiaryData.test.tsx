@@ -36,6 +36,10 @@ const messages: DiaryMessages = {
   workoutTemperatureInvalid: "workoutTemperatureInvalid",
   workoutSaveFailed: "workoutSaveFailed",
   workoutSaved: "workoutSaved",
+  workoutEditRequired: "workoutEditRequired",
+  workoutEditNotFound: "workoutEditNotFound",
+  workoutEditSaveFailed: "workoutEditSaveFailed",
+  workoutEditSaved: "workoutEditSaved",
   recoveryInvalidSleep: "recoveryInvalidSleep",
   recoverySaveFailed: "recoverySaveFailed",
   recoverySaved: "recoverySaved",
@@ -92,6 +96,7 @@ const createDayPayload = (params: {
     hasBath: params.hasBath,
     hasMfr: false,
     hasMassage: false,
+    recoveryOther: "",
     overallScore: null,
     functionalScore: null,
     muscleScore: null,
@@ -180,6 +185,7 @@ describe("useDiaryData", () => {
       result.current.setRecoveryForm((prev) => ({
         ...prev,
         hasBath: true,
+        recoveryOther: "Контрастный душ",
         sleepHours: "07:30",
       }));
       result.current.setWeightForm((prev) => ({
@@ -198,6 +204,7 @@ describe("useDiaryData", () => {
 
     expect(result.current.workoutForm[1]?.resultText).toBe("draft-workout");
     expect(result.current.recoveryForm.hasBath).toBe(true);
+    expect(result.current.recoveryForm.recoveryOther).toBe("Контрастный душ");
     expect(result.current.recoveryForm.sleepHours).toBe("07:30");
     expect(result.current.weightForm.morning).toBe("71.3");
   });

@@ -40,6 +40,7 @@ describe("shared/utils/dailyReport", () => {
         hasBath: true,
         hasMfr: false,
         hasMassage: true,
+        recoveryOther: "Контрастный душ",
         sleepHours: "7.5",
       },
       status: {
@@ -71,7 +72,7 @@ describe("shared/utils/dailyReport", () => {
         "",
         "70.8; 70.4",
         "",
-        "Баня, Массаж",
+        "Баня, Массаж, Контрастный душ",
         "",
         "10.00 км",
       ].join("\n")
@@ -108,5 +109,52 @@ describe("shared/utils/dailyReport", () => {
     expect(report).toContain("10.02.2026(Вт)");
     expect(report).toContain("Интервалы");
     expect(report.match(/^-$/gm)).toHaveLength(6);
+  });
+
+  it("не должен выводить null вместо пустого времени старта", () => {
+    const day: DailyReportDayData = {
+      planEntries: [
+        {
+          id: 1,
+          taskText: "Кросс 10 км",
+        },
+      ],
+      workoutReports: [
+        {
+          planEntryId: 1,
+          startTime: null,
+          resultText: "10 км",
+          commentText: null,
+          overallScore: null,
+          functionalScore: null,
+          muscleScore: null,
+          weather: null,
+          hasWind: null,
+          temperatureC: null,
+          surface: null,
+          shoes: [],
+        },
+      ],
+      weightEntries: [],
+      recoveryEntry: {
+        hasBath: false,
+        hasMfr: false,
+        hasMassage: false,
+        sleepHours: null,
+      },
+      status: {
+        totalDistanceKm: 10,
+      },
+      previousEveningWeightKg: null,
+    };
+
+    const report = buildDailyReportText({
+      date: "2026-02-10",
+      day,
+    });
+
+    expect(report).not.toContain("null");
+    expect(report).toContain("Кросс 10 км");
+    expect(report).toContain("10 км");
   });
 });

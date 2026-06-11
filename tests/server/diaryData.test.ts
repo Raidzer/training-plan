@@ -216,6 +216,7 @@ describe("server/diary getDiaryDayData", () => {
             hasBath: true,
             hasMfr: true,
             hasMassage: false,
+            recoveryOther: "Контрастный душ",
             sleepHours: "7.5",
           },
         ])
@@ -262,6 +263,7 @@ describe("server/diary getDiaryDayData", () => {
       hasBath: true,
       hasMfr: true,
       hasMassage: false,
+      recoveryOther: "Контрастный душ",
     });
     expect(result.previousEveningWeightKg).toBe("72.30");
     expect(result.workoutReports[0]).toMatchObject({
@@ -399,7 +401,7 @@ describe("server/diary getDiaryExportRows", () => {
           {
             id: 11,
             planEntryId: 2,
-            startTime: "",
+            startTime: null,
             resultText: "",
             commentText: null,
             distanceKm: null,
@@ -442,6 +444,7 @@ describe("server/diary getDiaryExportRows", () => {
             hasBath: true,
             hasMfr: false,
             hasMassage: true,
+            recoveryOther: "Контрастный душ",
             sleepHours: "7.5",
           },
         ])
@@ -460,11 +463,12 @@ describe("server/diary getDiaryExportRows", () => {
       score: "1) 8-7-6\n2) -",
       sleep: "07:30",
       weight: "70.4 / 71.1",
-      recovery: "Баня, Массаж",
+      recovery: "Баня, Массаж, Контрастный душ",
       volume: "10.00",
       hasWorkload: true,
     });
     expect(result[0].dateTime).toContain("08:30");
+    expect(result[0].dateTime).not.toContain("null");
     expect(result[0].comment).toContain("18.2°C");
     expect(result[0].comment).toContain("Солнечно");
     expect(result[0].comment).toContain("ветер");

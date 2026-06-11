@@ -9,6 +9,7 @@ import type {
   SavingWeightState,
   SavingWorkoutsState,
   WeightFormState,
+  WorkoutEditForm,
   WorkoutFormState,
 } from "../types/diaryTypes";
 import {
@@ -39,6 +40,10 @@ export type DiaryMessages = {
   workoutTemperatureInvalid: string;
   workoutSaveFailed: string;
   workoutSaved: string;
+  workoutEditRequired: string;
+  workoutEditNotFound: string;
+  workoutEditSaveFailed: string;
+  workoutEditSaved: string;
   recoveryInvalidSleep: string;
   recoverySaveFailed: string;
   recoverySaved: string;
@@ -60,6 +65,11 @@ type ShoeItem = {
 };
 
 const MAX_SHOE_MILEAGE_KM = 99999.99;
+const EMPTY_WORKOUT_EDIT_FORM: WorkoutEditForm = {
+  entryId: null,
+  taskText: "",
+  commentText: "",
+};
 
 const parseShoeMileageInput = (value: string | undefined) => {
   const trimmed = value?.trim() ?? "";
@@ -114,6 +124,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     hasBath: false,
     hasMfr: false,
     hasMassage: false,
+    recoveryOther: "",
     sleepHours: "",
   });
   const [savingWeight, setSavingWeight] = useState<SavingWeightState>({
@@ -123,6 +134,8 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const [savingRecovery, setSavingRecovery] = useState(false);
   const [workoutForm, setWorkoutForm] = useState<WorkoutFormState>({});
   const [savingWorkouts, setSavingWorkouts] = useState<SavingWorkoutsState>({});
+  const [workoutEditForm, setWorkoutEditForm] = useState<WorkoutEditForm>(EMPTY_WORKOUT_EDIT_FORM);
+  const [savingWorkoutEdit, setSavingWorkoutEdit] = useState(false);
 
   useEffect(() => {
     selectedDateRef.current = selectedDate;
@@ -206,6 +219,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       hasBath: Boolean(data.recoveryEntry?.hasBath),
       hasMfr: Boolean(data.recoveryEntry?.hasMfr),
       hasMassage: Boolean(data.recoveryEntry?.hasMassage),
+      recoveryOther: data.recoveryEntry?.recoveryOther ?? "",
       sleepHours: formatSleepTimeValue(data.recoveryEntry?.sleepHours),
     };
     setRecoveryForm(nextRecovery);
@@ -391,6 +405,97 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     [selectedDate, updateSelectedDate]
   );
 
+  const openWorkoutEdit = useCallback(
+    (entryId: number) => {
+      const entry = dayData?.planEntries.find((item) => item.id === entryId);
+      if (!entry) {
+        messageApi.error(messages.workoutEditNotFound);
+        return;
+      }
+
+      setWorkoutEditForm({
+        entryId: entry.id,
+        taskText: entry.taskText,
+        commentText: entry.commentText ?? "",
+      });
+    },
+    [dayData, messageApi, messages.workoutEditNotFound]
+  );
+
+  const closeWorkoutEdit = useCallback(() => {
+    if (savingWorkoutEdit) {
+      return;
+    }
+
+    setWorkoutEditForm(EMPTY_WORKOUT_EDIT_FORM);
+  }, [savingWorkoutEdit]);
+
+  const updateWorkoutEditTaskText = useCallback((value: string) => {
+    setWorkoutEditForm((prev) => ({ ...prev, taskText: value }));
+  }, []);
+
+  const updateWorkoutEditCommentText = useCallback((value: string) => {
+    setWorkoutEditForm((prev) => ({ ...prev, commentText: value }));
+  }, []);
+
+  const handleSaveWorkoutEdit = useCallback(async () => {
+    if (!dayData || !workoutEditForm.entryId) {
+      messageApi.error(messages.workoutEditSaveFailed);
+      return;
+    }
+
+    const targetEntry = dayData.planEntries.find((entry) => entry.id === workoutEditForm.entryId);
+    if (!targetEntry) {
+      messageApi.error(messages.workoutEditNotFound);
+      return;
+    }
+
+    const taskText = workoutEditForm.taskText.trim();
+    if (!taskText) {
+      messageApi.error(messages.workoutEditRequired);
+      return;
+    }
+
+    const commentText = workoutEditForm.commentText.trim();
+    const normalizedCommentText = commentText.length > 0 ? commentText : null;
+
+    setSavingWorkoutEdit(true);
+    try {
+      const res = await fetch(`/api/plans/entries/${targetEntry.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          taskText,
+          commentText: normalizedCommentText,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        updated?: boolean;
+        error?: string;
+      } | null;
+
+      if (!res.ok || !data?.updated) {
+        const errorCode = data?.error;
+        if (res.status === 404 || errorCode === "not_found") {
+          messageApi.error(messages.workoutEditNotFound);
+        } else {
+          messageApi.error(messages.workoutEditSaveFailed);
+        }
+        return;
+      }
+
+      messageApi.success(messages.workoutEditSaved);
+      setWorkoutEditForm(EMPTY_WORKOUT_EDIT_FORM);
+      await loadDay(selectedDate, { preserveForms: true });
+      await loadMarks(panelDate);
+    } catch (err) {
+      console.error(err);
+      messageApi.error(messages.workoutEditSaveFailed);
+    } finally {
+      setSavingWorkoutEdit(false);
+    }
+  }, [dayData, loadDay, loadMarks, messageApi, messages, panelDate, selectedDate, workoutEditForm]);
+
   const handleSaveWeight = useCallback(
     async (period: "morning" | "evening") => {
       const value = period === "morning" ? weightForm.morning : weightForm.evening;
@@ -434,10 +539,11 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const handleSaveWorkout = useCallback(
     async (planEntryId: number) => {
       const form = workoutForm[planEntryId];
-      if (!form?.startTime || !form?.resultText?.trim()) {
+      if (!form?.resultText?.trim()) {
         messageApi.error(messages.workoutRequired);
         return;
       }
+      const startTime = form.startTime.trim();
       const distanceValue = form.distanceKm.trim();
       const distanceKm = distanceValue.length > 0 ? Number(distanceValue.replace(",", ".")) : null;
 
@@ -487,7 +593,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           body: JSON.stringify({
             planEntryId,
             date: formatDate(selectedDate),
-            startTime: form.startTime,
+            startTime: startTime.length > 0 ? startTime : null,
             resultText: form.resultText,
             commentText: form.commentText,
             distanceKm,
@@ -538,6 +644,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           hasBath: recoveryForm.hasBath,
           hasMfr: recoveryForm.hasMfr,
           hasMassage: recoveryForm.hasMassage,
+          recoveryOther: recoveryForm.recoveryOther.trim() || null,
           sleepHours: sleepTime.value,
         }),
       });
@@ -575,12 +682,19 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     workoutForm,
     setWorkoutForm,
     savingWorkouts,
+    workoutEditForm,
+    savingWorkoutEdit,
     shoes,
     loadingShoes,
     updateSelectedDate,
     shiftDate,
+    openWorkoutEdit,
+    closeWorkoutEdit,
+    updateWorkoutEditTaskText,
+    updateWorkoutEditCommentText,
     handleSaveWeight,
     handleSaveWorkout,
+    handleSaveWorkoutEdit,
     handleSaveRecovery,
   };
 }

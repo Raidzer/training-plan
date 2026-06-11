@@ -145,6 +145,32 @@ describe("server/workoutReports", () => {
     expect(dbInsertMock).not.toHaveBeenCalled();
   });
 
+  it("upsertWorkoutReport должен сохранять null во времени старта", async () => {
+    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]));
+    const updateWhereMock = vi.fn().mockResolvedValue(undefined);
+    const updateSetMock = vi.fn(() => ({
+      where: updateWhereMock,
+    }));
+    dbUpdateMock.mockReturnValue({
+      set: updateSetMock,
+    });
+
+    await upsertWorkoutReport({
+      userId: 1,
+      planEntryId: 11,
+      date: "2026-02-09",
+      startTime: null,
+      resultText: "OK",
+    });
+
+    expect(updateSetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startTime: null,
+      })
+    );
+    expect(dbInsertMock).not.toHaveBeenCalled();
+  });
+
   it("upsertWorkoutReport должен вставлять отчет, условия и кроссовки", async () => {
     dbSelectMock
       .mockReturnValueOnce(createSelectWhereBuilder([]))

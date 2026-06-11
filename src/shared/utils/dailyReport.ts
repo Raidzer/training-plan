@@ -7,7 +7,7 @@ type DailyReportPlanEntry = {
 
 type DailyReportWorkoutReport = {
   planEntryId: number;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   overallScore: number | null;
@@ -29,6 +29,7 @@ type DailyReportRecoveryEntry = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  recoveryOther?: string | null;
   sleepHours: string | null;
 };
 
@@ -146,6 +147,7 @@ const formatRecoveryFlags = (entry: DailyReportRecoveryEntry) => {
     entry.hasBath ? "Баня" : null,
     entry.hasMfr ? "МФР" : null,
     entry.hasMassage ? "Массаж" : null,
+    entry.recoveryOther?.trim() ? entry.recoveryOther.trim() : null,
   ].filter(Boolean);
   return flags.length ? flags.join(", ") : "";
 };
@@ -197,8 +199,9 @@ export const buildDailyReportText = (params: { date: string; day: DailyReportDay
     const scoreText = formatWorkoutScore(report);
 
     pushWithSpacer(taskText);
-    if (report?.startTime?.trim()) {
-      pushWithSpacer(report.startTime);
+    const startTime = report?.startTime?.trim();
+    if (startTime) {
+      pushWithSpacer(startTime);
     }
     pushWithSpacer(resultText);
     pushWithSpacer(commentText);

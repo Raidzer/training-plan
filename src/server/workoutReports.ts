@@ -36,7 +36,7 @@ export type WorkoutReportSummary = {
   id: number;
   planEntryId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
@@ -190,7 +190,7 @@ export const upsertWorkoutReport = async (params: {
   userId: number;
   planEntryId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText?: string | null;
   distanceKm?: number | null;
@@ -207,7 +207,7 @@ export const upsertWorkoutReport = async (params: {
   const now = new Date();
   const updateValues: {
     date: string;
-    startTime: string;
+    startTime: string | null;
     resultText: string;
     commentText: string | null;
     updatedAt: Date;
@@ -238,7 +238,7 @@ export const upsertWorkoutReport = async (params: {
     userId: number;
     planEntryId: number;
     date: string;
-    startTime: string;
+    startTime: string | null;
     resultText: string;
     commentText: string | null;
     createdAt: Date;

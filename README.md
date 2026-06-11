@@ -99,6 +99,8 @@
 - `npm run build` — Сборка проекта для продакшена.
 - `npm run start` — Запуск собранного проекта.
 - `npm run lint` / `npm run lint:fix` — Проверка и исправление линтером.
-- `npm run db:push` — Применение схемы БД через Drizzle Kit.
+- `npm run db:generate` — Генерация SQL-миграций Drizzle.
+- `npm run db:migrate` — Применение SQL-миграций Drizzle.
+- `npm run db:push` — Локальная синхронизация схемы БД без миграционной истории.
 - `npm run db:studio` — Запуск Drizzle Studio для управления БД в браузере.
 - `npm run test` — Запуск тестов (Vitest).
