@@ -119,6 +119,23 @@ describe("POST /api/diary/workout-report", () => {
     await expectJsonError(response, 400, "invalid_time");
   });
 
+  it("должен сохранять отчет без времени старта", async () => {
+    const request = createJsonRequest({
+      url: "http://localhost/api/diary/workout-report",
+      body: createValidPayload({ startTime: null }),
+    });
+
+    const response = await POST(request);
+    const payload = await expectJsonSuccess<{ ok: boolean }>(response, 200);
+
+    expect(payload.ok).toBe(true);
+    expect(upsertWorkoutReportMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startTime: null,
+      })
+    );
+  });
+
   it("должен возвращать 400 при пустом resultText", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/diary/workout-report",

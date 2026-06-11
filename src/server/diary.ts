@@ -43,7 +43,7 @@ export type DiaryWorkoutReport = {
   id: number;
   planEntryId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;
@@ -681,7 +681,7 @@ export const getDiaryExportRows = async (params: {
     number,
     {
       id: number;
-      startTime: string;
+      startTime: string | null;
       resultText: string;
       commentText: string | null;
       distanceKm: string | null;

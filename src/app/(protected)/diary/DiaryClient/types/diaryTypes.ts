@@ -11,7 +11,7 @@ export type WorkoutReport = {
   id: number;
   planEntryId: number;
   date: string;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   distanceKm: string | null;

@@ -537,10 +537,11 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const handleSaveWorkout = useCallback(
     async (planEntryId: number) => {
       const form = workoutForm[planEntryId];
-      if (!form?.startTime || !form?.resultText?.trim()) {
+      if (!form?.resultText?.trim()) {
         messageApi.error(messages.workoutRequired);
         return;
       }
+      const startTime = form.startTime.trim();
       const distanceValue = form.distanceKm.trim();
       const distanceKm = distanceValue.length > 0 ? Number(distanceValue.replace(",", ".")) : null;
 
@@ -590,7 +591,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           body: JSON.stringify({
             planEntryId,
             date: formatDate(selectedDate),
-            startTime: form.startTime,
+            startTime: startTime.length > 0 ? startTime : null,
             resultText: form.resultText,
             commentText: form.commentText,
             distanceKm,

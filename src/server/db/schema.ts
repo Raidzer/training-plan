@@ -277,7 +277,7 @@ export const workoutReports = pgTable(
       .notNull()
       .references(() => planEntries.id),
     date: date("date").notNull(),
-    startTime: varchar("start_time", { length: 5 }).notNull(),
+    startTime: varchar("start_time", { length: 5 }),
     resultText: text("result_text").notNull(),
     commentText: text("comment_text"),
     distanceKm: numeric("distance_km", { precision: 6, scale: 2 }),

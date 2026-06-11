@@ -7,7 +7,7 @@ type DailyReportPlanEntry = {
 
 type DailyReportWorkoutReport = {
   planEntryId: number;
-  startTime: string;
+  startTime: string | null;
   resultText: string;
   commentText: string | null;
   overallScore: number | null;
