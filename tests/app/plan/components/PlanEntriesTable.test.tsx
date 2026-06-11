@@ -62,6 +62,7 @@ describe("PlanEntriesTable", () => {
     currentPage: 1,
     onPageChange: vi.fn(),
     onEditDay: vi.fn(),
+    onShiftPlanFromDate: vi.fn(),
     today: "2023-10-05",
   };
 
@@ -87,18 +88,41 @@ describe("PlanEntriesTable", () => {
 
   it("должен рендерить мобильные карточки с действиями", () => {
     const onEditDay = vi.fn();
+    const onShiftPlanFromDate = vi.fn();
 
-    render(<PlanEntriesTable {...defaultProps} onEditDay={onEditDay} />);
+    render(
+      <PlanEntriesTable
+        {...defaultProps}
+        onEditDay={onEditDay}
+        onShiftPlanFromDate={onShiftPlanFromDate}
+      />
+    );
 
     expect(screen.getByText("Нет отчета")).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Редактировать день 2023-10-01" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Сдвинуть план с 2023-10-01" })[0]);
 
     const diaryLinks = screen.getAllByRole("link", {
       name: "Открыть дневник на 2023-10-01",
     });
 
     expect(onEditDay).toHaveBeenCalledWith("2023-10-01");
+    expect(onShiftPlanFromDate).toHaveBeenCalledWith("2023-10-01");
     expect(diaryLinks[0].getAttribute("href")).toBe("/diary?date=2023-10-01");
+  });
+
+  it("должен отключать сдвиг для дня с заполненным отчетом", () => {
+    const onShiftPlanFromDate = vi.fn();
+
+    render(<PlanEntriesTable {...defaultProps} onShiftPlanFromDate={onShiftPlanFromDate} />);
+
+    const disabledShiftButtons = screen.getAllByRole("button", {
+      name: "Сдвинуть план с 2023-10-02",
+    });
+
+    expect(disabledShiftButtons[0]).toHaveProperty("disabled", true);
+    fireEvent.click(disabledShiftButtons[0]);
+    expect(onShiftPlanFromDate).not.toHaveBeenCalledWith("2023-10-02");
   });
 });

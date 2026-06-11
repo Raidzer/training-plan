@@ -27,6 +27,7 @@ vi.mock("@/server/db/client", () => {
 import {
   deletePlanEntriesForDate,
   getPlanEntriesWithReportFlags,
+  shiftPlanEntriesFromDate,
   updatePlanEntryText,
   upsertPlanEntriesForDate,
 } from "@/server/plans";
@@ -87,6 +88,11 @@ function createTx(selectQueue: unknown[]) {
   const select = createSelectFactory(selectQueue);
   const insertValuesMock = vi.fn().mockResolvedValue(undefined);
   const updateWhereMock = vi.fn().mockResolvedValue(undefined);
+  const updateSetMock = vi.fn(() => {
+    return {
+      where: updateWhereMock,
+    };
+  });
   const deleteWhereMock = vi.fn().mockResolvedValue(undefined);
 
   const tx = {
@@ -98,11 +104,7 @@ function createTx(selectQueue: unknown[]) {
     }),
     update: vi.fn(() => {
       return {
-        set: vi.fn(() => {
-          return {
-            where: updateWhereMock,
-          };
-        }),
+        set: updateSetMock,
       };
     }),
     delete: vi.fn(() => {
@@ -115,6 +117,7 @@ function createTx(selectQueue: unknown[]) {
   return {
     tx,
     insertValuesMock,
+    updateSetMock,
     updateWhereMock,
     deleteWhereMock,
   };
@@ -218,6 +221,29 @@ describe("server/plans", () => {
     expect(result).toEqual({ error: "invalid_entry_id" });
   });
 
+  it("upsertPlanEntriesForDate должен запрещать смену даты дня с отчетом", async () => {
+    const { tx, updateWhereMock } = createTx([
+      [{ id: 1, date: "2026-01-01" }],
+      [{ id: 1 }],
+      [{ id: 20 }],
+    ]);
+    dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await upsertPlanEntriesForDate({
+      userId: 5,
+      date: "2026-01-02",
+      originalDate: "2026-01-01",
+      isWorkload: false,
+      entries: [{ id: 1, taskText: "Run", commentText: null }],
+      isEdit: true,
+    });
+
+    expect(updateWhereMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ error: "date_locked_by_report" });
+  });
+
   it("upsertPlanEntriesForDate должен возвращать элементы при успешном создании", async () => {
     const updatedEntries = [
       {
@@ -290,6 +316,100 @@ describe("server/plans", () => {
 
     expect(result).toEqual({ error: "not_found" });
     expect(dbUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("shiftPlanEntriesFromDate должен возвращать invalid_shift при некорректном сдвиге", async () => {
+    const result = await shiftPlanEntriesFromDate({
+      userId: 5,
+      fromDate: "2026-01-01",
+      offsetDays: 0,
+    });
+
+    expect(result).toEqual({ error: "invalid_shift" });
+    expect(dbTransactionMock).not.toHaveBeenCalled();
+  });
+
+  it("shiftPlanEntriesFromDate должен возвращать not_found, если нечего сдвигать", async () => {
+    const { tx } = createTx([[]]);
+    dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await shiftPlanEntriesFromDate({
+      userId: 5,
+      fromDate: "2026-01-01",
+      offsetDays: 1,
+    });
+
+    expect(result).toEqual({ error: "not_found" });
+  });
+
+  it("shiftPlanEntriesFromDate должен запрещать сдвиг хвоста с отчетами", async () => {
+    const { tx, updateWhereMock } = createTx([
+      [
+        { id: 1, date: "2026-01-10" },
+        { id: 2, date: "2026-01-12" },
+      ],
+      [{ id: 20 }],
+    ]);
+    dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await shiftPlanEntriesFromDate({
+      userId: 5,
+      fromDate: "2026-01-10",
+      offsetDays: 2,
+    });
+
+    expect(updateWhereMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ error: "date_locked_by_report" });
+  });
+
+  it("shiftPlanEntriesFromDate должен запрещать сдвиг назад в занятый диапазон", async () => {
+    const { tx, updateWhereMock } = createTx([[{ id: 2, date: "2026-01-10" }], [], [{ id: 1 }]]);
+    dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await shiftPlanEntriesFromDate({
+      userId: 5,
+      fromDate: "2026-01-10",
+      offsetDays: -2,
+    });
+
+    expect(updateWhereMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ error: "target_date_exists" });
+  });
+
+  it("shiftPlanEntriesFromDate должен сдвигать хвост плана", async () => {
+    const { tx, updateSetMock, updateWhereMock } = createTx([
+      [
+        { id: 1, date: "2026-01-10" },
+        { id: 2, date: "2026-01-10" },
+        { id: 3, date: "2026-01-12" },
+      ],
+      [],
+    ]);
+    dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await shiftPlanEntriesFromDate({
+      userId: 5,
+      fromDate: "2026-01-10",
+      offsetDays: 2,
+    });
+
+    expect(updateSetMock).toHaveBeenCalledTimes(1);
+    expect(updateWhereMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      shifted: true,
+      shiftedEntriesCount: 3,
+      shiftedDaysCount: 2,
+      fromDate: "2026-01-10",
+      offsetDays: 2,
+    });
   });
 
   it("deletePlanEntriesForDate должен возвращать not_found, если день отсутствует", async () => {

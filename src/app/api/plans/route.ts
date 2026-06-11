@@ -117,6 +117,9 @@ export async function POST(req: Request) {
     if (updated.error === "invalid_entry_id") {
       return NextResponse.json({ error: "invalid_entry_id" }, { status: 400 });
     }
+    if (updated.error === "date_locked_by_report") {
+      return NextResponse.json({ error: "date_locked_by_report" }, { status: 409 });
+    }
   }
 
   return NextResponse.json(updated);

@@ -1,4 +1,4 @@
-import { BookOutlined, CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
+import { BookOutlined, CheckCircleOutlined, EditOutlined, SwapOutlined } from "@ant-design/icons";
 import { Button, Tag, Tooltip } from "antd";
 import Link from "next/link";
 import { PLAN_TEXT } from "../../constants/planText";
@@ -10,9 +10,10 @@ type PlanDayCardProps = {
   entry: PlanDayEntry;
   isToday: boolean;
   onEditDay: (date: string) => void;
+  onShiftPlanFromDate: (date: string) => void;
 };
 
-export function PlanDayCard({ entry, isToday, onEditDay }: PlanDayCardProps) {
+export function PlanDayCard({ entry, isToday, onEditDay, onShiftPlanFromDate }: PlanDayCardProps) {
   const className = [
     styles.mobileDayCard,
     entry.isWorkload ? styles.mobileWorkloadCard : "",
@@ -46,6 +47,20 @@ export function PlanDayCard({ entry, isToday, onEditDay }: PlanDayCardProps) {
               icon={<EditOutlined />}
               onClick={() => onEditDay(entry.date)}
               aria-label={PLAN_TEXT.table.editAria(entry.date)}
+            />
+          </Tooltip>
+          <Tooltip
+            title={
+              entry.hasReport ? PLAN_TEXT.table.shiftDisabledTooltip : PLAN_TEXT.table.shiftTooltip
+            }
+          >
+            <Button
+              size="small"
+              type="text"
+              icon={<SwapOutlined />}
+              onClick={() => onShiftPlanFromDate(entry.date)}
+              disabled={entry.hasReport}
+              aria-label={PLAN_TEXT.table.shiftAria(entry.date)}
             />
           </Tooltip>
           <Tooltip title={PLAN_TEXT.table.diaryTooltip}>
