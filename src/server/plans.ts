@@ -26,7 +26,7 @@ export type PlanEntryInput = {
 
 export type PlanEntriesUpdateResult =
   | { entries: PlanEntryWithReport[] }
-  | { error: "date_exists" | "not_found" | "invalid_entry_id" };
+  | { error: "date_exists" | "not_found" | "invalid_entry_id" | "date_locked_by_report" };
 
 export type PlanEntryTextUpdateResult = { updated: true } | { error: "not_found" };
 
@@ -104,6 +104,25 @@ export async function upsertPlanEntriesForDate(params: {
         if (entry.id && !existingIds.has(entry.id)) {
           return { error: "invalid_entry_id" as const };
         }
+      }
+    }
+
+    if (isEdit && date !== originalDate && existingRows.length > 0) {
+      const existingReportRows = await tx
+        .select({ id: workoutReports.id })
+        .from(workoutReports)
+        .where(
+          and(
+            eq(workoutReports.userId, userId),
+            inArray(
+              workoutReports.planEntryId,
+              existingRows.map((row) => row.id)
+            )
+          )
+        );
+
+      if (existingReportRows.length > 0) {
+        return { error: "date_locked_by_report" as const };
       }
     }
 

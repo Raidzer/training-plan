@@ -36,6 +36,9 @@ export type PlanEditorHandlers = {
   handleDeleteDay: () => void;
 };
 
+const isDraftDateLocked = (draft: PlanDraft) =>
+  Boolean(draft.originalDate) && draft.entries.some((entry) => entry.hasReport);
+
 export const usePlanEditor = ({
   entries,
   setEntries,
@@ -103,7 +106,7 @@ export const usePlanEditor = ({
       }
       updateDraft((prev) => ({
         ...prev,
-        date: value.format(PLAN_DATE_FORMAT),
+        date: isDraftDateLocked(prev) ? prev.date : value.format(PLAN_DATE_FORMAT),
       }));
     },
     [updateDraft]
@@ -188,6 +191,12 @@ export const usePlanEditor = ({
       return;
     }
 
+    const isDateChanged = Boolean(draft.originalDate) && normalizedDate !== draft.originalDate;
+    if (isDateChanged && isDraftDateLocked(draft)) {
+      msgApi.error(PLAN_TEXT.messages.dateLockedByReport);
+      return;
+    }
+
     if (
       entries.some((entry) => entry.date === normalizedDate && entry.date !== draft.originalDate)
     ) {
@@ -245,7 +254,9 @@ export const usePlanEditor = ({
 
       if (!res.ok || !data?.entries) {
         const errorCode = data?.error;
-        if (res.status === 409 || errorCode === "date_exists") {
+        if (errorCode === "date_locked_by_report") {
+          msgApi.error(PLAN_TEXT.messages.dateLockedByReport);
+        } else if (res.status === 409 || errorCode === "date_exists") {
           msgApi.error(PLAN_TEXT.messages.dateExists);
         } else if (res.status === 404 || errorCode === "not_found") {
           msgApi.error(PLAN_TEXT.messages.dayNotFound);

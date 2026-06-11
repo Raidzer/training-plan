@@ -218,6 +218,29 @@ describe("server/plans", () => {
     expect(result).toEqual({ error: "invalid_entry_id" });
   });
 
+  it("upsertPlanEntriesForDate должен запрещать смену даты дня с отчетом", async () => {
+    const { tx, updateWhereMock } = createTx([
+      [{ id: 1, date: "2026-01-01" }],
+      [{ id: 1 }],
+      [{ id: 20 }],
+    ]);
+    dbTransactionMock.mockImplementation(async (callback: (t: any) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await upsertPlanEntriesForDate({
+      userId: 5,
+      date: "2026-01-02",
+      originalDate: "2026-01-01",
+      isWorkload: false,
+      entries: [{ id: 1, taskText: "Run", commentText: null }],
+      isEdit: true,
+    });
+
+    expect(updateWhereMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ error: "date_locked_by_report" });
+  });
+
   it("upsertPlanEntriesForDate должен возвращать элементы при успешном создании", async () => {
     const updatedEntries = [
       {
