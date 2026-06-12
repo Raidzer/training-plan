@@ -24,8 +24,14 @@ vi.mock("@/server/diary", () => ({
 }));
 
 import { registerPlanCommands } from "@/bot/commands/handlers/planCommands";
-import { buildDailyReportMenuReplyKeyboard, buildLinkReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildDailyReportMenuReplyKeyboard,
+  buildLinkReplyKeyboard,
+  CUSTOM_DATE_BUTTON_TEXT,
+} from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, getPendingInput } from "@/bot/menu/menuState";
+
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
 
 type CommandHandler = (ctx: any) => Promise<unknown>;
 
@@ -164,14 +170,14 @@ describe("registerPlanCommands", () => {
     await (handlers.get("date") as CommandHandler)(missingCtx);
 
     expect(missingCtx.reply).toHaveBeenCalledWith(
-      'Выбери дату из списка или нажми "Произвольная дата".',
+      DATE_MENU_PROMPT_TEXT,
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
 
     await (handlers.get("date") as CommandHandler)(invalidCtx);
 
     expect(invalidCtx.reply).toHaveBeenCalledWith(
-      'Выбери дату из списка или нажми "Произвольная дата".',
+      DATE_MENU_PROMPT_TEXT,
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
     expect(getPendingInput(10)).toBe("dateMenu");

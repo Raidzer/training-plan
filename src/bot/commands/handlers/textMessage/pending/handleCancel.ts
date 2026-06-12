@@ -5,6 +5,7 @@ import {
   buildLinkReplyKeyboard,
   buildMainMenuReplyKeyboard,
   CANCEL_LINK_BUTTON_TEXT,
+  isButtonText,
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, clearRecoveryDraft, clearWeightDraft } from "@/bot/menu/menuState";
 
@@ -26,7 +27,7 @@ export const handleCancelIfRequested = async ({
     lower === "отмена" ||
     lower === "cancel" ||
     lower === "/cancel" ||
-    text === CANCEL_LINK_BUTTON_TEXT
+    isButtonText(text, CANCEL_LINK_BUTTON_TEXT)
   ) {
     clearPendingInput(chatId);
     clearRecoveryDraft(chatId);

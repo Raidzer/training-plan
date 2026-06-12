@@ -14,9 +14,12 @@ import {
   buildMainMenuReplyKeyboard,
   CUSTOM_DATE_BUTTON_TEXT,
   DATE_BACK_BUTTON_TEXT,
+  isButtonText,
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, setPendingInput } from "@/bot/menu/menuState";
 import { getPlanEntriesByDate } from "@/server/planEntries";
+
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
 
 type DateHandlerArgs = {
   ctx: any;
@@ -45,7 +48,7 @@ export const handleDatePending = async ({
   userId,
 }: DateHandlerArgs) => {
   if (pending === "dateMenu") {
-    if (text === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
       clearPendingInput(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
@@ -56,7 +59,7 @@ export const handleDatePending = async ({
       return;
     }
 
-    if (text === CUSTOM_DATE_BUTTON_TEXT) {
+    if (isButtonText(text, CUSTOM_DATE_BUTTON_TEXT)) {
       setPendingInput(chatId, "date");
       await ctx.reply("Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).", {
         reply_markup: buildBackReplyKeyboard(),
@@ -66,7 +69,7 @@ export const handleDatePending = async ({
 
     const parsedDate = parseDisplayDate(text);
     if (!parsedDate) {
-      await ctx.reply('Выбери дату из списка или нажми "Произвольная дата".');
+      await ctx.reply(DATE_MENU_PROMPT_TEXT);
       return;
     }
 
@@ -83,14 +86,14 @@ export const handleDatePending = async ({
     return;
   }
 
-  if (text === DATE_BACK_BUTTON_TEXT) {
+  if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
     setPendingInput(chatId, "dateMenu");
     const subscription = await getSubscription(userId);
     const timeZone = subscription?.timezone ?? null;
     const today = timeZone
       ? formatDateInTimeZone(new Date(), timeZone)
       : formatDateLocal(new Date());
-    await ctx.reply('Выбери дату из списка или нажми "Произвольная дата".', {
+    await ctx.reply(DATE_MENU_PROMPT_TEXT, {
       reply_markup: buildDateMenuReplyKeyboard({
         dateButtons: buildPlanDateButtons(today),
       }),

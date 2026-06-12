@@ -5,6 +5,7 @@ import {
   DATE_BUTTON_TEXT,
   HELP_BUTTON_TEXT,
   HIDE_MENU_BUTTON_TEXT,
+  isButtonText,
   LINK_BUTTON_TEXT,
   SUBSCRIBE_OFF_BUTTON_TEXT,
   SUBSCRIBE_ON_BUTTON_TEXT,
@@ -16,6 +17,39 @@ import {
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, clearRecoveryDraft, clearWeightDraft } from "@/bot/menu/menuState";
 
+type MenuAction =
+  | "link"
+  | "cancelLink"
+  | "today"
+  | "date"
+  | "dailyReport"
+  | "unsubscribe"
+  | "subscribe"
+  | "time"
+  | "timezone"
+  | "unlink"
+  | "help"
+  | "hideMenu"
+  | "weight"
+  | "aliceLink";
+
+const MENU_ACTION_BUTTONS: { buttonText: string; action: MenuAction }[] = [
+  { buttonText: LINK_BUTTON_TEXT, action: "link" },
+  { buttonText: CANCEL_LINK_BUTTON_TEXT, action: "cancelLink" },
+  { buttonText: TODAY_BUTTON_TEXT, action: "today" },
+  { buttonText: DATE_BUTTON_TEXT, action: "date" },
+  { buttonText: DAILY_REPORT_BUTTON_TEXT, action: "dailyReport" },
+  { buttonText: SUBSCRIBE_ON_BUTTON_TEXT, action: "unsubscribe" },
+  { buttonText: SUBSCRIBE_OFF_BUTTON_TEXT, action: "subscribe" },
+  { buttonText: TIME_BUTTON_TEXT, action: "time" },
+  { buttonText: TIMEZONE_BUTTON_TEXT, action: "timezone" },
+  { buttonText: UNLINK_BUTTON_TEXT, action: "unlink" },
+  { buttonText: HELP_BUTTON_TEXT, action: "help" },
+  { buttonText: HIDE_MENU_BUTTON_TEXT, action: "hideMenu" },
+  { buttonText: WEIGHT_BUTTON_TEXT, action: "weight" },
+  { buttonText: ALICE_LINK_BUTTON_TEXT, action: "aliceLink" },
+];
+
 export const resetPendingInput = (ctx: { chat?: { id: number } }) => {
   if (ctx.chat) {
     clearPendingInput(ctx.chat.id);
@@ -25,36 +59,11 @@ export const resetPendingInput = (ctx: { chat?: { id: number } }) => {
 };
 
 export const getMenuActionByText = (text: string) => {
-  switch (text) {
-    case LINK_BUTTON_TEXT:
-      return "link";
-    case CANCEL_LINK_BUTTON_TEXT:
-      return "cancelLink";
-    case TODAY_BUTTON_TEXT:
-      return "today";
-    case DATE_BUTTON_TEXT:
-      return "date";
-    case DAILY_REPORT_BUTTON_TEXT:
-      return "dailyReport";
-    case SUBSCRIBE_ON_BUTTON_TEXT:
-      return "unsubscribe";
-    case SUBSCRIBE_OFF_BUTTON_TEXT:
-      return "subscribe";
-    case TIME_BUTTON_TEXT:
-      return "time";
-    case TIMEZONE_BUTTON_TEXT:
-      return "timezone";
-    case UNLINK_BUTTON_TEXT:
-      return "unlink";
-    case HELP_BUTTON_TEXT:
-      return "help";
-    case HIDE_MENU_BUTTON_TEXT:
-      return "hideMenu";
-    case WEIGHT_BUTTON_TEXT:
-      return "weight";
-    case ALICE_LINK_BUTTON_TEXT:
-      return "aliceLink";
-    default:
-      return null;
+  for (const item of MENU_ACTION_BUTTONS) {
+    if (isButtonText(text, item.buttonText)) {
+      return item.action;
+    }
   }
+
+  return null;
 };

@@ -13,6 +13,13 @@ import {
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   buildWeightPeriodReplyKeyboard,
+  DATE_BACK_BUTTON_TEXT,
+  HELP_BUTTON_TEXT,
+  isButtonText,
+  isButtonTextWithValue,
+  LINK_BUTTON_TEXT,
+  RECOVERY_MFR_LABEL,
+  TODAY_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 
 describe("bot/menu/menuKeyboard", () => {
@@ -44,5 +51,21 @@ describe("bot/menu/menuKeyboard", () => {
         is_persistent: false,
       });
     }
+  });
+
+  it("добавляет иконки в основные кнопки меню", () => {
+    expect(buildLinkReplyKeyboard().keyboard[0][0].text).toBe(LINK_BUTTON_TEXT);
+    expect(buildMainMenuReplyKeyboard().keyboard[0][0].text).toBe(TODAY_BUTTON_TEXT);
+    expect(buildMainMenuReplyKeyboard().keyboard[5][1].text).toBe(HELP_BUTTON_TEXT);
+    expect(LINK_BUTTON_TEXT).toContain("🔗");
+    expect(TODAY_BUTTON_TEXT).toContain("📅");
+    expect(HELP_BUTTON_TEXT).toContain("❔");
+  });
+
+  it("сравнивает новые и старые подписи кнопок без учета иконки", () => {
+    expect(isButtonText("Назад", DATE_BACK_BUTTON_TEXT)).toBe(true);
+    expect(isButtonText("📅 Сегодня", TODAY_BUTTON_TEXT)).toBe(true);
+    expect(isButtonTextWithValue("МФР: нет", RECOVERY_MFR_LABEL)).toBe(true);
+    expect(isButtonTextWithValue(`${RECOVERY_MFR_LABEL}: нет`, RECOVERY_MFR_LABEL)).toBe(true);
   });
 });

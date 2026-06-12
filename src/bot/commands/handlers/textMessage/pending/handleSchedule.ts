@@ -6,6 +6,7 @@ import {
   buildTimeReplyKeyboard,
   buildTimezoneReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
+  isButtonText,
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput } from "@/bot/menu/menuState";
 
@@ -25,7 +26,7 @@ export const handleSchedulePending = async ({
   userId,
 }: ScheduleHandlerArgs) => {
   if (pending === "time") {
-    if (text === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
       clearPendingInput(chatId);
       const subscription = await getSubscription(userId);
       await ctx.reply("Меню управления ниже.", {
@@ -59,7 +60,7 @@ export const handleSchedulePending = async ({
     return;
   }
 
-  if (text === DATE_BACK_BUTTON_TEXT) {
+  if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
     clearPendingInput(chatId);
     const subscription = await getSubscription(userId);
     await ctx.reply("Меню управления ниже.", {

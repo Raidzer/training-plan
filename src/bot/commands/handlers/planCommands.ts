@@ -16,9 +16,12 @@ import {
   buildDailyReportMenuReplyKeyboard,
   buildDateMenuReplyKeyboard,
   buildLinkReplyKeyboard,
+  CUSTOM_DATE_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 import { setPendingInput } from "@/bot/menu/menuState";
 import { resetPendingInput } from "@/bot/commands/handlers/helpers";
+
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
 
 const buildPlanDateButtons = (today: string) => {
   return getNextIsoDates(today, 7).map((date) => {
@@ -85,7 +88,7 @@ export const registerPlanCommands = (bot: Bot) => {
       const today = timeZone
         ? formatDateInTimeZone(new Date(), timeZone)
         : formatDateLocal(new Date());
-      return ctx.reply('Выбери дату из списка или нажми "Произвольная дата".', {
+      return ctx.reply(DATE_MENU_PROMPT_TEXT, {
         reply_markup: buildDateMenuReplyKeyboard({
           dateButtons: buildPlanDateButtons(today),
         }),

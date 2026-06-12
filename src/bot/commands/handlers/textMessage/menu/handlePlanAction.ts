@@ -11,9 +11,12 @@ import {
   buildDailyReportMenuReplyKeyboard,
   buildDateMenuReplyKeyboard,
   buildMainMenuReplyKeyboard,
+  CUSTOM_DATE_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 import { setPendingInput } from "@/bot/menu/menuState";
 import { getPlanEntriesByDate } from "@/server/planEntries";
+
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
 
 type PlanMenuActionArgs = {
   ctx: any;
@@ -66,7 +69,7 @@ export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: Plan
     const label = formatDateForDisplay(date);
     return weekday ? `${label} (${weekday})` : label;
   });
-  await ctx.reply('Выбери дату из списка или нажми "Произвольная дата".', {
+  await ctx.reply(DATE_MENU_PROMPT_TEXT, {
     reply_markup: buildDateMenuReplyKeyboard({ dateButtons }),
   });
 };

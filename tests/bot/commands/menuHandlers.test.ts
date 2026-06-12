@@ -26,6 +26,7 @@ import { handleScheduleMenuAction } from "@/bot/commands/handlers/textMessage/me
 import { handleSubscriptionMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleSubscriptionAction";
 import {
   CANCEL_LINK_BUTTON_TEXT,
+  CUSTOM_DATE_BUTTON_TEXT,
   LINK_BUTTON_TEXT,
   buildLinkReplyKeyboard,
   buildMainMenuReplyKeyboard,
@@ -33,6 +34,8 @@ import {
   buildTimezoneReplyKeyboard,
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, getPendingInput, setPendingInput } from "@/bot/menu/menuState";
+
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
 
 function createContext() {
   return {
@@ -171,7 +174,7 @@ describe("bot menu handlers", () => {
 
     expect(getPendingInput(10)).toBe("dateMenu");
     expect(ctx.reply).toHaveBeenCalledWith(
-      'Выбери дату из списка или нажми "Произвольная дата".',
+      DATE_MENU_PROMPT_TEXT,
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
   });

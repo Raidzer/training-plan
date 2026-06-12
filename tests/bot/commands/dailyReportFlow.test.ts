@@ -37,7 +37,9 @@ import {
   buildBackReplyKeyboard,
   buildDailyReportMenuReplyKeyboard,
   buildMainMenuReplyKeyboard,
+  DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT,
   DATE_BACK_BUTTON_TEXT,
+  TODAY_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 
 describe("daily report flow", () => {
@@ -75,7 +77,7 @@ describe("daily report flow", () => {
       ctx,
       chatId: 10,
       userId: 20,
-      text: "Произвольная дата",
+      text: DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT,
       pending: "dailyReportMenu",
     });
 
@@ -149,7 +151,7 @@ describe("daily report flow", () => {
       ctx,
       chatId: 10,
       userId: 20,
-      text: "Сегодня",
+      text: TODAY_BUTTON_TEXT,
       pending: "dailyReportMenu",
     });
 

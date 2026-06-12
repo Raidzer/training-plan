@@ -21,6 +21,8 @@ import {
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, getPendingInput, setPendingInput } from "@/bot/menu/menuState";
 
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
+
 function createContext() {
   return {
     reply: vi.fn(),
@@ -86,7 +88,7 @@ describe("handleDatePending", () => {
     });
 
     expect(datePendingMocks.getPlanEntriesByDateMock).not.toHaveBeenCalled();
-    expect(ctx.reply).toHaveBeenCalledWith('Выбери дату из списка или нажми "Произвольная дата".');
+    expect(ctx.reply).toHaveBeenCalledWith(DATE_MENU_PROMPT_TEXT);
   });
 
   it("должен показывать план по дате из меню", async () => {
@@ -144,7 +146,7 @@ describe("handleDatePending", () => {
 
     expect(getPendingInput(10)).toBe("dateMenu");
     expect(ctx.reply).toHaveBeenCalledWith(
-      'Выбери дату из списка или нажми "Произвольная дата".',
+      DATE_MENU_PROMPT_TEXT,
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
   });
