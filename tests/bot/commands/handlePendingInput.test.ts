@@ -116,7 +116,10 @@ describe("handlePendingInput", () => {
     const ctx = await runPending("dateMenu");
 
     expect(pendingMocks.clearPendingInputMock).toHaveBeenCalledWith(10);
-    expect(ctx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
+    expect(ctx.reply).toHaveBeenCalledWith(
+      "Сначала свяжите аккаунт кнопкой ниже.",
+      expect.objectContaining({ reply_markup: expect.any(Object) })
+    );
     expect(pendingMocks.handleDatePendingMock).not.toHaveBeenCalled();
   });
 

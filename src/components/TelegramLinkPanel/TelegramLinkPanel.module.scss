@@ -18,6 +18,25 @@
   margin: 16px 0;
 }
 
+.subscriptionSettings {
+  display: grid;
+  gap: 12px;
+  max-width: 360px;
+  margin: 16px 0;
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timeField {
+  display: grid;
+  gap: 6px;
+}
+
 .codeCard {
   margin-top: 12px;
 }

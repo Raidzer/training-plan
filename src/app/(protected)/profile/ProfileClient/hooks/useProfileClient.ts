@@ -2,11 +2,13 @@
 
 import { Form } from "antd";
 import type { MessageInstance } from "antd/es/message/interface";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { buildTimezoneOptions } from "@/shared/constants/timezones";
 import { PROFILE_LABELS } from "../constants/profileConstants";
 import type {
+  DeleteProfileApiResponse,
+  DeleteProfileFormValues,
   EmailApiResponse,
   EmailFormValues,
   PasswordApiResponse,
@@ -16,6 +18,7 @@ import type {
   ProfileUserData,
 } from "../types/profileTypes";
 import {
+  canDeleteProfileRole,
   hasProfileValuesChanged,
   normalizeProfileUserData,
   normalizeProfileValues,
@@ -33,15 +36,18 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
   const [profileForm] = Form.useForm<ProfileFormValues>();
   const [passwordForm] = Form.useForm<PasswordFormValues>();
   const [emailForm] = Form.useForm<EmailFormValues>();
+  const [deleteProfileForm] = Form.useForm<DeleteProfileFormValues>();
   const [userData, setUserData] = useState(() => normalizeProfileUserData(initialUserData));
   const [formValues, setFormValues] = useState<ProfileFormValues>(() =>
     toProfileFormValues(initialUserData)
   );
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [deleteProfileModalOpen, setDeleteProfileModalOpen] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState(false);
 
   const initialValues = useMemo(() => toProfileFormValues(userData), [userData]);
   const hasProfileChanges = useMemo(
@@ -49,6 +55,7 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
     [formValues, initialValues]
   );
   const isEmailVerified = Boolean(session?.user?.emailVerified);
+  const canDeleteProfile = canDeleteProfileRole(userData.role);
 
   const timezoneOptions = useMemo(() => {
     return buildTimezoneOptions(new Date(), [userData.timezone]);
@@ -58,7 +65,10 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
     if (!nextUserData) {
       return;
     }
-    const normalizedUserData = normalizeProfileUserData(nextUserData);
+    const normalizedUserData = normalizeProfileUserData({
+      ...nextUserData,
+      role: nextUserData.role ?? userData.role,
+    });
     const nextFormValues = toProfileFormValues(normalizedUserData);
     setUserData(normalizedUserData);
     setFormValues(nextFormValues);
@@ -116,6 +126,11 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
     setEmailModalOpen(true);
   };
 
+  const openDeleteProfileModal = () => {
+    deleteProfileForm.resetFields();
+    setDeleteProfileModalOpen(true);
+  };
+
   const closePasswordModal = () => {
     setPasswordModalOpen(false);
     passwordForm.resetFields();
@@ -124,6 +139,11 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
   const closeEmailModal = () => {
     setEmailModalOpen(false);
     emailForm.resetFields();
+  };
+
+  const closeDeleteProfileModal = () => {
+    setDeleteProfileModalOpen(false);
+    deleteProfileForm.resetFields();
   };
 
   const handleChangePassword = async () => {
@@ -225,27 +245,76 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
     }
   };
 
+  const handleDeleteProfile = async () => {
+    const values = await deleteProfileForm.validateFields();
+    setDeletingProfile(true);
+
+    try {
+      const response = await fetch("/api/profile", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await readJson<DeleteProfileApiResponse>(response);
+
+      if (response.status === 403 && data?.error === "invalid_current_password") {
+        deleteProfileForm.setFields([
+          {
+            name: "currentPassword",
+            errors: [PROFILE_LABELS.invalidCurrentPassword],
+          },
+        ]);
+        return;
+      }
+
+      if (response.status === 403 && data?.error === "forbidden") {
+        messageApi.error(PROFILE_LABELS.deleteProfileForbidden);
+        return;
+      }
+
+      if (!response.ok || !data?.success) {
+        messageApi.error(PROFILE_LABELS.deleteProfileFail);
+        return;
+      }
+
+      messageApi.success(PROFILE_LABELS.deleteProfileSuccess);
+      closeDeleteProfileModal();
+      await signOut({ callbackUrl: "/login" });
+    } catch {
+      messageApi.error(PROFILE_LABELS.deleteProfileError);
+    } finally {
+      setDeletingProfile(false);
+    }
+  };
+
   return {
     profileForm,
     passwordForm,
     emailForm,
+    deleteProfileForm,
     userData,
     initialValues,
     timezoneOptions,
     hasProfileChanges,
     isEmailVerified,
+    canDeleteProfile,
     passwordModalOpen,
     emailModalOpen,
+    deleteProfileModalOpen,
     savingProfile,
     savingPassword,
     savingEmail,
+    deletingProfile,
     handleProfileValuesChange,
     handleSaveProfile,
     openPasswordModal,
     openEmailModal,
+    openDeleteProfileModal,
     closePasswordModal,
     closeEmailModal,
+    closeDeleteProfileModal,
     handleChangePassword,
     handleChangeEmail,
+    handleDeleteProfile,
   };
 };

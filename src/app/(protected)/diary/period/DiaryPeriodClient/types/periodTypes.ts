@@ -7,6 +7,7 @@ export type DayStatus = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  hasSleep: boolean;
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;

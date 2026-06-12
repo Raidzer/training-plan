@@ -1,5 +1,6 @@
 import { ADMIN_USERS_LABELS, ROLE_META } from "../constants/adminUsersConstants";
 import type { AdminUserRow } from "../types/adminUsersTypes";
+import { ROLES } from "@/shared/constants";
 
 export const getRoleMeta = (value: string) => {
   const normalized = value.trim().toLowerCase();
@@ -55,6 +56,10 @@ export const getGenderLabel = (value: string) => {
   return value || "-";
 };
 
+export const canDeleteAdminUser = (user: AdminUserRow) => {
+  return user.role !== ROLES.ADMIN;
+};
+
 const getApiError = (value: unknown) => {
   if (!value || typeof value !== "object") {
     return null;
@@ -92,6 +97,8 @@ export const getApiErrorMessage = (value: unknown, fallback: string) => {
       return ADMIN_USERS_LABELS.notFound;
     case "cannot_disable_self":
       return ADMIN_USERS_LABELS.cannotDisableSelf;
+    case "forbidden_admin_delete":
+      return ADMIN_USERS_LABELS.cannotDeleteAdmin;
     default:
       return fallback;
   }

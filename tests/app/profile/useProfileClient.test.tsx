@@ -3,11 +3,13 @@ import type { MessageInstance } from "antd/es/message/interface";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const profileSessionMocks = vi.hoisted(() => ({
+  signOutMock: vi.fn(),
   updateMock: vi.fn(),
   useSessionMock: vi.fn(),
 }));
 
 vi.mock("next-auth/react", () => ({
+  signOut: profileSessionMocks.signOutMock,
   useSession: profileSessionMocks.useSessionMock,
 }));
 
@@ -41,6 +43,7 @@ function createUserData(overrides: Partial<ProfileUserData> = {}): ProfileUserDa
     lastName: "Петров",
     gender: "male",
     timezone: "Europe/Moscow",
+    role: "athlete",
     ...overrides,
   };
 }
@@ -60,6 +63,7 @@ function renderProfileHook(messageApi = createMessageApi()) {
 describe("useProfileClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    profileSessionMocks.signOutMock.mockResolvedValue(undefined);
     profileSessionMocks.updateMock.mockResolvedValue(undefined);
     profileSessionMocks.useSessionMock.mockReturnValue({
       data: {
@@ -122,6 +126,18 @@ describe("useProfileClient", () => {
       result.current.closeEmailModal();
     });
     expect(result.current.emailModalOpen).toBe(false);
+
+    expect(result.current.canDeleteProfile).toBe(true);
+
+    act(() => {
+      result.current.openDeleteProfileModal();
+    });
+    expect(result.current.deleteProfileModalOpen).toBe(true);
+
+    act(() => {
+      result.current.closeDeleteProfileModal();
+    });
+    expect(result.current.deleteProfileModalOpen).toBe(false);
   });
 
   it("должен сохранять профиль и обновлять сессию", async () => {
@@ -419,5 +435,74 @@ describe("useProfileClient", () => {
 
     expect(messageApi.error).toHaveBeenCalledWith(PROFILE_LABELS.emailUpdateError);
     expect(result.current.savingEmail).toBe(false);
+  });
+
+  it("должен удалять профиль и обрабатывать ошибки удаления", async () => {
+    const { result, messageApi } = renderProfileHook();
+    const setDeleteFieldsSpy = vi.spyOn(result.current.deleteProfileForm, "setFields");
+
+    vi.spyOn(result.current.deleteProfileForm, "validateFields").mockResolvedValue({
+      currentPassword: "secret",
+    } as any);
+
+    act(() => {
+      result.current.openDeleteProfileModal();
+      result.current.deleteProfileForm.setFieldsValue({
+        currentPassword: "secret",
+      });
+    });
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        createResponse({ error: "invalid_current_password" }, 403)
+      ) as unknown as typeof fetch;
+
+    await act(async () => {
+      await result.current.handleDeleteProfile();
+    });
+
+    expect(setDeleteFieldsSpy).toHaveBeenCalledWith([
+      {
+        name: "currentPassword",
+        errors: [PROFILE_LABELS.invalidCurrentPassword],
+      },
+    ]);
+    expect(profileSessionMocks.signOutMock).not.toHaveBeenCalled();
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(createResponse({ success: true })) as unknown as typeof fetch;
+
+    await act(async () => {
+      await result.current.handleDeleteProfile();
+    });
+
+    expect(result.current.deleteProfileModalOpen).toBe(false);
+    expect(messageApi.success).toHaveBeenCalledWith(PROFILE_LABELS.deleteProfileSuccess);
+    expect(profileSessionMocks.signOutMock).toHaveBeenCalledWith({ callbackUrl: "/login" });
+
+    act(() => {
+      result.current.openDeleteProfileModal();
+    });
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(createResponse({ error: "forbidden" }, 403)) as unknown as typeof fetch;
+
+    await act(async () => {
+      await result.current.handleDeleteProfile();
+    });
+
+    expect(messageApi.error).toHaveBeenCalledWith(PROFILE_LABELS.deleteProfileForbidden);
+
+    global.fetch = vi.fn().mockRejectedValue(new Error("network")) as unknown as typeof fetch;
+
+    await act(async () => {
+      await result.current.handleDeleteProfile();
+    });
+
+    expect(messageApi.error).toHaveBeenCalledWith(PROFILE_LABELS.deleteProfileError);
+    expect(result.current.deletingProfile).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Typography, message } from "antd";
+import { Alert, Button, Card, Input, Switch, Typography, message } from "antd";
 import styles from "./TelegramLinkPanel.module.scss";
 
 type StatusResponse = {
@@ -24,6 +24,14 @@ type LinkCodeResponse = {
   code: string;
   expiresAt: string;
 };
+
+type SubscriptionUpdateResponse = {
+  success: boolean;
+  subscription: NonNullable<StatusResponse["subscription"]>;
+};
+
+const DEFAULT_SEND_TIME = "07:30";
+const SEND_TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 const getApiError = (value: unknown) => {
   if (!value || typeof value !== "object") {
@@ -84,8 +92,18 @@ export function TelegramLinkPanel() {
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [sending, setSending] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
+  const [savingSubscription, setSavingSubscription] = useState(false);
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
   const [issuedExpiresAt, setIssuedExpiresAt] = useState<string | null>(null);
+  const [subscriptionEnabled, setSubscriptionEnabled] = useState(false);
+  const [sendTime, setSendTime] = useState(DEFAULT_SEND_TIME);
+
+  const applyStatus = useCallback((nextStatus: StatusResponse) => {
+    const normalizedStatus = normalizeStatus(nextStatus);
+    setStatus(normalizedStatus);
+    setSubscriptionEnabled(normalizedStatus.subscription?.enabled ?? false);
+    setSendTime(normalizedStatus.subscription?.sendTime ?? DEFAULT_SEND_TIME);
+  }, []);
 
   const loadStatus = useCallback(
     async (showError = true) => {
@@ -101,7 +119,7 @@ export function TelegramLinkPanel() {
           setStatus(null);
           return;
         }
-        setStatus(normalizeStatus(data as StatusResponse));
+        applyStatus(data as StatusResponse);
       } catch (error) {
         if (showError) {
           messageApi.error("Не удалось загрузить статус");
@@ -111,7 +129,7 @@ export function TelegramLinkPanel() {
         setLoadingStatus(false);
       }
     },
-    [messageApi]
+    [applyStatus, messageApi]
   );
 
   useEffect(() => {
@@ -126,7 +144,7 @@ export function TelegramLinkPanel() {
           setStatus(null);
           return;
         }
-        setStatus(normalizeStatus(data as StatusResponse));
+        applyStatus(data as StatusResponse);
       })
       .catch((error) => {
         if (!active) {
@@ -143,7 +161,7 @@ export function TelegramLinkPanel() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [applyStatus]);
 
   const linked = Boolean(status?.linked);
   const telegramLabel = getTelegramLabel(status);
@@ -214,6 +232,52 @@ export function TelegramLinkPanel() {
     }
   };
 
+  const handleSubscriptionSave = async () => {
+    if (subscriptionEnabled && !SEND_TIME_REGEX.test(sendTime)) {
+      messageApi.error("Укажите время рассылки в формате HH:MM");
+      return;
+    }
+
+    setSavingSubscription(true);
+    try {
+      const res = await fetch("/api/telegram/subscription", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          enabled: subscriptionEnabled,
+          sendTime: sendTime || null,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const apiError = getApiError(data);
+        messageApi.error(apiError?.error ?? "Не удалось сохранить настройки рассылки");
+        return;
+      }
+
+      const payload = data as SubscriptionUpdateResponse;
+      setSubscriptionEnabled(payload.subscription.enabled);
+      setSendTime(payload.subscription.sendTime ?? DEFAULT_SEND_TIME);
+      setStatus((current) => {
+        if (!current) {
+          return current;
+        }
+        return {
+          ...current,
+          subscription: payload.subscription,
+        };
+      });
+      messageApi.success("Настройки рассылки сохранены");
+    } catch (error) {
+      messageApi.error("Не удалось сохранить настройки рассылки");
+      console.error(error);
+    } finally {
+      setSavingSubscription(false);
+    }
+  };
+
   return (
     <section className={styles.panel}>
       {contextHolder}
@@ -221,7 +285,7 @@ export function TelegramLinkPanel() {
         Telegram
       </Typography.Title>
       <Typography.Paragraph type="secondary" className={styles.subtitle}>
-        Получите код и отправьте его боту командой /link, чтобы связать аккаунт.
+        Получите код, нажмите в боте «Привязать аккаунт» и отправьте код сообщением.
       </Typography.Paragraph>
 
       {loadingStatus ? (
@@ -242,6 +306,37 @@ export function TelegramLinkPanel() {
               <Typography.Paragraph type="secondary" className={styles.subtitle}>
                 {subscriptionInfo}
               </Typography.Paragraph>
+              <div className={styles.subscriptionSettings}>
+                <div className={styles.settingRow}>
+                  <Typography.Text>Подписка на рассылку</Typography.Text>
+                  <Switch
+                    checked={subscriptionEnabled}
+                    onChange={(checked) => {
+                      setSubscriptionEnabled(checked);
+                    }}
+                    aria-label="Подписка на рассылку"
+                  />
+                </div>
+                <label className={styles.timeField}>
+                  <Typography.Text>Время рассылки</Typography.Text>
+                  <Input
+                    aria-label="Время рассылки"
+                    type="time"
+                    value={sendTime}
+                    onChange={(event) => {
+                      setSendTime(event.target.value);
+                    }}
+                    status={subscriptionEnabled && !SEND_TIME_REGEX.test(sendTime) ? "error" : ""}
+                  />
+                </label>
+                <Button
+                  type="primary"
+                  onClick={handleSubscriptionSave}
+                  loading={savingSubscription}
+                >
+                  Сохранить настройки рассылки
+                </Button>
+              </div>
               <div className={styles.actions}>
                 <Button danger onClick={handleUnlink} loading={unlinking}>
                   Отвязать Telegram
@@ -266,9 +361,9 @@ export function TelegramLinkPanel() {
 
           {!linked && issuedCode && (
             <Card type="inner" className={styles.codeCard}>
-              <Typography.Text>Отправьте боту команду:</Typography.Text>
+              <Typography.Text>Отправьте боту код:</Typography.Text>
               <Typography.Title level={4} className={styles.code}>
-                /link {issuedCode}
+                {issuedCode}
               </Typography.Title>
               <Typography.Text type="secondary">
                 Код действует до {formatDate(issuedExpiresAt)}.

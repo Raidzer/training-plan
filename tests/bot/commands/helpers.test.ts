@@ -47,6 +47,18 @@ describe("bot/commands/handlers/helpers", () => {
     expect(getMenuActionByText(ALICE_LINK_BUTTON_TEXT)).toBe("aliceLink");
   });
 
+  it("должен принимать старые подписи кнопок без иконок", () => {
+    expect(getMenuActionByText("Привязать аккаунт")).toBe("link");
+    expect(getMenuActionByText("Сегодня")).toBe("today");
+    expect(getMenuActionByText("Другая дата")).toBe("date");
+    expect(getMenuActionByText("Ежедневный отчет")).toBe("dailyReport");
+    expect(getMenuActionByText("Подписка: ВКЛ")).toBe("unsubscribe");
+    expect(getMenuActionByText("Подписка: ВЫКЛ")).toBe("subscribe");
+    expect(getMenuActionByText("Время рассылки")).toBe("time");
+    expect(getMenuActionByText("Часовой пояс")).toBe("timezone");
+    expect(getMenuActionByText("Скрыть меню")).toBe("hideMenu");
+  });
+
   it("должен возвращать null для неизвестного текста", () => {
     expect(getMenuActionByText("неизвестно")).toBeNull();
   });

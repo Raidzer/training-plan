@@ -1,4 +1,5 @@
 import { DEFAULT_TIMEZONE } from "@/shared/constants/timezones";
+import { ROLES } from "@/shared/constants";
 import type { ProfileApiUserData, ProfileFormValues, ProfileUserData } from "../types/profileTypes";
 
 export const normalizeProfileValues = (values: ProfileFormValues): ProfileFormValues => ({
@@ -34,7 +35,12 @@ export const normalizeProfileUserData = (userData: ProfileApiUserData): ProfileU
   ...userData,
   id: String(userData.id),
   lastName: userData.lastName ?? "",
+  role: userData.role ?? "",
 });
+
+export const canDeleteProfileRole = (role: string) => {
+  return role !== ROLES.ADMIN;
+};
 
 export async function readJson<T>(response: Response): Promise<T | null> {
   return response.json().catch(() => null) as Promise<T | null>;

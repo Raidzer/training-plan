@@ -49,6 +49,7 @@ export type DayStatus = {
   date: string;
   hasWeightMorning: boolean;
   hasWeightEvening: boolean;
+  hasSleep: boolean;
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;

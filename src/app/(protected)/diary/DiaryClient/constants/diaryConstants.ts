@@ -58,6 +58,9 @@ export const STATUS_LABELS = {
   weightLabel: "Вес",
   weightMorningShort: "У",
   weightEveningShort: "В",
+  sleepLabel: "Сон",
+  sleepFilledShort: "Да",
+  sleepEmptyShort: "-",
   workoutsLabel: "Тренировки",
 } as const;
 

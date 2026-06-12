@@ -47,6 +47,7 @@ const dayPayload = {
     date: "2026-01-10",
     hasWeightMorning: false,
     hasWeightEvening: false,
+    hasSleep: false,
     workoutsTotal: 0,
     workoutsWithFullReport: 0,
     dayHasReport: false,

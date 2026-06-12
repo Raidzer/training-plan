@@ -8,6 +8,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { TelegramLinkPanel } from "@/components/TelegramLinkPanel/TelegramLinkPanel";
 import { ChangeEmailModal } from "./components/ChangeEmailModal/ChangeEmailModal";
 import { ChangePasswordModal } from "./components/ChangePasswordModal/ChangePasswordModal";
+import { DeleteProfileModal } from "./components/DeleteProfileModal/DeleteProfileModal";
+import { DeleteProfileSection } from "./components/DeleteProfileSection/DeleteProfileSection";
 import { ProfileDetailsForm } from "./components/ProfileDetailsForm/ProfileDetailsForm";
 import { PROFILE_LABELS } from "./constants/profileConstants";
 import { useProfileClient } from "./hooks/useProfileClient";
@@ -20,24 +22,31 @@ export const ProfileClient = ({ userData: initialUserData }: ProfileClientProps)
     profileForm,
     passwordForm,
     emailForm,
+    deleteProfileForm,
     userData,
     initialValues,
     timezoneOptions,
     hasProfileChanges,
     isEmailVerified,
+    canDeleteProfile,
     passwordModalOpen,
     emailModalOpen,
+    deleteProfileModalOpen,
     savingProfile,
     savingPassword,
     savingEmail,
+    deletingProfile,
     handleProfileValuesChange,
     handleSaveProfile,
     openPasswordModal,
     openEmailModal,
+    openDeleteProfileModal,
     closePasswordModal,
     closeEmailModal,
+    closeDeleteProfileModal,
     handleChangePassword,
     handleChangeEmail,
+    handleDeleteProfile,
   } = useProfileClient({
     initialUserData,
     messageApi: message,
@@ -74,6 +83,11 @@ export const ProfileClient = ({ userData: initialUserData }: ProfileClientProps)
         <div className={styles.telegramSection}>
           <TelegramLinkPanel />
         </div>
+
+        <DeleteProfileSection
+          canDeleteProfile={canDeleteProfile}
+          onOpenDeleteModal={openDeleteProfileModal}
+        />
       </Card>
 
       <ChangeEmailModal
@@ -90,6 +104,14 @@ export const ProfileClient = ({ userData: initialUserData }: ProfileClientProps)
         saving={savingPassword}
         onCancel={closePasswordModal}
         onSubmit={handleChangePassword}
+      />
+
+      <DeleteProfileModal
+        form={deleteProfileForm}
+        open={deleteProfileModalOpen}
+        saving={deletingProfile}
+        onCancel={closeDeleteProfileModal}
+        onSubmit={handleDeleteProfile}
       />
     </main>
   );

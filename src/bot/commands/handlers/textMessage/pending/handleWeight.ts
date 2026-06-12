@@ -6,12 +6,14 @@ import {
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
+  buildBackReplyKeyboard,
   buildMainMenuReplyKeyboard,
   buildRecoveryReplyKeyboard,
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   buildWeightPeriodReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
+  isButtonText,
   REPORT_MAIN_MENU_BUTTON_TEXT,
   REPORT_RECOVERY_BUTTON_TEXT,
   REPORT_WEIGHT_BUTTON_TEXT,
@@ -33,6 +35,9 @@ import { upsertWeightEntry } from "@/server/weightEntries";
 import { getRecoveryEntryByDate } from "@/server/recoveryEntries";
 import { formatSleepTimeValue } from "@/bot/utils/sleepTime";
 
+const WEIGHT_DATE_MENU_PROMPT_TEXT = `Выбери дату: "${WEIGHT_TODAY_BUTTON_TEXT}" или "${WEIGHT_CUSTOM_DATE_BUTTON_TEXT}".`;
+const WEIGHT_PERIOD_PROMPT_TEXT = `Выбери "${WEIGHT_MORNING_BUTTON_TEXT}" или "${WEIGHT_EVENING_BUTTON_TEXT}".`;
+
 type WeightHandlerArgs = {
   ctx: any;
   chatId: number;
@@ -49,7 +54,7 @@ export const handleWeightPending = async ({
   userId,
 }: WeightHandlerArgs) => {
   if (pending === "weightDateMenu") {
-    if (text === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
@@ -62,7 +67,7 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (text === WEIGHT_TODAY_BUTTON_TEXT) {
+    if (isButtonText(text, WEIGHT_TODAY_BUTTON_TEXT)) {
       const subscription = await getSubscription(userId);
       const timeZone = subscription?.timezone ?? null;
       const today = timeZone
@@ -76,22 +81,22 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (text === WEIGHT_CUSTOM_DATE_BUTTON_TEXT) {
+    if (isButtonText(text, WEIGHT_CUSTOM_DATE_BUTTON_TEXT)) {
       setPendingInput(chatId, "weightDate");
-      await ctx.reply(
-        "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
-      );
+      await ctx.reply("Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).", {
+        reply_markup: buildBackReplyKeyboard(),
+      });
       return;
     }
 
-    await ctx.reply('Выбери дату: "Сегодня" или "Произвольная дата".', {
+    await ctx.reply(WEIGHT_DATE_MENU_PROMPT_TEXT, {
       reply_markup: buildWeightDateReplyKeyboard(),
     });
     return;
   }
 
   if (pending === "weightDate") {
-    if (text === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
       setPendingInput(chatId, "weightDateMenu");
       await ctx.reply("Когда зафиксировать вес?", {
         reply_markup: buildWeightDateReplyKeyboard(),
@@ -101,9 +106,9 @@ export const handleWeightPending = async ({
 
     const parsedDate = parseDisplayDate(text);
     if (!parsedDate) {
-      await ctx.reply(
-        "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
-      );
+      await ctx.reply("Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).", {
+        reply_markup: buildBackReplyKeyboard(),
+      });
       return;
     }
 
@@ -116,7 +121,7 @@ export const handleWeightPending = async ({
   }
 
   if (pending === "weightAction") {
-    if (text === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
       setPendingInput(chatId, "weightDateMenu");
@@ -137,7 +142,7 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (text === REPORT_WEIGHT_BUTTON_TEXT) {
+    if (isButtonText(text, REPORT_WEIGHT_BUTTON_TEXT)) {
       setPendingInput(chatId, "weightPeriod");
       await ctx.reply("Выбери период взвешивания.", {
         reply_markup: buildWeightPeriodReplyKeyboard(),
@@ -145,7 +150,7 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (text === REPORT_RECOVERY_BUTTON_TEXT) {
+    if (isButtonText(text, REPORT_RECOVERY_BUTTON_TEXT)) {
       const recoveryEntry = await getRecoveryEntryByDate({
         userId,
         date: draft.date,
@@ -173,7 +178,7 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (text === REPORT_MAIN_MENU_BUTTON_TEXT) {
+    if (isButtonText(text, REPORT_MAIN_MENU_BUTTON_TEXT)) {
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
@@ -193,7 +198,7 @@ export const handleWeightPending = async ({
   }
 
   if (pending === "weightPeriod") {
-    if (text === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
       setPendingInput(chatId, "weightAction");
       await ctx.reply("Выбери действие.", {
         reply_markup: buildWeightActionReplyKeyboard(),
@@ -212,22 +217,26 @@ export const handleWeightPending = async ({
       return;
     }
 
-    if (text === WEIGHT_MORNING_BUTTON_TEXT || text === WEIGHT_EVENING_BUTTON_TEXT) {
-      const period = text === WEIGHT_MORNING_BUTTON_TEXT ? "morning" : "evening";
+    const isMorningWeight = isButtonText(text, WEIGHT_MORNING_BUTTON_TEXT);
+    const isEveningWeight = isButtonText(text, WEIGHT_EVENING_BUTTON_TEXT);
+    if (isMorningWeight || isEveningWeight) {
+      const period = isMorningWeight ? "morning" : "evening";
       const periodLabel = period === "morning" ? "утренний" : "вечерний";
       setWeightDraft(chatId, { period });
       setPendingInput(chatId, "weightValue");
-      await ctx.reply(`Введите ${periodLabel} вес в кг (например, 72.4) или напишите 'отмена'.`);
+      await ctx.reply(`Введите ${periodLabel} вес в кг (например, 72.4).`, {
+        reply_markup: buildBackReplyKeyboard(),
+      });
       return;
     }
 
-    await ctx.reply("Выбери утренний или вечерний вес.", {
+    await ctx.reply(WEIGHT_PERIOD_PROMPT_TEXT, {
       reply_markup: buildWeightPeriodReplyKeyboard(),
     });
     return;
   }
 
-  if (text === DATE_BACK_BUTTON_TEXT) {
+  if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
     setPendingInput(chatId, "weightPeriod");
     await ctx.reply("Выбери период взвешивания.", {
       reply_markup: buildWeightPeriodReplyKeyboard(),
@@ -237,13 +246,17 @@ export const handleWeightPending = async ({
 
   const normalized = text.replace(",", ".");
   if (!/^\d{1,3}(?:\.\d{1})?$/.test(normalized)) {
-    await ctx.reply("Введите вес в кг (например, 72.4) или напишите 'отмена'.");
+    await ctx.reply("Введите вес в кг (например, 72.4).", {
+      reply_markup: buildBackReplyKeyboard(),
+    });
     return;
   }
 
   const weightKgInput = Number(normalized);
   if (!Number.isFinite(weightKgInput) || weightKgInput <= 0) {
-    await ctx.reply("Введите вес в кг (например, 72.4) или напишите 'отмена'.");
+    await ctx.reply("Введите вес в кг (например, 72.4).", {
+      reply_markup: buildBackReplyKeyboard(),
+    });
     return;
   }
   const weightKg = Math.round(weightKgInput * 10) / 10;

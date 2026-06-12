@@ -1,11 +1,12 @@
 import { formatDateInTimeZone, formatDateLocal, parseDisplayDate } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
-  buildCancelReplyKeyboard,
+  buildBackReplyKeyboard,
   buildDailyReportMenuReplyKeyboard,
   buildMainMenuReplyKeyboard,
   DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT,
   DATE_BACK_BUTTON_TEXT,
+  isButtonText,
   TODAY_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, setPendingInput } from "@/bot/menu/menuState";
@@ -19,8 +20,8 @@ type DailyReportHandlerArgs = {
   userId: number;
 };
 
-const DATE_PROMPT_TEXT =
-  'Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или нажмите кнопку "Отмена".';
+const DATE_PROMPT_TEXT = "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).";
+const DAILY_REPORT_MENU_PROMPT_TEXT = `Нажми "${TODAY_BUTTON_TEXT}", "${DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT}" или "${DATE_BACK_BUTTON_TEXT}".`;
 
 const replyWithDailyReport = async (params: {
   ctx: any;
@@ -58,7 +59,7 @@ export const handleDailyReportPending = async ({
   const subscribed = subscription?.enabled ?? false;
 
   if (pending === "dailyReportMenu") {
-    if (text === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
       clearPendingInput(chatId);
       await ctx.reply("Меню управления ниже.", {
         reply_markup: buildMainMenuReplyKeyboard({
@@ -68,7 +69,7 @@ export const handleDailyReportPending = async ({
       return;
     }
 
-    if (text === TODAY_BUTTON_TEXT) {
+    if (isButtonText(text, TODAY_BUTTON_TEXT)) {
       const today = timeZone
         ? formatDateInTimeZone(new Date(), timeZone)
         : formatDateLocal(new Date());
@@ -84,15 +85,23 @@ export const handleDailyReportPending = async ({
       return;
     }
 
-    if (text === DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT) {
+    if (isButtonText(text, DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT)) {
       setPendingInput(chatId, "dailyReportDate");
       await ctx.reply(DATE_PROMPT_TEXT, {
-        reply_markup: buildCancelReplyKeyboard(),
+        reply_markup: buildBackReplyKeyboard(),
       });
       return;
     }
 
-    await ctx.reply('Нажми "Сегодня", "Произвольная дата" или "Назад".', {
+    await ctx.reply(DAILY_REPORT_MENU_PROMPT_TEXT, {
+      reply_markup: buildDailyReportMenuReplyKeyboard(),
+    });
+    return;
+  }
+
+  if (isButtonText(text, DATE_BACK_BUTTON_TEXT)) {
+    setPendingInput(chatId, "dailyReportMenu");
+    await ctx.reply("Выбери дату для ежедневного отчета.", {
       reply_markup: buildDailyReportMenuReplyKeyboard(),
     });
     return;
@@ -101,7 +110,7 @@ export const handleDailyReportPending = async ({
   const parsedDate = parseDisplayDate(text);
   if (!parsedDate) {
     await ctx.reply(DATE_PROMPT_TEXT, {
-      reply_markup: buildCancelReplyKeyboard(),
+      reply_markup: buildBackReplyKeyboard(),
     });
     return;
   }

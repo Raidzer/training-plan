@@ -6,7 +6,7 @@ import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
 import { useState } from "react";
 import { ADMIN_USERS_LABELS } from "../constants/adminUsersConstants";
 import type { AdminUserRow, PasswordFormValues, RoleFormValues } from "../types/adminUsersTypes";
-import { getApiErrorMessage, getUserLabel } from "../utils/adminUsersUtils";
+import { canDeleteAdminUser, getApiErrorMessage, getUserLabel } from "../utils/adminUsersUtils";
 
 type UseAdminUsersParams = {
   users: AdminUserRow[];
@@ -24,6 +24,7 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
   const [savingRole, setSavingRole] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [savingStatusId, setSavingStatusId] = useState<number | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
 
   const updateRow = (userId: number, patch: Partial<AdminUserRow>) => {
     setRows((prev) =>
@@ -151,6 +152,29 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     }
   };
 
+  const deleteUser = async (user: AdminUserRow) => {
+    setDeletingUserId(user.id);
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        messageApi.error(getApiErrorMessage(data, ADMIN_USERS_LABELS.deleteUpdateFail));
+        return;
+      }
+
+      setRows((prev) => prev.filter((row) => row.id !== user.id));
+      messageApi.success(ADMIN_USERS_LABELS.deleteUpdateOk);
+    } catch {
+      messageApi.error(ADMIN_USERS_LABELS.deleteUpdateFail);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   const confirmDisableUser = (user: AdminUserRow) => {
     const label = getUserLabel(user);
     modalApi.confirm({
@@ -174,6 +198,29 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     await updateUserStatus(user, true);
   };
 
+  const confirmDeleteUser = (user: AdminUserRow) => {
+    const label = getUserLabel(user);
+    modalApi.confirm({
+      title: `${ADMIN_USERS_LABELS.deleteConfirmTitle} ${label}?`,
+      content: ADMIN_USERS_LABELS.deleteConfirmText,
+      okText: ADMIN_USERS_LABELS.deleteButton,
+      okType: "danger",
+      cancelText: ADMIN_USERS_LABELS.cancelButton,
+      onOk: async () => {
+        await deleteUser(user);
+      },
+    });
+  };
+
+  const handleDeleteUser = (user: AdminUserRow) => {
+    if (!canDeleteAdminUser(user)) {
+      messageApi.error(ADMIN_USERS_LABELS.cannotDeleteAdmin);
+      return;
+    }
+
+    confirmDeleteUser(user);
+  };
+
   return {
     rows,
     roleForm,
@@ -184,6 +231,7 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     savingRole,
     savingPassword,
     savingStatusId,
+    deletingUserId,
     openRoleModal,
     openPasswordModal,
     closeRoleModal,
@@ -191,5 +239,6 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     handleRoleSubmit,
     handlePasswordSubmit,
     handleStatusToggle,
+    handleDeleteUser,
   };
 };

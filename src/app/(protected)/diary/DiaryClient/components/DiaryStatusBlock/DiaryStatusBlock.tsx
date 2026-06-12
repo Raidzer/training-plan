@@ -11,6 +11,9 @@ type DiaryStatusLabels = {
   weightLabel: string;
   weightMorningShort: string;
   weightEveningShort: string;
+  sleepLabel: string;
+  sleepFilledShort: string;
+  sleepEmptyShort: string;
   workoutsLabel: string;
 };
 
@@ -45,6 +48,9 @@ export function DiaryStatusBlock({
         <Tag color={status?.hasWeightMorning && status?.hasWeightEvening ? "green" : "default"}>
           {labels.weightLabel}: {status?.hasWeightMorning ? labels.weightMorningShort : "-"} /{" "}
           {status?.hasWeightEvening ? labels.weightEveningShort : "-"}
+        </Tag>
+        <Tag color={status?.hasSleep ? "green" : "default"}>
+          {labels.sleepLabel}: {status?.hasSleep ? labels.sleepFilledShort : labels.sleepEmptyShort}
         </Tag>
         <Tag color={workoutsComplete ? "green" : "orange"}>
           {labels.workoutsLabel}: {status?.workoutsWithFullReport ?? 0}/{status?.workoutsTotal ?? 0}

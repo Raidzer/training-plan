@@ -5,6 +5,7 @@ export type DiaryDayStatus = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  hasSleep: boolean;
   workoutsTotal: number;
   workoutsWithFullReport: number;
   dayHasReport: boolean;
@@ -29,6 +30,20 @@ export const parseDistanceKm = (value?: string | number | null) => {
   }
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+};
+
+export const hasSleepHours = (value?: string | number | null) => {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  const normalized = typeof value === "number" ? value : String(value).trim();
+  if (normalized === "") {
+    return false;
+  }
+
+  const parsed = typeof normalized === "number" ? normalized : Number(normalized);
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 24;
 };
 
 export const isValidDateString = (value: string | null) =>
@@ -63,6 +78,7 @@ export const buildDayStatus = (params: {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  hasSleep: boolean;
   totalDistanceKm: number;
 }): DiaryDayStatus => {
   const workoutsTotal = params.planEntryIds.length;
@@ -72,6 +88,7 @@ export const buildDayStatus = (params: {
   const dayHasReport =
     params.hasWeightMorning &&
     params.hasWeightEvening &&
+    params.hasSleep &&
     (workoutsTotal === 0 || workoutsWithFullReport === workoutsTotal);
   return {
     date: params.date,
@@ -80,6 +97,7 @@ export const buildDayStatus = (params: {
     hasBath: params.hasBath,
     hasMfr: params.hasMfr,
     hasMassage: params.hasMassage,
+    hasSleep: params.hasSleep,
     totalDistanceKm: params.totalDistanceKm,
     workoutsTotal,
     workoutsWithFullReport,

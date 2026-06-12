@@ -30,7 +30,7 @@ export const handleMenuAction = async ({ ctx, chatId, action }: MenuActionHandle
 
   const userId = await ensureLinked(chatId);
   if (!userId) {
-    await ctx.reply("Сначала свяжите аккаунт командой /link.", {
+    await ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
       reply_markup: buildLinkReplyKeyboard(),
     });
     return;

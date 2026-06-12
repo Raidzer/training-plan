@@ -10,11 +10,13 @@ export type ProfileUserData = {
   lastName: string;
   gender: string;
   timezone: string;
+  role: string;
 };
 
-export type ProfileApiUserData = Omit<ProfileUserData, "id" | "lastName"> & {
+export type ProfileApiUserData = Omit<ProfileUserData, "id" | "lastName" | "role"> & {
   id: string | number;
   lastName?: string | null;
+  role?: string;
 };
 
 export type ProfileFormValues = {
@@ -32,6 +34,10 @@ export type PasswordFormValues = {
 
 export type EmailFormValues = {
   email: string;
+  currentPassword: string;
+};
+
+export type DeleteProfileFormValues = {
   currentPassword: string;
 };
 
@@ -53,6 +59,11 @@ export type EmailApiResponse = {
   user?: ProfileApiUserData;
 };
 
+export type DeleteProfileApiResponse = {
+  success?: boolean;
+  error?: string;
+};
+
 export type ProfileClientProps = {
   userData: ProfileUserData;
 };
@@ -60,3 +71,4 @@ export type ProfileClientProps = {
 export type ProfileFormInstance = FormInstance<ProfileFormValues>;
 export type EmailFormInstance = FormInstance<EmailFormValues>;
 export type PasswordFormInstance = FormInstance<PasswordFormValues>;
+export type DeleteProfileFormInstance = FormInstance<DeleteProfileFormValues>;

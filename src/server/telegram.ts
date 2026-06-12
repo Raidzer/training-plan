@@ -24,6 +24,11 @@ type TelegramLatestLinkCodeSummary = {
   consumedAt: Date | null;
 };
 
+type TelegramSubscriptionSettingsPatch = {
+  enabled: boolean;
+  sendTime: string | null;
+};
+
 export async function getTelegramAccountIdByUserId(userId: number): Promise<number | null> {
   const [existing] = await db
     .select({ id: telegramAccounts.id })
@@ -94,6 +99,57 @@ export async function getLatestTelegramLinkCodeSummary(
   }
 
   return codeRow;
+}
+
+export async function updateTelegramSubscriptionSettings(
+  userId: number,
+  patch: TelegramSubscriptionSettingsPatch
+): Promise<TelegramSubscriptionSummary | null> {
+  const now = new Date();
+
+  const updated = await db.transaction(async (tx) => {
+    const [account] = await tx
+      .select({ chatId: telegramAccounts.chatId })
+      .from(telegramAccounts)
+      .where(eq(telegramAccounts.userId, userId));
+
+    if (!account) {
+      return null;
+    }
+
+    const [subscription] = await tx
+      .select({ id: telegramSubscriptions.id })
+      .from(telegramSubscriptions)
+      .where(eq(telegramSubscriptions.userId, userId));
+
+    if (subscription) {
+      await tx
+        .update(telegramSubscriptions)
+        .set({
+          enabled: patch.enabled,
+          sendTime: patch.sendTime,
+          updatedAt: now,
+        })
+        .where(eq(telegramSubscriptions.id, subscription.id));
+    } else {
+      await tx.insert(telegramSubscriptions).values({
+        userId,
+        chatId: account.chatId,
+        enabled: patch.enabled,
+        sendTime: patch.sendTime,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    return true;
+  });
+
+  if (!updated) {
+    return null;
+  }
+
+  return await getTelegramSubscriptionSummary(userId);
 }
 
 export async function unlinkTelegramAccount(userId: number) {

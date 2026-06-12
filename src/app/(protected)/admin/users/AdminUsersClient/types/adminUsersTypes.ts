@@ -10,6 +10,7 @@ export type AdminUserRow = {
   role: string;
   isActive: boolean;
   createdAt: string;
+  lastActiveAt: string | null;
 };
 
 export type RoleMeta = {

@@ -8,6 +8,8 @@ const {
   bcryptCompareMock,
   getUserByIdentifierMock,
   getUserByIdMock,
+  touchUserLastActiveAtByIdMock,
+  touchUserLastActiveAtIfNeededMock,
 } = vi.hoisted(() => {
   const nextAuthHandler = vi.fn();
   return {
@@ -18,6 +20,8 @@ const {
     bcryptCompareMock: vi.fn(),
     getUserByIdentifierMock: vi.fn(),
     getUserByIdMock: vi.fn(),
+    touchUserLastActiveAtByIdMock: vi.fn(),
+    touchUserLastActiveAtIfNeededMock: vi.fn(),
   };
 });
 
@@ -46,6 +50,8 @@ vi.mock("@/server/services/users", () => {
   return {
     getUserByIdentifier: getUserByIdentifierMock,
     getUserById: getUserByIdMock,
+    touchUserLastActiveAtById: touchUserLastActiveAtByIdMock,
+    touchUserLastActiveAtIfNeeded: touchUserLastActiveAtIfNeededMock,
   };
 });
 
@@ -57,6 +63,8 @@ describe("auth.ts", () => {
     getUserByIdentifierMock.mockResolvedValue(null);
     getUserByIdMock.mockResolvedValue(null);
     bcryptCompareMock.mockResolvedValue(false);
+    touchUserLastActiveAtByIdMock.mockResolvedValue(undefined);
+    touchUserLastActiveAtIfNeededMock.mockResolvedValue(undefined);
   });
 
   it("должен инициализировать NextAuth обработчик", () => {
@@ -169,6 +177,7 @@ describe("auth.ts", () => {
         role: "coach",
         emailVerified,
       });
+      expect(touchUserLastActiveAtByIdMock).toHaveBeenCalledWith(7);
     });
   });
 
@@ -270,16 +279,18 @@ describe("auth.ts", () => {
 
     it("должен возвращать сессию с обновленными полями пользователя", async () => {
       const verifiedAt = new Date("2026-02-09T10:00:00.000Z");
-      getServerSessionMock.mockResolvedValue({
-        user: { id: "5", role: "athlete", emailVerified: null, name: "Runner" },
-        expires: "never",
-      });
-      getUserByIdMock.mockResolvedValue({
+      const activeUser = {
         id: 5,
         role: "admin",
         emailVerified: verifiedAt,
         isActive: true,
+        lastActiveAt: new Date("2026-02-09T09:50:00.000Z"),
+      };
+      getServerSessionMock.mockResolvedValue({
+        user: { id: "5", role: "athlete", emailVerified: null, name: "Runner" },
+        expires: "never",
       });
+      getUserByIdMock.mockResolvedValue(activeUser);
 
       const result = await auth();
 
@@ -292,6 +303,7 @@ describe("auth.ts", () => {
         },
         expires: "never",
       });
+      expect(touchUserLastActiveAtIfNeededMock).toHaveBeenCalledWith(activeUser);
     });
   });
 });

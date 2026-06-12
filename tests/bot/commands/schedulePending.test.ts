@@ -22,7 +22,12 @@ vi.mock("@/bot/services/telegramSubscriptions", () => ({
 }));
 
 import { handleSchedulePending } from "@/bot/commands/handlers/textMessage/pending/handleSchedule";
-import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildMainMenuReplyKeyboard,
+  buildTimeReplyKeyboard,
+  buildTimezoneReplyKeyboard,
+  DATE_BACK_BUTTON_TEXT,
+} from "@/bot/menu/menuKeyboard";
 
 function createContext() {
   return {
@@ -52,8 +57,31 @@ describe("handleSchedulePending", () => {
     expect(scheduleMocks.upsertSubscriptionMock).not.toHaveBeenCalled();
     expect(scheduleMocks.clearPendingInputMock).not.toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'."
+      "Выберите время кнопкой или напишите новое в формате HH:MM.",
+      {
+        reply_markup: buildTimeReplyKeyboard(),
+      }
     );
+  });
+
+  it("returns from send time input to main menu", async () => {
+    const ctx = createContext();
+
+    await handleSchedulePending({
+      ctx,
+      chatId: 10,
+      userId: 20,
+      pending: "time",
+      text: DATE_BACK_BUTTON_TEXT,
+    });
+
+    expect(scheduleMocks.upsertSubscriptionMock).not.toHaveBeenCalled();
+    expect(scheduleMocks.clearPendingInputMock).toHaveBeenCalledWith(10);
+    expect(ctx.reply).toHaveBeenCalledWith("Меню управления ниже.", {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: true,
+      }),
+    });
   });
 
   it("updates send time and returns to main menu", async () => {
@@ -96,8 +124,31 @@ describe("handleSchedulePending", () => {
     expect(scheduleMocks.upsertSubscriptionMock).not.toHaveBeenCalled();
     expect(scheduleMocks.clearPendingInputMock).not.toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Неверная таймзона. Пример: Europe/Moscow или +3. Или напишите 'отмена'."
+      "Неверная таймзона. Выберите вариант кнопкой или напишите IANA/смещение.",
+      {
+        reply_markup: buildTimezoneReplyKeyboard(),
+      }
     );
+  });
+
+  it("returns from timezone input to main menu", async () => {
+    const ctx = createContext();
+
+    await handleSchedulePending({
+      ctx,
+      chatId: 10,
+      userId: 20,
+      pending: "timezone",
+      text: DATE_BACK_BUTTON_TEXT,
+    });
+
+    expect(scheduleMocks.upsertSubscriptionMock).not.toHaveBeenCalled();
+    expect(scheduleMocks.clearPendingInputMock).toHaveBeenCalledWith(10);
+    expect(ctx.reply).toHaveBeenCalledWith("Меню управления ниже.", {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: true,
+      }),
+    });
   });
 
   it("updates timezone and returns to main menu", async () => {

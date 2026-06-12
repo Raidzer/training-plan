@@ -2,6 +2,7 @@
 
 import {
   CheckCircleOutlined,
+  DeleteOutlined,
   LockOutlined,
   StopOutlined,
   TrophyOutlined,
@@ -13,23 +14,32 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { ADMIN_USERS_LABELS } from "../../constants/adminUsersConstants";
 import type { AdminUserRow } from "../../types/adminUsersTypes";
-import { formatDate, getGenderLabel, getRoleMeta } from "../../utils/adminUsersUtils";
+import {
+  canDeleteAdminUser,
+  formatDate,
+  getGenderLabel,
+  getRoleMeta,
+} from "../../utils/adminUsersUtils";
 import styles from "./AdminUsersTable.module.scss";
 
 type AdminUsersTableProps = {
   rows: AdminUserRow[];
   savingStatusId: number | null;
+  deletingUserId: number | null;
   onOpenRoleModal: (user: AdminUserRow) => void;
   onOpenPasswordModal: (user: AdminUserRow) => void;
   onStatusToggle: (user: AdminUserRow) => void;
+  onDeleteUser: (user: AdminUserRow) => void;
 };
 
 export function AdminUsersTable({
   rows,
   savingStatusId,
+  deletingUserId,
   onOpenRoleModal,
   onOpenPasswordModal,
   onStatusToggle,
+  onDeleteUser,
 }: AdminUsersTableProps) {
   const columns: ColumnsType<AdminUserRow> = useMemo(
     () => [
@@ -82,6 +92,13 @@ export function AdminUsersTable({
         render: (value) => formatDate(String(value ?? "")),
       },
       {
+        title: ADMIN_USERS_LABELS.lastActiveAtColumn,
+        dataIndex: "lastActiveAt",
+        key: "lastActiveAt",
+        width: 190,
+        render: (value) => formatDate(String(value ?? "")),
+      },
+      {
         title: ADMIN_USERS_LABELS.statusColumn,
         dataIndex: "isActive",
         key: "isActive",
@@ -95,13 +112,14 @@ export function AdminUsersTable({
       {
         title: ADMIN_USERS_LABELS.actionsColumn,
         key: "actions",
-        width: 360,
+        width: 460,
         render: (_, record) => {
           const isActive = record.isActive;
           const statusLabel = isActive
             ? ADMIN_USERS_LABELS.disableButton
             : ADMIN_USERS_LABELS.enableButton;
           const statusIcon = isActive ? <StopOutlined /> : <CheckCircleOutlined />;
+          const canDeleteUser = canDeleteAdminUser(record);
 
           return (
             <Space size="small" wrap>
@@ -139,12 +157,31 @@ export function AdminUsersTable({
               >
                 {statusLabel}
               </Button>
+              <Button
+                size="small"
+                danger
+                disabled={!canDeleteUser}
+                icon={<DeleteOutlined />}
+                loading={deletingUserId === record.id}
+                onClick={() => {
+                  onDeleteUser(record);
+                }}
+              >
+                {ADMIN_USERS_LABELS.deleteButton}
+              </Button>
             </Space>
           );
         },
       },
     ],
-    [onOpenPasswordModal, onOpenRoleModal, onStatusToggle, savingStatusId]
+    [
+      deletingUserId,
+      onDeleteUser,
+      onOpenPasswordModal,
+      onOpenRoleModal,
+      onStatusToggle,
+      savingStatusId,
+    ]
   );
 
   return (
@@ -154,7 +191,7 @@ export function AdminUsersTable({
       columns={columns}
       dataSource={rows}
       pagination={{ pageSize: 10 }}
-      scroll={{ x: 1040 }}
+      scroll={{ x: 1640 }}
     />
   );
 }

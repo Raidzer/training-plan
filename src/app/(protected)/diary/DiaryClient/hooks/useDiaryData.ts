@@ -657,13 +657,14 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       }
       messageApi.success(messages.recoverySaved);
       await loadDay(selectedDate, { preserveForms: true });
+      await loadMarks(panelDate);
     } catch (err) {
       console.error(err);
       messageApi.error(messages.recoverySaveFailed);
     } finally {
       setSavingRecovery(false);
     }
-  }, [loadDay, messageApi, messages, recoveryForm, selectedDate]);
+  }, [loadDay, loadMarks, messageApi, messages, panelDate, recoveryForm, selectedDate]);
 
   return {
     selectedDate,

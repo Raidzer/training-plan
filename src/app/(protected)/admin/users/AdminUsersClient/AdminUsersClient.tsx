@@ -25,6 +25,7 @@ export function AdminUsersClient({ users }: AdminUsersClientProps) {
     savingRole,
     savingPassword,
     savingStatusId,
+    deletingUserId,
     openRoleModal,
     openPasswordModal,
     closeRoleModal,
@@ -32,6 +33,7 @@ export function AdminUsersClient({ users }: AdminUsersClientProps) {
     handleRoleSubmit,
     handlePasswordSubmit,
     handleStatusToggle,
+    handleDeleteUser,
   } = useAdminUsers({ users, messageApi, modalApi });
 
   const activeUserLabel = activeUser ? getUserLabel(activeUser) : "пользователя";
@@ -57,9 +59,11 @@ export function AdminUsersClient({ users }: AdminUsersClientProps) {
         <AdminUsersTable
           rows={rows}
           savingStatusId={savingStatusId}
+          deletingUserId={deletingUserId}
           onOpenRoleModal={openRoleModal}
           onOpenPasswordModal={openPasswordModal}
           onStatusToggle={handleStatusToggle}
+          onDeleteUser={handleDeleteUser}
         />
         <RoleModal
           form={roleForm}

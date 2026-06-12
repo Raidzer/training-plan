@@ -24,7 +24,7 @@ export const handleSubscriptionMenuAction = async ({
   if (action === "subscribe") {
     if (!subscription?.timezone || !subscription.sendTime) {
       await ctx.reply(
-        "Подписка включена, но нужно задать /timezone и /time, чтобы получать рассылку.",
+        "Подписка включена, но нужно задать часовой пояс и время рассылки в меню ниже.",
         {
           reply_markup: buildMainMenuReplyKeyboard({
             subscribed: subscription?.enabled ?? false,
