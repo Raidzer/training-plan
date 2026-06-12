@@ -17,6 +17,7 @@ export const ADMIN_USERS_LABELS = {
   loginColumn: "Логин",
   roleColumn: "Роль",
   createdAtColumn: "Создан",
+  lastActiveAtColumn: "Последняя активность",
   statusColumn: "Статус",
   actionsColumn: "Действия",
   activeStatus: "Активен",

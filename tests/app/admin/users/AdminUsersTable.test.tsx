@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ADMIN_USERS_LABELS } from "@/app/(protected)/admin/users/AdminUsersClient/constants/adminUsersConstants";
 import { AdminUsersTable } from "@/app/(protected)/admin/users/AdminUsersClient/components/AdminUsersTable/AdminUsersTable";
 import type { AdminUserRow } from "@/app/(protected)/admin/users/AdminUsersClient/types/adminUsersTypes";
+import { formatDate } from "@/app/(protected)/admin/users/AdminUsersClient/utils/adminUsersUtils";
 
 function createUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
   return {
@@ -16,6 +17,7 @@ function createUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
     role: "admin",
     isActive: true,
     createdAt: "2026-01-01T00:00:00.000Z",
+    lastActiveAt: "2026-06-12T10:00:00.000Z",
     ...overrides,
   };
 }
@@ -49,6 +51,7 @@ describe("AdminUsersTable", () => {
       login: "",
       role: "unknown",
       isActive: false,
+      lastActiveAt: null,
     });
     const onOpenRoleModal = vi.fn();
     const onOpenPasswordModal = vi.fn();
@@ -71,6 +74,8 @@ describe("AdminUsersTable", () => {
 
     expect(screen.getByText("Иван Петров")).toBeTruthy();
     expect(screen.getByText("runner@example.com")).toBeTruthy();
+    expect(screen.getAllByText(ADMIN_USERS_LABELS.lastActiveAtColumn).length).toBeGreaterThan(0);
+    expect(screen.getByText(formatDate(activeUser.lastActiveAt ?? ""))).toBeTruthy();
     expect(screen.getByText(ADMIN_USERS_LABELS.activeStatus)).toBeTruthy();
     expect(screen.getByText(ADMIN_USERS_LABELS.disabledStatus)).toBeTruthy();
     expect(onOpenRoleModal).toHaveBeenCalledWith(activeUser);
