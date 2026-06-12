@@ -39,6 +39,7 @@ describe("GET /api/diary/marks", () => {
         date: "2026-01-01",
         hasWeightMorning: true,
         hasWeightEvening: false,
+        hasSleep: true,
         workoutsTotal: 1,
         workoutsWithFullReport: 1,
         dayHasReport: true,

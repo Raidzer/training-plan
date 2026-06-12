@@ -212,6 +212,7 @@ function createDiaryData(overrides: Record<string, unknown> = {}) {
     marks: {
       "2026-05-11": {
         dayHasReport: true,
+        hasSleep: true,
       },
     },
     loadingMarks: false,
@@ -220,6 +221,7 @@ function createDiaryData(overrides: Record<string, unknown> = {}) {
         dayHasReport: true,
         hasWeightMorning: true,
         hasWeightEvening: false,
+        hasSleep: true,
         workoutsWithFullReport: 1,
         workoutsTotal: 1,
         totalDistanceKm: 10,

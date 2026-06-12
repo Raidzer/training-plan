@@ -106,6 +106,7 @@ const createDayPayload = (params: {
     date: "2025-12-29",
     hasWeightMorning: true,
     hasWeightEvening: false,
+    hasSleep: params.sleepHours !== null,
     workoutsTotal: 1,
     workoutsWithFullReport: 1,
     dayHasReport: true,

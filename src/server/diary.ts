@@ -21,6 +21,7 @@ import {
   formatWorkoutScore,
   hasReportableWorkoutTask,
   isNonEmptyText,
+  hasSleepHours,
   isValidDateString,
   parseDistanceKm,
   shiftDate,
@@ -104,6 +105,7 @@ type DayAggregation = {
   hasBath: boolean;
   hasMfr: boolean;
   hasMassage: boolean;
+  hasSleep: boolean;
   totalDistanceKm: number;
 };
 
@@ -308,6 +310,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
   const hasBath = Boolean(recoveryEntry?.hasBath);
   const hasMfr = Boolean(recoveryEntry?.hasMfr);
   const hasMassage = Boolean(recoveryEntry?.hasMassage);
+  const hasSleep = hasSleepHours(recoveryEntry?.sleepHours ?? null);
   const fullReportPlanEntryIds = new Set<number>();
   let totalDistanceKm = 0;
   for (const report of workoutReportsRows) {
@@ -325,6 +328,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
     hasBath,
     hasMfr,
     hasMassage,
+    hasSleep,
     totalDistanceKm,
   });
 
@@ -399,6 +403,7 @@ export const getDiaryDaysInRange = async (params: {
       hasBath: recoveryEntries.hasBath,
       hasMfr: recoveryEntries.hasMfr,
       hasMassage: recoveryEntries.hasMassage,
+      sleepHours: recoveryEntries.sleepHours,
     })
     .from(recoveryEntries)
     .where(
@@ -446,6 +451,7 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: false,
         hasMfr: false,
         hasMassage: false,
+        hasSleep: false,
         totalDistanceKm: 0,
       });
     }
@@ -464,6 +470,7 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: false,
         hasMfr: false,
         hasMassage: false,
+        hasSleep: false,
         totalDistanceKm: 0,
       } as DayAggregation);
     if (entry.period === "morning") {
@@ -490,11 +497,13 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: false,
         hasMfr: false,
         hasMassage: false,
+        hasSleep: false,
         totalDistanceKm: 0,
       } as DayAggregation);
     target.hasBath = entry.hasBath;
     target.hasMfr = entry.hasMfr;
     target.hasMassage = entry.hasMassage;
+    target.hasSleep = hasSleepHours(entry.sleepHours);
     if (!existing) {
       dayMap.set(entry.date, target);
     }
@@ -528,6 +537,7 @@ export const getDiaryDaysInRange = async (params: {
           hasBath: false,
           hasMfr: false,
           hasMassage: false,
+          hasSleep: false,
           totalDistanceKm: 0,
         });
       }
@@ -545,6 +555,7 @@ export const getDiaryDaysInRange = async (params: {
         hasBath: day.hasBath,
         hasMfr: day.hasMfr,
         hasMassage: day.hasMassage,
+        hasSleep: day.hasSleep,
         totalDistanceKm: day.totalDistanceKm,
       })
     )

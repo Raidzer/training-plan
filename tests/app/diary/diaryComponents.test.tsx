@@ -117,6 +117,7 @@ describe("DiaryClient components", () => {
           dayHasReport: true,
           hasWeightMorning: true,
           hasWeightEvening: false,
+          hasSleep: true,
           workoutsWithFullReport: 1,
           workoutsTotal: 2,
           totalDistanceKm: 12.5,
@@ -130,6 +131,9 @@ describe("DiaryClient components", () => {
           weightLabel: "Вес",
           weightMorningShort: "У",
           weightEveningShort: "В",
+          sleepLabel: "Сон",
+          sleepFilledShort: "Да",
+          sleepEmptyShort: "-",
           workoutsLabel: "Тренировки",
         }}
         onOpenReport={onOpenReport}
@@ -140,6 +144,7 @@ describe("DiaryClient components", () => {
 
     expect(screen.getByText("День заполнен")).toBeTruthy();
     expect(screen.getByText("Вес: У / -")).toBeTruthy();
+    expect(screen.getByText("Сон: Да")).toBeTruthy();
     expect(screen.getByText("Тренировки: 1/2")).toBeTruthy();
     expect(onOpenReport).toHaveBeenCalled();
   });

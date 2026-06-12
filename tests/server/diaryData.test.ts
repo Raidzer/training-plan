@@ -152,7 +152,22 @@ describe("server/diary getDiaryDayData", () => {
         ])
       )
       .mockReturnValueOnce(createSelectWhereBuilder([]))
-      .mockReturnValueOnce(createSelectWhereBuilder([]));
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          {
+            id: 5,
+            date: "2026-05-30",
+            hasBath: false,
+            hasMfr: false,
+            hasMassage: false,
+            recoveryOther: null,
+            overallScore: null,
+            functionalScore: null,
+            muscleScore: null,
+            sleepHours: "7.5",
+          },
+        ])
+      );
 
     const result = await getDiaryDayData({
       userId: 7,
@@ -164,6 +179,7 @@ describe("server/diary getDiaryDayData", () => {
     expect(result.status).toMatchObject({
       workoutsTotal: 0,
       workoutsWithFullReport: 0,
+      hasSleep: true,
       dayHasReport: true,
     });
     expect(dbSelectMock).toHaveBeenCalledTimes(4);
@@ -275,6 +291,7 @@ describe("server/diary getDiaryDayData", () => {
     expect(result.status).toMatchObject({
       workoutsTotal: 1,
       workoutsWithFullReport: 1,
+      hasSleep: true,
       dayHasReport: true,
       totalDistanceKm: 10.5,
     });
@@ -305,10 +322,18 @@ describe("server/diary getDiaryDaysInRange", () => {
       .mockReturnValueOnce(
         createSelectWhereBuilder([
           {
+            date: "2026-02-01",
+            hasBath: false,
+            hasMfr: false,
+            hasMassage: false,
+            sleepHours: "7.5",
+          },
+          {
             date: "2026-02-02",
             hasBath: true,
             hasMfr: false,
             hasMassage: true,
+            sleepHours: null,
           },
         ])
       )
@@ -337,6 +362,7 @@ describe("server/diary getDiaryDaysInRange", () => {
       workoutsWithFullReport: 1,
       hasWeightMorning: true,
       hasWeightEvening: true,
+      hasSleep: true,
       dayHasReport: true,
       totalDistanceKm: 7.25,
     });
@@ -345,6 +371,7 @@ describe("server/diary getDiaryDaysInRange", () => {
       workoutsTotal: 0,
       hasBath: true,
       hasMassage: true,
+      hasSleep: false,
       dayHasReport: false,
     });
     expect(result[2]).toMatchObject({
@@ -352,6 +379,7 @@ describe("server/diary getDiaryDaysInRange", () => {
       workoutsTotal: 0,
       hasWeightMorning: false,
       hasWeightEvening: false,
+      hasSleep: false,
     });
   });
 });
