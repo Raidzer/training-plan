@@ -25,6 +25,7 @@ function createUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
 const ROLE_ACTION_INDEX = 1;
 const PASSWORD_ACTION_INDEX = 2;
 const STATUS_ACTION_INDEX = 3;
+const DELETE_ACTION_INDEX = 4;
 
 function clickRowAction(container: HTMLElement, rowIndex: number, actionIndex: number) {
   const row = container.querySelectorAll("tbody tr.ant-table-row")[rowIndex];
@@ -56,21 +57,29 @@ describe("AdminUsersTable", () => {
     const onOpenRoleModal = vi.fn();
     const onOpenPasswordModal = vi.fn();
     const onStatusToggle = vi.fn();
+    const onDeleteUser = vi.fn();
 
     const { container } = render(
       <AdminUsersTable
         rows={[activeUser, disabledUser]}
         savingStatusId={null}
+        deletingUserId={null}
         onOpenRoleModal={onOpenRoleModal}
         onOpenPasswordModal={onOpenPasswordModal}
         onStatusToggle={onStatusToggle}
+        onDeleteUser={onDeleteUser}
       />
     );
+
+    const activeUserDeleteButton = container
+      .querySelectorAll("tbody tr.ant-table-row")[0]
+      ?.querySelectorAll("button")[DELETE_ACTION_INDEX] as HTMLButtonElement;
 
     clickRowAction(container, 0, ROLE_ACTION_INDEX);
     clickRowAction(container, 0, PASSWORD_ACTION_INDEX);
     clickRowAction(container, 0, STATUS_ACTION_INDEX);
     clickRowAction(container, 1, STATUS_ACTION_INDEX);
+    clickRowAction(container, 1, DELETE_ACTION_INDEX);
 
     expect(screen.getByText("Иван Петров")).toBeTruthy();
     expect(screen.getByText("runner@example.com")).toBeTruthy();
@@ -82,5 +91,7 @@ describe("AdminUsersTable", () => {
     expect(onOpenPasswordModal).toHaveBeenCalledWith(activeUser);
     expect(onStatusToggle).toHaveBeenNthCalledWith(1, activeUser);
     expect(onStatusToggle).toHaveBeenNthCalledWith(2, disabledUser);
+    expect(activeUserDeleteButton.disabled).toBe(true);
+    expect(onDeleteUser).toHaveBeenCalledWith(disabledUser);
   });
 });

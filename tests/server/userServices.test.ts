@@ -14,6 +14,7 @@ vi.mock("@/server/db/client", () => ({
 
 import {
   getUserById,
+  getUserDeletionCredentialsById,
   getUserByIdentifier,
   getUserEmailCredentialsById,
   getUserPasswordHashById,
@@ -90,6 +91,14 @@ describe("server/services/users", () => {
 
     mockSelectLimit([password]);
     await expect(getUserPasswordHashById(1)).resolves.toEqual(password);
+
+    mockSelectLimit([{ id: 1, email: "test@example.com", role: "athlete", passwordHash: "hash" }]);
+    await expect(getUserDeletionCredentialsById(1)).resolves.toEqual({
+      id: 1,
+      email: "test@example.com",
+      role: "athlete",
+      passwordHash: "hash",
+    });
 
     mockSelectLimit([]);
     await expect(getUserPasswordHashById(2)).resolves.toBeNull();

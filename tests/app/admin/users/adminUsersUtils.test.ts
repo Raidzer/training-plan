@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canDeleteAdminUser,
   formatDate,
   getApiErrorMessage,
   getGenderLabel,
@@ -62,8 +63,17 @@ describe("adminUsersUtils", () => {
     expect(getApiErrorMessage({ error: "cannot_disable_self" }, "fallback")).toBe(
       ADMIN_USERS_LABELS.cannotDisableSelf
     );
+    expect(getApiErrorMessage({ error: "forbidden_admin_delete" }, "fallback")).toBe(
+      ADMIN_USERS_LABELS.cannotDeleteAdmin
+    );
     expect(getApiErrorMessage({ error: "unknown" }, "fallback")).toBe("fallback");
     expect(getApiErrorMessage({ error: 1 }, "fallback")).toBe("fallback");
     expect(getApiErrorMessage(null, "fallback")).toBe("fallback");
+  });
+
+  it("запрещает удаление администратора", () => {
+    expect(canDeleteAdminUser({ ...baseUser, role: "athlete" })).toBe(true);
+    expect(canDeleteAdminUser({ ...baseUser, role: "coach" })).toBe(true);
+    expect(canDeleteAdminUser({ ...baseUser, role: "admin" })).toBe(false);
   });
 });
