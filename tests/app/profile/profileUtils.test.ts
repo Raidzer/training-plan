@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_TIMEZONE } from "@/shared/constants/timezones";
 import {
   hasProfileValuesChanged,
+  canDeleteProfileRole,
   normalizeProfileUserData,
   normalizeProfileValues,
   readJson,
@@ -40,6 +41,7 @@ describe("profileUtils", () => {
       lastName: "",
       gender: "unknown",
       timezone: "",
+      role: "athlete",
     };
 
     expect(toProfileFormValues(userData)).toEqual({
@@ -92,6 +94,7 @@ describe("profileUtils", () => {
       lastName: null,
       gender: "male",
       timezone: "Europe/Moscow",
+      role: "coach",
     };
 
     expect(normalizeProfileUserData(userData)).toEqual({
@@ -102,7 +105,14 @@ describe("profileUtils", () => {
       lastName: "",
       gender: "male",
       timezone: "Europe/Moscow",
+      role: "coach",
     });
+  });
+
+  it("разрешает удаление только неадминистративного профиля", () => {
+    expect(canDeleteProfileRole("athlete")).toBe(true);
+    expect(canDeleteProfileRole("coach")).toBe(true);
+    expect(canDeleteProfileRole("admin")).toBe(false);
   });
 
   it("reads JSON response and falls back to null for invalid JSON", async () => {

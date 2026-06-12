@@ -1,0 +1,33 @@
+.section {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 640px;
+  margin: 24px auto 0;
+  padding-top: 24px;
+  gap: 16px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.content {
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 6px !important;
+}
+
+.description {
+  margin: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .section {
+    flex-direction: column;
+  }
+
+  .section :global(.ant-btn) {
+    width: 100%;
+  }
+}

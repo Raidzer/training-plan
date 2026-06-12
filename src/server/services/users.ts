@@ -80,6 +80,7 @@ export async function getUserProfileById(id: number) {
       lastName: users.lastName,
       gender: users.gender,
       timezone: users.timezone,
+      role: users.role,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -97,6 +98,7 @@ export async function updateUserProfileById(id: number, input: UserProfileUpdate
     lastName: users.lastName,
     gender: users.gender,
     timezone: users.timezone,
+    role: users.role,
   });
 
   return user || null;
@@ -129,6 +131,7 @@ export async function updateUserEmailById(id: number, email: string) {
       lastName: users.lastName,
       gender: users.gender,
       timezone: users.timezone,
+      role: users.role,
     });
 
   return user || null;
@@ -138,6 +141,21 @@ export async function getUserPasswordHashById(id: number) {
   const [user] = await db
     .select({
       id: users.id,
+      passwordHash: users.passwordHash,
+    })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+
+  return user || null;
+}
+
+export async function getUserDeletionCredentialsById(id: number) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      role: users.role,
       passwordHash: users.passwordHash,
     })
     .from(users)

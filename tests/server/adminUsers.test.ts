@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { dbUpdateMock } = vi.hoisted(() => {
+const { dbTransactionMock, dbUpdateMock } = vi.hoisted(() => {
   return {
+    dbTransactionMock: vi.fn(),
     dbUpdateMock: vi.fn(),
   };
 });
@@ -9,12 +10,15 @@ const { dbUpdateMock } = vi.hoisted(() => {
 vi.mock("@/server/db/client", () => {
   return {
     db: {
+      transaction: dbTransactionMock,
       update: dbUpdateMock,
     },
   };
 });
 
 import {
+  canDeleteUserRole,
+  deleteUserAccountById,
   updateUserPasswordHashById,
   updateUserRoleById,
   updateUserStatusById,
@@ -44,9 +48,40 @@ function mockUpdateReturning(rows: unknown[]) {
   };
 }
 
+function createSelectLimitBuilder(rows: unknown[]) {
+  const builder = {
+    from: vi.fn(() => builder),
+    where: vi.fn(() => builder),
+    limit: vi.fn().mockResolvedValue(rows),
+  };
+
+  return builder;
+}
+
+function createSelectWhereBuilder(rows: unknown[]) {
+  const builder = {
+    from: vi.fn(() => builder),
+    where: vi.fn().mockResolvedValue(rows),
+  };
+
+  return builder;
+}
+
+function createDeleteBuilder() {
+  return {
+    where: vi.fn().mockResolvedValue([]),
+  };
+}
+
 describe("server/adminUsers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("canDeleteUserRole должен запрещать удаление администратора", () => {
+    expect(canDeleteUserRole("athlete")).toBe(true);
+    expect(canDeleteUserRole("coach")).toBe(true);
+    expect(canDeleteUserRole("admin")).toBe(false);
   });
 
   it("updateUserPasswordHashById должен возвращать true, когда пользователь обновлен", async () => {
@@ -96,5 +131,58 @@ describe("server/adminUsers", () => {
     const result = await updateUserStatusById(9, false);
 
     expect(result).toBeNull();
+  });
+
+  it("deleteUserAccountById должен запрещать удаление администратора до delete-запросов", async () => {
+    const tx = {
+      select: vi.fn().mockReturnValueOnce(
+        createSelectLimitBuilder([
+          {
+            id: 1,
+            email: "admin@example.com",
+            role: "admin",
+          },
+        ])
+      ),
+      delete: vi.fn(),
+    };
+
+    dbTransactionMock.mockImplementation(async (callback) => {
+      return await callback(tx);
+    });
+
+    const result = await deleteUserAccountById(1);
+
+    expect(result).toEqual({ error: "forbidden" });
+    expect(tx.delete).not.toHaveBeenCalled();
+  });
+
+  it("deleteUserAccountById должен удалять обычного пользователя транзакционно", async () => {
+    const tx = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce(
+          createSelectLimitBuilder([
+            {
+              id: 2,
+              email: "runner@example.com",
+              role: "athlete",
+            },
+          ])
+        )
+        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 10 }]))
+        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 20 }]))
+        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 30 }])),
+      delete: vi.fn(() => createDeleteBuilder()),
+    };
+
+    dbTransactionMock.mockImplementation(async (callback) => {
+      return await callback(tx);
+    });
+
+    const result = await deleteUserAccountById(2);
+
+    expect(result).toEqual({ deleted: true });
+    expect(tx.delete).toHaveBeenCalled();
   });
 });

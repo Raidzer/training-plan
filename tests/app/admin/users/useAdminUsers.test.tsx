@@ -290,6 +290,63 @@ describe("useAdminUsers", () => {
     expect(messageApi.success).toHaveBeenCalledWith(ADMIN_USERS_LABELS.userDisabled);
   });
 
+  it("requires confirmation before deleting user and removes row after success", async () => {
+    const user = createUser();
+    const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ success: true }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+    const modalApi = createModalApi();
+    const confirmMock = modalApi.confirm as ReturnType<typeof vi.fn>;
+
+    confirmMock.mockImplementation((options) => {
+      void options.onOk?.();
+      return undefined;
+    });
+
+    const { result } = renderHook(() =>
+      useAdminUsers({
+        users: [user],
+        messageApi,
+        modalApi,
+      })
+    );
+
+    await act(async () => {
+      result.current.handleDeleteUser(user);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/admin/users/1", {
+        method: "DELETE",
+      });
+    });
+
+    expect(confirmMock).toHaveBeenCalledTimes(1);
+    expect(result.current.rows).toEqual([]);
+    expect(messageApi.success).toHaveBeenCalledWith(ADMIN_USERS_LABELS.deleteUpdateOk);
+  });
+
+  it("does not allow deleting admin user from hook", () => {
+    const user = createUser({ role: "admin" });
+    const messageApi = createMessageApi();
+    const modalApi = createModalApi();
+    const { result } = renderHook(() =>
+      useAdminUsers({
+        users: [user],
+        messageApi,
+        modalApi,
+      })
+    );
+
+    act(() => {
+      result.current.handleDeleteUser(user);
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(modalApi.confirm).not.toHaveBeenCalled();
+    expect(messageApi.error).toHaveBeenCalledWith(ADMIN_USERS_LABELS.cannotDeleteAdmin);
+  });
+
   it("maps status API errors without mutating rows", async () => {
     const user = createUser({
       isActive: false,
