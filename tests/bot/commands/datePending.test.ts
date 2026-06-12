@@ -14,8 +14,14 @@ vi.mock("@/server/planEntries", () => ({
 }));
 
 import { handleDatePending } from "@/bot/commands/handlers/textMessage/pending/handleDate";
-import { CUSTOM_DATE_BUTTON_TEXT, DATE_BACK_BUTTON_TEXT } from "@/bot/menu/menuKeyboard";
+import {
+  buildBackReplyKeyboard,
+  CUSTOM_DATE_BUTTON_TEXT,
+  DATE_BACK_BUTTON_TEXT,
+} from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, getPendingInput, setPendingInput } from "@/bot/menu/menuState";
+
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
 
 function createContext() {
   return {
@@ -63,7 +69,10 @@ describe("handleDatePending", () => {
 
     expect(getPendingInput(10)).toBe("date");
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
+      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).",
+      {
+        reply_markup: buildBackReplyKeyboard(),
+      }
     );
   });
 
@@ -79,7 +88,7 @@ describe("handleDatePending", () => {
     });
 
     expect(datePendingMocks.getPlanEntriesByDateMock).not.toHaveBeenCalled();
-    expect(ctx.reply).toHaveBeenCalledWith('Выбери дату из списка или нажми "Произвольная дата".');
+    expect(ctx.reply).toHaveBeenCalledWith(DATE_MENU_PROMPT_TEXT);
   });
 
   it("должен показывать план по дате из меню", async () => {
@@ -117,7 +126,28 @@ describe("handleDatePending", () => {
     });
 
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
+      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).",
+      {
+        reply_markup: buildBackReplyKeyboard(),
+      }
+    );
+  });
+
+  it("должен возвращать ручной ввод даты к меню дат", async () => {
+    const ctx = createContext();
+
+    await handleDatePending({
+      ctx,
+      chatId: 10,
+      text: DATE_BACK_BUTTON_TEXT,
+      pending: "date",
+      userId: 20,
+    });
+
+    expect(getPendingInput(10)).toBe("dateMenu");
+    expect(ctx.reply).toHaveBeenCalledWith(
+      DATE_MENU_PROMPT_TEXT,
+      expect.objectContaining({ reply_markup: expect.any(Object) })
     );
   });
 

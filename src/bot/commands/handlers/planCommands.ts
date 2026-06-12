@@ -1,11 +1,38 @@
 import type { Bot } from "grammy";
-import { formatDateInTimeZone, formatDateLocal, parseDisplayDate } from "@/bot/utils/dateTime";
+import {
+  formatDateForDisplay,
+  formatDateInTimeZone,
+  formatDateLocal,
+  getNextIsoDates,
+  getWeekdayShortRu,
+  parseDisplayDate,
+} from "@/bot/utils/dateTime";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { getPlanEntriesByDate } from "@/server/planEntries";
 import { getDailyReportTextByDate } from "@/server/diary";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
+import {
+  buildDailyReportMenuReplyKeyboard,
+  buildDateMenuReplyKeyboard,
+  buildLinkReplyKeyboard,
+  CUSTOM_DATE_BUTTON_TEXT,
+} from "@/bot/menu/menuKeyboard";
+import { setPendingInput } from "@/bot/menu/menuState";
 import { resetPendingInput } from "@/bot/commands/handlers/helpers";
+
+const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
+
+const buildPlanDateButtons = (today: string) => {
+  return getNextIsoDates(today, 7).map((date) => {
+    const weekday = getWeekdayShortRu(date);
+    const label = formatDateForDisplay(date);
+    if (!weekday) {
+      return label;
+    }
+    return `${label} (${weekday})`;
+  });
+};
 
 export const registerPlanCommands = (bot: Bot) => {
   bot.command("today", async (ctx: any) => {
@@ -15,7 +42,9 @@ export const registerPlanCommands = (bot: Bot) => {
     resetPendingInput(ctx);
     const userId = await ensureLinked(ctx.chat.id);
     if (!userId) {
-      return ctx.reply("Сначала свяжите аккаунт командой /link.");
+      return ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
     }
 
     const subscription = await getSubscription(userId);
@@ -41,8 +70,13 @@ export const registerPlanCommands = (bot: Bot) => {
     resetPendingInput(ctx);
     const userId = await ensureLinked(ctx.chat.id);
     if (!userId) {
-      return ctx.reply("Сначала свяжите аккаунт командой /link.");
+      return ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
     }
+
+    const subscription = await getSubscription(userId);
+    const timeZone = subscription?.timezone ?? null;
 
     const text = ctx.message?.text ?? "";
     const parts = text.trim().split(/\s+/);
@@ -50,7 +84,15 @@ export const registerPlanCommands = (bot: Bot) => {
     const date = rawDate ? parseDisplayDate(rawDate) : null;
 
     if (!date) {
-      return ctx.reply("Используй: /date 21-12-2025");
+      setPendingInput(ctx.chat.id, "dateMenu");
+      const today = timeZone
+        ? formatDateInTimeZone(new Date(), timeZone)
+        : formatDateLocal(new Date());
+      return ctx.reply(DATE_MENU_PROMPT_TEXT, {
+        reply_markup: buildDateMenuReplyKeyboard({
+          dateButtons: buildPlanDateButtons(today),
+        }),
+      });
     }
 
     const entries = await getPlanEntriesByDate({ userId, date });
@@ -66,7 +108,9 @@ export const registerPlanCommands = (bot: Bot) => {
     resetPendingInput(ctx);
     const userId = await ensureLinked(ctx.chat.id);
     if (!userId) {
-      return ctx.reply("Сначала свяжите аккаунт командой /link.");
+      return ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
     }
 
     const subscription = await getSubscription(userId);
@@ -81,7 +125,10 @@ export const registerPlanCommands = (bot: Bot) => {
         : formatDateLocal(new Date());
 
     if (!date) {
-      return ctx.reply("Используй: /report 21-12-2025");
+      setPendingInput(ctx.chat.id, "dailyReportMenu");
+      return ctx.reply("Выбери дату для ежедневного отчета.", {
+        reply_markup: buildDailyReportMenuReplyKeyboard(),
+      });
     }
 
     const reportText = await getDailyReportTextByDate({ userId, date });

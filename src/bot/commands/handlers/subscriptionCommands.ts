@@ -3,7 +3,13 @@ import { TIME_REGEX } from "@/bot/utils/validators";
 import { resolveTimeZoneInput } from "@/bot/utils/dateTime";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { getSubscription, upsertSubscription } from "@/bot/services/telegramSubscriptions";
-import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildMainMenuReplyKeyboard,
+  buildLinkReplyKeyboard,
+  buildTimeReplyKeyboard,
+  buildTimezoneReplyKeyboard,
+} from "@/bot/menu/menuKeyboard";
+import { setPendingInput } from "@/bot/menu/menuState";
 import { resetPendingInput } from "@/bot/commands/handlers/helpers";
 
 export const registerSubscriptionCommands = (bot: Bot) => {
@@ -14,7 +20,9 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     resetPendingInput(ctx);
     const userId = await ensureLinked(ctx.chat.id);
     if (!userId) {
-      return ctx.reply("Сначала свяжите аккаунт командой /link.");
+      return ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
     }
 
     await upsertSubscription({
@@ -26,7 +34,7 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     const subscription = await getSubscription(userId);
     if (!subscription?.timezone || !subscription.sendTime) {
       return ctx.reply(
-        "Подписка включена, но нужно задать /timezone и /time, чтобы получать рассылку.",
+        "Подписка включена, но нужно задать часовой пояс и время рассылки в меню ниже.",
         {
           reply_markup: buildMainMenuReplyKeyboard({
             subscribed: subscription?.enabled ?? false,
@@ -49,7 +57,9 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     resetPendingInput(ctx);
     const userId = await ensureLinked(ctx.chat.id);
     if (!userId) {
-      return ctx.reply("Сначала свяжите аккаунт командой /link.");
+      return ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
     }
 
     await upsertSubscription({
@@ -73,7 +83,9 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     resetPendingInput(ctx);
     const userId = await ensureLinked(ctx.chat.id);
     if (!userId) {
-      return ctx.reply("Сначала свяжите аккаунт командой /link.");
+      return ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
     }
 
     const text = ctx.message?.text ?? "";
@@ -81,7 +93,10 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     const time = parts[1];
 
     if (!time || !TIME_REGEX.test(time)) {
-      return ctx.reply("Используй: /time 07:30");
+      setPendingInput(ctx.chat.id, "time");
+      return ctx.reply("Выберите время кнопкой или напишите новое в формате HH:MM.", {
+        reply_markup: buildTimeReplyKeyboard(),
+      });
     }
 
     await upsertSubscription({
@@ -90,7 +105,12 @@ export const registerSubscriptionCommands = (bot: Bot) => {
       patch: { sendTime: time },
     });
 
-    return ctx.reply(`Время рассылки обновлено: ${time}.`);
+    const subscription = await getSubscription(userId);
+    return ctx.reply(`Время рассылки обновлено: ${time}.`, {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: subscription?.enabled ?? false,
+      }),
+    });
   });
 
   bot.command("timezone", async (ctx: any) => {
@@ -100,7 +120,9 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     resetPendingInput(ctx);
     const userId = await ensureLinked(ctx.chat.id);
     if (!userId) {
-      return ctx.reply("Сначала свяжите аккаунт командой /link.");
+      return ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
     }
 
     const text = ctx.message?.text ?? "";
@@ -110,14 +132,26 @@ export const registerSubscriptionCommands = (bot: Bot) => {
     if (!timeZone) {
       const subscription = await getSubscription(userId);
       const currentTimeZone = subscription?.timezone ?? "не задана";
+      setPendingInput(ctx.chat.id, "timezone");
       return ctx.reply(
-        `Текущая таймзона: ${currentTimeZone}. Используй: /timezone Europe/Moscow или /timezone +3`
+        `Текущая таймзона: ${currentTimeZone}. Выберите таймзону кнопкой или напишите новую IANA/смещение, например Europe/Moscow или +3.`,
+        {
+          reply_markup: buildTimezoneReplyKeyboard({
+            currentTimeZone: subscription?.timezone ?? null,
+          }),
+        }
       );
     }
 
     const resolved = resolveTimeZoneInput(timeZone);
     if (!resolved) {
-      return ctx.reply("Неверная таймзона. Используй формат IANA или смещение (+3).");
+      const subscription = await getSubscription(userId);
+      setPendingInput(ctx.chat.id, "timezone");
+      return ctx.reply("Неверная таймзона. Выберите вариант кнопкой или напишите IANA/смещение.", {
+        reply_markup: buildTimezoneReplyKeyboard({
+          currentTimeZone: subscription?.timezone ?? null,
+        }),
+      });
     }
 
     await upsertSubscription({
@@ -130,6 +164,11 @@ export const registerSubscriptionCommands = (bot: Bot) => {
       resolved.type === "offset"
         ? `${resolved.timeZone} (смещение ${resolved.offset >= 0 ? "+" : ""}${resolved.offset})`
         : resolved.timeZone;
-    return ctx.reply(`Таймзона обновлена: ${displayTimeZone}.`);
+    const subscription = await getSubscription(userId);
+    return ctx.reply(`Таймзона обновлена: ${displayTimeZone}.`, {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: subscription?.enabled ?? false,
+      }),
+    });
   });
 };

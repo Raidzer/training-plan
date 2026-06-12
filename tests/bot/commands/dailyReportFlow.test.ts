@@ -34,9 +34,12 @@ vi.mock("@/server/diary", () => {
 import { handlePlanMenuAction } from "@/bot/commands/handlers/textMessage/menu/handlePlanAction";
 import { handleDailyReportPending } from "@/bot/commands/handlers/textMessage/pending/handleDailyReport";
 import {
-  buildCancelReplyKeyboard,
+  buildBackReplyKeyboard,
   buildDailyReportMenuReplyKeyboard,
   buildMainMenuReplyKeyboard,
+  DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT,
+  DATE_BACK_BUTTON_TEXT,
+  TODAY_BUTTON_TEXT,
 } from "@/bot/menu/menuKeyboard";
 
 describe("daily report flow", () => {
@@ -69,20 +72,20 @@ describe("daily report flow", () => {
     expect(getDailyReportTextByDateMock).not.toHaveBeenCalled();
   });
 
-  it("должен запрашивать дату и показывать кнопку отмены", async () => {
+  it("должен запрашивать дату и показывать кнопку назад", async () => {
     await handleDailyReportPending({
       ctx,
       chatId: 10,
       userId: 20,
-      text: "Произвольная дата",
+      text: DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT,
       pending: "dailyReportMenu",
     });
 
     expect(setPendingInputMock).toHaveBeenCalledWith(10, "dailyReportDate");
     expect(replyMock).toHaveBeenCalledWith(
-      'Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или нажмите кнопку "Отмена".',
+      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).",
       {
-        reply_markup: buildCancelReplyKeyboard(),
+        reply_markup: buildBackReplyKeyboard(),
       }
     );
   });
@@ -98,11 +101,26 @@ describe("daily report flow", () => {
 
     expect(getDailyReportTextByDateMock).not.toHaveBeenCalled();
     expect(replyMock).toHaveBeenCalledWith(
-      'Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или нажмите кнопку "Отмена".',
+      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).",
       {
-        reply_markup: buildCancelReplyKeyboard(),
+        reply_markup: buildBackReplyKeyboard(),
       }
     );
+  });
+
+  it("должен возвращать ручной ввод даты к меню ежедневного отчета", async () => {
+    await handleDailyReportPending({
+      ctx,
+      chatId: 10,
+      userId: 20,
+      text: DATE_BACK_BUTTON_TEXT,
+      pending: "dailyReportDate",
+    });
+
+    expect(setPendingInputMock).toHaveBeenCalledWith(10, "dailyReportMenu");
+    expect(replyMock).toHaveBeenCalledWith("Выбери дату для ежедневного отчета.", {
+      reply_markup: buildDailyReportMenuReplyKeyboard(),
+    });
   });
 
   it("должен формировать отчет по введенной дате и возвращать в главное меню", async () => {
@@ -133,7 +151,7 @@ describe("daily report flow", () => {
       ctx,
       chatId: 10,
       userId: 20,
-      text: "Сегодня",
+      text: TODAY_BUTTON_TEXT,
       pending: "dailyReportMenu",
     });
 

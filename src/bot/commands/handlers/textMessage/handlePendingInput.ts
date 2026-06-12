@@ -1,5 +1,6 @@
 import type { PendingInput } from "@/bot/menu/menuState";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
+import { buildLinkReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput } from "@/bot/menu/menuState";
 import { handleCancelIfRequested } from "@/bot/commands/handlers/textMessage/pending/handleCancel";
 import { handleDailyReportPending } from "@/bot/commands/handlers/textMessage/pending/handleDailyReport";
@@ -40,7 +41,9 @@ export const handlePendingInput = async ({
   const userId = await ensureLinked(chatId);
   if (!userId) {
     clearPendingInput(chatId);
-    await ctx.reply("Сначала свяжите аккаунт командой /link.");
+    await ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
     return;
   }
 

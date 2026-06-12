@@ -20,6 +20,7 @@ vi.mock("@/server/weightEntries", () => ({
 
 import { handleWeightPending } from "@/bot/commands/handlers/textMessage/pending/handleWeight";
 import {
+  buildBackReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
   REPORT_MAIN_MENU_BUTTON_TEXT,
   REPORT_RECOVERY_BUTTON_TEXT,
@@ -116,7 +117,10 @@ describe("handleWeightPending", () => {
 
     expect(getPendingInput(10)).toBe("weightDate");
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
+      "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).",
+      {
+        reply_markup: buildBackReplyKeyboard(),
+      }
     );
 
     await handleWeightPending({
@@ -262,9 +266,9 @@ describe("handleWeightPending", () => {
     });
 
     expect(weightMocks.upsertWeightEntryMock).not.toHaveBeenCalled();
-    expect(ctx.reply).toHaveBeenLastCalledWith(
-      "Введите вес в кг (например, 72.4) или напишите 'отмена'."
-    );
+    expect(ctx.reply).toHaveBeenLastCalledWith("Введите вес в кг (например, 72.4).", {
+      reply_markup: buildBackReplyKeyboard(),
+    });
   });
 
   it("должен возвращать к выбору даты или главному меню из промежуточных шагов", async () => {

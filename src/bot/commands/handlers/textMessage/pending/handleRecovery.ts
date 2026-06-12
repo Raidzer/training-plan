@@ -2,10 +2,14 @@ import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
   buildMainMenuReplyKeyboard,
   buildRecoveryReplyKeyboard,
+  buildRecoverySleepReplyKeyboard,
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
+  isButtonText,
+  isButtonTextWithValue,
   RECOVERY_BATH_LABEL,
+  RECOVERY_CLEAR_SLEEP_BUTTON_TEXT,
   RECOVERY_MASSAGE_LABEL,
   RECOVERY_MFR_LABEL,
   RECOVERY_SAVE_BUTTON_TEXT,
@@ -22,6 +26,8 @@ import {
 } from "@/bot/menu/menuState";
 import { upsertRecoveryEntry } from "@/server/recoveryEntries";
 import { parseSleepTimeInput } from "@/bot/utils/sleepTime";
+
+const RECOVERY_SELECT_PROMPT_TEXT = `Выбери пункты восстановления или нажми "${RECOVERY_SAVE_BUTTON_TEXT}".`;
 
 type RecoveryHandlerArgs = {
   ctx: any;
@@ -72,7 +78,7 @@ export const handleRecoveryPending = async ({
   const draft = getRecoveryDraft(chatId);
 
   if (pending === "recoverySelect") {
-    if (trimmedText === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(trimmedText, DATE_BACK_BUTTON_TEXT)) {
       clearRecoveryDraft(chatId);
       setPendingInput(chatId, "weightAction");
       await ctx.reply("Выбери действие.", {
@@ -81,7 +87,7 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (trimmedText === REPORT_MAIN_MENU_BUTTON_TEXT) {
+    if (isButtonText(trimmedText, REPORT_MAIN_MENU_BUTTON_TEXT)) {
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
@@ -104,12 +110,13 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (trimmedText === RECOVERY_SAVE_BUTTON_TEXT) {
+    if (isButtonText(trimmedText, RECOVERY_SAVE_BUTTON_TEXT)) {
       const sleepTime = parseSleepTimeInput(draft.sleepHours);
       if (!sleepTime.valid) {
-        await ctx.reply(
-          "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
-        );
+        setPendingInput(chatId, "recoverySleep");
+        await ctx.reply("Введите время сна в формате ЧЧ:ММ (например, 07:30).", {
+          reply_markup: buildRecoverySleepReplyKeyboard(),
+        });
         return;
       }
 
@@ -134,15 +141,15 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (trimmedText.startsWith(`${RECOVERY_SLEEP_LABEL}:`)) {
+    if (isButtonTextWithValue(trimmedText, RECOVERY_SLEEP_LABEL)) {
       setPendingInput(chatId, "recoverySleep");
-      await ctx.reply(
-        "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
-      );
+      await ctx.reply("Введите время сна в формате ЧЧ:ММ (например, 07:30).", {
+        reply_markup: buildRecoverySleepReplyKeyboard(),
+      });
       return;
     }
 
-    if (trimmedText.startsWith(`${RECOVERY_MFR_LABEL}:`)) {
+    if (isButtonTextWithValue(trimmedText, RECOVERY_MFR_LABEL)) {
       const nextDraft = {
         ...draft,
         hasMfr: !draft.hasMfr,
@@ -156,7 +163,7 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (trimmedText.startsWith(`${RECOVERY_MASSAGE_LABEL}:`)) {
+    if (isButtonTextWithValue(trimmedText, RECOVERY_MASSAGE_LABEL)) {
       const nextDraft = {
         ...draft,
         hasMassage: !draft.hasMassage,
@@ -170,7 +177,7 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (trimmedText.startsWith(`${RECOVERY_BATH_LABEL}:`)) {
+    if (isButtonTextWithValue(trimmedText, RECOVERY_BATH_LABEL)) {
       const nextDraft = {
         ...draft,
         hasBath: !draft.hasBath,
@@ -186,7 +193,7 @@ export const handleRecoveryPending = async ({
 
     await replyWithRecoveryMenu({
       ctx,
-      message: 'Выбери пункты восстановления или нажми "Сохранить".',
+      message: RECOVERY_SELECT_PROMPT_TEXT,
       draft,
     });
     return;
@@ -203,17 +210,17 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (trimmedText === DATE_BACK_BUTTON_TEXT) {
+    if (isButtonText(trimmedText, DATE_BACK_BUTTON_TEXT)) {
       setPendingInput(chatId, "recoverySelect");
       await replyWithRecoveryMenu({
         ctx,
-        message: 'Выбери пункты восстановления или нажми "Сохранить".',
+        message: RECOVERY_SELECT_PROMPT_TEXT,
         draft,
       });
       return;
     }
 
-    if (trimmedText === REPORT_MAIN_MENU_BUTTON_TEXT) {
+    if (isButtonText(trimmedText, REPORT_MAIN_MENU_BUTTON_TEXT)) {
       clearPendingInput(chatId);
       clearRecoveryDraft(chatId);
       clearWeightDraft(chatId);
@@ -226,7 +233,7 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (lowerText === "нет") {
+    if (isButtonText(trimmedText, RECOVERY_CLEAR_SLEEP_BUTTON_TEXT) || lowerText === "нет") {
       setRecoveryDraft(chatId, { sleepHours: "" });
       setPendingInput(chatId, "recoverySelect");
       const updated = {
@@ -243,9 +250,9 @@ export const handleRecoveryPending = async ({
 
     const sleepTime = parseSleepTimeInput(trimmedText);
     if (!sleepTime.valid) {
-      await ctx.reply(
-        "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
-      );
+      await ctx.reply("Введите время сна в формате ЧЧ:ММ (например, 07:30).", {
+        reply_markup: buildRecoverySleepReplyKeyboard(),
+      });
       return;
     }
 

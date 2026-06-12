@@ -22,6 +22,7 @@ import {
   getTelegramAccountSummary,
   getTelegramSubscriptionSummary,
   unlinkTelegramAccount,
+  updateTelegramSubscriptionSettings,
 } from "@/server/telegram";
 
 function mockSelectWhereResult(rows: unknown[]) {
@@ -37,6 +38,14 @@ function mockSelectWhereResult(rows: unknown[]) {
   dbSelectMock.mockReturnValue({
     from: fromMock,
   });
+}
+
+function createTxSelectBuilder(rows: unknown[]) {
+  return {
+    from: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue(rows),
+    })),
+  };
 }
 
 describe("server/telegram", () => {
@@ -144,5 +153,101 @@ describe("server/telegram", () => {
       subscriptions: 2,
       codes: 0,
     });
+  });
+
+  it("updateTelegramSubscriptionSettings должен обновлять существующую подписку", async () => {
+    const updateWhereMock = vi.fn().mockResolvedValue(undefined);
+    const updateSetMock = vi.fn(() => ({
+      where: updateWhereMock,
+    }));
+    const tx = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce(createTxSelectBuilder([{ chatId: 10 }]))
+        .mockReturnValueOnce(createTxSelectBuilder([{ id: 5 }])),
+      update: vi.fn(() => ({
+        set: updateSetMock,
+      })),
+    };
+
+    dbTransactionMock.mockImplementation(async (callback: (tx: any) => unknown) => {
+      return await callback(tx);
+    });
+    mockSelectWhereResult([{ enabled: true, timezone: "Europe/Moscow", sendTime: "07:30" }]);
+
+    const result = await updateTelegramSubscriptionSettings(20, {
+      enabled: true,
+      sendTime: "07:30",
+    });
+
+    expect(result).toEqual({
+      enabled: true,
+      timezone: "Europe/Moscow",
+      sendTime: "07:30",
+    });
+    expect(updateSetMock).toHaveBeenCalledWith({
+      enabled: true,
+      sendTime: "07:30",
+      updatedAt: expect.any(Date),
+    });
+  });
+
+  it("updateTelegramSubscriptionSettings должен создавать подписку для связанного аккаунта", async () => {
+    const insertValuesMock = vi.fn().mockResolvedValue(undefined);
+    const tx = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce(createTxSelectBuilder([{ chatId: 10 }]))
+        .mockReturnValueOnce(createTxSelectBuilder([])),
+      insert: vi.fn(() => ({
+        values: insertValuesMock,
+      })),
+    };
+
+    dbTransactionMock.mockImplementation(async (callback: (tx: any) => unknown) => {
+      return await callback(tx);
+    });
+    mockSelectWhereResult([{ enabled: false, timezone: "Europe/Moscow", sendTime: null }]);
+
+    const result = await updateTelegramSubscriptionSettings(20, {
+      enabled: false,
+      sendTime: null,
+    });
+
+    expect(result).toEqual({
+      enabled: false,
+      timezone: "Europe/Moscow",
+      sendTime: null,
+    });
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 20,
+        chatId: 10,
+        enabled: false,
+        sendTime: null,
+      })
+    );
+  });
+
+  it("updateTelegramSubscriptionSettings должен возвращать null без связанного аккаунта", async () => {
+    const tx = {
+      select: vi.fn().mockReturnValueOnce(createTxSelectBuilder([])),
+      update: vi.fn(),
+      insert: vi.fn(),
+    };
+
+    dbTransactionMock.mockImplementation(async (callback: (tx: any) => unknown) => {
+      return await callback(tx);
+    });
+
+    const result = await updateTelegramSubscriptionSettings(20, {
+      enabled: true,
+      sendTime: "07:30",
+    });
+
+    expect(result).toBeNull();
+    expect(tx.update).not.toHaveBeenCalled();
+    expect(tx.insert).not.toHaveBeenCalled();
+    expect(dbSelectMock).toHaveBeenCalledTimes(0);
   });
 });

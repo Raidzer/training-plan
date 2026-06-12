@@ -36,9 +36,6 @@ export const handleLinkMenuAction = async ({ ctx, chatId, action }: LinkMenuActi
 
   setPendingInput(chatId, "link");
   await ctx.reply("Введите 6-значный код с сайта.", {
-    reply_markup: { force_reply: true },
-  });
-  await ctx.reply("Если передумали, нажмите кнопку <Отменить привязку>.", {
     reply_markup: buildCancelLinkReplyKeyboard(),
   });
 };

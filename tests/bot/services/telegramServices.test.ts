@@ -18,7 +18,13 @@ vi.mock("@/server/db/client", () => ({
   },
 }));
 
-import { ensureLinked, getLinkedAccount, unlinkAccount } from "@/bot/services/telegramAccounts";
+import {
+  ensureLinked,
+  getKeyboardRefreshTargets,
+  getLinkedAccount,
+  getLinkedAccountDetails,
+  unlinkAccount,
+} from "@/bot/services/telegramAccounts";
 import {
   getEnabledSubscriptions,
   getSubscription,
@@ -31,6 +37,7 @@ function mockSelectWhere(rows: unknown[]) {
   const builder = {
     from: vi.fn(() => builder),
     innerJoin: vi.fn(() => builder),
+    leftJoin: vi.fn(() => builder),
     where: whereMock,
   };
 
@@ -102,6 +109,33 @@ describe("bot/services telegram", () => {
     mockSelectWhere([]);
 
     await expect(ensureLinked(10)).resolves.toBeNull();
+  });
+
+  it("должен получать детали связанного Telegram аккаунта", async () => {
+    mockSelectWhere([{ userId: 20, role: "admin", subscribed: null }]);
+
+    await expect(getLinkedAccountDetails(10)).resolves.toEqual({
+      userId: 20,
+      role: "admin",
+      subscribed: false,
+    });
+
+    mockSelectWhere([]);
+
+    await expect(getLinkedAccountDetails(10)).resolves.toBeNull();
+  });
+
+  it("должен получать активные чаты для обновления клавиатуры", async () => {
+    const rows = [
+      { userId: 20, chatId: 100, subscribed: true },
+      { userId: 30, chatId: 200, subscribed: null },
+    ];
+    mockSelectWhere(rows);
+
+    await expect(getKeyboardRefreshTargets()).resolves.toEqual([
+      { userId: 20, chatId: 100, subscribed: true },
+      { userId: 30, chatId: 200, subscribed: false },
+    ]);
   });
 
   it("должен удалять аккаунт и подписку в транзакции", async () => {

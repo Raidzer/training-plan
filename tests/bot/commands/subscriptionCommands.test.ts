@@ -16,6 +16,13 @@ vi.mock("@/bot/services/telegramSubscriptions", () => ({
 }));
 
 import { registerSubscriptionCommands } from "@/bot/commands/handlers/subscriptionCommands";
+import {
+  buildLinkReplyKeyboard,
+  buildMainMenuReplyKeyboard,
+  buildTimeReplyKeyboard,
+  buildTimezoneReplyKeyboard,
+} from "@/bot/menu/menuKeyboard";
+import { clearPendingInput, getPendingInput } from "@/bot/menu/menuState";
 
 type CommandHandler = (ctx: any) => Promise<unknown>;
 
@@ -49,6 +56,7 @@ function createContext(overrides: Record<string, unknown> = {}) {
 describe("registerSubscriptionCommands", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearPendingInput(10);
     subscriptionMocks.ensureLinkedMock.mockResolvedValue(20);
     subscriptionMocks.getSubscriptionMock.mockResolvedValue({
       enabled: true,
@@ -95,10 +103,18 @@ describe("registerSubscriptionCommands", () => {
     await (handlers.get("time") as CommandHandler)(timeCtx);
     await (handlers.get("timezone") as CommandHandler)(timezoneCtx);
 
-    expect(subscribeCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
-    expect(unsubscribeCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
-    expect(timeCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
-    expect(timezoneCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
+    expect(subscribeCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
+    expect(unsubscribeCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
+    expect(timeCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
+    expect(timezoneCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
   });
 
   it("должен включать и выключать подписку", async () => {
@@ -122,7 +138,7 @@ describe("registerSubscriptionCommands", () => {
       patch: { enabled: true },
     });
     expect(subscribeNeedsSettingsCtx.reply).toHaveBeenCalledWith(
-      "Подписка включена, но нужно задать /timezone и /time, чтобы получать рассылку.",
+      "Подписка включена, но нужно задать часовой пояс и время рассылки в меню ниже.",
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
     expect(subscribeReadyCtx.reply).toHaveBeenCalledWith(
@@ -150,14 +166,28 @@ describe("registerSubscriptionCommands", () => {
     await (handlers.get("time") as CommandHandler)(invalidCtx);
     await (handlers.get("time") as CommandHandler)(validCtx);
 
-    expect(missingCtx.reply).toHaveBeenCalledWith("Используй: /time 07:30");
-    expect(invalidCtx.reply).toHaveBeenCalledWith("Используй: /time 07:30");
+    expect(missingCtx.reply).toHaveBeenCalledWith(
+      "Выберите время кнопкой или напишите новое в формате HH:MM.",
+      {
+        reply_markup: buildTimeReplyKeyboard(),
+      }
+    );
+    expect(invalidCtx.reply).toHaveBeenCalledWith(
+      "Выберите время кнопкой или напишите новое в формате HH:MM.",
+      {
+        reply_markup: buildTimeReplyKeyboard(),
+      }
+    );
     expect(subscriptionMocks.upsertSubscriptionMock).toHaveBeenCalledWith({
       userId: 20,
       chatId: 10,
       patch: { sendTime: "08:15" },
     });
-    expect(validCtx.reply).toHaveBeenCalledWith("Время рассылки обновлено: 08:15.");
+    expect(validCtx.reply).toHaveBeenCalledWith("Время рассылки обновлено: 08:15.", {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: true,
+      }),
+    });
   });
 
   it("должен показывать, валидировать и сохранять таймзону", async () => {
@@ -174,22 +204,46 @@ describe("registerSubscriptionCommands", () => {
     });
 
     await (handlers.get("timezone") as CommandHandler)(currentCtx);
+
+    expect(currentCtx.reply).toHaveBeenCalledWith(
+      "Текущая таймзона: не задана. Выберите таймзону кнопкой или напишите новую IANA/смещение, например Europe/Moscow или +3.",
+      {
+        reply_markup: buildTimezoneReplyKeyboard({
+          currentTimeZone: null,
+        }),
+      }
+    );
+    expect(getPendingInput(10)).toBe("timezone");
+
     await (handlers.get("timezone") as CommandHandler)(invalidCtx);
+
+    expect(invalidCtx.reply).toHaveBeenCalledWith(
+      "Неверная таймзона. Выберите вариант кнопкой или напишите IANA/смещение.",
+      {
+        reply_markup: buildTimezoneReplyKeyboard({
+          currentTimeZone: "Europe/Moscow",
+        }),
+      }
+    );
+    expect(getPendingInput(10)).toBe("timezone");
+
     await (handlers.get("timezone") as CommandHandler)(offsetCtx);
     await (handlers.get("timezone") as CommandHandler)(ianaCtx);
 
-    expect(currentCtx.reply).toHaveBeenCalledWith(
-      "Текущая таймзона: не задана. Используй: /timezone Europe/Moscow или /timezone +3"
-    );
-    expect(invalidCtx.reply).toHaveBeenCalledWith(
-      "Неверная таймзона. Используй формат IANA или смещение (+3)."
-    );
     expect(subscriptionMocks.upsertSubscriptionMock).toHaveBeenCalledWith({
       userId: 20,
       chatId: 10,
       patch: { timezone: "Etc/GMT-3" },
     });
-    expect(offsetCtx.reply).toHaveBeenCalledWith("Таймзона обновлена: Etc/GMT-3 (смещение +3).");
-    expect(ianaCtx.reply).toHaveBeenCalledWith("Таймзона обновлена: Europe/Moscow.");
+    expect(offsetCtx.reply).toHaveBeenCalledWith("Таймзона обновлена: Etc/GMT-3 (смещение +3).", {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: true,
+      }),
+    });
+    expect(ianaCtx.reply).toHaveBeenCalledWith("Таймзона обновлена: Europe/Moscow.", {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: true,
+      }),
+    });
   });
 });

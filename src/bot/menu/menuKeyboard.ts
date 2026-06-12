@@ -1,34 +1,54 @@
-export const LINK_BUTTON_TEXT = "Привязать аккаунт";
-export const CANCEL_LINK_BUTTON_TEXT = "Отменить привязку";
-export const TODAY_BUTTON_TEXT = "Сегодня";
-export const DATE_BUTTON_TEXT = "Другая дата";
-export const DAILY_REPORT_BUTTON_TEXT = "Ежедневный отчет";
-export const DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
-export const CUSTOM_DATE_BUTTON_TEXT = "Указать дату";
-export const DATE_BACK_BUTTON_TEXT = "Назад";
-export const CANCEL_BUTTON_TEXT = "Отмена";
-export const SUBSCRIBE_ON_BUTTON_TEXT = "Подписка: ВКЛ";
-export const SUBSCRIBE_OFF_BUTTON_TEXT = "Подписка: ВЫКЛ";
-export const TIME_BUTTON_TEXT = "Время рассылки";
-export const TIMEZONE_BUTTON_TEXT = "Часовой пояс";
-export const UNLINK_BUTTON_TEXT = "Отвязать";
-export const HELP_BUTTON_TEXT = "Помощь";
-export const HIDE_MENU_BUTTON_TEXT = "Скрыть меню";
-export const WEIGHT_BUTTON_TEXT = "Заполнить дневник";
-export const WEIGHT_TODAY_BUTTON_TEXT = "Сегодня";
-export const WEIGHT_CUSTOM_DATE_BUTTON_TEXT = "Произвольная дата";
-export const REPORT_WEIGHT_BUTTON_TEXT = "Указать вес";
-export const REPORT_RECOVERY_BUTTON_TEXT = "Сон и восстановление";
-export const REPORT_MAIN_MENU_BUTTON_TEXT = "Главное меню";
-export const WEIGHT_MORNING_BUTTON_TEXT = "Указать утренний вес";
-export const WEIGHT_EVENING_BUTTON_TEXT = "Указать вечерний вес";
-export const RECOVERY_SLEEP_LABEL = "Сон";
-export const RECOVERY_MFR_LABEL = "МФР";
-export const RECOVERY_MASSAGE_LABEL = "Массаж";
-export const RECOVERY_BATH_LABEL = "Баня";
-export const RECOVERY_SAVE_BUTTON_TEXT = "Сохранить";
+import { buildTimezoneOptions } from "@/shared/constants/timezones";
 
-export const ALICE_LINK_BUTTON_TEXT = "Связать с Алисой";
+export const LINK_BUTTON_TEXT = "🔗 Привязать аккаунт";
+export const CANCEL_LINK_BUTTON_TEXT = "✖️ Отменить привязку";
+export const TODAY_BUTTON_TEXT = "📅 Сегодня";
+export const DATE_BUTTON_TEXT = "🗓️ Другая дата";
+export const DAILY_REPORT_BUTTON_TEXT = "📋 Ежедневный отчет";
+export const DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT = "🗓️ Произвольная дата";
+export const CUSTOM_DATE_BUTTON_TEXT = "✏️ Указать дату";
+export const DATE_BACK_BUTTON_TEXT = "↩️ Назад";
+export const SUBSCRIBE_ON_BUTTON_TEXT = "🔔 Подписка: ВКЛ";
+export const SUBSCRIBE_OFF_BUTTON_TEXT = "🔕 Подписка: ВЫКЛ";
+export const TIME_BUTTON_TEXT = "🕒 Время рассылки";
+export const TIMEZONE_BUTTON_TEXT = "🌍 Часовой пояс";
+export const UNLINK_BUTTON_TEXT = "🔓 Отвязать";
+export const HELP_BUTTON_TEXT = "❔ Помощь";
+export const HIDE_MENU_BUTTON_TEXT = "🙈 Скрыть меню";
+export const WEIGHT_BUTTON_TEXT = "📝 Заполнить дневник";
+export const WEIGHT_TODAY_BUTTON_TEXT = "📅 Сегодня";
+export const WEIGHT_CUSTOM_DATE_BUTTON_TEXT = "🗓️ Произвольная дата";
+export const REPORT_WEIGHT_BUTTON_TEXT = "⚖️ Указать вес";
+export const REPORT_RECOVERY_BUTTON_TEXT = "💤 Сон и восстановление";
+export const REPORT_MAIN_MENU_BUTTON_TEXT = "🏠 Главное меню";
+export const WEIGHT_MORNING_BUTTON_TEXT = "🌅 Указать утренний вес";
+export const WEIGHT_EVENING_BUTTON_TEXT = "🌙 Указать вечерний вес";
+export const RECOVERY_SLEEP_LABEL = "💤 Сон";
+export const RECOVERY_MFR_LABEL = "🧘 МФР";
+export const RECOVERY_MASSAGE_LABEL = "💆 Массаж";
+export const RECOVERY_BATH_LABEL = "🛁 Баня";
+export const RECOVERY_SAVE_BUTTON_TEXT = "💾 Сохранить";
+export const RECOVERY_CLEAR_SLEEP_BUTTON_TEXT = "🧹 Очистить сон";
+
+const TIME_PRESET_BUTTONS = ["06:00", "06:30", "07:00", "07:30", "08:00", "08:30"];
+
+export const ALICE_LINK_BUTTON_TEXT = "🎙️ Связать с Алисой";
+
+const BUTTON_ICON_PREFIX_REGEX = /^[^A-Za-zА-Яа-яЁё0-9]+/;
+
+export const getPlainButtonText = (text: string) => {
+  return text.trim().replace(BUTTON_ICON_PREFIX_REGEX, "").trim();
+};
+
+export const isButtonText = (text: string, buttonText: string) => {
+  return getPlainButtonText(text) === getPlainButtonText(buttonText);
+};
+
+export const isButtonTextWithValue = (text: string, buttonText: string) => {
+  const plainText = getPlainButtonText(text);
+  const plainButtonText = getPlainButtonText(buttonText);
+  return plainText.startsWith(`${plainButtonText}:`);
+};
 
 export const buildMainMenuReplyKeyboard = (params?: { subscribed?: boolean }) => {
   const subscribed = params?.subscribed ?? false;
@@ -95,9 +115,42 @@ export const buildDailyReportMenuReplyKeyboard = () => {
   };
 };
 
-export const buildCancelReplyKeyboard = () => {
+export const buildBackReplyKeyboard = () => {
   return {
-    keyboard: [[{ text: CANCEL_BUTTON_TEXT }]],
+    keyboard: [[{ text: DATE_BACK_BUTTON_TEXT }]],
+    resize_keyboard: true,
+    is_persistent: false,
+  };
+};
+
+export const buildTimeReplyKeyboard = () => {
+  const rows: { text: string }[][] = [];
+  for (let i = 0; i < TIME_PRESET_BUTTONS.length; i += 3) {
+    rows.push(TIME_PRESET_BUTTONS.slice(i, i + 3).map((time) => ({ text: time })));
+  }
+  rows.push([{ text: DATE_BACK_BUTTON_TEXT }]);
+
+  return {
+    keyboard: rows,
+    resize_keyboard: true,
+    is_persistent: false,
+  };
+};
+
+export const buildTimezoneReplyKeyboard = (params?: { currentTimeZone?: string | null }) => {
+  const includeTimeZones: string[] = [];
+  if (params?.currentTimeZone) {
+    includeTimeZones.push(params.currentTimeZone);
+  }
+
+  const timezoneButtons = buildTimezoneOptions(new Date(), includeTimeZones).map((option) => [
+    {
+      text: option.value,
+    },
+  ]);
+
+  return {
+    keyboard: [...timezoneButtons, [{ text: DATE_BACK_BUTTON_TEXT }]],
     resize_keyboard: true,
     is_persistent: false,
   };
@@ -169,6 +222,17 @@ export const buildRecoveryReplyKeyboard = (params: {
         },
       ],
       [{ text: RECOVERY_SAVE_BUTTON_TEXT }],
+      [{ text: REPORT_MAIN_MENU_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }],
+    ],
+    resize_keyboard: true,
+    is_persistent: false,
+  };
+};
+
+export const buildRecoverySleepReplyKeyboard = () => {
+  return {
+    keyboard: [
+      [{ text: RECOVERY_CLEAR_SLEEP_BUTTON_TEXT }],
       [{ text: REPORT_MAIN_MENU_BUTTON_TEXT }, { text: DATE_BACK_BUTTON_TEXT }],
     ],
     resize_keyboard: true,

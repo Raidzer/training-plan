@@ -19,6 +19,7 @@ vi.mock("@/bot/services/telegramLinking", () => ({
 }));
 
 import { handleLinkPending } from "@/bot/commands/handlers/textMessage/pending/handleLink";
+import { buildCancelLinkReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, getPendingInput, setPendingInput } from "@/bot/menu/menuState";
 
 function createContext() {
@@ -48,7 +49,9 @@ describe("handleLinkPending", () => {
 
     expect(linkPendingMocks.linkAccountMock).not.toHaveBeenCalled();
     expect(getPendingInput(10)).toBe("link");
-    expect(ctx.reply).toHaveBeenCalledWith("Введите 6-значный код с сайта или напишите 'отмена'.");
+    expect(ctx.reply).toHaveBeenCalledWith("Введите 6-значный код с сайта.", {
+      reply_markup: buildCancelLinkReplyKeyboard(),
+    });
   });
 
   it("должен связывать аккаунт и очищать pending", async () => {
@@ -102,10 +105,16 @@ describe("handleLinkPending", () => {
     await handleLinkPending({ ctx: expiredCtx, chatId: 10, text: "222222" });
 
     expect(userLinkedCtx.reply).toHaveBeenCalledWith(
-      "Аккаунт уже связан с Telegram. Попробуйте другой код или напишите 'отмена'."
+      "Аккаунт уже связан с Telegram. Попробуйте другой код.",
+      {
+        reply_markup: buildCancelLinkReplyKeyboard(),
+      }
     );
     expect(expiredCtx.reply).toHaveBeenCalledWith(
-      "Код недействителен или истек. Попробуйте другой или напишите 'отмена'."
+      "Код недействителен или истек. Попробуйте другой.",
+      {
+        reply_markup: buildCancelLinkReplyKeyboard(),
+      }
     );
   });
 });
