@@ -2,11 +2,18 @@ import { eq, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 
+const USER_ACTIVITY_UPDATE_INTERVAL_MS = 15 * 60 * 1000;
+
 export type UserProfileUpdateInput = {
   name: string;
   lastName: string | null;
   gender: string;
   timezone: string;
+};
+
+export type UserActivitySnapshot = {
+  id: number;
+  lastActiveAt?: Date | null;
 };
 
 export async function getUserByIdentifier(identifier: string) {
@@ -30,6 +37,7 @@ export async function getUserById(id: number) {
       timezone: users.timezone,
       role: users.role,
       isActive: users.isActive,
+      lastActiveAt: users.lastActiveAt,
       emailVerified: users.emailVerified,
     })
     .from(users)
@@ -37,6 +45,29 @@ export async function getUserById(id: number) {
     .limit(1);
 
   return user || null;
+}
+
+export function shouldUpdateLastActiveAt(lastActiveAt: Date | null | undefined, now = new Date()) {
+  if (!lastActiveAt) {
+    return true;
+  }
+
+  return now.getTime() - lastActiveAt.getTime() >= USER_ACTIVITY_UPDATE_INTERVAL_MS;
+}
+
+export async function touchUserLastActiveAtById(id: number, now = new Date()): Promise<void> {
+  await db.update(users).set({ lastActiveAt: now }).where(eq(users.id, id));
+}
+
+export async function touchUserLastActiveAtIfNeeded(
+  user: UserActivitySnapshot,
+  now = new Date()
+): Promise<void> {
+  if (!shouldUpdateLastActiveAt(user.lastActiveAt, now)) {
+    return;
+  }
+
+  await touchUserLastActiveAtById(user.id, now);
 }
 
 export async function getUserProfileById(id: number) {

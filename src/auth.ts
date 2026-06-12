@@ -3,12 +3,34 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getUserById, getUserByIdentifier } from "@/server/services/users";
+import {
+  getUserById,
+  getUserByIdentifier,
+  touchUserLastActiveAtById,
+  touchUserLastActiveAtIfNeeded,
+  type UserActivitySnapshot,
+} from "@/server/services/users";
 
 const schema = z.object({
   email: z.string().trim().min(2).max(255),
   password: z.string().min(6),
 });
+
+async function trackUserLastActiveAt(user: UserActivitySnapshot): Promise<void> {
+  try {
+    await touchUserLastActiveAtIfNeeded(user);
+  } catch (error) {
+    console.error("Failed to update user activity", error);
+  }
+}
+
+async function trackUserLoginAt(userId: number): Promise<void> {
+  try {
+    await touchUserLastActiveAtById(userId);
+  } catch (error) {
+    console.error("Failed to update user login activity", error);
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -37,6 +59,9 @@ export const authOptions: NextAuthOptions = {
         if (!ok) {
           return null;
         }
+
+        await trackUserLoginAt(user.id);
+
         return {
           id: String(user.id),
           email: user.email,
@@ -100,6 +125,8 @@ export const auth = async () => {
   if (!user || !user.isActive) {
     return null;
   }
+
+  await trackUserLastActiveAt(user);
 
   return {
     ...session,
