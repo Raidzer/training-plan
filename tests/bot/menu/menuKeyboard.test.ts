@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildBackReplyKeyboard,
   buildCancelLinkReplyKeyboard,
-  buildCancelReplyKeyboard,
   buildDailyReportMenuReplyKeyboard,
   buildDateMenuReplyKeyboard,
   buildLinkReplyKeyboard,
   buildMainMenuReplyKeyboard,
   buildRecoveryReplyKeyboard,
+  buildRecoverySleepReplyKeyboard,
+  buildTimeReplyKeyboard,
+  buildTimezoneReplyKeyboard,
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   buildWeightPeriodReplyKeyboard,
@@ -20,7 +23,9 @@ describe("bot/menu/menuKeyboard", () => {
       buildCancelLinkReplyKeyboard(),
       buildDateMenuReplyKeyboard({ dateButtons: ["01-06", "02-06", "03-06"] }),
       buildDailyReportMenuReplyKeyboard(),
-      buildCancelReplyKeyboard(),
+      buildBackReplyKeyboard(),
+      buildTimeReplyKeyboard(),
+      buildTimezoneReplyKeyboard(),
       buildWeightDateReplyKeyboard(),
       buildWeightPeriodReplyKeyboard(),
       buildWeightActionReplyKeyboard(),
@@ -30,6 +35,7 @@ describe("bot/menu/menuKeyboard", () => {
         hasMfr: false,
         hasMassage: false,
       }),
+      buildRecoverySleepReplyKeyboard(),
     ];
 
     for (const keyboard of keyboards) {

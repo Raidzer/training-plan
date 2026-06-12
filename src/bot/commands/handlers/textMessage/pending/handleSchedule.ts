@@ -1,7 +1,12 @@
 import { TIME_REGEX } from "@/bot/utils/validators";
 import { resolveTimeZoneInput } from "@/bot/utils/dateTime";
 import { getSubscription, upsertSubscription } from "@/bot/services/telegramSubscriptions";
-import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildMainMenuReplyKeyboard,
+  buildTimeReplyKeyboard,
+  buildTimezoneReplyKeyboard,
+  DATE_BACK_BUTTON_TEXT,
+} from "@/bot/menu/menuKeyboard";
 import { clearPendingInput } from "@/bot/menu/menuState";
 
 type ScheduleHandlerArgs = {
@@ -20,8 +25,21 @@ export const handleSchedulePending = async ({
   userId,
 }: ScheduleHandlerArgs) => {
   if (pending === "time") {
+    if (text === DATE_BACK_BUTTON_TEXT) {
+      clearPendingInput(chatId);
+      const subscription = await getSubscription(userId);
+      await ctx.reply("Меню управления ниже.", {
+        reply_markup: buildMainMenuReplyKeyboard({
+          subscribed: subscription?.enabled ?? false,
+        }),
+      });
+      return;
+    }
+
     if (!TIME_REGEX.test(text)) {
-      await ctx.reply("Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'.");
+      await ctx.reply("Выберите время кнопкой или напишите новое в формате HH:MM.", {
+        reply_markup: buildTimeReplyKeyboard(),
+      });
       return;
     }
 
@@ -41,9 +59,25 @@ export const handleSchedulePending = async ({
     return;
   }
 
+  if (text === DATE_BACK_BUTTON_TEXT) {
+    clearPendingInput(chatId);
+    const subscription = await getSubscription(userId);
+    await ctx.reply("Меню управления ниже.", {
+      reply_markup: buildMainMenuReplyKeyboard({
+        subscribed: subscription?.enabled ?? false,
+      }),
+    });
+    return;
+  }
+
   const resolved = resolveTimeZoneInput(text);
   if (!resolved) {
-    await ctx.reply("Неверная таймзона. Пример: Europe/Moscow или +3. Или напишите 'отмена'.");
+    const subscription = await getSubscription(userId);
+    await ctx.reply("Неверная таймзона. Выберите вариант кнопкой или напишите IANA/смещение.", {
+      reply_markup: buildTimezoneReplyKeyboard({
+        currentTimeZone: subscription?.timezone ?? null,
+      }),
+    });
     return;
   }
 

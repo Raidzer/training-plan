@@ -1,7 +1,7 @@
 import { formatDateInTimeZone, formatDateLocal, parseDisplayDate } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
-  buildCancelReplyKeyboard,
+  buildBackReplyKeyboard,
   buildDailyReportMenuReplyKeyboard,
   buildMainMenuReplyKeyboard,
   DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT,
@@ -19,8 +19,7 @@ type DailyReportHandlerArgs = {
   userId: number;
 };
 
-const DATE_PROMPT_TEXT =
-  'Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или нажмите кнопку "Отмена".';
+const DATE_PROMPT_TEXT = "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).";
 
 const replyWithDailyReport = async (params: {
   ctx: any;
@@ -87,7 +86,7 @@ export const handleDailyReportPending = async ({
     if (text === DAILY_REPORT_CUSTOM_DATE_BUTTON_TEXT) {
       setPendingInput(chatId, "dailyReportDate");
       await ctx.reply(DATE_PROMPT_TEXT, {
-        reply_markup: buildCancelReplyKeyboard(),
+        reply_markup: buildBackReplyKeyboard(),
       });
       return;
     }
@@ -98,10 +97,18 @@ export const handleDailyReportPending = async ({
     return;
   }
 
+  if (text === DATE_BACK_BUTTON_TEXT) {
+    setPendingInput(chatId, "dailyReportMenu");
+    await ctx.reply("Выбери дату для ежедневного отчета.", {
+      reply_markup: buildDailyReportMenuReplyKeyboard(),
+    });
+    return;
+  }
+
   const parsedDate = parseDisplayDate(text);
   if (!parsedDate) {
     await ctx.reply(DATE_PROMPT_TEXT, {
-      reply_markup: buildCancelReplyKeyboard(),
+      reply_markup: buildBackReplyKeyboard(),
     });
     return;
   }

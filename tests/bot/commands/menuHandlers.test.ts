@@ -29,6 +29,8 @@ import {
   LINK_BUTTON_TEXT,
   buildLinkReplyKeyboard,
   buildMainMenuReplyKeyboard,
+  buildTimeReplyKeyboard,
+  buildTimezoneReplyKeyboard,
 } from "@/bot/menu/menuKeyboard";
 import { clearPendingInput, getPendingInput, setPendingInput } from "@/bot/menu/menuState";
 
@@ -192,11 +194,19 @@ describe("bot menu handlers", () => {
 
     expect(ctx.reply).toHaveBeenNthCalledWith(
       1,
-      "Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'."
+      "Выберите время кнопкой или напишите новое в формате HH:MM.",
+      {
+        reply_markup: buildTimeReplyKeyboard(),
+      }
     );
     expect(ctx.reply).toHaveBeenNthCalledWith(
       2,
-      "Текущая таймзона: Europe/Moscow. Введите IANA (например, Europe/Moscow) или смещение (например, +3), либо напишите 'отмена'."
+      "Текущая таймзона: Europe/Moscow. Выберите таймзону кнопкой или напишите новую IANA/смещение, например Europe/Moscow или +3.",
+      {
+        reply_markup: buildTimezoneReplyKeyboard({
+          currentTimeZone: "Europe/Moscow",
+        }),
+      }
     );
   });
 
@@ -235,7 +245,7 @@ describe("bot menu handlers", () => {
       patch: { enabled: true },
     });
     expect(needsSettingsCtx.reply).toHaveBeenCalledWith(
-      "Подписка включена, но нужно задать /timezone и /time, чтобы получать рассылку.",
+      "Подписка включена, но нужно задать часовой пояс и время рассылки в меню ниже.",
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
     expect(readyCtx.reply).toHaveBeenCalledWith(
@@ -265,7 +275,7 @@ describe("bot menu handlers", () => {
     });
 
     expect(ctx.reply).toHaveBeenCalledWith(
-      "Подписка включена, но нужно задать /timezone и /time, чтобы получать рассылку.",
+      "Подписка включена, но нужно задать часовой пояс и время рассылки в меню ниже.",
       expect.objectContaining({ reply_markup: buildMainMenuReplyKeyboard({ subscribed: false }) })
     );
   });

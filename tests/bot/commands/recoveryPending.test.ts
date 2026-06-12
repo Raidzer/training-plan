@@ -15,8 +15,10 @@ vi.mock("@/server/recoveryEntries", () => ({
 
 import { handleRecoveryPending } from "@/bot/commands/handlers/textMessage/pending/handleRecovery";
 import {
+  buildRecoverySleepReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
   RECOVERY_BATH_LABEL,
+  RECOVERY_CLEAR_SLEEP_BUTTON_TEXT,
   RECOVERY_MASSAGE_LABEL,
   RECOVERY_MFR_LABEL,
   RECOVERY_SAVE_BUTTON_TEXT,
@@ -156,8 +158,12 @@ describe("handleRecoveryPending", () => {
     });
 
     expect(recoveryMocks.upsertRecoveryEntryMock).not.toHaveBeenCalled();
+    expect(getPendingInput(10)).toBe("recoverySleep");
     expect(ctx.reply).toHaveBeenLastCalledWith(
-      "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
+      "Введите время сна в формате ЧЧ:ММ (например, 07:30).",
+      {
+        reply_markup: buildRecoverySleepReplyKeyboard(),
+      }
     );
   });
 
@@ -193,13 +199,16 @@ describe("handleRecoveryPending", () => {
     });
 
     expect(ctx.reply).toHaveBeenLastCalledWith(
-      "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
+      "Введите время сна в формате ЧЧ:ММ (например, 07:30).",
+      {
+        reply_markup: buildRecoverySleepReplyKeyboard(),
+      }
     );
 
     await handleRecoveryPending({
       ctx,
       chatId: 10,
-      text: "нет",
+      text: RECOVERY_CLEAR_SLEEP_BUTTON_TEXT,
       pending: "recoverySleep",
       userId: 20,
     });

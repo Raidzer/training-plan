@@ -23,6 +23,7 @@ vi.mock("@/bot/services/telegramLinking", () => ({
 }));
 
 import { registerAccountCommands } from "@/bot/commands/handlers/accountCommands";
+import { buildCancelLinkReplyKeyboard } from "@/bot/menu/menuKeyboard";
 
 type CommandHandler = (ctx: any) => Promise<unknown>;
 
@@ -96,7 +97,7 @@ describe("registerAccountCommands", () => {
     await menuHandler(linkedMenuCtx);
 
     expect(unlinkedStartCtx.reply).toHaveBeenCalledWith(
-      "Привет! Чтобы связать аккаунт, получи код на сайте и отправь команду /link <код>.",
+      "Привет! Чтобы связать аккаунт, получи код на сайте и нажми кнопку ниже.",
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
     expect(linkedStartCtx.reply).toHaveBeenCalledWith(
@@ -104,7 +105,7 @@ describe("registerAccountCommands", () => {
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
     expect(unlinkedMenuCtx.reply).toHaveBeenCalledWith(
-      "Меню управления доступно после связки. Используй /link <код>.",
+      "Меню управления доступно после связки. Получи код на сайте и нажми кнопку ниже.",
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
     expect(linkedMenuCtx.reply).toHaveBeenCalledWith(
@@ -142,8 +143,8 @@ describe("registerAccountCommands", () => {
     await linkHandler(successCtx);
 
     expect(groupCtx.reply).toHaveBeenCalledWith("Связка доступна только в личных сообщениях.");
-    expect(invalidCtx.reply).toHaveBeenCalledWith("Используй: /link 123456", {
-      reply_markup: expect.any(Object),
+    expect(invalidCtx.reply).toHaveBeenCalledWith("Введите 6-значный код с сайта.", {
+      reply_markup: buildCancelLinkReplyKeyboard(),
     });
     expect(accountMocks.linkAccountMock).toHaveBeenCalledWith({
       chatId: 10,

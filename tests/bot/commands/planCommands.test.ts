@@ -24,6 +24,8 @@ vi.mock("@/server/diary", () => ({
 }));
 
 import { registerPlanCommands } from "@/bot/commands/handlers/planCommands";
+import { buildDailyReportMenuReplyKeyboard, buildLinkReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import { clearPendingInput, getPendingInput } from "@/bot/menu/menuState";
 
 type CommandHandler = (ctx: any) => Promise<unknown>;
 
@@ -58,6 +60,7 @@ describe("registerPlanCommands", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
+    clearPendingInput(10);
     planMocks.ensureLinkedMock.mockResolvedValue(20);
     planMocks.getSubscriptionMock.mockResolvedValue({
       enabled: true,
@@ -101,9 +104,15 @@ describe("registerPlanCommands", () => {
     await (handlers.get("date") as CommandHandler)(dateCtx);
     await (handlers.get("report") as CommandHandler)(reportCtx);
 
-    expect(todayCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
-    expect(dateCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
-    expect(reportCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.");
+    expect(todayCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
+    expect(dateCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
+    expect(reportCtx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
+      reply_markup: buildLinkReplyKeyboard(),
+    });
   });
 
   it("должен показывать план на сегодня с учетом таймзоны или времени сервера", async () => {
@@ -153,11 +162,22 @@ describe("registerPlanCommands", () => {
     ]);
 
     await (handlers.get("date") as CommandHandler)(missingCtx);
+
+    expect(missingCtx.reply).toHaveBeenCalledWith(
+      'Выбери дату из списка или нажми "Произвольная дата".',
+      expect.objectContaining({ reply_markup: expect.any(Object) })
+    );
+
     await (handlers.get("date") as CommandHandler)(invalidCtx);
+
+    expect(invalidCtx.reply).toHaveBeenCalledWith(
+      'Выбери дату из списка или нажми "Произвольная дата".',
+      expect.objectContaining({ reply_markup: expect.any(Object) })
+    );
+    expect(getPendingInput(10)).toBe("dateMenu");
+
     await (handlers.get("date") as CommandHandler)(validCtx);
 
-    expect(missingCtx.reply).toHaveBeenCalledWith("Используй: /date 21-12-2025");
-    expect(invalidCtx.reply).toHaveBeenCalledWith("Используй: /date 21-12-2025");
     expect(planMocks.getPlanEntriesByDateMock).toHaveBeenCalledWith({
       userId: 20,
       date: "2025-12-21",
@@ -184,11 +204,16 @@ describe("registerPlanCommands", () => {
       .mockResolvedValueOnce({ enabled: true, timezone: null });
 
     await (handlers.get("report") as CommandHandler)(invalidCtx);
+
+    expect(invalidCtx.reply).toHaveBeenCalledWith("Выбери дату для ежедневного отчета.", {
+      reply_markup: buildDailyReportMenuReplyKeyboard(),
+    });
+    expect(getPendingInput(10)).toBe("dailyReportMenu");
+
     await (handlers.get("report") as CommandHandler)(dateCtx);
     await (handlers.get("report") as CommandHandler)(timezoneCtx);
     await (handlers.get("report") as CommandHandler)(serverTimeCtx);
 
-    expect(invalidCtx.reply).toHaveBeenCalledWith("Используй: /report 21-12-2025");
     expect(planMocks.getDailyReportTextByDateMock).toHaveBeenNthCalledWith(1, {
       userId: 20,
       date: "2025-12-21",

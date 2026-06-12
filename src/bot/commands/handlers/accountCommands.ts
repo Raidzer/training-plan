@@ -2,7 +2,12 @@ import type { Bot } from "grammy";
 import { ensureLinked, getLinkedAccount, unlinkAccount } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { linkAccount } from "@/bot/services/telegramLinking";
-import { buildLinkReplyKeyboard, buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildCancelLinkReplyKeyboard,
+  buildLinkReplyKeyboard,
+  buildMainMenuReplyKeyboard,
+} from "@/bot/menu/menuKeyboard";
+import { setPendingInput } from "@/bot/menu/menuState";
 import { resetPendingInput } from "@/bot/commands/handlers/helpers";
 
 export const registerAccountCommands = (bot: Bot) => {
@@ -17,7 +22,7 @@ export const registerAccountCommands = (bot: Bot) => {
     const subscription = userId ? await getSubscription(userId) : null;
     const message = userId
       ? "Привет! Меню управления ниже."
-      : "Привет! Чтобы связать аккаунт, получи код на сайте и отправь команду /link <код>.";
+      : "Привет! Чтобы связать аккаунт, получи код на сайте и нажми кнопку ниже.";
 
     if (!userId) {
       const keyboard = buildLinkReplyKeyboard();
@@ -42,7 +47,7 @@ export const registerAccountCommands = (bot: Bot) => {
     const subscription = userId ? await getSubscription(userId) : null;
     const message = userId
       ? "Меню управления:"
-      : "Меню управления доступно после связки. Используй /link <код>.";
+      : "Меню управления доступно после связки. Получи код на сайте и нажми кнопку ниже.";
 
     if (!userId) {
       const keyboard = buildLinkReplyKeyboard();
@@ -68,8 +73,9 @@ export const registerAccountCommands = (bot: Bot) => {
     const code = parts[1];
 
     if (!code || !/^\d{6}$/.test(code)) {
-      return ctx.reply("Используй: /link 123456", {
-        reply_markup: buildLinkReplyKeyboard(),
+      setPendingInput(ctx.chat.id, "link");
+      return ctx.reply("Введите 6-значный код с сайта.", {
+        reply_markup: buildCancelLinkReplyKeyboard(),
       });
     }
 

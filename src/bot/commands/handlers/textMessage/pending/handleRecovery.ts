@@ -2,10 +2,12 @@ import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
   buildMainMenuReplyKeyboard,
   buildRecoveryReplyKeyboard,
+  buildRecoverySleepReplyKeyboard,
   buildWeightActionReplyKeyboard,
   buildWeightDateReplyKeyboard,
   DATE_BACK_BUTTON_TEXT,
   RECOVERY_BATH_LABEL,
+  RECOVERY_CLEAR_SLEEP_BUTTON_TEXT,
   RECOVERY_MASSAGE_LABEL,
   RECOVERY_MFR_LABEL,
   RECOVERY_SAVE_BUTTON_TEXT,
@@ -107,9 +109,10 @@ export const handleRecoveryPending = async ({
     if (trimmedText === RECOVERY_SAVE_BUTTON_TEXT) {
       const sleepTime = parseSleepTimeInput(draft.sleepHours);
       if (!sleepTime.valid) {
-        await ctx.reply(
-          "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
-        );
+        setPendingInput(chatId, "recoverySleep");
+        await ctx.reply("Введите время сна в формате ЧЧ:ММ (например, 07:30).", {
+          reply_markup: buildRecoverySleepReplyKeyboard(),
+        });
         return;
       }
 
@@ -136,9 +139,9 @@ export const handleRecoveryPending = async ({
 
     if (trimmedText.startsWith(`${RECOVERY_SLEEP_LABEL}:`)) {
       setPendingInput(chatId, "recoverySleep");
-      await ctx.reply(
-        "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
-      );
+      await ctx.reply("Введите время сна в формате ЧЧ:ММ (например, 07:30).", {
+        reply_markup: buildRecoverySleepReplyKeyboard(),
+      });
       return;
     }
 
@@ -226,7 +229,7 @@ export const handleRecoveryPending = async ({
       return;
     }
 
-    if (lowerText === "нет") {
+    if (trimmedText === RECOVERY_CLEAR_SLEEP_BUTTON_TEXT || lowerText === "нет") {
       setRecoveryDraft(chatId, { sleepHours: "" });
       setPendingInput(chatId, "recoverySelect");
       const updated = {
@@ -243,9 +246,9 @@ export const handleRecoveryPending = async ({
 
     const sleepTime = parseSleepTimeInput(trimmedText);
     if (!sleepTime.valid) {
-      await ctx.reply(
-        "Введите время сна в формате ЧЧ:ММ (например, 07:30) или напишите 'нет', чтобы очистить."
-      );
+      await ctx.reply("Введите время сна в формате ЧЧ:ММ (например, 07:30).", {
+        reply_markup: buildRecoverySleepReplyKeyboard(),
+      });
       return;
     }
 

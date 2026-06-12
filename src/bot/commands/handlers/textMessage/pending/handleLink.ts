@@ -1,7 +1,11 @@
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { linkAccount } from "@/bot/services/telegramLinking";
-import { buildLinkReplyKeyboard, buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import {
+  buildCancelLinkReplyKeyboard,
+  buildLinkReplyKeyboard,
+  buildMainMenuReplyKeyboard,
+} from "@/bot/menu/menuKeyboard";
 import { clearPendingInput } from "@/bot/menu/menuState";
 
 type LinkHandlerArgs = {
@@ -12,7 +16,9 @@ type LinkHandlerArgs = {
 
 export const handleLinkPending = async ({ ctx, chatId, text }: LinkHandlerArgs) => {
   if (!/^\d{6}$/.test(text)) {
-    await ctx.reply("Введите 6-значный код с сайта или напишите 'отмена'.");
+    await ctx.reply("Введите 6-значный код с сайта.", {
+      reply_markup: buildCancelLinkReplyKeyboard(),
+    });
     return;
   }
 
@@ -39,12 +45,14 @@ export const handleLinkPending = async ({ ctx, chatId, text }: LinkHandlerArgs) 
       return;
     }
     if (result.error === "пользователь-уже-связан") {
-      await ctx.reply(
-        "Аккаунт уже связан с Telegram. Попробуйте другой код или напишите 'отмена'."
-      );
+      await ctx.reply("Аккаунт уже связан с Telegram. Попробуйте другой код.", {
+        reply_markup: buildCancelLinkReplyKeyboard(),
+      });
       return;
     }
-    await ctx.reply("Код недействителен или истек. Попробуйте другой или напишите 'отмена'.");
+    await ctx.reply("Код недействителен или истек. Попробуйте другой.", {
+      reply_markup: buildCancelLinkReplyKeyboard(),
+    });
     return;
   }
 

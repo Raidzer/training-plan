@@ -6,6 +6,7 @@ import {
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
+  buildBackReplyKeyboard,
   buildMainMenuReplyKeyboard,
   buildRecoveryReplyKeyboard,
   buildWeightActionReplyKeyboard,
@@ -78,9 +79,9 @@ export const handleWeightPending = async ({
 
     if (text === WEIGHT_CUSTOM_DATE_BUTTON_TEXT) {
       setPendingInput(chatId, "weightDate");
-      await ctx.reply(
-        "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
-      );
+      await ctx.reply("Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).", {
+        reply_markup: buildBackReplyKeyboard(),
+      });
       return;
     }
 
@@ -101,9 +102,9 @@ export const handleWeightPending = async ({
 
     const parsedDate = parseDisplayDate(text);
     if (!parsedDate) {
-      await ctx.reply(
-        "Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025) или напишите 'отмена'."
-      );
+      await ctx.reply("Введите дату в формате ДД-ММ-ГГГГ (например, 21-12-2025).", {
+        reply_markup: buildBackReplyKeyboard(),
+      });
       return;
     }
 
@@ -217,7 +218,9 @@ export const handleWeightPending = async ({
       const periodLabel = period === "morning" ? "утренний" : "вечерний";
       setWeightDraft(chatId, { period });
       setPendingInput(chatId, "weightValue");
-      await ctx.reply(`Введите ${periodLabel} вес в кг (например, 72.4) или напишите 'отмена'.`);
+      await ctx.reply(`Введите ${periodLabel} вес в кг (например, 72.4).`, {
+        reply_markup: buildBackReplyKeyboard(),
+      });
       return;
     }
 
@@ -237,13 +240,17 @@ export const handleWeightPending = async ({
 
   const normalized = text.replace(",", ".");
   if (!/^\d{1,3}(?:\.\d{1})?$/.test(normalized)) {
-    await ctx.reply("Введите вес в кг (например, 72.4) или напишите 'отмена'.");
+    await ctx.reply("Введите вес в кг (например, 72.4).", {
+      reply_markup: buildBackReplyKeyboard(),
+    });
     return;
   }
 
   const weightKgInput = Number(normalized);
   if (!Number.isFinite(weightKgInput) || weightKgInput <= 0) {
-    await ctx.reply("Введите вес в кг (например, 72.4) или напишите 'отмена'.");
+    await ctx.reply("Введите вес в кг (например, 72.4).", {
+      reply_markup: buildBackReplyKeyboard(),
+    });
     return;
   }
   const weightKg = Math.round(weightKgInput * 10) / 10;

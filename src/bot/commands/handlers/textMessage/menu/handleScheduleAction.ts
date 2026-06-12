@@ -1,4 +1,5 @@
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
+import { buildTimeReplyKeyboard, buildTimezoneReplyKeyboard } from "@/bot/menu/menuKeyboard";
 import { setPendingInput } from "@/bot/menu/menuState";
 
 type ScheduleMenuActionArgs = {
@@ -16,13 +17,20 @@ export const handleScheduleMenuAction = async ({
 }: ScheduleMenuActionArgs) => {
   setPendingInput(chatId, action);
   if (action === "time") {
-    await ctx.reply("Введите время в формате HH:MM (например, 07:30) или напишите 'отмена'.");
+    await ctx.reply("Выберите время кнопкой или напишите новое в формате HH:MM.", {
+      reply_markup: buildTimeReplyKeyboard(),
+    });
     return;
   }
 
   const subscription = await getSubscription(userId);
   const timeZone = subscription?.timezone ?? "не задана";
   await ctx.reply(
-    `Текущая таймзона: ${timeZone}. Введите IANA (например, Europe/Moscow) или смещение (например, +3), либо напишите 'отмена'.`
+    `Текущая таймзона: ${timeZone}. Выберите таймзону кнопкой или напишите новую IANA/смещение, например Europe/Moscow или +3.`,
+    {
+      reply_markup: buildTimezoneReplyKeyboard({
+        currentTimeZone: subscription?.timezone ?? null,
+      }),
+    }
   );
 };

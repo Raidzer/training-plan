@@ -87,7 +87,7 @@ describe("handleMenuAction routing", () => {
 
     await handleMenuAction({ ctx, chatId: 10, action: "today" });
 
-    expect(ctx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт командой /link.", {
+    expect(ctx.reply).toHaveBeenCalledWith("Сначала свяжите аккаунт кнопкой ниже.", {
       reply_markup: expect.any(Object),
     });
     expect(menuActionMocks.handlePlanMenuActionMock).not.toHaveBeenCalled();
