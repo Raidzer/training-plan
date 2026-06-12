@@ -45,7 +45,7 @@ describe("TelegramLinkPanel", () => {
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
 
-    expect(await screen.findByText("/link 123456")).toBeTruthy();
+    expect(await screen.findByText("123456")).toBeTruthy();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/telegram/link-code", { method: "POST" });
     });
@@ -86,6 +86,9 @@ describe("TelegramLinkPanel", () => {
     expect(
       screen.getByText("Рассылка включена. Время: 08:00. Таймзона: Europe/Moscow.")
     ).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Подписка на рассылку" })).toBeTruthy();
+    expect(screen.getByLabelText("Время рассылки")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Сохранить настройки рассылки" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Отвязать Telegram" })).toBeTruthy();
   });
 
@@ -121,7 +124,7 @@ describe("TelegramLinkPanel", () => {
       expect(fetchMock).toHaveBeenCalledWith("/api/telegram/link-code", { method: "POST" });
     });
 
-    expect(screen.queryByText("/link 123456")).toBeNull();
+    expect(screen.queryByText("123456")).toBeNull();
   });
 
   it("отвязывает Telegram и перезагружает статус", async () => {
@@ -264,7 +267,7 @@ describe("TelegramLinkPanel", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/telegram/link-code", { method: "POST" });
     });
-    expect(screen.queryByText("/link 999000")).toBeNull();
+    expect(screen.queryByText("999000")).toBeNull();
   });
 
   it("показывает н/д для выданного кода без корректной даты и обрабатывает сетевые ошибки", async () => {
@@ -297,7 +300,7 @@ describe("TelegramLinkPanel", () => {
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
 
-    expect(await screen.findByText("/link 999000")).toBeTruthy();
+    expect(await screen.findByText("999000")).toBeTruthy();
     expect(screen.getByText("Код действует до н/д.")).toBeTruthy();
 
     await waitFor(() => {
@@ -316,5 +319,73 @@ describe("TelegramLinkPanel", () => {
     });
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it("сохраняет настройки Telegram-рассылки в профиле", async () => {
+    const linkedStatus = {
+      linked: true,
+      telegram: {
+        username: "runner",
+        firstName: "Runner",
+        linkedAt: "2026-06-06T12:00:00.000Z",
+      },
+      subscription: {
+        enabled: false,
+        timezone: "Europe/Moscow",
+        sendTime: null,
+      },
+      codeExpiresAt: null,
+      codeConsumedAt: null,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(linkedStatus), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            success: true,
+            subscription: {
+              enabled: true,
+              timezone: "Europe/Moscow",
+              sendTime: "08:30",
+            },
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TelegramLinkPanel />);
+
+    expect(await screen.findByText("Telegram: @runner")).toBeTruthy();
+    fireEvent.click(screen.getByRole("switch", { name: "Подписка на рассылку" }));
+    fireEvent.change(screen.getByLabelText("Время рассылки"), {
+      target: { value: "08:30" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Сохранить настройки рассылки" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/telegram/subscription", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          enabled: true,
+          sendTime: "08:30",
+        }),
+      });
+    });
+    expect(
+      await screen.findByText("Рассылка включена. Время: 08:30. Таймзона: Europe/Moscow.")
+    ).toBeTruthy();
   });
 });
