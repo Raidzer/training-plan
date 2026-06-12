@@ -126,6 +126,7 @@ const createDayPayload = (params: {
     date: params.date ?? "2025-12-29",
     hasWeightMorning: true,
     hasWeightEvening: false,
+    hasSleep: params.sleepHours !== null,
     workoutsTotal: 1,
     workoutsWithFullReport: 1,
     dayHasReport: true,
@@ -788,12 +789,14 @@ describe("useDiaryData (extended)", () => {
     });
 
     let recoveryBody: Record<string, unknown> = {};
+    let marksRequestCount = 0;
 
     setFetchHandler(async (url, init) => {
       if (url.startsWith("/api/shoes")) {
         return createJsonResponse({ shoes: [] });
       }
       if (url.startsWith("/api/diary/marks")) {
+        marksRequestCount += 1;
         return createJsonResponse({ days: [dayPayload.status] });
       }
       if (url.startsWith("/api/diary/day")) {
@@ -832,6 +835,7 @@ describe("useDiaryData (extended)", () => {
     expect(recoveryBody.hasBath).toBe(true);
     expect(recoveryBody.hasMfr).toBe(true);
     expect(recoveryBody.recoveryOther).toBe("Контрастный душ");
+    expect(marksRequestCount).toBeGreaterThanOrEqual(2);
     expect(messageApi.success).toHaveBeenCalledWith(messages.recoverySaved);
   });
 

@@ -8,6 +8,7 @@ import {
   formatTemperatureValue,
   formatWeight,
   formatWorkoutScore,
+  hasSleepHours,
   hasReportableWorkoutTask,
   shiftDate,
 } from "@/shared/utils/diaryUtils";
@@ -40,6 +41,7 @@ describe("shared/utils/diaryUtils (extended)", () => {
       hasBath: true,
       hasMfr: false,
       hasMassage: true,
+      hasSleep: true,
       totalDistanceKm: 12.5,
     });
 
@@ -50,11 +52,32 @@ describe("shared/utils/diaryUtils (extended)", () => {
       hasBath: true,
       hasMfr: false,
       hasMassage: true,
+      hasSleep: true,
       totalDistanceKm: 12.5,
       workoutsTotal: 2,
       workoutsWithFullReport: 1,
       dayHasReport: false,
     });
+  });
+
+  it("должен учитывать сон в заполненности дня", () => {
+    const baseParams = {
+      date: "2026-02-10",
+      planEntryIds: [],
+      fullReportPlanEntryIds: new Set<number>(),
+      hasWeightMorning: true,
+      hasWeightEvening: true,
+      hasBath: false,
+      hasMfr: false,
+      hasMassage: false,
+      totalDistanceKm: 0,
+    };
+
+    expect(buildDayStatus({ ...baseParams, hasSleep: true }).dayHasReport).toBe(true);
+    expect(buildDayStatus({ ...baseParams, hasSleep: false }).dayHasReport).toBe(false);
+    expect(hasSleepHours("07.5")).toBe(true);
+    expect(hasSleepHours(null)).toBe(false);
+    expect(hasSleepHours("")).toBe(false);
   });
 
   it("должен форматировать отображаемые поля при exports", () => {

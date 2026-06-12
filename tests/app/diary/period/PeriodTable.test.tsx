@@ -8,6 +8,7 @@ function createDay(overrides: Partial<DayStatus> = {}): DayStatus {
     date: "2026-06-01",
     hasWeightMorning: true,
     hasWeightEvening: false,
+    hasSleep: true,
     hasBath: true,
     hasMfr: false,
     hasMassage: true,

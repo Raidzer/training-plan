@@ -103,6 +103,7 @@ const createDayPayload = (): DayPayload => ({
     date: "2025-12-29",
     hasWeightMorning: true,
     hasWeightEvening: false,
+    hasSleep: true,
     workoutsTotal: 1,
     workoutsWithFullReport: 1,
     dayHasReport: true,
