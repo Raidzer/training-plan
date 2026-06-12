@@ -107,6 +107,7 @@ function createUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
     role: "athlete",
     isActive: true,
     createdAt: "2026-05-01T00:00:00.000Z",
+    lastActiveAt: null,
     ...overrides,
   };
 }

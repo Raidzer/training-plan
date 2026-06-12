@@ -15,6 +15,13 @@
       "when": 1781205054710,
       "tag": "0001_normalize_workout_start_time",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781248180662,
+      "tag": "0002_chemical_retro_girl",
+      "breakpoints": true
     }
   ]
 }

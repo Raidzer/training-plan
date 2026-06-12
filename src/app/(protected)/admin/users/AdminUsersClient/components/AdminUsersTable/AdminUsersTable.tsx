@@ -82,6 +82,13 @@ export function AdminUsersTable({
         render: (value) => formatDate(String(value ?? "")),
       },
       {
+        title: ADMIN_USERS_LABELS.lastActiveAtColumn,
+        dataIndex: "lastActiveAt",
+        key: "lastActiveAt",
+        width: 190,
+        render: (value) => formatDate(String(value ?? "")),
+      },
+      {
         title: ADMIN_USERS_LABELS.statusColumn,
         dataIndex: "isActive",
         key: "isActive",
@@ -154,7 +161,7 @@ export function AdminUsersTable({
       columns={columns}
       dataSource={rows}
       pagination={{ pageSize: 10 }}
-      scroll={{ x: 1040 }}
+      scroll={{ x: 1540 }}
     />
   );
 }

@@ -19,6 +19,7 @@ export default async function AdminUsersPage() {
       role: users.role,
       isActive: users.isActive,
       createdAt: users.createdAt,
+      lastActiveAt: users.lastActiveAt,
     })
     .from(users)
     .orderBy(desc(users.createdAt));
@@ -33,6 +34,7 @@ export default async function AdminUsersPage() {
     role: row.role,
     isActive: row.isActive,
     createdAt: row.createdAt.toISOString(),
+    lastActiveAt: row.lastActiveAt?.toISOString() ?? null,
   }));
 
   return <AdminUsersClient users={data} />;

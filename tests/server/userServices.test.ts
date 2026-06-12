@@ -18,6 +18,9 @@ import {
   getUserEmailCredentialsById,
   getUserPasswordHashById,
   getUserProfileById,
+  shouldUpdateLastActiveAt,
+  touchUserLastActiveAtById,
+  touchUserLastActiveAtIfNeeded,
   updateUserEmailById,
   updateUserPasswordHashById,
   updateUserProfileById,
@@ -113,5 +116,52 @@ describe("server/services/users", () => {
 
     mockUpdateReturning([]);
     await expect(updateUserPasswordHashById(2, "hash")).resolves.toBeNull();
+  });
+
+  it("shouldUpdateLastActiveAt должен учитывать интервал обновления активности", () => {
+    const now = new Date("2026-06-12T10:15:00.000Z");
+
+    expect(shouldUpdateLastActiveAt(null, now)).toBe(true);
+    expect(shouldUpdateLastActiveAt(new Date("2026-06-12T10:01:00.000Z"), now)).toBe(false);
+    expect(shouldUpdateLastActiveAt(new Date("2026-06-12T10:00:00.000Z"), now)).toBe(true);
+  });
+
+  it("touchUserLastActiveAtById должен обновлять дату активности пользователя", async () => {
+    const now = new Date("2026-06-12T10:15:00.000Z");
+    const { setMock, whereMock } = mockUpdateReturning([]);
+
+    await touchUserLastActiveAtById(3, now);
+
+    expect(setMock).toHaveBeenCalledWith({ lastActiveAt: now });
+    expect(whereMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("touchUserLastActiveAtIfNeeded должен пропускать свежую активность", async () => {
+    const now = new Date("2026-06-12T10:15:00.000Z");
+
+    await touchUserLastActiveAtIfNeeded(
+      {
+        id: 3,
+        lastActiveAt: new Date("2026-06-12T10:01:00.000Z"),
+      },
+      now
+    );
+
+    expect(userServiceMocks.dbUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("touchUserLastActiveAtIfNeeded должен обновлять устаревшую активность", async () => {
+    const now = new Date("2026-06-12T10:15:00.000Z");
+    const { setMock } = mockUpdateReturning([]);
+
+    await touchUserLastActiveAtIfNeeded(
+      {
+        id: 3,
+        lastActiveAt: new Date("2026-06-12T10:00:00.000Z"),
+      },
+      now
+    );
+
+    expect(setMock).toHaveBeenCalledWith({ lastActiveAt: now });
   });
 });
