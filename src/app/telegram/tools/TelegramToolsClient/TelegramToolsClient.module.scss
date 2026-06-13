@@ -1,0 +1,101 @@
+.page {
+  width: 100%;
+  min-height: 100%;
+  padding: 8px 0 24px;
+  color: var(--text-primary);
+}
+
+.header {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  color: var(--brand-color);
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.subtitle {
+  max-width: 640px;
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.toolsList {
+  display: grid;
+  gap: 12px;
+}
+
+.toolCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-card);
+}
+
+.toolContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.toolIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 8px;
+  color: var(--nav-primary-text);
+  background: var(--nav-primary-bg);
+  font-size: 18px;
+}
+
+.toolText {
+  min-width: 0;
+}
+
+.toolTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.toolDescription {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.toolButton {
+  min-width: 112px;
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding-top: 4px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .toolCard {
+    grid-template-columns: 1fr;
+  }
+
+  .toolButton {
+    width: 100%;
+  }
+}

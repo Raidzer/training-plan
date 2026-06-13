@@ -12,6 +12,7 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "bot": "tsx src/bot/index.ts",
+    "bot:tools": "tsx src/bot/tools/index.ts",
     "db:up": "docker compose up -d db",
     "db:wait": "node wait-for-db.js",
     "db:push": "drizzle-kit push",

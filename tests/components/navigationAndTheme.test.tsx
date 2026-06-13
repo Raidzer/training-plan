@@ -106,4 +106,17 @@ describe("ThemeProvider", () => {
     expect(localStorage.getItem("ui-theme")).toBe("light");
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
+
+  it("не показывает общий header на Telegram routes", () => {
+    navigationMocks.pathname = "/telegram/tools";
+
+    render(
+      <ThemeProvider initialTheme="light">
+        <div>Telegram content</div>
+      </ThemeProvider>
+    );
+
+    expect(screen.getByText("Telegram content")).toBeTruthy();
+    expect(screen.queryByText("Беговой клуб СПИРОС")).toBeNull();
+  });
 });
