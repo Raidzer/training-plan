@@ -1,0 +1,161 @@
+.panel {
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  box-shadow: var(--surface-shadow);
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 18px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.inputStack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.inputRow {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+}
+
+.methodRow {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.labelBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.rowHint {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.distanceControls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.methodControls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.methodDescription {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.fieldGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.input {
+  max-width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft);
+  color: var(--brand-color);
+  font-size: 13px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.distanceInput {
+  width: 132px;
+}
+
+.timeInput {
+  width: 116px;
+  text-align: center;
+}
+
+.unit {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.presetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.presetButton {
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft);
+  color: var(--brand-color);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.presetButton:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.formulaNote {
+  margin: 18px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .panel {
+    padding: 16px;
+  }
+
+  .inputRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .distanceInput,
+  .timeInput {
+    width: 100%;
+  }
+
+  .fieldGroup {
+    width: 100%;
+  }
+}

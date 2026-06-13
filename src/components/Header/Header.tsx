@@ -9,6 +9,14 @@ import styles from "./Header.module.scss";
 
 const usefulItems = [
   {
+    key: "result-equivalent",
+    label: (
+      <Link href="/tools/result-equivalent" className={styles.dropdownLink}>
+        Калькулятор эквивалента результата
+      </Link>
+    ),
+  },
+  {
     key: "pace-calculator",
     label: (
       <Link href="/tools/pace-calculator" className={styles.dropdownLink}>
@@ -44,6 +52,14 @@ export function Header({ mode, onToggle }: { mode: Mode; onToggle: (next: Mode) 
       key: "tools",
       label: "Полезное",
       children: [
+        {
+          key: "result-equivalent",
+          label: (
+            <Link href="/tools/result-equivalent" className={styles.drawerLink}>
+              Калькулятор эквивалента результата
+            </Link>
+          ),
+        },
         {
           key: "pace-calculator",
           label: (
