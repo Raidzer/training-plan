@@ -103,6 +103,23 @@ describe("usePaceCalculator", () => {
     expect(result.current.distanceInputValue).toBe("100");
   });
 
+  it("должен очищать ручной ввод дистанции", async () => {
+    const { result } = renderHook(() => usePaceCalculator());
+
+    await waitFor(() => {
+      expect(result.current.distanceInputValue).toBe("10000");
+    });
+
+    act(() => {
+      result.current.handleDistanceClear();
+    });
+
+    expect(result.current.distance).toBe(0);
+    expect(result.current.distanceInputValue).toBe("");
+    expect(result.current.splits).toEqual([]);
+    expect(result.current.canSave).toBe(false);
+  });
+
   it("должен синхронизировать результат из круга и обрабатывать нулевые значения", async () => {
     const { result } = renderHook(() => usePaceCalculator());
 

@@ -161,6 +161,11 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     updateDistance(nextValue);
   };
 
+  const handleDistanceClear = () => {
+    setDistanceInputValue("");
+    updateDistance(0);
+  };
+
   const handleDistancePreset = (value: number) => {
     setDistanceInputValue(String(value));
     updateDistance(value);
@@ -280,6 +285,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     savedResults,
     canSave,
     handleDistanceChange,
+    handleDistanceClear,
     handleDistancePreset,
     handleResultTimeChange,
     handlePaceTimeChange,

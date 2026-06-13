@@ -71,6 +71,11 @@ export const useResultEquivalent = (): UseResultEquivalentReturn => {
     setSourceDistance(nextDistance);
   };
 
+  const handleSourceDistanceClear = () => {
+    setSourceDistanceInputValue("");
+    setSourceDistance(0);
+  };
+
   const handleSourceDistancePreset = (value: number) => {
     setSourceDistance(value);
     setSourceDistanceInputValue(String(value));
@@ -92,6 +97,7 @@ export const useResultEquivalent = (): UseResultEquivalentReturn => {
     predictionMethodDescription,
     equivalents,
     handleSourceDistanceChange,
+    handleSourceDistanceClear,
     handleSourceDistancePreset,
     handleSourceTimeChange,
     handlePredictionMethodChange,

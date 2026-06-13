@@ -30,6 +30,7 @@ export type UseResultEquivalentReturn = {
   predictionMethodDescription: string;
   equivalents: EquivalentResult[];
   handleSourceDistanceChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  handleSourceDistanceClear: () => void;
   handleSourceDistancePreset: (value: number) => void;
   handleSourceTimeChange: (value: string) => void;
   handlePredictionMethodChange: (value: PredictionMethod) => void;

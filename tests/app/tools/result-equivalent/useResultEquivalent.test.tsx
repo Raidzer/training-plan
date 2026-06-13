@@ -70,6 +70,18 @@ describe("useResultEquivalent", () => {
     expect(result.current.sourceDistanceInputValue).toBe("5000");
   });
 
+  it("должен очищать исходную дистанцию", () => {
+    const { result } = renderHook(() => useResultEquivalent());
+
+    act(() => {
+      result.current.handleSourceDistanceClear();
+    });
+
+    expect(result.current.sourceDistance).toBe(0);
+    expect(result.current.sourceDistanceInputValue).toBe("");
+    expect(result.current.equivalents).toEqual([]);
+  });
+
   it("должен возвращать пустой список при нулевых значениях", () => {
     const { result } = renderHook(() => useResultEquivalent());
 
