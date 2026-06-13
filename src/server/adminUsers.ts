@@ -5,6 +5,7 @@ import {
   aliceLinkCodes,
   diaryResultTemplates,
   personalRecords,
+  plans,
   planEntries,
   planImports,
   recoveryEntries,
@@ -26,6 +27,7 @@ import { ROLES } from "@/shared/constants";
 type UserRole = "admin" | "coach" | "athlete";
 
 export type DeleteUserAccountResult = { deleted: true } | { error: "not_found" | "forbidden" };
+export type ClearUserTrainingDataResult = { cleared: true } | { error: "not_found" };
 
 export function canDeleteUserRole(role: string): boolean {
   return role !== ROLES.ADMIN;
@@ -70,6 +72,64 @@ export async function updateUserStatusById(userId: number, isActive: boolean) {
   }
 
   return updated;
+}
+
+export async function clearUserTrainingDataById(
+  userId: number
+): Promise<ClearUserTrainingDataResult> {
+  return await db.transaction(async (tx) => {
+    const [targetUser] = await tx
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!targetUser) {
+      return { error: "not_found" as const };
+    }
+
+    const planEntryRows = await tx
+      .select({ id: planEntries.id })
+      .from(planEntries)
+      .where(eq(planEntries.userId, userId));
+    const planEntryIds = planEntryRows.map((entry) => entry.id);
+
+    const reportRows =
+      planEntryIds.length > 0
+        ? await tx
+            .select({ id: workoutReports.id })
+            .from(workoutReports)
+            .where(
+              or(
+                eq(workoutReports.userId, userId),
+                inArray(workoutReports.planEntryId, planEntryIds)
+              )
+            )
+        : await tx
+            .select({ id: workoutReports.id })
+            .from(workoutReports)
+            .where(eq(workoutReports.userId, userId));
+    const reportIds = reportRows.map((report) => report.id);
+
+    if (reportIds.length > 0) {
+      await tx
+        .delete(workoutReportConditions)
+        .where(inArray(workoutReportConditions.workoutReportId, reportIds));
+      await tx
+        .delete(workoutReportShoes)
+        .where(inArray(workoutReportShoes.workoutReportId, reportIds));
+      await tx.delete(workoutReports).where(inArray(workoutReports.id, reportIds));
+    }
+
+    await tx.delete(recoveryEntries).where(eq(recoveryEntries.userId, userId));
+    await tx.delete(weightEntries).where(eq(weightEntries.userId, userId));
+    await tx.delete(workouts).where(eq(workouts.userId, userId));
+    await tx.delete(planEntries).where(eq(planEntries.userId, userId));
+    await tx.delete(planImports).where(eq(planImports.userId, userId));
+    await tx.delete(plans).where(eq(plans.userId, userId));
+
+    return { cleared: true as const };
+  });
 }
 
 export async function deleteUserAccountById(userId: number): Promise<DeleteUserAccountResult> {

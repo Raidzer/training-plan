@@ -18,6 +18,7 @@ vi.mock("@/server/db/client", () => {
 
 import {
   canDeleteUserRole,
+  clearUserTrainingDataById,
   deleteUserAccountById,
   updateUserPasswordHashById,
   updateUserRoleById,
@@ -183,6 +184,42 @@ describe("server/adminUsers", () => {
     const result = await deleteUserAccountById(2);
 
     expect(result).toEqual({ deleted: true });
+    expect(tx.delete).toHaveBeenCalled();
+  });
+
+  it("clearUserTrainingDataById должен возвращать not_found без delete-запросов", async () => {
+    const tx = {
+      select: vi.fn().mockReturnValueOnce(createSelectLimitBuilder([])),
+      delete: vi.fn(),
+    };
+
+    dbTransactionMock.mockImplementation(async (callback) => {
+      return await callback(tx);
+    });
+
+    const result = await clearUserTrainingDataById(99);
+
+    expect(result).toEqual({ error: "not_found" });
+    expect(tx.delete).not.toHaveBeenCalled();
+  });
+
+  it("clearUserTrainingDataById должен очищать план и дневник транзакционно", async () => {
+    const tx = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce(createSelectLimitBuilder([{ id: 2 }]))
+        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 10 }]))
+        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 20 }])),
+      delete: vi.fn(() => createDeleteBuilder()),
+    };
+
+    dbTransactionMock.mockImplementation(async (callback) => {
+      return await callback(tx);
+    });
+
+    const result = await clearUserTrainingDataById(2);
+
+    expect(result).toEqual({ cleared: true });
     expect(tx.delete).toHaveBeenCalled();
   });
 });

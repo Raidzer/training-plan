@@ -2,13 +2,15 @@
 
 import {
   CheckCircleOutlined,
+  ClearOutlined,
   DeleteOutlined,
+  EllipsisOutlined,
   LockOutlined,
   StopOutlined,
   TrophyOutlined,
   UserSwitchOutlined,
 } from "@ant-design/icons";
-import { Button, Space, Table, Tag, Typography } from "antd";
+import { Button, Dropdown, Space, Table, Tag, Typography, type MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -25,20 +27,24 @@ import styles from "./AdminUsersTable.module.scss";
 type AdminUsersTableProps = {
   rows: AdminUserRow[];
   savingStatusId: number | null;
+  clearingUserDataId: number | null;
   deletingUserId: number | null;
   onOpenRoleModal: (user: AdminUserRow) => void;
   onOpenPasswordModal: (user: AdminUserRow) => void;
   onStatusToggle: (user: AdminUserRow) => void;
+  onClearUserTrainingData: (user: AdminUserRow) => void;
   onDeleteUser: (user: AdminUserRow) => void;
 };
 
 export function AdminUsersTable({
   rows,
   savingStatusId,
+  clearingUserDataId,
   deletingUserId,
   onOpenRoleModal,
   onOpenPasswordModal,
   onStatusToggle,
+  onClearUserTrainingData,
   onDeleteUser,
 }: AdminUsersTableProps) {
   const columns: ColumnsType<AdminUserRow> = useMemo(
@@ -46,7 +52,7 @@ export function AdminUsersTable({
       {
         title: ADMIN_USERS_LABELS.userColumn,
         key: "user",
-        width: 280,
+        width: 230,
         render: (_, record) => (
           <Space orientation="vertical" size={0} className={styles.userCell}>
             <Typography.Text strong>
@@ -112,7 +118,8 @@ export function AdminUsersTable({
       {
         title: ADMIN_USERS_LABELS.actionsColumn,
         key: "actions",
-        width: 460,
+        width: 180,
+        fixed: "right",
         render: (_, record) => {
           const isActive = record.isActive;
           const statusLabel = isActive
@@ -120,62 +127,87 @@ export function AdminUsersTable({
             : ADMIN_USERS_LABELS.enableButton;
           const statusIcon = isActive ? <StopOutlined /> : <CheckCircleOutlined />;
           const canDeleteUser = canDeleteAdminUser(record);
+          const isStatusSaving = savingStatusId === record.id;
+          const isClearingUserData = clearingUserDataId === record.id;
+          const isDeletingUser = deletingUserId === record.id;
+          const isActionLoading = isStatusSaving || isClearingUserData || isDeletingUser;
+          const menuItems: MenuProps["items"] = [
+            {
+              key: "role",
+              icon: <UserSwitchOutlined />,
+              label: ADMIN_USERS_LABELS.roleButton,
+              onClick: () => {
+                onOpenRoleModal(record);
+              },
+            },
+            {
+              key: "password",
+              icon: <LockOutlined />,
+              label: ADMIN_USERS_LABELS.passwordButton,
+              onClick: () => {
+                onOpenPasswordModal(record);
+              },
+            },
+            {
+              key: "status",
+              danger: isActive,
+              disabled: isStatusSaving,
+              icon: statusIcon,
+              label: statusLabel,
+              onClick: () => {
+                onStatusToggle(record);
+              },
+            },
+            {
+              type: "divider",
+            },
+            {
+              key: "clear-training-data",
+              danger: true,
+              disabled: isClearingUserData,
+              icon: <ClearOutlined />,
+              label: ADMIN_USERS_LABELS.clearTrainingDataButton,
+              onClick: () => {
+                onClearUserTrainingData(record);
+              },
+            },
+            {
+              key: "delete",
+              danger: true,
+              disabled: !canDeleteUser || isDeletingUser,
+              icon: <DeleteOutlined />,
+              label: ADMIN_USERS_LABELS.deleteButton,
+              onClick: () => {
+                onDeleteUser(record);
+              },
+            },
+          ];
 
           return (
-            <Space size="small" wrap>
+            <Space size="small" className={styles.actionsCell}>
               <Link href={`/admin/users/${record.id}/records`}>
                 <Button size="small" icon={<TrophyOutlined />}>
                   {ADMIN_USERS_LABELS.recordsButton}
                 </Button>
               </Link>
-              <Button
-                size="small"
-                icon={<UserSwitchOutlined />}
-                onClick={() => {
-                  onOpenRoleModal(record);
-                }}
-              >
-                {ADMIN_USERS_LABELS.roleButton}
-              </Button>
-              <Button
-                size="small"
-                icon={<LockOutlined />}
-                onClick={() => {
-                  onOpenPasswordModal(record);
-                }}
-              >
-                {ADMIN_USERS_LABELS.passwordButton}
-              </Button>
-              <Button
-                size="small"
-                danger={isActive}
-                icon={statusIcon}
-                loading={savingStatusId === record.id}
-                onClick={() => {
-                  onStatusToggle(record);
-                }}
-              >
-                {statusLabel}
-              </Button>
-              <Button
-                size="small"
-                danger
-                disabled={!canDeleteUser}
-                icon={<DeleteOutlined />}
-                loading={deletingUserId === record.id}
-                onClick={() => {
-                  onDeleteUser(record);
-                }}
-              >
-                {ADMIN_USERS_LABELS.deleteButton}
-              </Button>
+              <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
+                <Button
+                  aria-label={ADMIN_USERS_LABELS.actionsMenuButton}
+                  title={ADMIN_USERS_LABELS.actionsMenuButton}
+                  size="small"
+                  icon={<EllipsisOutlined />}
+                  loading={isActionLoading}
+                />
+              </Dropdown>
             </Space>
           );
         },
       },
     ],
     [
+      clearingUserDataId,
       deletingUserId,
+      onClearUserTrainingData,
       onDeleteUser,
       onOpenPasswordModal,
       onOpenRoleModal,
@@ -191,7 +223,7 @@ export function AdminUsersTable({
       columns={columns}
       dataSource={rows}
       pagination={{ pageSize: 10 }}
-      scroll={{ x: 1640 }}
+      scroll={{ x: 1310 }}
     />
   );
 }
