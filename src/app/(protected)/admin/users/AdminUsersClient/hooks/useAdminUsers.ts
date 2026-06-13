@@ -24,6 +24,7 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
   const [savingRole, setSavingRole] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [savingStatusId, setSavingStatusId] = useState<number | null>(null);
+  const [clearingUserDataId, setClearingUserDataId] = useState<number | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
 
   const updateRow = (userId: number, patch: Partial<AdminUserRow>) => {
@@ -175,6 +176,28 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     }
   };
 
+  const clearUserTrainingData = async (user: AdminUserRow) => {
+    setClearingUserDataId(user.id);
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}/training-data`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        messageApi.error(getApiErrorMessage(data, ADMIN_USERS_LABELS.clearTrainingDataUpdateFail));
+        return;
+      }
+
+      messageApi.success(ADMIN_USERS_LABELS.clearTrainingDataUpdateOk);
+    } catch {
+      messageApi.error(ADMIN_USERS_LABELS.clearTrainingDataUpdateFail);
+    } finally {
+      setClearingUserDataId(null);
+    }
+  };
+
   const confirmDisableUser = (user: AdminUserRow) => {
     const label = getUserLabel(user);
     modalApi.confirm({
@@ -212,6 +235,20 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     });
   };
 
+  const confirmClearUserTrainingData = (user: AdminUserRow) => {
+    const label = getUserLabel(user);
+    modalApi.confirm({
+      title: `${ADMIN_USERS_LABELS.clearTrainingDataConfirmTitle} ${label}?`,
+      content: ADMIN_USERS_LABELS.clearTrainingDataConfirmText,
+      okText: ADMIN_USERS_LABELS.clearTrainingDataButton,
+      okType: "danger",
+      cancelText: ADMIN_USERS_LABELS.cancelButton,
+      onOk: async () => {
+        await clearUserTrainingData(user);
+      },
+    });
+  };
+
   const handleDeleteUser = (user: AdminUserRow) => {
     if (!canDeleteAdminUser(user)) {
       messageApi.error(ADMIN_USERS_LABELS.cannotDeleteAdmin);
@@ -219,6 +256,10 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     }
 
     confirmDeleteUser(user);
+  };
+
+  const handleClearUserTrainingData = (user: AdminUserRow) => {
+    confirmClearUserTrainingData(user);
   };
 
   return {
@@ -231,6 +272,7 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     savingRole,
     savingPassword,
     savingStatusId,
+    clearingUserDataId,
     deletingUserId,
     openRoleModal,
     openPasswordModal,
@@ -239,6 +281,7 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     handleRoleSubmit,
     handlePasswordSubmit,
     handleStatusToggle,
+    handleClearUserTrainingData,
     handleDeleteUser,
   };
 };

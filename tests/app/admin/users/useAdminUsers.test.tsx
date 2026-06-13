@@ -326,6 +326,42 @@ describe("useAdminUsers", () => {
     expect(messageApi.success).toHaveBeenCalledWith(ADMIN_USERS_LABELS.deleteUpdateOk);
   });
 
+  it("requires confirmation before clearing user training data", async () => {
+    const user = createUser();
+    const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ success: true }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+    const modalApi = createModalApi();
+    const confirmMock = modalApi.confirm as ReturnType<typeof vi.fn>;
+
+    confirmMock.mockImplementation((options) => {
+      void options.onOk?.();
+      return undefined;
+    });
+
+    const { result } = renderHook(() =>
+      useAdminUsers({
+        users: [user],
+        messageApi,
+        modalApi,
+      })
+    );
+
+    await act(async () => {
+      result.current.handleClearUserTrainingData(user);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/admin/users/1/training-data", {
+        method: "DELETE",
+      });
+    });
+
+    expect(confirmMock).toHaveBeenCalledTimes(1);
+    expect(result.current.rows).toEqual([user]);
+    expect(messageApi.success).toHaveBeenCalledWith(ADMIN_USERS_LABELS.clearTrainingDataUpdateOk);
+  });
+
   it("does not allow deleting admin user from hook", () => {
     const user = createUser({ role: "admin" });
     const messageApi = createMessageApi();

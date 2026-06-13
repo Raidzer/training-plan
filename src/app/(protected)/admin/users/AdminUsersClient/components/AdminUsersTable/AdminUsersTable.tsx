@@ -2,6 +2,7 @@
 
 import {
   CheckCircleOutlined,
+  ClearOutlined,
   DeleteOutlined,
   LockOutlined,
   StopOutlined,
@@ -25,20 +26,24 @@ import styles from "./AdminUsersTable.module.scss";
 type AdminUsersTableProps = {
   rows: AdminUserRow[];
   savingStatusId: number | null;
+  clearingUserDataId: number | null;
   deletingUserId: number | null;
   onOpenRoleModal: (user: AdminUserRow) => void;
   onOpenPasswordModal: (user: AdminUserRow) => void;
   onStatusToggle: (user: AdminUserRow) => void;
+  onClearUserTrainingData: (user: AdminUserRow) => void;
   onDeleteUser: (user: AdminUserRow) => void;
 };
 
 export function AdminUsersTable({
   rows,
   savingStatusId,
+  clearingUserDataId,
   deletingUserId,
   onOpenRoleModal,
   onOpenPasswordModal,
   onStatusToggle,
+  onClearUserTrainingData,
   onDeleteUser,
 }: AdminUsersTableProps) {
   const columns: ColumnsType<AdminUserRow> = useMemo(
@@ -112,7 +117,7 @@ export function AdminUsersTable({
       {
         title: ADMIN_USERS_LABELS.actionsColumn,
         key: "actions",
-        width: 460,
+        width: 620,
         render: (_, record) => {
           const isActive = record.isActive;
           const statusLabel = isActive
@@ -160,6 +165,17 @@ export function AdminUsersTable({
               <Button
                 size="small"
                 danger
+                icon={<ClearOutlined />}
+                loading={clearingUserDataId === record.id}
+                onClick={() => {
+                  onClearUserTrainingData(record);
+                }}
+              >
+                {ADMIN_USERS_LABELS.clearTrainingDataButton}
+              </Button>
+              <Button
+                size="small"
+                danger
                 disabled={!canDeleteUser}
                 icon={<DeleteOutlined />}
                 loading={deletingUserId === record.id}
@@ -175,7 +191,9 @@ export function AdminUsersTable({
       },
     ],
     [
+      clearingUserDataId,
       deletingUserId,
+      onClearUserTrainingData,
       onDeleteUser,
       onOpenPasswordModal,
       onOpenRoleModal,
@@ -191,7 +209,7 @@ export function AdminUsersTable({
       columns={columns}
       dataSource={rows}
       pagination={{ pageSize: 10 }}
-      scroll={{ x: 1640 }}
+      scroll={{ x: 1800 }}
     />
   );
 }
