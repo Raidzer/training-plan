@@ -20,14 +20,18 @@ export const PACE_CALCULATOR_TEXT = {
     title: "Дистанция:",
     hint: "Впишите дистанцию или нажмите на кнопку с нужной дистанцией",
     ariaLabel: "Дистанция в метрах",
+    clear: "Очистить дистанцию",
     unit: "м",
   },
   result: {
     title: "Результат:",
     save: "Сохранить результат",
     resultLabel: "Результат:",
+    resultAriaLabel: "Результат",
     paceLabel: "Темп (мин/км):",
+    paceAriaLabel: "Темп",
     lapLabel: "Время на круге (400 м):",
+    lapAriaLabel: "Время на круге",
     helper: "Если менять одно значение, то остальные значения пересчитываются автоматически",
   },
   splits: {

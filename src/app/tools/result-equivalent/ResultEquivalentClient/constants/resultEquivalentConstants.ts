@@ -55,6 +55,7 @@ export const RESULT_EQUIVALENT_TEXT = {
     distanceLabel: "Дистанция:",
     distanceHint: "Введите дистанцию в метрах или выберите быстрый пресет",
     distanceAriaLabel: "Исходная дистанция в метрах",
+    distanceClear: "Очистить исходную дистанцию",
     distanceUnit: "м",
     resultLabel: "Результат:",
     resultAriaLabel: "Исходный результат",

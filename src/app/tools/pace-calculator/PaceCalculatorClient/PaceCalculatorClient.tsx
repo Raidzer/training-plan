@@ -20,6 +20,7 @@ export function PaceCalculatorClient() {
     lapTimeString,
     canSave,
     handleDistanceChange,
+    handleDistanceClear,
     handleDistancePreset,
     handleResultTimeChange,
     handlePaceTimeChange,
@@ -43,6 +44,7 @@ export function PaceCalculatorClient() {
           <DistanceSection
             distanceInputValue={distanceInputValue}
             onDistanceChange={handleDistanceChange}
+            onDistanceClear={handleDistanceClear}
             onDistancePreset={handleDistancePreset}
           />
           <div className={styles.sectionDivider} />

@@ -25,6 +25,8 @@ export const SPEED_TO_PACE_TEXT = {
     title: "Темп",
     kmLabel: "Минут на км",
     mileLabel: "Минут на милю",
+    kmAriaLabel: "Темп на километр",
+    mileAriaLabel: "Темп на милю",
     unit: "мин:сек",
   },
 } as const;

@@ -1,15 +1,18 @@
+import { CloseCircleFilled } from "@ant-design/icons";
 import { DISTANCE_PRESETS, PACE_CALCULATOR_TEXT } from "../../constants/paceCalculatorConstants";
 import styles from "./DistanceSection.module.scss";
 
 type DistanceSectionProps = {
   distanceInputValue: string;
   onDistanceChange: React.ChangeEventHandler<HTMLInputElement>;
+  onDistanceClear: () => void;
   onDistancePreset: (value: number) => void;
 };
 
 export function DistanceSection({
   distanceInputValue,
   onDistanceChange,
+  onDistanceClear,
   onDistancePreset,
 }: DistanceSectionProps) {
   return (
@@ -27,6 +30,17 @@ export function DistanceSection({
             onChange={onDistanceChange}
             aria-label={PACE_CALCULATOR_TEXT.distance.ariaLabel}
           />
+          {distanceInputValue && (
+            <button
+              className={styles.clearButton}
+              type="button"
+              aria-label={PACE_CALCULATOR_TEXT.distance.clear}
+              title={PACE_CALCULATOR_TEXT.distance.clear}
+              onClick={onDistanceClear}
+            >
+              <CloseCircleFilled aria-hidden="true" />
+            </button>
+          )}
           <span className={styles.unit}>{PACE_CALCULATOR_TEXT.distance.unit}</span>
         </div>
         <div className={styles.presetRow}>

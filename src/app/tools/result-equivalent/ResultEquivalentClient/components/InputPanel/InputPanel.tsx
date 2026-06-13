@@ -1,4 +1,5 @@
 import { TimeInput } from "@/components/inputs/TimeInput";
+import { CloseCircleFilled } from "@ant-design/icons";
 import { Segmented } from "antd";
 import {
   DISTANCE_PRESETS,
@@ -14,6 +15,7 @@ type InputPanelProps = {
   predictionMethod: PredictionMethod;
   predictionMethodDescription: string;
   onSourceDistanceChange: React.ChangeEventHandler<HTMLInputElement>;
+  onSourceDistanceClear: () => void;
   onSourceDistancePreset: (value: number) => void;
   onSourceTimeChange: (value: string) => void;
   onPredictionMethodChange: (value: PredictionMethod) => void;
@@ -25,6 +27,7 @@ export function InputPanel({
   predictionMethod,
   predictionMethodDescription,
   onSourceDistanceChange,
+  onSourceDistanceClear,
   onSourceDistancePreset,
   onSourceTimeChange,
   onPredictionMethodChange,
@@ -50,6 +53,17 @@ export function InputPanel({
                 onChange={onSourceDistanceChange}
                 aria-label={RESULT_EQUIVALENT_TEXT.input.distanceAriaLabel}
               />
+              {sourceDistanceInputValue && (
+                <button
+                  className={styles.clearButton}
+                  type="button"
+                  aria-label={RESULT_EQUIVALENT_TEXT.input.distanceClear}
+                  title={RESULT_EQUIVALENT_TEXT.input.distanceClear}
+                  onClick={onSourceDistanceClear}
+                >
+                  <CloseCircleFilled aria-hidden="true" />
+                </button>
+              )}
               <span className={styles.unit}>{RESULT_EQUIVALENT_TEXT.input.distanceUnit}</span>
             </div>
             <div className={styles.presetRow}>
@@ -77,6 +91,7 @@ export function InputPanel({
               placeholder="00:00:00"
               value={sourceTime}
               onChange={onSourceTimeChange}
+              allowClear
               aria-label={RESULT_EQUIVALENT_TEXT.input.resultAriaLabel}
             />
           </div>

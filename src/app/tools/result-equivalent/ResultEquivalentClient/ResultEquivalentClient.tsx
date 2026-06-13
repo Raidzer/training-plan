@@ -14,6 +14,7 @@ export function ResultEquivalentClient() {
     predictionMethodDescription,
     equivalents,
     handleSourceDistanceChange,
+    handleSourceDistanceClear,
     handleSourceDistancePreset,
     handleSourceTimeChange,
     handlePredictionMethodChange,
@@ -35,6 +36,7 @@ export function ResultEquivalentClient() {
           predictionMethod={predictionMethod}
           predictionMethodDescription={predictionMethodDescription}
           onSourceDistanceChange={handleSourceDistanceChange}
+          onSourceDistanceClear={handleSourceDistanceClear}
           onSourceDistancePreset={handleSourceDistancePreset}
           onSourceTimeChange={handleSourceTimeChange}
           onPredictionMethodChange={handlePredictionMethodChange}
