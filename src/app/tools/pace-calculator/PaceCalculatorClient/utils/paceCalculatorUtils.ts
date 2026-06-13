@@ -11,6 +11,14 @@ export const toNonNegativeInt = (value: string) => {
   return parsed;
 };
 
+export const normalizeDistanceInputValue = (value: string) => {
+  if (value.length === 0) {
+    return "";
+  }
+
+  return String(toNonNegativeInt(value));
+};
+
 export const getCeilSeconds = (value: number) => {
   if (!Number.isFinite(value)) {
     return 0;

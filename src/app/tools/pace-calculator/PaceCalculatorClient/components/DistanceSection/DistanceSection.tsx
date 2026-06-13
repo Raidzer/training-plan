@@ -2,13 +2,13 @@ import { DISTANCE_PRESETS, PACE_CALCULATOR_TEXT } from "../../constants/paceCalc
 import styles from "./DistanceSection.module.scss";
 
 type DistanceSectionProps = {
-  distance: number;
+  distanceInputValue: string;
   onDistanceChange: React.ChangeEventHandler<HTMLInputElement>;
   onDistancePreset: (value: number) => void;
 };
 
 export function DistanceSection({
-  distance,
+  distanceInputValue,
   onDistanceChange,
   onDistancePreset,
 }: DistanceSectionProps) {
@@ -23,7 +23,7 @@ export function DistanceSection({
             type="number"
             min={0}
             step={1}
-            value={distance}
+            value={distanceInputValue}
             onChange={onDistanceChange}
             aria-label={PACE_CALCULATOR_TEXT.distance.ariaLabel}
           />
