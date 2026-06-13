@@ -12,7 +12,7 @@ export const SPEED_TO_PACE_TEXT = {
   speed: {
     title: "Скорость",
     kmhLabel: "Км в час",
-    mpsLabel: "Метров в сек",
+    mpsLabel: "Метров в секунду",
     mphLabel: "Миль в час",
     kmhAriaLabel: "Километров в час",
     mpsAriaLabel: "Метров в секунду",

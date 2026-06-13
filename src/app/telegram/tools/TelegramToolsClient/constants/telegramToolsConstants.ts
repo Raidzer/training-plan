@@ -11,8 +11,8 @@ export const TELEGRAM_TOOLS_TEXT = {
 export const TELEGRAM_TOOL_LINKS = [
   {
     key: "resultEquivalent",
-    title: "Эквивалент результата",
-    shortTitle: "Эквивалент",
+    title: "Прогноз результата",
+    shortTitle: "Прогноз",
     description: "Прогноз результата на популярных дистанциях по нескольким методикам.",
     href: "/telegram/tools/result-equivalent",
   },

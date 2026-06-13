@@ -52,7 +52,7 @@ describe("TelegramToolsNavigation", () => {
     render(<TelegramToolsNavigation />);
 
     expect(screen.getByRole("link", { name: "Все" }).getAttribute("href")).toBe("/telegram/tools");
-    expect(screen.getByRole("link", { name: "Эквивалент" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "Прогноз" }).getAttribute("href")).toBe(
       "/telegram/tools/result-equivalent"
     );
     expect(screen.getByRole("link", { name: "Темп" }).getAttribute("href")).toBe(
@@ -66,9 +66,7 @@ describe("TelegramToolsNavigation", () => {
   it("отмечает текущий калькулятор", () => {
     render(<TelegramToolsNavigation />);
 
-    expect(screen.getByRole("link", { name: "Эквивалент" }).getAttribute("aria-current")).toBe(
-      "page"
-    );
+    expect(screen.getByRole("link", { name: "Прогноз" }).getAttribute("aria-current")).toBe("page");
   });
 
   it("переключает тему из Telegram navigation", () => {
