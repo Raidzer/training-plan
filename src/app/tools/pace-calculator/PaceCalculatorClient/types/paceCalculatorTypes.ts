@@ -25,6 +25,7 @@ export type UsePaceCalculatorReturn = {
   paceSeconds: number;
   lapMinutes: number;
   lapSeconds: number;
+  distanceInputValue: string;
   splits: SplitItem[];
   splitGroups: SplitItem[][];
   savedResults: SavedResult[];

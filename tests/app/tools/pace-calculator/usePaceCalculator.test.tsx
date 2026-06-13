@@ -83,6 +83,26 @@ describe("usePaceCalculator", () => {
     expect(result.current.lapTimeString).toBe("00:01:12");
   });
 
+  it("должен убирать ведущий ноль из ручного ввода дистанции", async () => {
+    const { result } = renderHook(() => usePaceCalculator());
+
+    await waitFor(() => {
+      expect(result.current.distanceInputValue).toBe("10000");
+    });
+
+    act(() => {
+      result.current.handleDistancePreset(0);
+    });
+    act(() => {
+      result.current.handleDistanceChange({
+        target: { value: "0100" },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(result.current.distance).toBe(100);
+    expect(result.current.distanceInputValue).toBe("100");
+  });
+
   it("должен синхронизировать результат из круга и обрабатывать нулевые значения", async () => {
     const { result } = renderHook(() => usePaceCalculator());
 

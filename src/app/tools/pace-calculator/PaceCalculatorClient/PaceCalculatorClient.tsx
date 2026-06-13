@@ -11,10 +11,10 @@ import styles from "./PaceCalculatorClient.module.scss";
 
 export function PaceCalculatorClient() {
   const {
-    distance,
     splits,
     splitGroups,
     savedResults,
+    distanceInputValue,
     resultTimeString,
     paceTimeString,
     lapTimeString,
@@ -41,7 +41,7 @@ export function PaceCalculatorClient() {
       <div className={styles.calculatorGrid}>
         <div className={styles.panel}>
           <DistanceSection
-            distance={distance}
+            distanceInputValue={distanceInputValue}
             onDistanceChange={handleDistanceChange}
             onDistancePreset={handleDistancePreset}
           />

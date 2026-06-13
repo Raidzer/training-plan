@@ -4,6 +4,7 @@ import {
   formatTime,
   getCeilSeconds,
   getDistanceLabel,
+  normalizeDistanceInputValue,
   parseTimeInputToSeconds,
   safeParseSaved,
   toNonNegativeInt,
@@ -14,6 +15,12 @@ describe("app/tools/pace-calculator.utils", () => {
     expect(toNonNegativeInt("42")).toBe(42);
     expect(toNonNegativeInt("-5")).toBe(0);
     expect(toNonNegativeInt("bad")).toBe(0);
+  });
+
+  it("должен нормализовать строку ввода дистанции без ведущего нуля", () => {
+    expect(normalizeDistanceInputValue("0100")).toBe("100");
+    expect(normalizeDistanceInputValue("000")).toBe("0");
+    expect(normalizeDistanceInputValue("")).toBe("");
   });
 
   it("должен нормализовать секунды и форматировать время", () => {

@@ -34,6 +34,7 @@ export function ThemeProvider({
 }) {
   const [mode, setMode] = useState<Mode>(initialTheme);
   const pathname = usePathname();
+  const isTelegramRoute = pathname.startsWith("/telegram/");
   const isFullWidthRoute = pathname.startsWith("/tools/templates/");
   const isWideRoute =
     pathname.startsWith("/plan") ||
@@ -75,19 +76,22 @@ export function ThemeProvider({
       >
         <App>
           <div className={styles.root}>
-            <Header mode={mode} onToggle={handleSetMode} />
+            {!isTelegramRoute && <Header mode={mode} onToggle={handleSetMode} />}
             <main
               className={clsx(
                 styles.main,
                 isWideRoute && styles.mainWide,
-                isFullWidthRoute && styles.mainFull
+                isFullWidthRoute && styles.mainFull,
+                isTelegramRoute && styles.mainTelegram
               )}
             >
               {children}
             </main>
-            <footer className={styles.footer} title={APP_VERSION_TITLE}>
-              v{APP_VERSION}
-            </footer>
+            {!isTelegramRoute && (
+              <footer className={styles.footer} title={APP_VERSION_TITLE}>
+                v{APP_VERSION}
+              </footer>
+            )}
           </div>
         </App>
       </ConfigProvider>
