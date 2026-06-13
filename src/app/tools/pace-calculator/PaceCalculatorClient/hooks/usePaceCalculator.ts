@@ -10,6 +10,7 @@ import {
   formatTime,
   getCeilSeconds,
   getDistanceLabel,
+  normalizeDistanceInputValue,
   safeParseSaved,
   toNonNegativeInt,
   parseTimeInputToSeconds,
@@ -37,6 +38,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   const [lastEdited, setLastEdited] = useState<LastEdited>("result");
   const [savedResults, setSavedResults] = useState<SavedResult[]>(readSavedResults);
   const [inputValue, setInputValue] = useState<string>(DEFAULT_INPUT_VALUE);
+  const [distanceInputValue, setDistanceInputValue] = useState("10000");
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(savedResults));
@@ -153,11 +155,14 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   };
 
   const handleDistanceChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = toNonNegativeInt(event.target.value);
+    const nextInputValue = normalizeDistanceInputValue(event.target.value);
+    const nextValue = toNonNegativeInt(nextInputValue);
+    setDistanceInputValue(nextInputValue);
     updateDistance(nextValue);
   };
 
   const handleDistancePreset = (value: number) => {
+    setDistanceInputValue(String(value));
     updateDistance(value);
   };
 
@@ -269,6 +274,7 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     paceSeconds,
     lapMinutes,
     lapSeconds,
+    distanceInputValue,
     splits,
     splitGroups,
     savedResults,
