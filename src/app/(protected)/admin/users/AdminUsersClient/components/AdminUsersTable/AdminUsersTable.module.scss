@@ -12,7 +12,7 @@
 
 .userCell {
   min-width: 0;
-  max-width: 240px;
+  max-width: 200px;
 }
 
 .userCell :global(.ant-typography) {
@@ -20,5 +20,9 @@
 }
 
 .nowrap {
+  white-space: nowrap;
+}
+
+.actionsCell {
   white-space: nowrap;
 }
