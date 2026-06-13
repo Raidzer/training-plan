@@ -40,6 +40,8 @@ export function ResultSection({
               placeholder="00:00:00"
               value={resultTime}
               onChange={onResultTimeChange}
+              allowClear
+              aria-label={PACE_CALCULATOR_TEXT.result.resultAriaLabel}
             />
           </div>
         </div>
@@ -54,6 +56,8 @@ export function ResultSection({
               placeholder="00:00"
               value={paceTime}
               onChange={onPaceTimeChange}
+              allowClear
+              aria-label={PACE_CALCULATOR_TEXT.result.paceAriaLabel}
             />
           </div>
         </div>
@@ -68,6 +72,8 @@ export function ResultSection({
               placeholder="00:00"
               value={lapTime}
               onChange={onLapTimeChange}
+              allowClear
+              aria-label={PACE_CALCULATOR_TEXT.result.lapAriaLabel}
             />
           </div>
         </div>

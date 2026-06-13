@@ -45,7 +45,7 @@ export const PREDICTION_METHODS: PredictionMethodOption[] = [
 
 export const RESULT_EQUIVALENT_TEXT = {
   header: {
-    title: "Калькулятор эквивалента результата",
+    title: "Калькулятор прогноза результата",
     description:
       "Оценивает, какой результат можно ожидать на других дистанциях, если текущая форма соответствует введенному забегу.",
     hint: "Выберите исходную дистанцию, введите результат и сравните прогноз на популярных дистанциях.",
@@ -55,6 +55,7 @@ export const RESULT_EQUIVALENT_TEXT = {
     distanceLabel: "Дистанция:",
     distanceHint: "Введите дистанцию в метрах или выберите быстрый пресет",
     distanceAriaLabel: "Исходная дистанция в метрах",
+    distanceClear: "Очистить исходную дистанцию",
     distanceUnit: "м",
     resultLabel: "Результат:",
     resultAriaLabel: "Исходный результат",
@@ -64,7 +65,7 @@ export const RESULT_EQUIVALENT_TEXT = {
       "Это ориентир, а не гарантия: профиль трассы, погода и подготовка могут заметно менять итог.",
   },
   table: {
-    title: "Эквивалентные результаты",
+    title: "Прогноз результатов",
     hint: "Прогноз на популярные дистанции при сопоставимом уровне готовности.",
     distanceColumn: "Дистанция",
     resultColumn: "Прогноз",

@@ -55,7 +55,7 @@
 
 .fields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 90px));
+  grid-template-columns: minmax(0, 140px);
   gap: 8px 12px;
   align-items: center;
   min-width: 0;
@@ -86,12 +86,12 @@
 }
 
 .timeInputMedium {
-  width: 100px;
+  width: 112px;
   text-align: center;
 }
 
 .timeInputLarge {
-  width: 120px;
+  width: 132px;
   text-align: center;
 }
 
@@ -107,7 +107,7 @@
   }
 
   .fields {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 140px);
   }
 
   .fieldGroup {

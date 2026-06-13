@@ -31,6 +31,7 @@ export type UsePaceCalculatorReturn = {
   savedResults: SavedResult[];
   canSave: boolean;
   handleDistanceChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  handleDistanceClear: () => void;
   handleDistancePreset: (value: number) => void;
   formatSplitTime: (seconds: number) => string;
   getSavedDistanceLabel: (meters: number) => string;

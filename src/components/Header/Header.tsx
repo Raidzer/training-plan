@@ -12,7 +12,7 @@ const usefulItems = [
     key: "result-equivalent",
     label: (
       <Link href="/tools/result-equivalent" className={styles.dropdownLink}>
-        Калькулятор эквивалента результата
+        Калькулятор прогноза результата
       </Link>
     ),
   },
@@ -56,7 +56,7 @@ export function Header({ mode, onToggle }: { mode: Mode; onToggle: (next: Mode) 
           key: "result-equivalent",
           label: (
             <Link href="/tools/result-equivalent" className={styles.drawerLink}>
-              Калькулятор эквивалента результата
+              Калькулятор прогноза результата
             </Link>
           ),
         },

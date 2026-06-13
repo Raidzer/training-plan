@@ -1,0 +1,107 @@
+.navigation {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  margin: -12px -12px 16px;
+  padding: 12px 12px 10px;
+  background: var(--bg-color);
+}
+
+.allToolsLink,
+.tabLink,
+.themeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.themeButton {
+  justify-self: end;
+  width: 36px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.allToolsLink {
+  justify-self: start;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabLink {
+  flex: 0 0 auto;
+  padding: 0 14px;
+}
+
+.active {
+  border-color: transparent;
+  color: var(--nav-primary-text);
+  background: var(--nav-primary-bg);
+}
+
+@media (max-width: 560px) {
+  .navigation {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "all theme"
+      "tabs tabs";
+    margin-bottom: 12px;
+  }
+
+  .allToolsLink,
+  .tabLink,
+  .themeButton {
+    min-height: 34px;
+    font-size: 13px;
+  }
+
+  .themeButton {
+    grid-area: theme;
+    width: 34px;
+  }
+
+  .allToolsLink {
+    grid-area: all;
+    padding: 0 10px;
+  }
+
+  .tabs {
+    grid-area: tabs;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    overflow-x: visible;
+  }
+
+  .tabLink {
+    min-width: 0;
+    padding: 0 6px;
+  }
+}

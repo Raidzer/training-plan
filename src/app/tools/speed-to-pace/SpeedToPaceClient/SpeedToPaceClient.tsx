@@ -43,6 +43,7 @@ export function SpeedToPaceClient() {
                     value={speedKmhString}
                     onChange={handleSpeedKmhChange}
                     aria-label={SPEED_TO_PACE_TEXT.speed.kmhAriaLabel}
+                    allowClear
                   />
                   <span className={styles.unit}>{SPEED_TO_PACE_TEXT.speed.kmhUnit}</span>
                 </div>
@@ -56,6 +57,7 @@ export function SpeedToPaceClient() {
                     value={speedMpsString}
                     onChange={handleSpeedMpsChange}
                     aria-label={SPEED_TO_PACE_TEXT.speed.mpsAriaLabel}
+                    allowClear
                   />
                   <span className={styles.unit}>{SPEED_TO_PACE_TEXT.speed.mpsUnit}</span>
                 </div>
@@ -69,6 +71,7 @@ export function SpeedToPaceClient() {
                     value={speedMphString}
                     onChange={handleSpeedMphChange}
                     aria-label={SPEED_TO_PACE_TEXT.speed.mphAriaLabel}
+                    allowClear
                   />
                   <span className={styles.unit}>{SPEED_TO_PACE_TEXT.speed.mphUnit}</span>
                 </div>
@@ -88,6 +91,8 @@ export function SpeedToPaceClient() {
                       placeholder="00:00"
                       value={paceKmTimeString}
                       onChange={handlePaceKmTimeChange}
+                      allowClear
+                      aria-label={SPEED_TO_PACE_TEXT.pace.kmAriaLabel}
                     />
                     <span className={styles.unit}>{SPEED_TO_PACE_TEXT.pace.unit}</span>
                   </div>
@@ -102,6 +107,8 @@ export function SpeedToPaceClient() {
                       placeholder="00:00"
                       value={paceMileTimeString}
                       onChange={handlePaceMileTimeChange}
+                      allowClear
+                      aria-label={SPEED_TO_PACE_TEXT.pace.mileAriaLabel}
                     />
                     <span className={styles.unit}>{SPEED_TO_PACE_TEXT.pace.unit}</span>
                   </div>

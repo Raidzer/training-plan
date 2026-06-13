@@ -93,8 +93,27 @@
   box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.clearButton:hover {
+  color: var(--accent-color);
+}
+
 .distanceInput {
+  flex: 0 1 132px;
   width: 132px;
+  min-width: 0;
 }
 
 .timeInput {
@@ -152,7 +171,8 @@
 
   .distanceInput,
   .timeInput {
-    width: 100%;
+    flex: 1 1 0;
+    width: auto;
   }
 
   .fieldGroup {
