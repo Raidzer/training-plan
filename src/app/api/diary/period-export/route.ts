@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/auth";
+import { DEFAULT_TIMEZONE } from "@/shared/constants/timezones";
 import { buildDateRange } from "@/shared/utils/diaryUtils";
 import {
   getDiaryExportRows,
@@ -13,6 +14,15 @@ export const runtime = "nodejs";
 
 const DIARY_HEADER_ROW_HEIGHT = 105;
 const DIARY_TASK_COLUMN_WIDTH = 101.125;
+
+const CURRENT_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: DEFAULT_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const formatCurrentDate = () => CURRENT_DATE_FORMATTER.format(new Date(Date.now()));
 
 const DIARY_HEADER_FONT: Partial<ExcelJS.Font> = {
   bold: true,
@@ -160,8 +170,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
     }
 
+    const currentDate = formatCurrentDate();
     from = fullRange.from;
-    to = fullRange.to;
+    to = fullRange.to > currentDate ? currentDate : fullRange.to;
+    if (from > to) {
+      return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
+    }
     filenamePrefix = "diary_all";
   }
 
