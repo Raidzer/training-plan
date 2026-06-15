@@ -1,4 +1,4 @@
-﻿import { beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ExcelJS from "exceljs";
 import { createRequestWithQuery, createSession, expectJsonError } from "@tests/helpers";
 
@@ -88,6 +88,7 @@ const getStringCellValue = (sheet: ExcelJS.Worksheet, rowNumber: number, columnN
 describe("GET /api/diary/period-export", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(Date, "now").mockReturnValue(new Date("2026-06-14T12:00:00.000Z").getTime());
     authMock.mockResolvedValue(createSession({ id: "9" }));
     isValidDateStringMock.mockReturnValue(true);
     getDiaryExportRowsMock.mockResolvedValue([
@@ -105,6 +106,10 @@ describe("GET /api/diary/period-export", () => {
       from: "2025-10-13",
       to: "2026-06-15",
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("должен возвращать 401 без сессии", async () => {
@@ -170,7 +175,7 @@ describe("GET /api/diary/period-export", () => {
     expect(getDiaryWeeklyVolumesBySundayMock).not.toHaveBeenCalled();
   });
 
-  it("должен выгружать весь дневник по диапазону плана", async () => {
+  it("должен выгружать весь дневник по диапазону плана до текущей даты", async () => {
     const request = createRequestWithQuery({
       path: "/api/diary/period-export",
       query: { scope: "all" },
@@ -179,19 +184,36 @@ describe("GET /api/diary/period-export", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-disposition")).toBe(
-      'attachment; filename="diary_all_2025-10-13_2026-06-15.xlsx"'
+      'attachment; filename="diary_all_2025-10-13_2026-06-14.xlsx"'
     );
     expect(getFullDiaryDateRangeMock).toHaveBeenCalledWith({ userId: 9 });
     expect(getDiaryExportRowsMock).toHaveBeenCalledWith({
       userId: 9,
       from: "2025-10-13",
-      to: "2026-06-15",
+      to: "2026-06-14",
     });
     expect(getDiaryWeeklyVolumesBySundayMock).toHaveBeenCalledWith({
       userId: 9,
       from: "2025-10-13",
-      to: "2026-06-15",
+      to: "2026-06-14",
     });
+  });
+
+  it("должен возвращать 404 при выгрузке всего дневника, если план начинается в будущем", async () => {
+    getFullDiaryDateRangeMock.mockResolvedValue({
+      from: "2026-06-15",
+      to: "2026-07-01",
+    });
+
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { scope: "all" },
+    });
+    const response = await GET(request);
+
+    await expectJsonError(response, 404, "Нет данных для выгрузки");
+    expect(getDiaryExportRowsMock).not.toHaveBeenCalled();
+    expect(getDiaryWeeklyVolumesBySundayMock).not.toHaveBeenCalled();
   });
 
   it("должен возвращать 404 при выгрузке всего дневника без данных", async () => {
