@@ -27,10 +27,17 @@ describe("TelegramLinkPanel", () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ code: "123456", expiresAt }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
+        new Response(
+          JSON.stringify({
+            code: "123456",
+            linkUrl: "https://t.me/RunLogBot?start=deep-link-token",
+            expiresAt,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
       )
       .mockResolvedValueOnce(
         new Response(JSON.stringify(unlinkedStatus), {
@@ -43,8 +50,10 @@ describe("TelegramLinkPanel", () => {
     render(<TelegramLinkPanel />);
 
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
+    fireEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
+    const telegramLink = await screen.findByRole("link", { name: "Открыть Telegram" });
+    expect(telegramLink.getAttribute("href")).toBe("https://t.me/RunLogBot?start=deep-link-token");
     expect(await screen.findByText("123456")).toBeTruthy();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/telegram/link-code", { method: "POST" });
@@ -117,8 +126,8 @@ describe("TelegramLinkPanel", () => {
 
     render(<TelegramLinkPanel />);
 
-    expect(await screen.findByText(/Последний код действует до/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
+    expect(await screen.findByText(/Последняя ссылка действует до/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/telegram/link-code", { method: "POST" });
@@ -260,9 +269,9 @@ describe("TelegramLinkPanel", () => {
     render(<TelegramLinkPanel />);
 
     expect(
-      await screen.findByText("Код действует 15 минут. Новый код заменит старый.")
+      await screen.findByText("Ссылка и код действуют 15 минут. Новая выдача заменит старую.")
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
+    fireEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/telegram/link-code", { method: "POST" });
@@ -281,7 +290,7 @@ describe("TelegramLinkPanel", () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ code: "999000", expiresAt: "bad-date" }), {
+        new Response(JSON.stringify({ code: "999000", linkUrl: null, expiresAt: "bad-date" }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         })
@@ -298,7 +307,7 @@ describe("TelegramLinkPanel", () => {
     render(<TelegramLinkPanel />);
 
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
+    fireEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     expect(await screen.findByText("999000")).toBeTruthy();
     expect(screen.getByText("Код действует до н/д.")).toBeTruthy();
@@ -307,11 +316,13 @@ describe("TelegramLinkPanel", () => {
       expect(fetchMock).toHaveBeenCalledTimes(3);
     });
     await waitFor(() => {
-      const issueButton = screen.getByRole("button", { name: "Получить код" }) as HTMLButtonElement;
+      const issueButton = screen.getByRole("button", {
+        name: "Получить ссылку",
+      }) as HTMLButtonElement;
       expect(issueButton.disabled).toBe(false);
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Получить код" }));
+    fireEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(4);

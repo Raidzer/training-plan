@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { issueTelegramLinkCode } from "@/server/telegramLink";
+import { buildTelegramDeepLinkUrl, issueTelegramLinkCode } from "@/server/telegramLink";
 import { getTelegramAccountIdByUserId } from "@/server/telegram";
 
 export async function POST() {
@@ -17,10 +17,15 @@ export async function POST() {
   }
 
   try {
-    const { code, expiresAt } = await issueTelegramLinkCode({ userId });
+    const { code, linkToken, expiresAt } = await issueTelegramLinkCode({ userId });
+    const linkUrl = buildTelegramDeepLinkUrl({
+      username: process.env.TELEGRAM_BOT_USERNAME,
+      payload: linkToken,
+    });
 
     return NextResponse.json({
       code,
+      linkUrl,
       expiresAt: expiresAt.toISOString(),
     });
   } catch (error) {
