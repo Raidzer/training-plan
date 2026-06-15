@@ -112,6 +112,8 @@ describe("server/services/users", () => {
       updateUserProfileById(1, {
         name: "Runner",
         lastName: "",
+        patronymic: null,
+        heightCm: 180,
         gender: "male",
         timezone: "Europe/Moscow",
       })

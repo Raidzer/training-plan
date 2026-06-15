@@ -7,6 +7,8 @@ const USER_ACTIVITY_UPDATE_INTERVAL_MS = 15 * 60 * 1000;
 export type UserProfileUpdateInput = {
   name: string;
   lastName: string | null;
+  patronymic: string | null;
+  heightCm: number | null;
   gender: string;
   timezone: string;
 };
@@ -33,6 +35,8 @@ export async function getUserById(id: number) {
       email: users.email,
       name: users.name,
       lastName: users.lastName,
+      patronymic: users.patronymic,
+      heightCm: users.heightCm,
       gender: users.gender,
       timezone: users.timezone,
       role: users.role,
@@ -78,6 +82,8 @@ export async function getUserProfileById(id: number) {
       login: users.login,
       name: users.name,
       lastName: users.lastName,
+      patronymic: users.patronymic,
+      heightCm: users.heightCm,
       gender: users.gender,
       timezone: users.timezone,
       role: users.role,
@@ -96,6 +102,8 @@ export async function updateUserProfileById(id: number, input: UserProfileUpdate
     login: users.login,
     name: users.name,
     lastName: users.lastName,
+    patronymic: users.patronymic,
+    heightCm: users.heightCm,
     gender: users.gender,
     timezone: users.timezone,
     role: users.role,
@@ -129,6 +137,8 @@ export async function updateUserEmailById(id: number, email: string) {
       login: users.login,
       name: users.name,
       lastName: users.lastName,
+      patronymic: users.patronymic,
+      heightCm: users.heightCm,
       gender: users.gender,
       timezone: users.timezone,
       role: users.role,

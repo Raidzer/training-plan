@@ -8,20 +8,29 @@ export type ProfileUserData = {
   login: string;
   name: string;
   lastName: string;
+  patronymic: string;
+  heightCm: number | null;
   gender: string;
   timezone: string;
   role: string;
 };
 
-export type ProfileApiUserData = Omit<ProfileUserData, "id" | "lastName" | "role"> & {
+export type ProfileApiUserData = Omit<
+  ProfileUserData,
+  "id" | "lastName" | "patronymic" | "heightCm" | "role"
+> & {
   id: string | number;
   lastName?: string | null;
+  patronymic?: string | null;
+  heightCm?: number | null;
   role?: string;
 };
 
 export type ProfileFormValues = {
   name: string;
   lastName: string;
+  patronymic: string;
+  heightCm: number | null;
   gender: Gender;
   timezone: string;
 };

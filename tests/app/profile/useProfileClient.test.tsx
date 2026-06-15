@@ -41,6 +41,8 @@ function createUserData(overrides: Partial<ProfileUserData> = {}): ProfileUserDa
     login: "runner",
     name: "Иван",
     lastName: "Петров",
+    patronymic: "Иванович",
+    heightCm: 180,
     gender: "male",
     timezone: "Europe/Moscow",
     role: "athlete",
@@ -83,6 +85,8 @@ describe("useProfileClient", () => {
     expect(result.current.initialValues).toEqual({
       name: "Иван",
       lastName: "Петров",
+      patronymic: "Иванович",
+      heightCm: 180,
       gender: "male",
       timezone: "Europe/Moscow",
     });
@@ -98,6 +102,8 @@ describe("useProfileClient", () => {
         {
           name: "Анна",
           lastName: "Петров",
+          patronymic: "Иванович",
+          heightCm: 180,
           gender: "female",
           timezone: "Europe/Moscow",
         }
@@ -148,6 +154,8 @@ describe("useProfileClient", () => {
           id: "2",
           name: "Анна",
           lastName: null as unknown as string,
+          patronymic: null as unknown as string,
+          heightCm: 172,
           gender: "female",
           timezone: "Etc/UTC",
         }),
@@ -160,6 +168,8 @@ describe("useProfileClient", () => {
     vi.spyOn(result.current.profileForm, "validateFields").mockResolvedValue({
       name: " Анна ",
       lastName: " ",
+      patronymic: " Сергеевна ",
+      heightCm: null,
       gender: "female",
       timezone: "Etc/UTC",
     } as any);
@@ -168,6 +178,8 @@ describe("useProfileClient", () => {
       result.current.profileForm.setFieldsValue({
         name: " Анна ",
         lastName: " ",
+        patronymic: " Сергеевна ",
+        heightCm: null,
         gender: "female",
         timezone: "Etc/UTC",
       });
@@ -182,6 +194,8 @@ describe("useProfileClient", () => {
     expect(JSON.parse(String(request.body))).toEqual({
       name: "Анна",
       lastName: "",
+      patronymic: "Сергеевна",
+      heightCm: null,
       gender: "female",
       timezone: "Etc/UTC",
     });
@@ -190,6 +204,8 @@ describe("useProfileClient", () => {
         id: "2",
         name: "Анна",
         lastName: "",
+        patronymic: "",
+        heightCm: 172,
       })
     );
     expect(profileSessionMocks.updateMock).toHaveBeenCalled();
@@ -203,6 +219,8 @@ describe("useProfileClient", () => {
     vi.spyOn(result.current.profileForm, "validateFields").mockResolvedValue({
       name: "Иван",
       lastName: "Петров",
+      patronymic: "Иванович",
+      heightCm: 180,
       gender: "male",
       timezone: "Europe/Moscow",
     } as any);

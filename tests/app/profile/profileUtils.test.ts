@@ -20,6 +20,8 @@ describe("profileUtils", () => {
     const values: ProfileFormValues = {
       name: "  Иван  ",
       lastName: "  Петров  ",
+      patronymic: "  Иванович  ",
+      heightCm: 180,
       gender: "male",
       timezone: "Europe/Moscow",
     };
@@ -27,6 +29,8 @@ describe("profileUtils", () => {
     expect(normalizeProfileValues(values)).toEqual({
       name: "Иван",
       lastName: "Петров",
+      patronymic: "Иванович",
+      heightCm: 180,
       gender: "male",
       timezone: "Europe/Moscow",
     });
@@ -39,6 +43,8 @@ describe("profileUtils", () => {
       login: "runner",
       name: "Анна",
       lastName: "",
+      patronymic: "",
+      heightCm: null,
       gender: "unknown",
       timezone: "",
       role: "athlete",
@@ -47,6 +53,8 @@ describe("profileUtils", () => {
     expect(toProfileFormValues(userData)).toEqual({
       name: "Анна",
       lastName: "",
+      patronymic: "",
+      heightCm: null,
       gender: "male",
       timezone: DEFAULT_TIMEZONE,
     });
@@ -56,6 +64,8 @@ describe("profileUtils", () => {
     const currentValues: ProfileFormValues = {
       name: "Иван",
       lastName: "Петров",
+      patronymic: "Иванович",
+      heightCm: 180,
       gender: "male",
       timezone: "Europe/Moscow",
     };
@@ -65,6 +75,8 @@ describe("profileUtils", () => {
         {
           name: "  Иван ",
           lastName: "Петров  ",
+          patronymic: " Иванович ",
+          heightCm: 180,
           gender: "male",
           timezone: "Europe/Moscow",
         },
@@ -77,6 +89,8 @@ describe("profileUtils", () => {
         {
           name: "Иван",
           lastName: "Сидоров",
+          patronymic: "Иванович",
+          heightCm: 180,
           gender: "male",
           timezone: "Europe/Moscow",
         },
@@ -92,6 +106,8 @@ describe("profileUtils", () => {
       login: "runner",
       name: "Иван",
       lastName: null,
+      patronymic: null,
+      heightCm: null,
       gender: "male",
       timezone: "Europe/Moscow",
       role: "coach",
@@ -103,6 +119,8 @@ describe("profileUtils", () => {
       login: "runner",
       name: "Иван",
       lastName: "",
+      patronymic: "",
+      heightCm: null,
       gender: "male",
       timezone: "Europe/Moscow",
       role: "coach",

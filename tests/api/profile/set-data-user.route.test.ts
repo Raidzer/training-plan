@@ -30,6 +30,8 @@ import { PATCH } from "@/app/api/setDataUser/route";
 const validPayload = {
   name: "  Ivan  ",
   lastName: "  Petrov  ",
+  patronymic: "  Ivanovich  ",
+  heightCm: 180,
   gender: "male",
   timezone: "Europe/Moscow",
 };
@@ -43,6 +45,8 @@ describe("PATCH /api/setDataUser", () => {
       email: "runner@example.test",
       name: "Ivan",
       lastName: "Petrov",
+      patronymic: "Ivanovich",
+      heightCm: 180,
       gender: "male",
       timezone: "Europe/Moscow",
     });
@@ -140,13 +144,15 @@ describe("PATCH /api/setDataUser", () => {
       body: {
         ...validPayload,
         lastName: "   ",
+        patronymic: "   ",
+        heightCm: null,
       },
     });
 
     const response = await PATCH(request);
     const payload = await expectJsonSuccess<{
       success: boolean;
-      user: { id: number; name: string; lastName: string | null };
+      user: { id: number; name: string; lastName: string | null; patronymic: string | null };
     }>(response, 200);
 
     expect(payload.success).toBe(true);
@@ -154,6 +160,8 @@ describe("PATCH /api/setDataUser", () => {
     expect(updateUserProfileByIdMock).toHaveBeenCalledWith(13, {
       name: "Ivan",
       lastName: null,
+      patronymic: null,
+      heightCm: null,
       gender: "male",
       timezone: "Europe/Moscow",
     });
