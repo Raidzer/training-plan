@@ -3,6 +3,7 @@ import { db } from "@/server/db/client";
 import {
   aliceAccounts,
   aliceLinkCodes,
+  competitionBlocks,
   diaryResultTemplates,
   personalRecords,
   plans,
@@ -123,6 +124,7 @@ export async function clearUserTrainingDataById(
 
     await tx.delete(recoveryEntries).where(eq(recoveryEntries.userId, userId));
     await tx.delete(weightEntries).where(eq(weightEntries.userId, userId));
+    await tx.delete(competitionBlocks).where(eq(competitionBlocks.userId, userId));
     await tx.delete(workouts).where(eq(workouts.userId, userId));
     await tx.delete(planEntries).where(eq(planEntries.userId, userId));
     await tx.delete(planImports).where(eq(planImports.userId, userId));
@@ -188,6 +190,7 @@ export async function deleteUserAccountById(userId: number): Promise<DeleteUserA
     await tx.delete(recoveryEntries).where(eq(recoveryEntries.userId, userId));
     await tx.delete(weightEntries).where(eq(weightEntries.userId, userId));
     await tx.delete(personalRecords).where(eq(personalRecords.userId, userId));
+    await tx.delete(competitionBlocks).where(eq(competitionBlocks.userId, userId));
     await tx.delete(workouts).where(eq(workouts.userId, userId));
 
     if (reportIds.length > 0) {

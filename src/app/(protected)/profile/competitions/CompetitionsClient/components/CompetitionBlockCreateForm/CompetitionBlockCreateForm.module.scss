@@ -1,0 +1,41 @@
+.formSection {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.formTitle {
+  margin: 0 !important;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px 150px auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.titleInput,
+.dateInput {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .formRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .formSection {
+    padding: 12px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}

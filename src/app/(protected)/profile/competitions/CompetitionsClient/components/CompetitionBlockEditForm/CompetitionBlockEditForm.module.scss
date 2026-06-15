@@ -1,0 +1,34 @@
+.editForm {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px 150px auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.titleInput,
+.dateInput {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .editForm {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .editForm {
+    grid-template-columns: 1fr;
+  }
+}

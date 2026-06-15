@@ -4,7 +4,14 @@ export type DashboardClientProps = {
   session: Session;
 };
 
-export type DashboardCardId = "admin" | "templates" | "plan" | "diary" | "shoes" | "records";
+export type DashboardCardId =
+  | "admin"
+  | "templates"
+  | "plan"
+  | "diary"
+  | "shoes"
+  | "records"
+  | "competitions";
 
 export type DashboardCardConfig = {
   id: DashboardCardId;

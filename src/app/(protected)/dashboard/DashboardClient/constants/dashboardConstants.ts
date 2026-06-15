@@ -45,4 +45,10 @@ export const DASHBOARD_CARDS: DashboardCardConfig[] = [
     description: "Заполните личные рекорды по дистанциям и добавьте ссылку на протокол.",
     href: "/profile/records",
   },
+  {
+    id: "competitions",
+    title: "Соревнования",
+    description: "Ведите блоки подготовки, старты и результаты.",
+    href: "/profile/competitions",
+  },
 ];

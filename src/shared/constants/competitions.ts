@@ -1,0 +1,15 @@
+export const COMPETITION_PRIORITIES = {
+  MAIN: "main",
+  REGULAR: "regular",
+} as const;
+
+export type CompetitionPriority =
+  (typeof COMPETITION_PRIORITIES)[keyof typeof COMPETITION_PRIORITIES];
+
+export const MAX_COMPETITION_BLOCK_TITLE_LENGTH = 255;
+export const MAX_COMPETITION_NAME_LOCATION_LENGTH = 255;
+export const MAX_COMPETITION_DISTANCE_LABEL_LENGTH = 64;
+export const MAX_COMPETITION_RESULT_LENGTH = 32;
+export const MAX_COMPETITION_DISTANCE_METERS = 1_000_000;
+
+export const COMPETITION_RESULT_REGEX = /^[0-9:. ,]+$/;

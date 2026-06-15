@@ -1,0 +1,32 @@
+.page {
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+  min-height: 70vh;
+}
+
+.card {
+  width: 100%;
+  max-width: 1120px;
+  min-width: 0;
+}
+
+.header {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0 0 8px !important;
+}
+
+.subtitle {
+  margin: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .card :global(.ant-card-body) {
+    padding: 16px !important;
+  }
+}
