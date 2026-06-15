@@ -22,6 +22,7 @@ type StatusResponse = {
 
 type LinkCodeResponse = {
   code: string;
+  linkUrl: string | null;
   expiresAt: string;
 };
 
@@ -94,6 +95,7 @@ export function TelegramLinkPanel() {
   const [unlinking, setUnlinking] = useState(false);
   const [savingSubscription, setSavingSubscription] = useState(false);
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
+  const [issuedLinkUrl, setIssuedLinkUrl] = useState<string | null>(null);
   const [issuedExpiresAt, setIssuedExpiresAt] = useState<string | null>(null);
   const [subscriptionEnabled, setSubscriptionEnabled] = useState(false);
   const [sendTime, setSendTime] = useState(DEFAULT_SEND_TIME);
@@ -180,7 +182,7 @@ export function TelegramLinkPanel() {
     if (!status?.codeExpiresAt || status.codeConsumedAt) {
       return "";
     }
-    return `Последний код действует до ${formatDate(status.codeExpiresAt)}.`;
+    return `Последняя ссылка действует до ${formatDate(status.codeExpiresAt)}.`;
   }, [status]);
 
   const handleIssueCode = async () => {
@@ -193,17 +195,18 @@ export function TelegramLinkPanel() {
         if (apiError?.error === "already-linked") {
           messageApi.info("Аккаунт уже связан");
         } else {
-          messageApi.error("Не удалось получить код");
+          messageApi.error("Не удалось получить ссылку для привязки");
         }
         return;
       }
       const payload = data as LinkCodeResponse;
       setIssuedCode(payload.code);
+      setIssuedLinkUrl(payload.linkUrl ?? null);
       setIssuedExpiresAt(payload.expiresAt);
-      messageApi.success("Код получен");
+      messageApi.success(payload.linkUrl ? "Ссылка для привязки получена" : "Код получен");
       await loadStatus(false);
     } catch (error) {
-      messageApi.error("Не удалось получить код");
+      messageApi.error("Не удалось получить ссылку для привязки");
       console.error(error);
     } finally {
       setSending(false);
@@ -222,6 +225,7 @@ export function TelegramLinkPanel() {
       }
       messageApi.success("Telegram отвязан");
       setIssuedCode(null);
+      setIssuedLinkUrl(null);
       setIssuedExpiresAt(null);
       await loadStatus(false);
     } catch (error) {
@@ -285,7 +289,7 @@ export function TelegramLinkPanel() {
         Telegram
       </Typography.Title>
       <Typography.Paragraph type="secondary" className={styles.subtitle}>
-        Получите код, нажмите в боте «Привязать аккаунт» и отправьте код сообщением.
+        Получите ссылку, откройте Telegram и подтвердите привязку в боте.
       </Typography.Paragraph>
 
       {loadingStatus ? (
@@ -350,18 +354,32 @@ export function TelegramLinkPanel() {
 
           {!linked && (
             <div className={styles.actions}>
-              <Button aria-label="Получить код" onClick={handleIssueCode} loading={sending}>
-                Получить код
+              <Button aria-label="Получить ссылку" onClick={handleIssueCode} loading={sending}>
+                Получить ссылку
               </Button>
               <Typography.Text type="secondary">
-                {activeCodeInfo || "Код действует 15 минут. Новый код заменит старый."}
+                {activeCodeInfo || "Ссылка и код действуют 15 минут. Новая выдача заменит старую."}
               </Typography.Text>
             </div>
           )}
 
           {!linked && issuedCode && (
             <Card type="inner" className={styles.codeCard}>
-              <Typography.Text>Отправьте боту код:</Typography.Text>
+              {issuedLinkUrl ? (
+                <>
+                  <Typography.Text>Откройте Telegram, чтобы завершить привязку:</Typography.Text>
+                  <div className={styles.linkAction}>
+                    <Button type="primary" href={issuedLinkUrl} target="_blank" rel="noreferrer">
+                      Открыть Telegram
+                    </Button>
+                  </div>
+                  <Typography.Text type="secondary">
+                    Если ссылка недоступна, отправьте боту код:
+                  </Typography.Text>
+                </>
+              ) : (
+                <Typography.Text>Ссылка на бота не настроена. Отправьте боту код:</Typography.Text>
+              )}
               <Typography.Title level={4} className={styles.code}>
                 {issuedCode}
               </Typography.Title>

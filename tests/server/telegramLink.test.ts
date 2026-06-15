@@ -32,6 +32,12 @@ describe("server/telegramLink", () => {
     expect(code).toMatch(/^\d{6}$/);
   });
 
+  it("generateTelegramLinkToken должен возвращать payload для Telegram deep link", () => {
+    const token = telegramLinkModule.generateTelegramLinkToken();
+
+    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  });
+
   it("hashTelegramLinkCode должен быть детерминированным", () => {
     const hashA = telegramLinkModule.hashTelegramLinkCode("123456");
     const hashB = telegramLinkModule.hashTelegramLinkCode("123456");
@@ -66,13 +72,25 @@ describe("server/telegramLink", () => {
     const result = await telegramLinkModule.issueTelegramLinkCode({ userId: 5 });
 
     expect(result.code).toMatch(/^\d{6}$/);
+    expect(result.linkToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(result.expiresAt.toISOString()).toBe("2026-02-09T10:15:00.000Z");
     expect(deleteWhereMock).toHaveBeenCalledTimes(1);
-    expect(selectLimitMock).toHaveBeenCalledWith(1);
-    expect(insertValuesMock).toHaveBeenCalledWith(
+    expect(selectLimitMock).toHaveBeenCalledTimes(2);
+    expect(selectLimitMock).toHaveBeenNthCalledWith(1, 1);
+    expect(selectLimitMock).toHaveBeenNthCalledWith(2, 1);
+    expect(insertValuesMock).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         userId: 5,
         codeHash: telegramLinkModule.hashTelegramLinkCode(result.code),
+        consumedAt: null,
+      })
+    );
+    expect(insertValuesMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        userId: 5,
+        codeHash: telegramLinkModule.hashTelegramLinkCode(result.linkToken),
         consumedAt: null,
       })
     );
@@ -89,6 +107,7 @@ describe("server/telegramLink", () => {
     const selectLimitMock = vi
       .fn()
       .mockResolvedValueOnce([{ id: 1 }])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
     dbSelectMock.mockReturnValue({
       from: vi.fn(() => ({
@@ -106,8 +125,10 @@ describe("server/telegramLink", () => {
     const result = await telegramLinkModule.issueTelegramLinkCode({ userId: 5 });
 
     expect(result.code).toMatch(/^\d{6}$/);
-    expect(selectLimitMock).toHaveBeenCalledTimes(2);
-    expect(insertValuesMock).toHaveBeenCalledWith(
+    expect(result.linkToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(selectLimitMock).toHaveBeenCalledTimes(3);
+    expect(insertValuesMock).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         codeHash: telegramLinkModule.hashTelegramLinkCode(result.code),
       })
@@ -137,5 +158,23 @@ describe("server/telegramLink", () => {
     expect(selectLimitMock).toHaveBeenCalledTimes(5);
 
     codeSpy.mockRestore();
+  });
+
+  it("buildTelegramDeepLinkUrl должен собирать ссылку при валидном username", () => {
+    expect(
+      telegramLinkModule.buildTelegramDeepLinkUrl({
+        username: "@RunLogBot",
+        payload: "abc_123-XYZ",
+      })
+    ).toBe("https://t.me/RunLogBot?start=abc_123-XYZ");
+  });
+
+  it("buildTelegramDeepLinkUrl должен возвращать null без валидного username", () => {
+    expect(
+      telegramLinkModule.buildTelegramDeepLinkUrl({
+        username: "bad name",
+        payload: "abc_123-XYZ",
+      })
+    ).toBeNull();
   });
 });

@@ -127,6 +127,44 @@ describe("registerAccountCommands", () => {
     expect(accountMocks.ensureLinkedMock).not.toHaveBeenCalled();
   });
 
+  it("должен связывать аккаунт по deep link payload из /start", async () => {
+    const handlers = createBotHarness();
+    const startHandler = handlers.get("start") as CommandHandler;
+    const ctx = createContext({ match: "deep-link-token" });
+
+    accountMocks.ensureLinkedMock.mockResolvedValue(20);
+    accountMocks.getSubscriptionMock.mockResolvedValue({ enabled: true });
+    accountMocks.linkAccountMock.mockResolvedValue({ ok: true });
+
+    await startHandler(ctx);
+
+    expect(accountMocks.linkAccountMock).toHaveBeenCalledWith({
+      chatId: 10,
+      code: "deep-link-token",
+      username: "runner",
+      firstName: "Runner",
+    });
+    expect(ctx.reply).toHaveBeenCalledWith("Аккаунт успешно связан. Меню управления ниже.", {
+      reply_markup: expect.any(Object),
+    });
+  });
+
+  it("должен отклонять невалидный payload из /start", async () => {
+    const handlers = createBotHarness();
+    const startHandler = handlers.get("start") as CommandHandler;
+    const ctx = createContext({ match: "bad payload" });
+
+    await startHandler(ctx);
+
+    expect(accountMocks.linkAccountMock).not.toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(
+      "Ссылка для привязки недействительна или истекла. Получите новую ссылку на сайте.",
+      {
+        reply_markup: expect.any(Object),
+      }
+    );
+  });
+
   it("должен валидировать /link и связывать аккаунт по коду", async () => {
     const handlers = createBotHarness();
     const linkHandler = handlers.get("link") as CommandHandler;
