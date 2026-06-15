@@ -29,6 +29,21 @@ const schema = z
       .nullable()
       .optional()
       .transform((value) => value || null),
+    patronymic: z
+      .string()
+      .trim()
+      .max(255)
+      .nullable()
+      .optional()
+      .transform((value) => value || null),
+    heightCm: z
+      .number()
+      .int()
+      .min(50)
+      .max(250)
+      .nullable()
+      .optional()
+      .transform((value) => value ?? null),
     gender: z.enum(PROFILE_GENDERS),
     timezone: z
       .string()
@@ -61,10 +76,12 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
     }
 
-    const { name, lastName, gender, timezone } = parsed.data;
+    const { name, lastName, patronymic, heightCm, gender, timezone } = parsed.data;
     const updatedUser = await updateUserProfileById(userId, {
       name,
       lastName,
+      patronymic,
+      heightCm,
       gender,
       timezone,
     });

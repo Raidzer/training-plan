@@ -26,6 +26,8 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(true),
   name: varchar("name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }),
+  patronymic: varchar("patronymic", { length: 255 }),
+  heightCm: integer("height_cm"),
   gender: varchar("gender", { length: 16 }).notNull().default("male"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastActiveAt: timestamp("last_active_at"),

@@ -5,6 +5,8 @@ import type { ProfileApiUserData, ProfileFormValues, ProfileUserData } from "../
 export const normalizeProfileValues = (values: ProfileFormValues): ProfileFormValues => ({
   name: values.name.trim(),
   lastName: values.lastName?.trim() ?? "",
+  patronymic: values.patronymic?.trim() ?? "",
+  heightCm: values.heightCm ?? null,
   gender: values.gender,
   timezone: values.timezone,
 });
@@ -12,6 +14,8 @@ export const normalizeProfileValues = (values: ProfileFormValues): ProfileFormVa
 export const toProfileFormValues = (userData: ProfileUserData): ProfileFormValues => ({
   name: userData.name,
   lastName: userData.lastName,
+  patronymic: userData.patronymic,
+  heightCm: userData.heightCm,
   gender: userData.gender === "female" ? "female" : "male",
   timezone: userData.timezone || DEFAULT_TIMEZONE,
 });
@@ -26,6 +30,8 @@ export const hasProfileValuesChanged = (
   return (
     normalizedDraft.name !== normalizedCurrent.name ||
     normalizedDraft.lastName !== normalizedCurrent.lastName ||
+    normalizedDraft.patronymic !== normalizedCurrent.patronymic ||
+    normalizedDraft.heightCm !== normalizedCurrent.heightCm ||
     normalizedDraft.gender !== normalizedCurrent.gender ||
     normalizedDraft.timezone !== normalizedCurrent.timezone
   );
@@ -35,6 +41,8 @@ export const normalizeProfileUserData = (userData: ProfileApiUserData): ProfileU
   ...userData,
   id: String(userData.id),
   lastName: userData.lastName ?? "",
+  patronymic: userData.patronymic ?? "",
+  heightCm: userData.heightCm ?? null,
   role: userData.role ?? "",
 });
 

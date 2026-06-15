@@ -22,6 +22,8 @@ export default async function Profile() {
         ...user,
         id: String(user.id),
         lastName: user.lastName ?? "",
+        patronymic: user.patronymic ?? "",
+        heightCm: user.heightCm ?? null,
       }}
     />
   );
