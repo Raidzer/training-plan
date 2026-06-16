@@ -20,14 +20,22 @@ const {
   getDiaryExportRowsMock,
   getFullDiaryDateRangeMock,
   getDiaryWeeklyVolumesBySundayMock,
+  getLatestWeightEntryMock,
+  getPersonalRecordsMock,
+  getUserProfileByIdMock,
   isValidDateStringMock,
+  listCompetitionBlocksByUserMock,
 } = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
     getDiaryExportRowsMock: vi.fn(),
     getFullDiaryDateRangeMock: vi.fn(),
     getDiaryWeeklyVolumesBySundayMock: vi.fn(),
+    getLatestWeightEntryMock: vi.fn(),
+    getPersonalRecordsMock: vi.fn(),
+    getUserProfileByIdMock: vi.fn(),
     isValidDateStringMock: vi.fn(),
+    listCompetitionBlocksByUserMock: vi.fn(),
   };
 });
 
@@ -43,6 +51,30 @@ vi.mock("@/server/diary", () => {
     getFullDiaryDateRange: getFullDiaryDateRangeMock,
     getDiaryWeeklyVolumesBySunday: getDiaryWeeklyVolumesBySundayMock,
     isValidDateString: isValidDateStringMock,
+  };
+});
+
+vi.mock("@/server/services/users", () => {
+  return {
+    getUserProfileById: getUserProfileByIdMock,
+  };
+});
+
+vi.mock("@/server/personalRecords", () => {
+  return {
+    getPersonalRecords: getPersonalRecordsMock,
+  };
+});
+
+vi.mock("@/server/competitions", () => {
+  return {
+    listCompetitionBlocksByUser: listCompetitionBlocksByUserMock,
+  };
+});
+
+vi.mock("@/server/weightEntries", () => {
+  return {
+    getLatestWeightEntry: getLatestWeightEntryMock,
   };
 });
 
@@ -85,6 +117,17 @@ const getStringCellValue = (sheet: ExcelJS.Worksheet, rowNumber: number, columnN
   return String(value);
 };
 
+const getRequiredWorksheet = (workbook: ExcelJS.Workbook, sheetName: string) => {
+  const sheet = workbook.getWorksheet(sheetName);
+  expect(sheet).toBeTruthy();
+
+  if (!sheet) {
+    throw new Error(`Лист ${sheetName} не найден`);
+  }
+
+  return sheet;
+};
+
 describe("GET /api/diary/period-export", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -106,6 +149,81 @@ describe("GET /api/diary/period-export", () => {
       from: "2025-10-13",
       to: "2026-06-15",
     });
+    getUserProfileByIdMock.mockResolvedValue({
+      id: 9,
+      email: "runner@example.com",
+      login: "runner",
+      name: "Иван",
+      lastName: "Петров",
+      patronymic: "Сергеевич",
+      heightCm: 180,
+      gender: "male",
+      dateOfBirth: "1990-02-03",
+      occupation: "work",
+      timezone: "Europe/Moscow",
+      role: "athlete",
+    });
+    getLatestWeightEntryMock.mockResolvedValue("70.5");
+    getPersonalRecordsMock.mockResolvedValue([
+      {
+        distanceKey: "10k",
+        timeText: "37:32",
+        recordDate: "2026-05-23",
+        protocolUrl: null,
+        raceName: null,
+        raceCity: null,
+      },
+    ]);
+    listCompetitionBlocksByUserMock.mockResolvedValue([
+      {
+        id: 1,
+        title: "Весна 2026",
+        startDate: "2026-04-01",
+        endDate: "2026-05-31",
+        sortOrder: 0,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        competitions: [
+          {
+            id: 11,
+            blockId: 1,
+            date: "2026-04-26",
+            nameLocation: "Москва",
+            distanceMeters: 21100,
+            distanceLabel: "21.1 км",
+            priority: "main",
+            result: "1:21:16",
+            sortOrder: 0,
+            createdAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          },
+        ],
+      },
+      {
+        id: 2,
+        title: "Осень 2026",
+        startDate: "2026-06-01",
+        endDate: "2026-09-30",
+        sortOrder: 1,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        competitions: [
+          {
+            id: 12,
+            blockId: 2,
+            date: "2026-09-26",
+            nameLocation: "Московский марафон",
+            distanceMeters: 10000,
+            distanceLabel: "10 км",
+            priority: "regular",
+            result: null,
+            sortOrder: 0,
+            createdAt: new Date("2026-01-01T00:00:00.000Z"),
+            updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          },
+        ],
+      },
+    ]);
   });
 
   afterEach(() => {
@@ -243,6 +361,56 @@ describe("GET /api/diary/period-export", () => {
     );
   });
 
+  it("должен формировать лист Человек первым с профилем, рекордами и соревнованиями", async () => {
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { from: "2026-01-23", to: "2026-01-25" },
+    });
+    const response = await GET(request);
+    const workbook = await loadWorkbookFromResponse(response);
+    const personSheet = getRequiredWorksheet(workbook, "Человек");
+
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(["Человек", "Дневник"]);
+    expect(getUserProfileByIdMock).toHaveBeenCalledWith(9);
+    expect(getLatestWeightEntryMock).toHaveBeenCalledWith({ userId: 9 });
+    expect(getPersonalRecordsMock).toHaveBeenCalledWith({ userId: 9 });
+    expect(listCompetitionBlocksByUserMock).toHaveBeenCalledWith(9);
+
+    const profileHeaders = [1, 2, 3, 4, 5, 6, 7].map((columnNumber) =>
+      getStringCellValue(personSheet, 1, columnNumber)
+    );
+    expect(profileHeaders).toEqual(["Фио", "Дата рождения", "Рост", "Вес", "Работа/учёба", "", ""]);
+    expect(profileHeaders).not.toContain("Количество нагрузок в неделю");
+    expect(profileHeaders).not.toContain("Разное");
+    expect(getStringCellValue(personSheet, 2, 1)).toBe("Петров Иван Сергеевич");
+    expect(personSheet.getCell("B2").value).toBeInstanceOf(Date);
+    expect((personSheet.getCell("B2").value as Date).toISOString().slice(0, 10)).toBe("1990-02-03");
+    expect(personSheet.getCell("C2").value).toBe(180);
+    expect(personSheet.getCell("D2").value).toBe(70.5);
+    expect(getStringCellValue(personSheet, 2, 5)).toBe("Работа");
+
+    expect(getStringCellValue(personSheet, 4, 1)).toBe("Личный рекорд");
+    expect(getStringCellValue(personSheet, 5, 2)).toBe("Марафон");
+    expect(getStringCellValue(personSheet, 5, 1)).toBe("");
+    expect(getStringCellValue(personSheet, 7, 1)).toBe("37:32");
+    expect(getStringCellValue(personSheet, 7, 2)).toBe("10 км");
+    expect(getStringCellValue(personSheet, 7, 3)).toBe("23.05.2026");
+
+    expect(getStringCellValue(personSheet, 17, 1)).toBe("Дата");
+    expect(personSheet.getColumn(2).width).toBe(110);
+    expect(getStringCellValue(personSheet, 18, 1)).toBe("Подготовка");
+    expect(personSheet.getCell("A18").isMerged).toBe(true);
+    expect(getStringCellValue(personSheet, 19, 2)).toBe("Москва, 21.1 км");
+    expect(getStringCellValue(personSheet, 19, 3)).toBe("1:21:16");
+    expect(personSheet.getCell("A19").fill).toEqual(
+      expect.objectContaining({
+        fgColor: { argb: "FFFFFF00" },
+      })
+    );
+    expect(getStringCellValue(personSheet, 20, 1)).toBe("Подготовка");
+    expect(getStringCellValue(personSheet, 21, 2)).toBe("Московский марафон, 10 км");
+  });
+
   it("должен указывать полный недельный объем в синей строке при частичном диапазоне", async () => {
     const request = createRequestWithQuery({
       path: "/api/diary/period-export",
@@ -266,12 +434,7 @@ describe("GET /api/diary/period-export", () => {
     });
 
     const workbook = await loadWorkbookFromResponse(response);
-    const sheet = workbook.getWorksheet(1);
-
-    expect(sheet).toBeTruthy();
-    if (!sheet) {
-      return;
-    }
+    const sheet = getRequiredWorksheet(workbook, "Дневник");
 
     expect(getStringCellValue(sheet, 5, 13)).toBe("42.50 км");
     expect(getStringCellValue(sheet, 5, 13)).not.toBe("12.00 км");
@@ -284,12 +447,7 @@ describe("GET /api/diary/period-export", () => {
     });
     const response = await GET(request);
     const workbook = await loadWorkbookFromResponse(response);
-    const sheet = workbook.getWorksheet(1);
-
-    expect(sheet).toBeTruthy();
-    if (!sheet) {
-      return;
-    }
+    const sheet = getRequiredWorksheet(workbook, "Дневник");
 
     const headerRow = sheet.getRow(1);
     const headerCell = headerRow.getCell(1);
@@ -346,11 +504,7 @@ describe("GET /api/diary/period-export", () => {
     const response = await GET(request);
     const workbook = await loadWorkbookFromResponse(response);
 
-    const sheet = workbook.getWorksheet(1);
-    expect(sheet).toBeTruthy();
-    if (!sheet) {
-      return;
-    }
+    const sheet = getRequiredWorksheet(workbook, "Дневник");
 
     expect(sheet.rowCount).toBe(5);
     expect(getStringCellValue(sheet, 5, 13)).toBe("33.33 км");
@@ -370,11 +524,7 @@ describe("GET /api/diary/period-export", () => {
     const response = await GET(request);
     const workbook = await loadWorkbookFromResponse(response);
 
-    const sheet = workbook.getWorksheet(1);
-    expect(sheet).toBeTruthy();
-    if (!sheet) {
-      return;
-    }
+    const sheet = getRequiredWorksheet(workbook, "Дневник");
 
     expect(sheet.rowCount).toBe(3);
     expect(getStringCellValue(sheet, 3, 13)).toBe("4.00");
@@ -390,11 +540,7 @@ describe("GET /api/diary/period-export", () => {
     const response = await GET(request);
     const workbook = await loadWorkbookFromResponse(response);
 
-    const sheet = workbook.getWorksheet(1);
-    expect(sheet).toBeTruthy();
-    if (!sheet) {
-      return;
-    }
+    const sheet = getRequiredWorksheet(workbook, "Дневник");
 
     expect(getStringCellValue(sheet, 5, 13)).toBe("0.00 км");
   });
@@ -424,11 +570,7 @@ describe("GET /api/diary/period-export", () => {
     const response = await GET(request);
     const workbook = await loadWorkbookFromResponse(response);
 
-    const sheet = workbook.getWorksheet(1);
-    expect(sheet).toBeTruthy();
-    if (!sheet) {
-      return;
-    }
+    const sheet = getRequiredWorksheet(workbook, "Дневник");
 
     expect(sheet.rowCount).toBe(11);
     expect(getStringCellValue(sheet, 3, 13)).toBe("55.55 км");
@@ -451,12 +593,7 @@ describe("GET /api/diary/period-export", () => {
     });
     const response = await GET(request);
     const workbook = await loadWorkbookFromResponse(response);
-    const sheet = workbook.getWorksheet(1);
-
-    expect(sheet).toBeTruthy();
-    if (!sheet) {
-      return;
-    }
+    const sheet = getRequiredWorksheet(workbook, "Дневник");
 
     expect(getStringCellValue(sheet, 2, 2)).toBe("Кросс & ОФП");
 

@@ -1,4 +1,5 @@
 import { COMPETITION_PRIORITIES } from "@/shared/constants/competitions";
+import { PERSONAL_RECORD_DISTANCES } from "@/shared/constants/personalRecords.constants";
 
 export const COMPETITIONS_DATE_FORMAT = "YYYY-MM-DD";
 export const COMPETITIONS_DISPLAY_DATE_FORMAT = "DD.MM.YYYY";
@@ -71,6 +72,11 @@ export const COMPETITION_PRIORITY_OPTIONS = [
     label: competitionsLabels.regularPriority,
   },
 ] as const;
+
+export const COMPETITION_DISTANCE_OPTIONS = PERSONAL_RECORD_DISTANCES.map((distance) => ({
+  value: distance.label,
+  label: distance.label,
+})) as Array<{ value: string; label: string }>;
 
 export const COMPETITION_PRIORITY_META = {
   [COMPETITION_PRIORITIES.MAIN]: {

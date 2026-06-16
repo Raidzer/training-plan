@@ -9,11 +9,39 @@ import {
   getDiaryWeeklyVolumesBySunday,
   isValidDateString,
 } from "@/server/diary";
+import type { CompetitionBlockWithCompetitions } from "@/server/competitions";
+import { listCompetitionBlocksByUser } from "@/server/competitions";
+import type { PersonalRecord } from "@/server/personalRecords";
+import { getPersonalRecords } from "@/server/personalRecords";
+import { getUserProfileById } from "@/server/services/users";
+import { getLatestWeightEntry } from "@/server/weightEntries";
+import { PERSONAL_RECORD_DISTANCES } from "@/shared/constants/personalRecords.constants";
+import { COMPETITION_PRIORITIES } from "@/shared/constants/competitions";
 
 export const runtime = "nodejs";
 
+const PERSON_SHEET_NAME = "Человек";
+const DIARY_SHEET_NAME = "Дневник";
+const PERSON_PROFILE_HEADER_ROW_HEIGHT = 84;
+const PERSON_DEFAULT_ROW_HEIGHT = 14.25;
+const PERSON_RECORD_HEADER_ROW_HEIGHT = 26.25;
+const PERSON_RECORD_ROW_HEIGHT = 19.5;
+const PERSON_COMPETITION_HEADER_ROW_HEIGHT = 28.5;
+const PERSON_COMPETITION_BLOCK_ROW_HEIGHT = 19.5;
+const PERSON_COMPETITION_BLOCK_TITLE = "Подготовка";
 const DIARY_HEADER_ROW_HEIGHT = 105;
 const DIARY_TASK_COLUMN_WIDTH = 101.125;
+const EXCEL_DATE_FORMAT = "mm-dd-yy";
+const EXCEL_TIME_TEXT_FORMAT = "@";
+
+type UserProfile = NonNullable<Awaited<ReturnType<typeof getUserProfileById>>>;
+
+type PersonSheetData = {
+  profile: UserProfile;
+  latestWeightKg: string | null;
+  personalRecords: PersonalRecord[];
+  competitionBlocks: CompetitionBlockWithCompetitions[];
+};
 
 const CURRENT_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
   timeZone: DEFAULT_TIMEZONE,
@@ -52,6 +80,90 @@ const DIARY_HEADER_ALIGNMENT: Partial<ExcelJS.Alignment> = {
   vertical: "middle",
   wrapText: true,
 };
+
+const PERSON_HEADER_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FF92D050" },
+  bgColor: { argb: "FF92D050" },
+};
+
+const PERSON_BLUE_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FF00B0F0" },
+  bgColor: { argb: "FF00B0F0" },
+};
+
+const PERSON_WHITE_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FFFFFFFF" },
+  bgColor: { argb: "FFFFFFFF" },
+};
+
+const PERSON_MAIN_COMPETITION_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FFFFFF00" },
+  bgColor: { argb: "FFFFFF00" },
+};
+
+const PERSON_HEADER_BORDER: Partial<ExcelJS.Borders> = {
+  top: { style: "medium", color: { argb: "FF000000" } },
+  left: { style: "medium", color: { argb: "FF000000" } },
+  bottom: { style: "medium", color: { argb: "FF000000" } },
+  right: { style: "medium", color: { argb: "FF000000" } },
+};
+
+const PERSON_THIN_BORDER: Partial<ExcelJS.Borders> = {
+  top: { style: "thin" },
+  left: { style: "thin" },
+  bottom: { style: "thin" },
+  right: { style: "thin" },
+};
+
+const PERSON_HEADER_FONT: Partial<ExcelJS.Font> = {
+  bold: true,
+  size: 20,
+  color: { argb: "FF000000" },
+  name: "Ink Free",
+  family: 4,
+  charset: 204,
+};
+
+const PERSON_BLOCK_FONT: Partial<ExcelJS.Font> = {
+  bold: true,
+  size: 14,
+  color: { argb: "FF000000" },
+  name: "Ink Free",
+  family: 4,
+  charset: 204,
+};
+
+const PERSON_BODY_FONT: Partial<ExcelJS.Font> = {
+  size: 11,
+  color: { argb: "FF000000" },
+  name: "Calibri",
+  family: 2,
+  charset: 204,
+};
+
+const PERSON_COMPETITION_BODY_FONT: Partial<ExcelJS.Font> = {
+  size: 11,
+  color: { argb: "FF000000" },
+  name: "Calibri",
+  family: 2,
+  charset: 204,
+};
+
+const PERSON_PROFILE_COLUMNS = [
+  { header: "Фио", key: "fullName", width: 32.875 },
+  { header: "Дата рождения", key: "dateOfBirth", width: 110 },
+  { header: "Рост", key: "heightCm", width: 19.625 },
+  { header: "Вес", key: "weightKg", width: 9.375 },
+  { header: "Работа/учёба", key: "occupation", width: 23.5 },
+] as const;
 
 const htmlToRichText = (html: string | null | undefined): ExcelJS.RichText[] | string => {
   if (!html) return "";
@@ -134,6 +246,273 @@ const isSundayDate = (value: string) => {
   return date.getUTCDay() === 0;
 };
 
+const toExcelDate = (value: string | null | undefined) => {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date;
+};
+
+const formatDisplayDate = (value: string | null | undefined) => {
+  if (!value) {
+    return "";
+  }
+
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) {
+    return "";
+  }
+
+  return `${day}.${month}.${year}`;
+};
+
+const formatPersonName = (profile: UserProfile) => {
+  const nameParts = [profile.lastName, profile.name, profile.patronymic].filter((part) => {
+    return Boolean(part?.trim());
+  });
+
+  return nameParts.join(" ");
+};
+
+const formatOccupation = (occupation: string | null) => {
+  if (occupation === "work") {
+    return "Работа";
+  }
+
+  if (occupation === "study") {
+    return "Учеба";
+  }
+
+  return "";
+};
+
+const formatLatestWeight = (value: string | null) => {
+  if (!value) {
+    return "";
+  }
+
+  const parsed = Number(value.replace(",", "."));
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+
+  return parsed;
+};
+
+const formatCompetitionName = (
+  competition: CompetitionBlockWithCompetitions["competitions"][number]
+) => {
+  const nameLocation = competition.nameLocation.trim();
+  const distanceLabel = competition.distanceLabel.trim();
+
+  if (!distanceLabel) {
+    return nameLocation;
+  }
+
+  return `${nameLocation}, ${distanceLabel}`;
+};
+
+const applyPersonHeaderCellStyle = (cell: ExcelJS.Cell) => {
+  cell.font = PERSON_HEADER_FONT;
+  cell.fill = PERSON_HEADER_FILL;
+  cell.border = PERSON_HEADER_BORDER;
+  cell.alignment = {
+    horizontal: "center",
+    vertical: "middle",
+    wrapText: true,
+  };
+};
+
+const applyPersonBodyCellStyle = (cell: ExcelJS.Cell) => {
+  cell.font = PERSON_BODY_FONT;
+  cell.border = PERSON_THIN_BORDER;
+  cell.alignment = {
+    horizontal: "left",
+    vertical: "middle",
+    wrapText: true,
+  };
+};
+
+const applyPersonalRecordDistanceStyle = (cell: ExcelJS.Cell) => {
+  cell.font = PERSON_BLOCK_FONT;
+  cell.fill = PERSON_BLUE_FILL;
+  cell.border = PERSON_THIN_BORDER;
+  cell.alignment = {
+    horizontal: "center",
+    vertical: "middle",
+    wrapText: true,
+  };
+};
+
+const applyCenteredPersonCellStyle = (cell: ExcelJS.Cell) => {
+  cell.font = PERSON_BODY_FONT;
+  cell.border = PERSON_THIN_BORDER;
+  cell.alignment = {
+    horizontal: "center",
+    vertical: "middle",
+    wrapText: true,
+  };
+};
+
+const applyCompetitionBlockStyle = (cell: ExcelJS.Cell) => {
+  cell.font = PERSON_BLOCK_FONT;
+  cell.fill = PERSON_BLUE_FILL;
+  cell.border = PERSON_THIN_BORDER;
+  cell.alignment = {
+    horizontal: "center",
+    vertical: "middle",
+    wrapText: true,
+  };
+};
+
+const applyCompetitionCellStyle = (cell: ExcelJS.Cell, isMainCompetition: boolean) => {
+  cell.font = PERSON_COMPETITION_BODY_FONT;
+  cell.fill = isMainCompetition ? PERSON_MAIN_COMPETITION_FILL : PERSON_WHITE_FILL;
+  cell.border = PERSON_THIN_BORDER;
+  cell.alignment = {
+    horizontal: "center",
+    vertical: "middle",
+    wrapText: true,
+  };
+};
+
+const applyPersonRowStyle = (
+  row: ExcelJS.Row,
+  fromColumn: number,
+  toColumn: number,
+  handler: (cell: ExcelJS.Cell) => void
+) => {
+  for (let columnNumber = fromColumn; columnNumber <= toColumn; columnNumber += 1) {
+    handler(row.getCell(columnNumber));
+  }
+};
+
+const addPersonProfileBlock = (sheet: ExcelJS.Worksheet, data: PersonSheetData) => {
+  sheet.columns = PERSON_PROFILE_COLUMNS.map((column) => ({
+    header: column.header,
+    key: column.key,
+    width: column.width,
+  }));
+
+  const headerRow = sheet.getRow(1);
+  headerRow.height = PERSON_PROFILE_HEADER_ROW_HEIGHT;
+  PERSON_PROFILE_COLUMNS.forEach((column, index) => {
+    const cell = headerRow.getCell(index + 1);
+    cell.value = column.header;
+    applyPersonHeaderCellStyle(cell);
+  });
+
+  const valueRow = sheet.getRow(2);
+  valueRow.height = PERSON_DEFAULT_ROW_HEIGHT;
+  valueRow.getCell(1).value = formatPersonName(data.profile);
+  valueRow.getCell(2).value = toExcelDate(data.profile.dateOfBirth);
+  valueRow.getCell(2).numFmt = EXCEL_DATE_FORMAT;
+  valueRow.getCell(3).value = data.profile.heightCm ?? "";
+  valueRow.getCell(4).value = formatLatestWeight(data.latestWeightKg);
+  valueRow.getCell(5).value = formatOccupation(data.profile.occupation ?? null);
+  applyPersonRowStyle(valueRow, 1, PERSON_PROFILE_COLUMNS.length, applyPersonBodyCellStyle);
+
+  sheet.mergeCells("A3:E3");
+  sheet.getRow(3).height = PERSON_DEFAULT_ROW_HEIGHT;
+};
+
+const addPersonalRecordsBlock = (sheet: ExcelJS.Worksheet, personalRecords: PersonalRecord[]) => {
+  const headerRow = sheet.getRow(4);
+  headerRow.height = PERSON_RECORD_HEADER_ROW_HEIGHT;
+  headerRow.getCell(1).value = "Личный рекорд";
+  headerRow.getCell(2).value = "Дистанция";
+  headerRow.getCell(3).value = "Дата";
+  applyPersonRowStyle(headerRow, 1, 3, applyPersonHeaderCellStyle);
+
+  const recordsByDistance = new Map(
+    personalRecords.map((record) => [record.distanceKey, record] as const)
+  );
+
+  PERSONAL_RECORD_DISTANCES.forEach((distance, index) => {
+    const row = sheet.getRow(5 + index);
+    const record = recordsByDistance.get(distance.key);
+    row.height = PERSON_RECORD_ROW_HEIGHT;
+    row.getCell(1).value = record?.timeText ?? "";
+    row.getCell(1).numFmt = EXCEL_TIME_TEXT_FORMAT;
+    row.getCell(2).value = distance.label;
+    row.getCell(3).value = formatDisplayDate(record?.recordDate);
+    row.getCell(3).numFmt = EXCEL_TIME_TEXT_FORMAT;
+    applyCenteredPersonCellStyle(row.getCell(1));
+    applyPersonalRecordDistanceStyle(row.getCell(2));
+    applyCenteredPersonCellStyle(row.getCell(3));
+  });
+
+  sheet.getRow(16).height = PERSON_DEFAULT_ROW_HEIGHT;
+};
+
+const addCompetitionsBlock = (
+  sheet: ExcelJS.Worksheet,
+  competitionBlocks: CompetitionBlockWithCompetitions[]
+) => {
+  const headerRow = sheet.getRow(17);
+  headerRow.height = PERSON_COMPETITION_HEADER_ROW_HEIGHT;
+  headerRow.getCell(1).value = "Дата";
+  headerRow.getCell(2).value = "Название соревнований(или город) и дистанция";
+  headerRow.getCell(3).value = "Результат";
+  applyPersonRowStyle(headerRow, 1, 3, applyPersonHeaderCellStyle);
+
+  let rowNumber = 18;
+
+  for (const block of competitionBlocks) {
+    sheet.mergeCells(`A${rowNumber}:C${rowNumber}`);
+    const blockRow = sheet.getRow(rowNumber);
+    blockRow.height = PERSON_COMPETITION_BLOCK_ROW_HEIGHT;
+    blockRow.getCell(1).value = PERSON_COMPETITION_BLOCK_TITLE;
+    applyPersonRowStyle(blockRow, 1, 3, applyCompetitionBlockStyle);
+    rowNumber += 1;
+
+    for (const competition of block.competitions) {
+      const row = sheet.getRow(rowNumber);
+      const isMainCompetition = competition.priority === COMPETITION_PRIORITIES.MAIN;
+
+      row.height = PERSON_DEFAULT_ROW_HEIGHT;
+      row.getCell(1).value = toExcelDate(competition.date);
+      row.getCell(1).numFmt = EXCEL_DATE_FORMAT;
+      row.getCell(2).value = formatCompetitionName(competition);
+      row.getCell(3).value = competition.result ?? "";
+      row.getCell(3).numFmt = EXCEL_TIME_TEXT_FORMAT;
+      applyPersonRowStyle(row, 1, 3, (cell) => {
+        applyCompetitionCellStyle(cell, isMainCompetition);
+      });
+      rowNumber += 1;
+    }
+  }
+};
+
+const addPersonSheet = (workbook: ExcelJS.Workbook, data: PersonSheetData) => {
+  const sheet = workbook.addWorksheet(PERSON_SHEET_NAME);
+  sheet.properties.defaultRowHeight = 15;
+  sheet.properties.defaultColWidth = 12.625;
+  sheet.views = [
+    {
+      state: "normal",
+      showGridLines: true,
+      zoomScale: 115,
+      zoomScaleNormal: 115,
+    },
+  ];
+  sheet.pageSetup = {
+    orientation: "landscape",
+    fitToWidth: 1,
+    fitToHeight: 1,
+  };
+
+  addPersonProfileBlock(sheet, data);
+  addPersonalRecordsBlock(sheet, data.personalRecords);
+  addCompetitionsBlock(sheet, data.competitionBlocks);
+};
+
 const applyDiaryHeaderStyle = (sheet: ExcelJS.Worksheet) => {
   const headerRow = sheet.getRow(1);
   headerRow.height = DIARY_HEADER_ROW_HEIGHT;
@@ -187,14 +566,31 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "invalid_range" }, { status: 400 });
   }
 
-  const [rows, weeklyVolumeBySunday] = await Promise.all([
-    getDiaryExportRows({ userId, from, to }),
-    getDiaryWeeklyVolumesBySunday({ userId, from, to }),
-  ]);
+  const [rows, weeklyVolumeBySunday, profile, personalRecords, competitionBlocks, latestWeightKg] =
+    await Promise.all([
+      getDiaryExportRows({ userId, from, to }),
+      getDiaryWeeklyVolumesBySunday({ userId, from, to }),
+      getUserProfileById(userId),
+      getPersonalRecords({ userId }),
+      listCompetitionBlocksByUser(userId),
+      getLatestWeightEntry({ userId }),
+    ]);
+
+  if (!profile) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
   const exportDates = buildDateRange(from, to);
 
   const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet("Дневник");
+  addPersonSheet(workbook, {
+    profile,
+    latestWeightKg,
+    personalRecords,
+    competitionBlocks,
+  });
+
+  const sheet = workbook.addWorksheet(DIARY_SHEET_NAME);
   sheet.views = [{ state: "frozen", ySplit: 1, topLeftCell: "A2" }];
 
   sheet.columns = [

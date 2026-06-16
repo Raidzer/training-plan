@@ -7,6 +7,7 @@ import {
   competitionsLabels,
 } from "../../constants/competitionsConstants";
 import type { CompetitionFormState } from "../../types/competitionsTypes";
+import { CompetitionDistanceInput } from "../CompetitionDistanceInput/CompetitionDistanceInput";
 import styles from "./CompetitionCreateForm.module.scss";
 
 type CompetitionCreateFormProps = {
@@ -47,14 +48,12 @@ export function CompetitionCreateForm({
         maxLength={255}
         className={styles.nameInput}
       />
-      <Input
+      <CompetitionDistanceInput
         value={form.distanceLabel}
-        onChange={(event) => {
-          onChange("distanceLabel", event.target.value);
+        onChange={(value) => {
+          onChange("distanceLabel", value);
         }}
-        placeholder={competitionsLabels.distancePlaceholder}
         disabled={saving}
-        maxLength={64}
         className={styles.distanceInput}
       />
       <Select

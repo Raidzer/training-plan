@@ -15,6 +15,7 @@ import {
   competitionsLabels,
 } from "../../constants/competitionsConstants";
 import type { CompetitionFormState, CompetitionItem } from "../../types/competitionsTypes";
+import { CompetitionDistanceInput } from "../CompetitionDistanceInput/CompetitionDistanceInput";
 import styles from "./CompetitionTable.module.scss";
 
 type CompetitionTableProps = {
@@ -89,13 +90,12 @@ export function CompetitionTable({
         width: 120,
         render: (value: string, record) =>
           editingCompetitionId === record.id ? (
-            <Input
+            <CompetitionDistanceInput
               value={editingCompetitionForm.distanceLabel}
-              onChange={(event) => {
-                onChangeEdit("distanceLabel", event.target.value);
+              onChange={(distanceLabel) => {
+                onChangeEdit("distanceLabel", distanceLabel);
               }}
               disabled={updatingCompetitionId === record.id}
-              maxLength={64}
               className={styles.distanceInput}
             />
           ) : (

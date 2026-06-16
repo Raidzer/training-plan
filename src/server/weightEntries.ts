@@ -1,8 +1,21 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { weightEntries } from "@/server/db/schema";
 
 export type WeightEntryPeriod = "morning" | "evening";
+
+export const getLatestWeightEntry = async (params: { userId: number }) => {
+  const [entry] = await db
+    .select({
+      weightKg: weightEntries.weightKg,
+    })
+    .from(weightEntries)
+    .where(eq(weightEntries.userId, params.userId))
+    .orderBy(desc(weightEntries.date), asc(weightEntries.period))
+    .limit(1);
+
+  return entry?.weightKg ? String(entry.weightKg) : null;
+};
 
 export const upsertWeightEntry = async (params: {
   userId: number;
