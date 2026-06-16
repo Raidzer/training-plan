@@ -29,6 +29,8 @@ export const users = pgTable("users", {
   patronymic: varchar("patronymic", { length: 255 }),
   heightCm: integer("height_cm"),
   gender: varchar("gender", { length: 16 }).notNull().default("male"),
+  dateOfBirth: date("date_of_birth"),
+  occupation: varchar("occupation", { length: 16 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastActiveAt: timestamp("last_active_at"),
   emailVerified: timestamp("email_verified"),

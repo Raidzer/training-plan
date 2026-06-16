@@ -1,15 +1,23 @@
 "use client";
 
 import { CheckCircleFilled, GlobalOutlined } from "@ant-design/icons";
-import { Button, Form, Input, InputNumber, Select, Tooltip } from "antd";
+import { Button, DatePicker, Form, Input, InputNumber, Select, Tooltip } from "antd";
+import dayjs, { type Dayjs } from "dayjs";
 import { filterTimezoneOption, type TimezoneSelectOption } from "@/shared/constants/timezones";
-import { GENDER_OPTIONS, PROFILE_LABELS } from "../../constants/profileConstants";
+import {
+  GENDER_OPTIONS,
+  OCCUPATION_OPTIONS,
+  PROFILE_DATE_DISPLAY_FORMAT,
+  PROFILE_LABELS,
+} from "../../constants/profileConstants";
 import type {
   ProfileFormInstance,
   ProfileFormValues,
   ProfileUserData,
 } from "../../types/profileTypes";
 import styles from "./ProfileDetailsForm.module.scss";
+
+const disableFutureDate = (currentDate: Dayjs) => currentDate.isAfter(dayjs(), "day");
 
 type ProfileDetailsFormProps = {
   form: ProfileFormInstance;
@@ -98,6 +106,17 @@ export function ProfileDetailsForm({
       </Form.Item>
       <Form.Item label={PROFILE_LABELS.genderLabel} name="gender" rules={[{ required: true }]}>
         <Select options={GENDER_OPTIONS} />
+      </Form.Item>
+      <Form.Item label={PROFILE_LABELS.dateOfBirthLabel} name="dateOfBirth">
+        <DatePicker
+          allowClear
+          className={styles.dateInput}
+          disabledDate={disableFutureDate}
+          format={PROFILE_DATE_DISPLAY_FORMAT}
+        />
+      </Form.Item>
+      <Form.Item label={PROFILE_LABELS.occupationLabel} name="occupation">
+        <Select allowClear options={OCCUPATION_OPTIONS} />
       </Form.Item>
       <Form.Item
         label={PROFILE_LABELS.heightCmLabel}

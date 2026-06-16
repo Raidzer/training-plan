@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import dayjs from "dayjs";
 
 import { DEFAULT_TIMEZONE } from "@/shared/constants/timezones";
 import {
@@ -23,6 +24,8 @@ describe("profileUtils", () => {
       patronymic: "  Иванович  ",
       heightCm: 180,
       gender: "male",
+      dateOfBirth: dayjs("1990-04-12"),
+      occupation: "work",
       timezone: "Europe/Moscow",
     };
 
@@ -32,6 +35,8 @@ describe("profileUtils", () => {
       patronymic: "Иванович",
       heightCm: 180,
       gender: "male",
+      dateOfBirth: "1990-04-12",
+      occupation: "work",
       timezone: "Europe/Moscow",
     });
   });
@@ -46,16 +51,22 @@ describe("profileUtils", () => {
       patronymic: "",
       heightCm: null,
       gender: "unknown",
+      dateOfBirth: null,
+      occupation: "unknown",
       timezone: "",
       role: "athlete",
     };
 
-    expect(toProfileFormValues(userData)).toEqual({
+    const formValues = toProfileFormValues(userData);
+
+    expect(formValues).toEqual({
       name: "Анна",
       lastName: "",
       patronymic: "",
       heightCm: null,
       gender: "male",
+      dateOfBirth: null,
+      occupation: null,
       timezone: DEFAULT_TIMEZONE,
     });
   });
@@ -67,6 +78,8 @@ describe("profileUtils", () => {
       patronymic: "Иванович",
       heightCm: 180,
       gender: "male",
+      dateOfBirth: dayjs("1990-04-12"),
+      occupation: "work",
       timezone: "Europe/Moscow",
     };
 
@@ -78,6 +91,8 @@ describe("profileUtils", () => {
           patronymic: " Иванович ",
           heightCm: 180,
           gender: "male",
+          dateOfBirth: dayjs("1990-04-12"),
+          occupation: "work",
           timezone: "Europe/Moscow",
         },
         currentValues
@@ -92,6 +107,8 @@ describe("profileUtils", () => {
           patronymic: "Иванович",
           heightCm: 180,
           gender: "male",
+          dateOfBirth: dayjs("1990-04-12"),
+          occupation: "work",
           timezone: "Europe/Moscow",
         },
         currentValues
@@ -109,6 +126,8 @@ describe("profileUtils", () => {
       patronymic: null,
       heightCm: null,
       gender: "male",
+      dateOfBirth: "1990-04-12",
+      occupation: "study",
       timezone: "Europe/Moscow",
       role: "coach",
     };
@@ -122,6 +141,8 @@ describe("profileUtils", () => {
       patronymic: "",
       heightCm: null,
       gender: "male",
+      dateOfBirth: "1990-04-12",
+      occupation: "study",
       timezone: "Europe/Moscow",
       role: "coach",
     });
