@@ -2,6 +2,7 @@ import { CloseOutlined, DeleteOutlined, EditOutlined, SaveOutlined } from "@ant-
 import { Button, DatePicker, Input, Select, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo } from "react";
+import { TimeInput } from "@/components/inputs/TimeInput";
 import { COMPETITION_PRIORITIES } from "@/shared/constants/competitions";
 import {
   formatCompetitionDate,
@@ -128,10 +129,10 @@ export function CompetitionTable({
         width: 140,
         render: (value: string | null, record) =>
           editingCompetitionId === record.id ? (
-            <Input
+            <TimeInput
               value={editingCompetitionForm.result}
-              onChange={(event) => {
-                onChangeEdit("result", event.target.value);
+              onChange={(value) => {
+                onChangeEdit("result", value);
               }}
               disabled={updatingCompetitionId === record.id}
               maxLength={32}

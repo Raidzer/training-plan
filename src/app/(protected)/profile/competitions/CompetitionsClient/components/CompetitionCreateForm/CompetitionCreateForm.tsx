@@ -1,5 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { Button, DatePicker, Input, Select } from "antd";
+import { TimeInput } from "@/components/inputs/TimeInput";
 import {
   COMPETITION_PRIORITY_OPTIONS,
   COMPETITIONS_DISPLAY_DATE_FORMAT,
@@ -65,10 +66,10 @@ export function CompetitionCreateForm({
         disabled={saving}
         className={styles.priorityInput}
       />
-      <Input
+      <TimeInput
         value={form.result}
-        onChange={(event) => {
-          onChange("result", event.target.value);
+        onChange={(value) => {
+          onChange("result", value);
         }}
         placeholder={competitionsLabels.resultPlaceholder}
         disabled={saving}
