@@ -115,6 +115,8 @@ describe("server/services/users", () => {
         patronymic: null,
         heightCm: 180,
         gender: "male",
+        dateOfBirth: "1990-04-12",
+        occupation: "work",
         timezone: "Europe/Moscow",
       })
     ).resolves.toEqual(profile);

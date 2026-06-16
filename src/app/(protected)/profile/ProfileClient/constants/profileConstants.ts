@@ -11,6 +11,8 @@ export const PROFILE_LABELS = {
   heightCmLabel: "Рост, см",
   emailLabel: "Email",
   genderLabel: "Пол",
+  dateOfBirthLabel: "Дата рождения",
+  occupationLabel: "Занятость",
   timezoneLabel: "Часовой пояс",
   verifiedEmailTooltip: "Почта подтверждена",
   verifiedEmailAriaLabel: "Почта подтверждена",
@@ -52,6 +54,7 @@ export const PROFILE_LABELS = {
   tooLongName: "Слишком длинное имя",
   tooLongPatronymic: "Слишком длинное отчество",
   invalidHeightCm: "Укажите рост от 50 до 250 см",
+  invalidDateOfBirth: "Дата рождения не может быть в будущем",
   tooLongEmail: "Слишком длинный email",
   tooLongPassword: "Слишком длинный пароль",
   minPassword: "Минимум 6 символов",
@@ -62,3 +65,11 @@ export const GENDER_OPTIONS = [
   { value: "male", label: "Мужской" },
   { value: "female", label: "Женский" },
 ];
+
+export const OCCUPATION_OPTIONS = [
+  { value: "work", label: "Работа" },
+  { value: "study", label: "Учеба" },
+];
+
+export const PROFILE_DATE_FORMAT = "YYYY-MM-DD";
+export const PROFILE_DATE_DISPLAY_FORMAT = "DD.MM.YYYY";

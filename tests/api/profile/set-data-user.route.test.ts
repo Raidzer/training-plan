@@ -33,6 +33,8 @@ const validPayload = {
   patronymic: "  Ivanovich  ",
   heightCm: 180,
   gender: "male",
+  dateOfBirth: "1990-04-12",
+  occupation: "work",
   timezone: "Europe/Moscow",
 };
 
@@ -48,6 +50,8 @@ describe("PATCH /api/setDataUser", () => {
       patronymic: "Ivanovich",
       heightCm: 180,
       gender: "male",
+      dateOfBirth: "1990-04-12",
+      occupation: "work",
       timezone: "Europe/Moscow",
     });
   });
@@ -124,6 +128,35 @@ describe("PATCH /api/setDataUser", () => {
     expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
   });
 
+  it("должен возвращать 400 при невалидной дате рождения или занятости", async () => {
+    const invalidDateRequest = createJsonRequest({
+      url: "http://localhost/api/setDataUser",
+      method: "PATCH",
+      body: {
+        ...validPayload,
+        dateOfBirth: "9999-01-01",
+      },
+    });
+
+    const invalidDateResponse = await PATCH(invalidDateRequest);
+
+    await expectJsonError(invalidDateResponse, 400, "invalid_payload");
+
+    const invalidOccupationRequest = createJsonRequest({
+      url: "http://localhost/api/setDataUser",
+      method: "PATCH",
+      body: {
+        ...validPayload,
+        occupation: "freelance",
+      },
+    });
+
+    const invalidOccupationResponse = await PATCH(invalidOccupationRequest);
+
+    await expectJsonError(invalidOccupationResponse, 400, "invalid_payload");
+    expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
+  });
+
   it("должен возвращать 404 когда пользователь отсутствует", async () => {
     updateUserProfileByIdMock.mockResolvedValue(null);
     const request = createJsonRequest({
@@ -146,6 +179,8 @@ describe("PATCH /api/setDataUser", () => {
         lastName: "   ",
         patronymic: "   ",
         heightCm: null,
+        dateOfBirth: null,
+        occupation: null,
       },
     });
 
@@ -163,6 +198,8 @@ describe("PATCH /api/setDataUser", () => {
       patronymic: null,
       heightCm: null,
       gender: "male",
+      dateOfBirth: null,
+      occupation: null,
       timezone: "Europe/Moscow",
     });
   });
