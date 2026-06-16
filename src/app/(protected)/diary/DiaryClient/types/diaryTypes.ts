@@ -43,6 +43,7 @@ export type RecoveryEntry = {
   functionalScore: number | null;
   muscleScore: number | null;
   sleepHours: string | null;
+  additionalSleepHours?: string | null;
 };
 
 export type DayStatus = {
@@ -73,6 +74,7 @@ export type RecoveryForm = {
   hasMassage: boolean;
   recoveryOther: string;
   sleepHours: string;
+  additionalSleepHours: string;
 };
 
 export type WorkoutFormEntry = {

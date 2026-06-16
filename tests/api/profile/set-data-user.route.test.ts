@@ -30,7 +30,11 @@ import { PATCH } from "@/app/api/setDataUser/route";
 const validPayload = {
   name: "  Ivan  ",
   lastName: "  Petrov  ",
+  patronymic: "  Ivanovich  ",
+  heightCm: 180,
   gender: "male",
+  dateOfBirth: "1990-04-12",
+  occupation: "work",
   timezone: "Europe/Moscow",
 };
 
@@ -43,7 +47,11 @@ describe("PATCH /api/setDataUser", () => {
       email: "runner@example.test",
       name: "Ivan",
       lastName: "Petrov",
+      patronymic: "Ivanovich",
+      heightCm: 180,
       gender: "male",
+      dateOfBirth: "1990-04-12",
+      occupation: "work",
       timezone: "Europe/Moscow",
     });
   });
@@ -120,6 +128,35 @@ describe("PATCH /api/setDataUser", () => {
     expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
   });
 
+  it("должен возвращать 400 при невалидной дате рождения или занятости", async () => {
+    const invalidDateRequest = createJsonRequest({
+      url: "http://localhost/api/setDataUser",
+      method: "PATCH",
+      body: {
+        ...validPayload,
+        dateOfBirth: "9999-01-01",
+      },
+    });
+
+    const invalidDateResponse = await PATCH(invalidDateRequest);
+
+    await expectJsonError(invalidDateResponse, 400, "invalid_payload");
+
+    const invalidOccupationRequest = createJsonRequest({
+      url: "http://localhost/api/setDataUser",
+      method: "PATCH",
+      body: {
+        ...validPayload,
+        occupation: "freelance",
+      },
+    });
+
+    const invalidOccupationResponse = await PATCH(invalidOccupationRequest);
+
+    await expectJsonError(invalidOccupationResponse, 400, "invalid_payload");
+    expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
+  });
+
   it("должен возвращать 404 когда пользователь отсутствует", async () => {
     updateUserProfileByIdMock.mockResolvedValue(null);
     const request = createJsonRequest({
@@ -140,13 +177,17 @@ describe("PATCH /api/setDataUser", () => {
       body: {
         ...validPayload,
         lastName: "   ",
+        patronymic: "   ",
+        heightCm: null,
+        dateOfBirth: null,
+        occupation: null,
       },
     });
 
     const response = await PATCH(request);
     const payload = await expectJsonSuccess<{
       success: boolean;
-      user: { id: number; name: string; lastName: string | null };
+      user: { id: number; name: string; lastName: string | null; patronymic: string | null };
     }>(response, 200);
 
     expect(payload.success).toBe(true);
@@ -154,7 +195,11 @@ describe("PATCH /api/setDataUser", () => {
     expect(updateUserProfileByIdMock).toHaveBeenCalledWith(13, {
       name: "Ivan",
       lastName: null,
+      patronymic: null,
+      heightCm: null,
       gender: "male",
+      dateOfBirth: null,
+      occupation: null,
       timezone: "Europe/Moscow",
     });
   });

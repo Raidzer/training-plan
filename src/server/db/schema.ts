@@ -26,7 +26,11 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(true),
   name: varchar("name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }),
+  patronymic: varchar("patronymic", { length: 255 }),
+  heightCm: integer("height_cm"),
   gender: varchar("gender", { length: 16 }).notNull().default("male"),
+  dateOfBirth: date("date_of_birth"),
+  occupation: varchar("occupation", { length: 16 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastActiveAt: timestamp("last_active_at"),
   emailVerified: timestamp("email_verified"),
@@ -162,6 +166,55 @@ export const personalRecords = pgTable(
   })
 );
 
+export const competitionBlocks = pgTable(
+  "competition_blocks",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    title: varchar("title", { length: 255 }).notNull(),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    competitionBlocksUserStartSortIdx: index("competition_blocks_user_start_sort_idx").on(
+      table.userId,
+      table.startDate,
+      table.sortOrder
+    ),
+  })
+);
+
+export const competitions = pgTable(
+  "competitions",
+  {
+    id: serial("id").primaryKey(),
+    blockId: integer("block_id")
+      .notNull()
+      .references(() => competitionBlocks.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    nameLocation: varchar("name_location", { length: 255 }).notNull(),
+    distanceMeters: integer("distance_meters"),
+    distanceLabel: varchar("distance_label", { length: 64 }).notNull(),
+    priority: varchar("priority", { length: 16 }).notNull().default("regular"),
+    result: varchar("result", { length: 32 }),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    competitionsBlockDateSortIdx: index("competitions_block_date_sort_idx").on(
+      table.blockId,
+      table.date,
+      table.sortOrder
+    ),
+  })
+);
+
 export const shoes = pgTable(
   "shoes",
   {
@@ -257,6 +310,7 @@ export const recoveryEntries = pgTable(
     functionalScore: integer("functional_score"),
     muscleScore: integer("muscle_score"),
     sleepHours: numeric("sleep_hours", { precision: 4, scale: 2 }),
+    additionalSleepHours: numeric("additional_sleep_hours", { precision: 4, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

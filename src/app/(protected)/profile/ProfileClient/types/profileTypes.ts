@@ -1,6 +1,8 @@
 import type { FormInstance } from "antd";
+import type { Dayjs } from "dayjs";
 
 export type Gender = "male" | "female";
+export type Occupation = "work" | "study";
 
 export type ProfileUserData = {
   id: string;
@@ -8,21 +10,47 @@ export type ProfileUserData = {
   login: string;
   name: string;
   lastName: string;
+  patronymic: string;
+  heightCm: number | null;
   gender: string;
+  dateOfBirth: string | null;
+  occupation: string | null;
   timezone: string;
   role: string;
 };
 
-export type ProfileApiUserData = Omit<ProfileUserData, "id" | "lastName" | "role"> & {
+export type ProfileApiUserData = Omit<
+  ProfileUserData,
+  "id" | "lastName" | "patronymic" | "heightCm" | "dateOfBirth" | "occupation" | "role"
+> & {
   id: string | number;
   lastName?: string | null;
+  patronymic?: string | null;
+  heightCm?: number | null;
+  dateOfBirth?: string | null;
+  occupation?: string | null;
   role?: string;
 };
 
 export type ProfileFormValues = {
   name: string;
   lastName: string;
+  patronymic: string;
+  heightCm: number | null;
   gender: Gender;
+  dateOfBirth: Dayjs | null;
+  occupation: Occupation | null;
+  timezone: string;
+};
+
+export type ProfilePayload = {
+  name: string;
+  lastName: string;
+  patronymic: string;
+  heightCm: number | null;
+  gender: Gender;
+  dateOfBirth: string | null;
+  occupation: Occupation | null;
   timezone: string;
 };
 

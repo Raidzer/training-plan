@@ -1,0 +1,68 @@
+.blockCard {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  min-width: 0;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.blockHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.blockMain {
+  min-width: 0;
+}
+
+.blockTitleGroup {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.blockTitleLine {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.blockTitle {
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blockActions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.blockBody {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .blockCard {
+    padding: 12px;
+  }
+
+  .blockHeader {
+    align-items: start;
+  }
+
+  .blockTitle {
+    white-space: normal;
+  }
+}

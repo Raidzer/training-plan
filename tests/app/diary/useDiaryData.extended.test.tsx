@@ -72,6 +72,7 @@ const createDayPayload = (params: {
   workoutResult: string;
   hasBath: boolean;
   sleepHours: string | null;
+  additionalSleepHours?: string | null;
   weightMorning: string;
 }): DayPayload => ({
   planEntries: [
@@ -121,6 +122,7 @@ const createDayPayload = (params: {
     functionalScore: null,
     muscleScore: null,
     sleepHours: params.sleepHours,
+    additionalSleepHours: params.additionalSleepHours ?? null,
   },
   status: {
     date: params.date ?? "2025-12-29",
@@ -218,6 +220,7 @@ describe("useDiaryData (extended)", () => {
         ...prev,
         hasBath: true,
         sleepHours: "07:30",
+        additionalSleepHours: "00:35",
       }));
       result.current.setWeightForm((prev) => ({
         ...prev,
@@ -236,6 +239,7 @@ describe("useDiaryData (extended)", () => {
     expect(result.current.workoutForm[1]?.resultText).toBe("draft-workout");
     expect(result.current.recoveryForm.hasBath).toBe(true);
     expect(result.current.recoveryForm.sleepHours).toBe("07:30");
+    expect(result.current.recoveryForm.additionalSleepHours).toBe("00:35");
     expect(result.current.weightForm.morning).toBe("71.3");
   });
 
@@ -779,7 +783,7 @@ describe("useDiaryData (extended)", () => {
     expect(messageApi.success).toHaveBeenCalledWith(messages.workoutEditSaved);
   });
 
-  it("должен сохранять восстановление с нормализованным sleepHours", async () => {
+  it("должен сохранять восстановление с нормализованными значениями сна", async () => {
     const dayPayload = createDayPayload({
       totalDistanceKm: 10,
       workoutResult: "ok",
@@ -824,6 +828,7 @@ describe("useDiaryData (extended)", () => {
         hasMassage: false,
         recoveryOther: "  Контрастный душ  ",
         sleepHours: "07:30",
+        additionalSleepHours: "0035",
       }));
     });
 
@@ -832,6 +837,7 @@ describe("useDiaryData (extended)", () => {
     });
 
     expect(recoveryBody.sleepHours).toBe(7.5);
+    expect(recoveryBody.additionalSleepHours).toBe(0.5833333333333334);
     expect(recoveryBody.hasBath).toBe(true);
     expect(recoveryBody.hasMfr).toBe(true);
     expect(recoveryBody.recoveryOther).toBe("Контрастный душ");

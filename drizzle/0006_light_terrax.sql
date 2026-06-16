@@ -1,0 +1,1 @@
+ALTER TABLE "recovery_entries" ADD COLUMN "additional_sleep_hours" numeric(4, 2);

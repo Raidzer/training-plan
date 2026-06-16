@@ -57,6 +57,7 @@ describe("server/recoveryEntries", () => {
       hasMassage: true,
       recoveryOther: "Контрастный душ",
       sleepHours: 7.5,
+      additionalSleepHours: 0.58,
     });
 
     expect(updateSetMock).toHaveBeenCalledWith(
@@ -66,6 +67,7 @@ describe("server/recoveryEntries", () => {
         hasMassage: true,
         recoveryOther: "Контрастный душ",
         sleepHours: "7.5",
+        additionalSleepHours: "0.58",
       })
     );
     expect(dbInsertMock).not.toHaveBeenCalled();
@@ -86,6 +88,7 @@ describe("server/recoveryEntries", () => {
       hasMassage: false,
       recoveryOther: null,
       sleepHours: null,
+      additionalSleepHours: null,
     });
 
     expect(insertValuesMock).toHaveBeenCalledWith(
@@ -97,6 +100,7 @@ describe("server/recoveryEntries", () => {
         hasMassage: false,
         recoveryOther: null,
         sleepHours: null,
+        additionalSleepHours: null,
       })
     );
   });
@@ -111,6 +115,7 @@ describe("server/recoveryEntries", () => {
         hasMassage: true,
         recoveryOther: "Контрастный душ",
         sleepHours: "8",
+        additionalSleepHours: "0.58",
       },
     ]);
 
@@ -126,6 +131,7 @@ describe("server/recoveryEntries", () => {
       hasMassage: true,
       recoveryOther: "Контрастный душ",
       sleepHours: "8",
+      additionalSleepHours: "0.58",
     });
 
     mockSelectResult([]);

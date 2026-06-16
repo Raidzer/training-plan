@@ -10,6 +10,74 @@ import {
 import { setPendingInput } from "@/bot/menu/menuState";
 import { resetPendingInput } from "@/bot/commands/handlers/helpers";
 
+const START_LINK_PAYLOAD_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
+
+const getStartPayload = (ctx: any) => {
+  if (typeof ctx.match !== "string") {
+    return "";
+  }
+
+  return ctx.match.trim();
+};
+
+const replyWithMainMenu = async (ctx: any, chatId: number, message: string) => {
+  const userId = await ensureLinked(chatId);
+  const subscription = userId ? await getSubscription(userId) : null;
+  const keyboard = buildMainMenuReplyKeyboard({
+    subscribed: subscription?.enabled ?? false,
+  });
+
+  return ctx.reply(message, {
+    reply_markup: keyboard,
+  });
+};
+
+const handleStartLinkPayload = async (ctx: any, payload: string) => {
+  if (!START_LINK_PAYLOAD_REGEX.test(payload)) {
+    return ctx.reply(
+      "Ссылка для привязки недействительна или истекла. Получите новую ссылку на сайте.",
+      {
+        reply_markup: buildLinkReplyKeyboard(),
+      }
+    );
+  }
+
+  const result = await linkAccount({
+    chatId: ctx.chat.id,
+    code: payload,
+    username: ctx.from?.username ?? null,
+    firstName: ctx.from?.first_name ?? null,
+  });
+
+  if (!result.ok) {
+    if (result.error === "чат-уже-связан") {
+      const userId = await ensureLinked(ctx.chat.id);
+      const subscription = userId ? await getSubscription(userId) : null;
+      const keyboard = userId
+        ? buildMainMenuReplyKeyboard({
+            subscribed: subscription?.enabled ?? false,
+          })
+        : buildLinkReplyKeyboard();
+      return ctx.reply("Этот чат уже связан с аккаунтом.", {
+        reply_markup: keyboard,
+      });
+    }
+    if (result.error === "пользователь-уже-связан") {
+      return ctx.reply("Аккаунт уже связан с Telegram.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
+    }
+    return ctx.reply(
+      "Ссылка для привязки недействительна или истекла. Получите новую ссылку на сайте.",
+      {
+        reply_markup: buildLinkReplyKeyboard(),
+      }
+    );
+  }
+
+  return replyWithMainMenu(ctx, ctx.chat.id, "Аккаунт успешно связан. Меню управления ниже.");
+};
+
 export const registerAccountCommands = (bot: Bot) => {
   bot.command("start", async (ctx: any) => {
     if (ctx.chat?.type !== "private") {
@@ -17,6 +85,11 @@ export const registerAccountCommands = (bot: Bot) => {
     }
 
     resetPendingInput(ctx);
+
+    const startPayload = getStartPayload(ctx);
+    if (startPayload) {
+      return handleStartLinkPayload(ctx, startPayload);
+    }
 
     const userId = await ensureLinked(ctx.chat.id);
     const subscription = userId ? await getSubscription(userId) : null;

@@ -117,6 +117,7 @@ describe("POST /api/diary/recovery", () => {
         functionalScore: "",
         muscleScore: null,
         sleepHours: "7.5",
+        additionalSleepHours: "0.58",
         recoveryOther: "  Контрастный душ  ",
       },
     });
@@ -135,6 +136,7 @@ describe("POST /api/diary/recovery", () => {
       functionalScore: null,
       muscleScore: null,
       sleepHours: 7.5,
+      additionalSleepHours: 0.58,
       recoveryOther: "Контрастный душ",
     });
   });

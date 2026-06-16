@@ -1,0 +1,13 @@
+.list {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.loading {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 120px;
+  justify-content: center;
+}

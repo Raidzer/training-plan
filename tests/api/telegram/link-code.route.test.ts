@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSession, expectJsonError, readJsonResponse } from "@tests/helpers";
 
-const { authMock, issueTelegramLinkCodeMock, getTelegramAccountIdByUserIdMock } = vi.hoisted(() => {
+const {
+  authMock,
+  buildTelegramDeepLinkUrlMock,
+  issueTelegramLinkCodeMock,
+  getTelegramAccountIdByUserIdMock,
+} = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
+    buildTelegramDeepLinkUrlMock: vi.fn(),
     issueTelegramLinkCodeMock: vi.fn(),
     getTelegramAccountIdByUserIdMock: vi.fn(),
   };
@@ -17,6 +23,7 @@ vi.mock("@/auth", () => {
 
 vi.mock("@/server/telegramLink", () => {
   return {
+    buildTelegramDeepLinkUrl: buildTelegramDeepLinkUrlMock,
     issueTelegramLinkCode: issueTelegramLinkCodeMock,
   };
 });
@@ -33,9 +40,12 @@ describe("POST /api/telegram/link-code", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMock.mockResolvedValue(createSession({ id: "25" }));
+    process.env.TELEGRAM_BOT_USERNAME = "RunLogBot";
+    buildTelegramDeepLinkUrlMock.mockReturnValue("https://t.me/RunLogBot?start=deep-link-token");
     getTelegramAccountIdByUserIdMock.mockResolvedValue(null);
     issueTelegramLinkCodeMock.mockResolvedValue({
       code: "123456",
+      linkToken: "deep-link-token",
       expiresAt: new Date("2026-02-09T11:00:00.000Z"),
     });
   });
@@ -75,17 +85,40 @@ describe("POST /api/telegram/link-code", () => {
 
   it("должен выдавать код при валидном запрос", async () => {
     const expiresAt = new Date("2026-02-09T11:00:00.000Z");
-    issueTelegramLinkCodeMock.mockResolvedValue({ code: "654321", expiresAt });
+    issueTelegramLinkCodeMock.mockResolvedValue({
+      code: "654321",
+      linkToken: "deep-link-token",
+      expiresAt,
+    });
 
     const response = await POST();
     expect(response.status).toBe(200);
-    const payload = await readJsonResponse<{ code: string; expiresAt: string }>(response);
+    const payload = await readJsonResponse<{
+      code: string;
+      linkUrl: string | null;
+      expiresAt: string;
+    }>(response);
 
     expect(payload).toEqual({
       code: "654321",
+      linkUrl: "https://t.me/RunLogBot?start=deep-link-token",
       expiresAt: expiresAt.toISOString(),
     });
     expect(getTelegramAccountIdByUserIdMock).toHaveBeenCalledWith(25);
     expect(issueTelegramLinkCodeMock).toHaveBeenCalledWith({ userId: 25 });
+    expect(buildTelegramDeepLinkUrlMock).toHaveBeenCalledWith({
+      username: "RunLogBot",
+      payload: "deep-link-token",
+    });
+  });
+
+  it("должен возвращать null linkUrl когда username бота не настроен", async () => {
+    buildTelegramDeepLinkUrlMock.mockReturnValue(null);
+
+    const response = await POST();
+    expect(response.status).toBe(200);
+    const payload = await readJsonResponse<{ linkUrl: string | null }>(response);
+
+    expect(payload.linkUrl).toBeNull();
   });
 });

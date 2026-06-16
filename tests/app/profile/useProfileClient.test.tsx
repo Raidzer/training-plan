@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import type { MessageInstance } from "antd/es/message/interface";
+import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const profileSessionMocks = vi.hoisted(() => ({
@@ -41,7 +42,11 @@ function createUserData(overrides: Partial<ProfileUserData> = {}): ProfileUserDa
     login: "runner",
     name: "Иван",
     lastName: "Петров",
+    patronymic: "Иванович",
+    heightCm: 180,
     gender: "male",
+    dateOfBirth: null,
+    occupation: null,
     timezone: "Europe/Moscow",
     role: "athlete",
     ...overrides,
@@ -83,7 +88,11 @@ describe("useProfileClient", () => {
     expect(result.current.initialValues).toEqual({
       name: "Иван",
       lastName: "Петров",
+      patronymic: "Иванович",
+      heightCm: 180,
       gender: "male",
+      dateOfBirth: null,
+      occupation: null,
       timezone: "Europe/Moscow",
     });
     expect(result.current.isEmailVerified).toBe(true);
@@ -98,7 +107,11 @@ describe("useProfileClient", () => {
         {
           name: "Анна",
           lastName: "Петров",
+          patronymic: "Иванович",
+          heightCm: 180,
           gender: "female",
+          dateOfBirth: null,
+          occupation: null,
           timezone: "Europe/Moscow",
         }
       );
@@ -148,7 +161,11 @@ describe("useProfileClient", () => {
           id: "2",
           name: "Анна",
           lastName: null as unknown as string,
+          patronymic: null as unknown as string,
+          heightCm: 172,
           gender: "female",
+          dateOfBirth: "1990-04-12",
+          occupation: "work",
           timezone: "Etc/UTC",
         }),
       })
@@ -160,7 +177,11 @@ describe("useProfileClient", () => {
     vi.spyOn(result.current.profileForm, "validateFields").mockResolvedValue({
       name: " Анна ",
       lastName: " ",
+      patronymic: " Сергеевна ",
+      heightCm: null,
       gender: "female",
+      dateOfBirth: dayjs("1990-04-12"),
+      occupation: "work",
       timezone: "Etc/UTC",
     } as any);
 
@@ -168,7 +189,11 @@ describe("useProfileClient", () => {
       result.current.profileForm.setFieldsValue({
         name: " Анна ",
         lastName: " ",
+        patronymic: " Сергеевна ",
+        heightCm: null,
         gender: "female",
+        dateOfBirth: dayjs("1990-04-12"),
+        occupation: "work",
         timezone: "Etc/UTC",
       });
     });
@@ -182,7 +207,11 @@ describe("useProfileClient", () => {
     expect(JSON.parse(String(request.body))).toEqual({
       name: "Анна",
       lastName: "",
+      patronymic: "Сергеевна",
+      heightCm: null,
       gender: "female",
+      dateOfBirth: "1990-04-12",
+      occupation: "work",
       timezone: "Etc/UTC",
     });
     expect(result.current.userData).toEqual(
@@ -190,6 +219,10 @@ describe("useProfileClient", () => {
         id: "2",
         name: "Анна",
         lastName: "",
+        patronymic: "",
+        heightCm: 172,
+        dateOfBirth: "1990-04-12",
+        occupation: "work",
       })
     );
     expect(profileSessionMocks.updateMock).toHaveBeenCalled();
@@ -203,7 +236,11 @@ describe("useProfileClient", () => {
     vi.spyOn(result.current.profileForm, "validateFields").mockResolvedValue({
       name: "Иван",
       lastName: "Петров",
+      patronymic: "Иванович",
+      heightCm: 180,
       gender: "male",
+      dateOfBirth: null,
+      occupation: null,
       timezone: "Europe/Moscow",
     } as any);
 
