@@ -101,6 +101,7 @@ const createDayPayload = (params: {
     functionalScore: null,
     muscleScore: null,
     sleepHours: params.sleepHours,
+    additionalSleepHours: null,
   },
   status: {
     date: "2025-12-29",
@@ -188,6 +189,7 @@ describe("useDiaryData", () => {
         hasBath: true,
         recoveryOther: "Контрастный душ",
         sleepHours: "07:30",
+        additionalSleepHours: "00:35",
       }));
       result.current.setWeightForm((prev) => ({
         ...prev,
@@ -207,6 +209,7 @@ describe("useDiaryData", () => {
     expect(result.current.recoveryForm.hasBath).toBe(true);
     expect(result.current.recoveryForm.recoveryOther).toBe("Контрастный душ");
     expect(result.current.recoveryForm.sleepHours).toBe("07:30");
+    expect(result.current.recoveryForm.additionalSleepHours).toBe("00:35");
     expect(result.current.weightForm.morning).toBe("71.3");
   });
 });

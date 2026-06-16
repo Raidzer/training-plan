@@ -88,6 +88,7 @@ export async function POST(req: Request) {
     functionalScore?: number | string | null;
     muscleScore?: number | string | null;
     sleepHours?: number | string | null;
+    additionalSleepHours?: number | string | null;
     recoveryOther?: string | null;
   } | null;
 
@@ -103,6 +104,7 @@ export async function POST(req: Request) {
   const functionalScore = parseOptionalScore(body?.functionalScore);
   const muscleScore = parseOptionalScore(body?.muscleScore);
   const sleepHours = parseOptionalSleepHours(body?.sleepHours);
+  const additionalSleepHours = parseOptionalSleepHours(body?.additionalSleepHours);
   const recoveryOther = parseOptionalRecoveryOther(body?.recoveryOther);
 
   if (
@@ -113,6 +115,7 @@ export async function POST(req: Request) {
     !functionalScore.valid ||
     !muscleScore.valid ||
     !sleepHours.valid ||
+    !additionalSleepHours.valid ||
     !recoveryOther.valid
   ) {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
@@ -136,6 +139,9 @@ export async function POST(req: Request) {
   }
   if (sleepHours.value !== undefined) {
     upsertParams.sleepHours = sleepHours.value;
+  }
+  if (additionalSleepHours.value !== undefined) {
+    upsertParams.additionalSleepHours = additionalSleepHours.value;
   }
   if (recoveryOther.value !== undefined) {
     upsertParams.recoveryOther = recoveryOther.value;

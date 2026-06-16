@@ -76,6 +76,7 @@ export type DiaryRecoveryEntry = {
   functionalScore: number | null;
   muscleScore: number | null;
   sleepHours: string | null;
+  additionalSleepHours: string | null;
 };
 
 export type DiaryExportRow = {
@@ -237,6 +238,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
       functionalScore: recoveryEntries.functionalScore,
       muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
+      additionalSleepHours: recoveryEntries.additionalSleepHours,
     })
     .from(recoveryEntries)
     .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));
@@ -342,6 +344,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
     functionalScore: null,
     muscleScore: null,
     sleepHours: null,
+    additionalSleepHours: null,
   };
 
   return {
@@ -671,6 +674,7 @@ export const getDiaryExportRows = async (params: {
       functionalScore: recoveryEntries.functionalScore,
       muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
+      additionalSleepHours: recoveryEntries.additionalSleepHours,
     })
     .from(recoveryEntries)
     .where(
@@ -737,6 +741,7 @@ export const getDiaryExportRows = async (params: {
       hasMassage: boolean;
       recoveryOther: string | null;
       sleepHours: string | null;
+      additionalSleepHours: string | null;
     }
   >();
   for (const entry of recoveryRows) {
@@ -746,6 +751,7 @@ export const getDiaryExportRows = async (params: {
       hasMassage: entry.hasMassage,
       recoveryOther: entry.recoveryOther,
       sleepHours: entry.sleepHours ? String(entry.sleepHours) : null,
+      additionalSleepHours: entry.additionalSleepHours ? String(entry.additionalSleepHours) : null,
     });
   }
 

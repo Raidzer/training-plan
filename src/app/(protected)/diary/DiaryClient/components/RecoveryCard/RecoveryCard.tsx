@@ -16,12 +16,15 @@ type RecoveryCardProps = {
   otherPlaceholder: string;
   sleepLabel: string;
   sleepPlaceholder: string;
+  additionalSleepLabel: string;
+  additionalSleepPlaceholder: string;
   saveLabel: string;
   recoveryForm: RecoveryForm;
   savingRecovery: boolean;
   onToggle: (field: RecoveryToggleField, checked: boolean) => void;
   onOtherChange: (value: string) => void;
   onSleepChange: (value: string) => void;
+  onAdditionalSleepChange: (value: string) => void;
   onSave: () => void;
 };
 
@@ -34,12 +37,15 @@ export function RecoveryCard({
   otherPlaceholder,
   sleepLabel,
   sleepPlaceholder,
+  additionalSleepLabel,
+  additionalSleepPlaceholder,
   saveLabel,
   recoveryForm,
   savingRecovery,
   onToggle,
   onOtherChange,
   onSleepChange,
+  onAdditionalSleepChange,
   onSave,
 }: RecoveryCardProps) {
   return (
@@ -78,15 +84,29 @@ export function RecoveryCard({
             onChange={(event) => onOtherChange(event.target.value)}
           />
         </div>
-        <div className={styles.recoveryField}>
-          <Typography.Text>{sleepLabel}</Typography.Text>
-          <Input
-            className={styles.recoveryInput}
-            maxLength={5}
-            placeholder={sleepPlaceholder}
-            value={recoveryForm.sleepHours}
-            onChange={(event) => onSleepChange(normalizeStartTimeInput(event.target.value))}
-          />
+        <div className={styles.sleepFields}>
+          <div className={styles.recoveryField}>
+            <Typography.Text>{sleepLabel}</Typography.Text>
+            <Input
+              className={styles.recoveryInput}
+              maxLength={5}
+              placeholder={sleepPlaceholder}
+              value={recoveryForm.sleepHours}
+              onChange={(event) => onSleepChange(normalizeStartTimeInput(event.target.value))}
+            />
+          </div>
+          <div className={styles.recoveryField}>
+            <Typography.Text>{additionalSleepLabel}</Typography.Text>
+            <Input
+              className={styles.recoveryInput}
+              maxLength={5}
+              placeholder={additionalSleepPlaceholder}
+              value={recoveryForm.additionalSleepHours}
+              onChange={(event) =>
+                onAdditionalSleepChange(normalizeStartTimeInput(event.target.value))
+              }
+            />
+          </div>
         </div>
       </div>
       <div className={styles.recoveryActions}>

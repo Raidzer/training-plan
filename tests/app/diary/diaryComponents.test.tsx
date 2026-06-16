@@ -76,6 +76,8 @@ describe("DiaryClient components", () => {
         otherPlaceholder="Свое восстановление"
         sleepLabel="Сон"
         sleepPlaceholder="07:30"
+        additionalSleepLabel="Доп. сон"
+        additionalSleepPlaceholder="00:35"
         saveLabel="Сохранить"
         recoveryForm={{
           hasBath: false,
@@ -83,11 +85,13 @@ describe("DiaryClient components", () => {
           hasMassage: false,
           recoveryOther: "",
           sleepHours: "",
+          additionalSleepHours: "",
         }}
         savingRecovery={false}
         onToggle={onToggle}
         onOtherChange={onOtherChange}
         onSleepChange={onSleepChange}
+        onAdditionalSleepChange={onSleepChange}
         onSave={onSave}
       />
     );
@@ -98,12 +102,14 @@ describe("DiaryClient components", () => {
       target: { value: "Контрастный душ" },
     });
     fireEvent.change(screen.getByPlaceholderText("07:30"), { target: { value: "0730" } });
+    fireEvent.change(screen.getByPlaceholderText("00:35"), { target: { value: "0035" } });
     fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
 
     expect(onToggle).toHaveBeenNthCalledWith(1, "hasBath", true);
     expect(onToggle).toHaveBeenNthCalledWith(2, "hasMfr", true);
     expect(onOtherChange).toHaveBeenCalledWith("Контрастный душ");
     expect(onSleepChange).toHaveBeenCalledWith("07:30");
+    expect(onSleepChange).toHaveBeenCalledWith("00:35");
     expect(onSave).toHaveBeenCalled();
   });
 

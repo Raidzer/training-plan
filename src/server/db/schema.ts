@@ -310,6 +310,7 @@ export const recoveryEntries = pgTable(
     functionalScore: integer("functional_score"),
     muscleScore: integer("muscle_score"),
     sleepHours: numeric("sleep_hours", { precision: 4, scale: 2 }),
+    additionalSleepHours: numeric("additional_sleep_hours", { precision: 4, scale: 2 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

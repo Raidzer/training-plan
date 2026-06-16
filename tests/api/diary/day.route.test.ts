@@ -42,6 +42,7 @@ const dayPayload = {
     functionalScore: null,
     muscleScore: null,
     sleepHours: null,
+    additionalSleepHours: null,
   },
   status: {
     date: "2026-01-10",

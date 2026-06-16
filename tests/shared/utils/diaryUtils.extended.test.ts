@@ -5,6 +5,7 @@ import {
   formatDateWithDay,
   formatNumberedLines,
   formatRecovery,
+  formatSleep,
   formatTemperatureValue,
   formatWeight,
   formatWorkoutScore,
@@ -94,6 +95,7 @@ describe("shared/utils/diaryUtils (extended)", () => {
     ).toBe("8---7");
     expect(formatWeight({ morning: "70.15", evening: "70.2" })).toBe("70.2 / 70.2");
     expect(formatWeight()).toBe("-");
+    expect(formatSleep({ sleepHours: "8.77", additionalSleepHours: "0.58" })).toBe("08:46+00:35");
     expect(formatNumberedLines(["A", " ", null])).toBe("1) A\n2) -\n3) -");
     expect(
       formatRecovery({

@@ -85,7 +85,13 @@ vi.mock("@/app/(protected)/diary/DiaryClient/components/WeightCard/WeightCard", 
 }));
 
 vi.mock("@/app/(protected)/diary/DiaryClient/components/RecoveryCard/RecoveryCard", () => ({
-  RecoveryCard: ({ onOtherChange, onSave, onSleepChange, onToggle }: any) => (
+  RecoveryCard: ({
+    onAdditionalSleepChange,
+    onOtherChange,
+    onSave,
+    onSleepChange,
+    onToggle,
+  }: any) => (
     <section>
       <button type="button" onClick={() => onToggle("hasBath", true)}>
         toggle-recovery
@@ -95,6 +101,9 @@ vi.mock("@/app/(protected)/diary/DiaryClient/components/RecoveryCard/RecoveryCar
       </button>
       <button type="button" onClick={() => onSleepChange("07:30")}>
         sleep-recovery
+      </button>
+      <button type="button" onClick={() => onAdditionalSleepChange("00:35")}>
+        additional-sleep-recovery
       </button>
       <button type="button" onClick={onSave}>
         save-recovery
@@ -193,6 +202,7 @@ function createDiaryData(overrides: Record<string, unknown> = {}) {
     hasMassage: false,
     recoveryOther: "",
     sleepHours: "",
+    additionalSleepHours: "",
   };
   let workoutState: Record<number, any> = {};
 
@@ -258,6 +268,7 @@ function createDiaryData(overrides: Record<string, unknown> = {}) {
         hasMfr: false,
         hasMassage: false,
         sleepHours: "7.5",
+        additionalSleepHours: "0.58",
       },
       previousEveningWeightKg: null,
     },
@@ -317,6 +328,7 @@ describe("DiaryClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "toggle-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "other-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "sleep-recovery" }));
+    fireEvent.click(screen.getByRole("button", { name: "additional-sleep-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "save-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-result" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-weather" }));
@@ -340,6 +352,7 @@ describe("DiaryClient", () => {
         hasBath: true,
         recoveryOther: "Контрастный душ",
         sleepHours: "07:30",
+        additionalSleepHours: "00:35",
       })
     );
     expect(diaryData.getWorkoutState()[101]).toEqual(

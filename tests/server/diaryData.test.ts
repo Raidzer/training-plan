@@ -165,6 +165,7 @@ describe("server/diary getDiaryDayData", () => {
             functionalScore: null,
             muscleScore: null,
             sleepHours: "7.5",
+            additionalSleepHours: "0.58",
           },
         ])
       );
@@ -234,6 +235,7 @@ describe("server/diary getDiaryDayData", () => {
             hasMassage: false,
             recoveryOther: "Контрастный душ",
             sleepHours: "7.5",
+            additionalSleepHours: "0.58",
           },
         ])
       )
@@ -280,6 +282,7 @@ describe("server/diary getDiaryDayData", () => {
       hasMfr: true,
       hasMassage: false,
       recoveryOther: "Контрастный душ",
+      additionalSleepHours: "0.58",
     });
     expect(result.previousEveningWeightKg).toBe("72.30");
     expect(result.workoutReports[0]).toMatchObject({
@@ -474,6 +477,7 @@ describe("server/diary getDiaryExportRows", () => {
             hasMassage: true,
             recoveryOther: "Контрастный душ",
             sleepHours: "7.5",
+            additionalSleepHours: "0.58",
           },
         ])
       );
@@ -489,7 +493,7 @@ describe("server/diary getDiaryExportRows", () => {
       task: "1) Кросс 10 км\n2) Заминка",
       result: "1) 10 км\n2) -",
       score: "1) 8-7-6\n2) -",
-      sleep: "07:30",
+      sleep: "07:30+00:35",
       weight: "70.4 / 71.1",
       recovery: "Баня, Массаж, Контрастный душ",
       volume: "10.00",

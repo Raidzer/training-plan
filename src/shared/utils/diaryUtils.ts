@@ -164,13 +164,14 @@ export const formatWorkoutScore = (report?: {
   return parts.join("-");
 };
 
-export const formatSleep = (entry?: { sleepHours: string | null }) => {
-  if (!entry?.sleepHours) {
-    return "-";
+const formatSleepValue = (value?: string | number | null) => {
+  if (value === null || value === undefined || value === "") {
+    return "";
   }
-  const parsed = Number(entry.sleepHours);
+
+  const parsed = typeof value === "number" ? value : Number(String(value).replace(",", "."));
   if (!Number.isFinite(parsed)) {
-    return "-";
+    return "";
   }
   const clamped = Math.min(Math.max(parsed, 0), 24);
   let hours = Math.floor(clamped);
@@ -183,6 +184,24 @@ export const formatSleep = (entry?: { sleepHours: string | null }) => {
     minutes = 0;
   }
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+};
+
+export const formatSleep = (entry?: {
+  sleepHours?: string | number | null;
+  additionalSleepHours?: string | number | null;
+}) => {
+  const sleepText = formatSleepValue(entry?.sleepHours);
+  const additionalSleepText = formatSleepValue(entry?.additionalSleepHours);
+  if (!sleepText && !additionalSleepText) {
+    return "-";
+  }
+  if (!sleepText) {
+    return additionalSleepText;
+  }
+  if (!additionalSleepText) {
+    return sleepText;
+  }
+  return `${sleepText}+${additionalSleepText}`;
 };
 
 export const formatWeightValue = (value?: string) => {
