@@ -40,6 +40,7 @@ export function ThemeProvider({
     pathname.startsWith("/plan") ||
     pathname.startsWith("/diary") ||
     pathname.startsWith("/profile/records") ||
+    pathname.startsWith("/profile/competitions") ||
     pathname.startsWith("/admin") ||
     pathname === "/tools/templates";
 

@@ -3,6 +3,7 @@
 import {
   BookOutlined,
   CalendarOutlined,
+  FlagOutlined,
   ShoppingOutlined,
   SnippetsOutlined,
   TeamOutlined,
@@ -21,6 +22,7 @@ const DASHBOARD_CARD_ICONS = {
   diary: <BookOutlined />,
   shoes: <ShoppingOutlined />,
   records: <TrophyOutlined />,
+  competitions: <FlagOutlined />,
 } satisfies Record<DashboardCardId, ReactNode>;
 
 type DashboardCardsProps = {

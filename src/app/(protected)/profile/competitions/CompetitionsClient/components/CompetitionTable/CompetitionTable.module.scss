@@ -1,0 +1,25 @@
+.table {
+  width: 100%;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.dateInput,
+.distanceInput,
+.priorityInput,
+.resultInput {
+  width: 100%;
+}
+
+.mainCompetitionRow > td {
+  background: rgba(250, 204, 21, 0.2) !important;
+}
+
+.mainCompetitionRow:hover > td {
+  background: rgba(250, 204, 21, 0.28) !important;
+}
