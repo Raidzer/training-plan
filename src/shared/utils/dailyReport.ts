@@ -1,4 +1,9 @@
-import { formatWorkoutScore, surfaceLabels, weatherLabels } from "@/shared/utils/diaryUtils";
+import {
+  formatSleep,
+  formatWorkoutScore,
+  surfaceLabels,
+  weatherLabels,
+} from "@/shared/utils/diaryUtils";
 
 type DailyReportPlanEntry = {
   id: number;
@@ -31,6 +36,7 @@ type DailyReportRecoveryEntry = {
   hasMassage: boolean;
   recoveryOther?: string | null;
   sleepHours: string | null;
+  additionalSleepHours?: string | null;
 };
 
 type DailyReportStatus = {
@@ -83,27 +89,6 @@ const formatTemperatureValue = (value?: string | null) => {
     ? (Math.round(parsed * 10) / 10).toFixed(1)
     : trimmed;
   return `${temperatureText}°C`;
-};
-
-const formatSleepTimeValue = (value?: string | number | null) => {
-  if (value === null || value === undefined || value === "") {
-    return "";
-  }
-  const parsed = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-  if (!Number.isFinite(parsed)) {
-    return "";
-  }
-  const clamped = Math.min(Math.max(parsed, 0), 24);
-  let hours = Math.floor(clamped);
-  let minutes = Math.round((clamped - hours) * 60);
-  if (minutes === 60) {
-    hours = Math.min(hours + 1, 24);
-    minutes = 0;
-  }
-  if (hours === 24) {
-    minutes = 0;
-  }
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 };
 
 const formatWeightValue = (value?: string | number | null) => {
@@ -211,7 +196,7 @@ export const buildDailyReportText = (params: { date: string; day: DailyReportDay
   const morningWeight = params.day.weightEntries.find(
     (entry) => entry.period === "morning"
   )?.weightKg;
-  const sleepText = formatSleepTimeValue(params.day.recoveryEntry.sleepHours);
+  const sleepText = formatSleep(params.day.recoveryEntry);
   const weightText = joinValues([
     formatWeightValue(params.day.previousEveningWeightKg),
     formatWeightValue(morningWeight),
@@ -221,7 +206,7 @@ export const buildDailyReportText = (params: { date: string; day: DailyReportDay
     params.day.status.totalDistanceKm > 0 ? params.day.status.totalDistanceKm.toFixed(2) : "";
 
   const recoveryBlock = [
-    sleepText || "-",
+    sleepText,
     weightText || "-",
     recoveryText || "",
     volumeKm ? `${volumeKm} км` : "-",

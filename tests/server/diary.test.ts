@@ -41,6 +41,7 @@ describe("formatSleep", () => {
   it("должен форматировать часы сна", () => {
     expect(formatSleep({ sleepHours: "8" })).toBe("08:00");
     expect(formatSleep({ sleepHours: "7.5" })).toBe("07:30");
+    expect(formatSleep({ sleepHours: "8.77", additionalSleepHours: "0.58" })).toBe("08:46+00:35");
   });
 
   it("должен возвращать прочерк при отсутствии данных", () => {

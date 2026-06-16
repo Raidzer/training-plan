@@ -83,6 +83,8 @@ export const RECOVERY_LABELS = {
   muscleLabel: "Мышечная оценка",
   sleepLabel: "Сон, часы",
   sleepPlaceholder: "ЧЧ:ММ",
+  additionalSleepLabel: "Доп. сон",
+  additionalSleepPlaceholder: "ЧЧ:ММ",
   scorePlaceholder: "1-10",
   saveLabel: "Сохранить",
 } as const;

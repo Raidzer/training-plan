@@ -126,6 +126,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     hasMassage: false,
     recoveryOther: "",
     sleepHours: "",
+    additionalSleepHours: "",
   });
   const [savingWeight, setSavingWeight] = useState<SavingWeightState>({
     morning: false,
@@ -221,6 +222,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       hasMassage: Boolean(data.recoveryEntry?.hasMassage),
       recoveryOther: data.recoveryEntry?.recoveryOther ?? "",
       sleepHours: formatSleepTimeValue(data.recoveryEntry?.sleepHours),
+      additionalSleepHours: formatSleepTimeValue(data.recoveryEntry?.additionalSleepHours),
     };
     setRecoveryForm(nextRecovery);
     const reportMap = new Map(data.workoutReports.map((report) => [report.planEntryId, report]));
@@ -634,6 +636,11 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       messageApi.error(messages.recoveryInvalidSleep);
       return;
     }
+    const additionalSleepTime = parseSleepTimeInput(recoveryForm.additionalSleepHours);
+    if (!additionalSleepTime.valid) {
+      messageApi.error(messages.recoveryInvalidSleep);
+      return;
+    }
     setSavingRecovery(true);
     try {
       const res = await fetch("/api/diary/recovery", {
@@ -646,6 +653,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           hasMassage: recoveryForm.hasMassage,
           recoveryOther: recoveryForm.recoveryOther.trim() || null,
           sleepHours: sleepTime.value,
+          additionalSleepHours: additionalSleepTime.value,
         }),
       });
       if (!res.ok) {

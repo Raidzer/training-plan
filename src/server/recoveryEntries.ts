@@ -13,6 +13,7 @@ export const upsertRecoveryEntry = async (params: {
   functionalScore?: number | null;
   muscleScore?: number | null;
   sleepHours?: number | null;
+  additionalSleepHours?: number | null;
 }) => {
   const now = new Date();
   const updates: {
@@ -25,6 +26,7 @@ export const upsertRecoveryEntry = async (params: {
     functionalScore?: number | null;
     muscleScore?: number | null;
     sleepHours?: string | null;
+    additionalSleepHours?: string | null;
   } = {
     hasBath: params.hasBath,
     hasMfr: params.hasMfr,
@@ -43,6 +45,10 @@ export const upsertRecoveryEntry = async (params: {
   if (params.sleepHours !== undefined) {
     updates.sleepHours = params.sleepHours === null ? null : String(params.sleepHours);
   }
+  if (params.additionalSleepHours !== undefined) {
+    updates.additionalSleepHours =
+      params.additionalSleepHours === null ? null : String(params.additionalSleepHours);
+  }
   if (params.recoveryOther !== undefined) {
     updates.recoveryOther = params.recoveryOther;
   }
@@ -60,6 +66,7 @@ export const upsertRecoveryEntry = async (params: {
     functionalScore?: number | null;
     muscleScore?: number | null;
     sleepHours?: string | null;
+    additionalSleepHours?: string | null;
   } = {
     userId: params.userId,
     date: params.date,
@@ -80,6 +87,10 @@ export const upsertRecoveryEntry = async (params: {
   }
   if (params.sleepHours !== undefined) {
     insertValues.sleepHours = params.sleepHours === null ? null : String(params.sleepHours);
+  }
+  if (params.additionalSleepHours !== undefined) {
+    insertValues.additionalSleepHours =
+      params.additionalSleepHours === null ? null : String(params.additionalSleepHours);
   }
   if (params.recoveryOther !== undefined) {
     insertValues.recoveryOther = params.recoveryOther;
@@ -110,6 +121,7 @@ export const getRecoveryEntryByDate = async (params: { userId: number; date: str
       functionalScore: recoveryEntries.functionalScore,
       muscleScore: recoveryEntries.muscleScore,
       sleepHours: recoveryEntries.sleepHours,
+      additionalSleepHours: recoveryEntries.additionalSleepHours,
     })
     .from(recoveryEntries)
     .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));

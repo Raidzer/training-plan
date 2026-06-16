@@ -82,6 +82,10 @@ export function DiaryClient({ userId }: { userId: number }) {
     setRecoveryForm((prev) => ({ ...prev, sleepHours: value }));
   };
 
+  const handleRecoveryAdditionalSleepChange = (value: string) => {
+    setRecoveryForm((prev) => ({ ...prev, additionalSleepHours: value }));
+  };
+
   const handleRecoveryOtherChange = (value: string) => {
     setRecoveryForm((prev) => ({ ...prev, recoveryOther: value }));
   };
@@ -224,12 +228,15 @@ export function DiaryClient({ userId }: { userId: number }) {
                       otherPlaceholder={RECOVERY_LABELS.otherPlaceholder}
                       sleepLabel={RECOVERY_LABELS.sleepLabel}
                       sleepPlaceholder={RECOVERY_LABELS.sleepPlaceholder}
+                      additionalSleepLabel={RECOVERY_LABELS.additionalSleepLabel}
+                      additionalSleepPlaceholder={RECOVERY_LABELS.additionalSleepPlaceholder}
                       saveLabel={RECOVERY_LABELS.saveLabel}
                       recoveryForm={recoveryForm}
                       savingRecovery={savingRecovery}
                       onToggle={handleRecoveryToggle}
                       onOtherChange={handleRecoveryOtherChange}
                       onSleepChange={handleRecoverySleepChange}
+                      onAdditionalSleepChange={handleRecoveryAdditionalSleepChange}
                       onSave={handleSaveRecovery}
                     />
                   </div>
