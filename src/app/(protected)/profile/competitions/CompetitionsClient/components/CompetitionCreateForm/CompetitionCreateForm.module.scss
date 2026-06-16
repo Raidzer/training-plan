@@ -4,9 +4,10 @@
   gap: 10px;
   align-items: center;
   padding: 12px;
-  border: 1px solid #f0f0f0;
+  min-width: 0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface-bg);
 }
 
 .dateInput,

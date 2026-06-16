@@ -26,6 +26,25 @@ export const parseCompetitionDistanceMeters = (value: string): number | null => 
   return roundedMeters;
 };
 
+export const formatCompetitionDistanceLabel = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  if (/[a-zа-я]/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = Number(trimmed.replace(",", "."));
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return trimmed;
+  }
+
+  const unit = parsed >= 100 ? "м" : "км";
+  return `${trimmed} ${unit}`;
+};
+
 export const formatCompetitionDate = (value: string) => {
   const [year, month, day] = value.split("-");
 

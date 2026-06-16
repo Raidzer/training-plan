@@ -3,7 +3,10 @@ import { Button, DatePicker, Input, Select, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo } from "react";
 import { COMPETITION_PRIORITIES } from "@/shared/constants/competitions";
-import { formatCompetitionDate } from "@/shared/utils/competitionUtils";
+import {
+  formatCompetitionDate,
+  formatCompetitionDistanceLabel,
+} from "@/shared/utils/competitionUtils";
 import {
   COMPETITION_PRIORITY_META,
   COMPETITION_PRIORITY_OPTIONS,
@@ -95,7 +98,7 @@ export function CompetitionTable({
               className={styles.distanceInput}
             />
           ) : (
-            value
+            formatCompetitionDistanceLabel(value)
           ),
       },
       {

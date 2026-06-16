@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCompetitionDate,
+  formatCompetitionDistanceLabel,
   parseCompetitionDistanceMeters,
 } from "@/shared/utils/competitionUtils";
 
@@ -21,5 +22,11 @@ describe("competitionUtils", () => {
   it("должен форматировать ISO-дату для таблицы", () => {
     expect(formatCompetitionDate("2026-05-24")).toBe("24.05.2026");
     expect(formatCompetitionDate("bad-date")).toBe("bad-date");
+  });
+
+  it("должен добавлять единицу к числовой дистанции для отображения", () => {
+    expect(formatCompetitionDistanceLabel("21.1")).toBe("21.1 км");
+    expect(formatCompetitionDistanceLabel("3000")).toBe("3000 м");
+    expect(formatCompetitionDistanceLabel("10 км")).toBe("10 км");
   });
 });

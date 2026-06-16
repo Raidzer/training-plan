@@ -3,9 +3,10 @@
   gap: 12px;
   padding: 16px;
   margin-bottom: 24px;
-  border: 1px solid #f0f0f0;
+  min-width: 0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--surface-soft);
 }
 
 .formTitle {
@@ -14,9 +15,10 @@
 
 .formRow {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 150px 150px auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(140px, 150px) minmax(140px, 150px) auto;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .titleInput,

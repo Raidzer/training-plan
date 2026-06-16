@@ -1,5 +1,6 @@
 .table {
   width: 100%;
+  min-width: 0;
 }
 
 .actions {
@@ -16,9 +17,9 @@
 }
 
 .mainCompetitionRow > td {
-  background: #fff7bf !important;
+  background: rgba(250, 204, 21, 0.2) !important;
 }
 
 .mainCompetitionRow:hover > td {
-  background: #fff2a8 !important;
+  background: rgba(250, 204, 21, 0.28) !important;
 }

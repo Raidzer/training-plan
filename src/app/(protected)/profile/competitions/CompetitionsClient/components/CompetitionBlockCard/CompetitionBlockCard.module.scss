@@ -2,9 +2,10 @@
   display: grid;
   gap: 14px;
   padding: 14px;
-  border: 1px solid #f0f0f0;
+  min-width: 0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface-soft);
 }
 
 .blockHeader {
@@ -12,6 +13,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .blockMain {
@@ -47,6 +49,8 @@
 .blockBody {
   display: grid;
   gap: 14px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 640px) {
