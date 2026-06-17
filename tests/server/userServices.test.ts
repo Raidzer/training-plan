@@ -114,9 +114,11 @@ describe("server/services/users", () => {
         lastName: "",
         patronymic: null,
         heightCm: 180,
+        weeklyWorkloadCount: 5,
         gender: "male",
         dateOfBirth: "1990-04-12",
         occupation: "work",
+        miscellaneous: "Starts on Tuesday",
         timezone: "Europe/Moscow",
       })
     ).resolves.toEqual(profile);

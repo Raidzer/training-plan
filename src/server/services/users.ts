@@ -9,9 +9,11 @@ export type UserProfileUpdateInput = {
   lastName: string | null;
   patronymic: string | null;
   heightCm: number | null;
+  weeklyWorkloadCount: number | null;
   gender: string;
   dateOfBirth: string | null;
   occupation: string | null;
+  miscellaneous: string | null;
   timezone: string;
 };
 
@@ -39,9 +41,11 @@ export async function getUserById(id: number) {
       lastName: users.lastName,
       patronymic: users.patronymic,
       heightCm: users.heightCm,
+      weeklyWorkloadCount: users.weeklyWorkloadCount,
       gender: users.gender,
       dateOfBirth: users.dateOfBirth,
       occupation: users.occupation,
+      miscellaneous: users.miscellaneous,
       timezone: users.timezone,
       role: users.role,
       isActive: users.isActive,
@@ -88,9 +92,11 @@ export async function getUserProfileById(id: number) {
       lastName: users.lastName,
       patronymic: users.patronymic,
       heightCm: users.heightCm,
+      weeklyWorkloadCount: users.weeklyWorkloadCount,
       gender: users.gender,
       dateOfBirth: users.dateOfBirth,
       occupation: users.occupation,
+      miscellaneous: users.miscellaneous,
       timezone: users.timezone,
       role: users.role,
     })
@@ -110,9 +116,11 @@ export async function updateUserProfileById(id: number, input: UserProfileUpdate
     lastName: users.lastName,
     patronymic: users.patronymic,
     heightCm: users.heightCm,
+    weeklyWorkloadCount: users.weeklyWorkloadCount,
     gender: users.gender,
     dateOfBirth: users.dateOfBirth,
     occupation: users.occupation,
+    miscellaneous: users.miscellaneous,
     timezone: users.timezone,
     role: users.role,
   });
@@ -147,9 +155,11 @@ export async function updateUserEmailById(id: number, email: string) {
       lastName: users.lastName,
       patronymic: users.patronymic,
       heightCm: users.heightCm,
+      weeklyWorkloadCount: users.weeklyWorkloadCount,
       gender: users.gender,
       dateOfBirth: users.dateOfBirth,
       occupation: users.occupation,
+      miscellaneous: users.miscellaneous,
       timezone: users.timezone,
       role: users.role,
     });

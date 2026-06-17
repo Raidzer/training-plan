@@ -44,9 +44,11 @@ function createUserData(overrides: Partial<ProfileUserData> = {}): ProfileUserDa
     lastName: "Петров",
     patronymic: "Иванович",
     heightCm: 180,
+    weeklyWorkloadCount: null,
     gender: "male",
     dateOfBirth: null,
     occupation: null,
+    miscellaneous: "",
     timezone: "Europe/Moscow",
     role: "athlete",
     ...overrides,
@@ -90,9 +92,11 @@ describe("useProfileClient", () => {
       lastName: "Петров",
       patronymic: "Иванович",
       heightCm: 180,
+      weeklyWorkloadCount: null,
       gender: "male",
       dateOfBirth: null,
       occupation: null,
+      miscellaneous: "",
       timezone: "Europe/Moscow",
     });
     expect(result.current.isEmailVerified).toBe(true);
@@ -109,9 +113,11 @@ describe("useProfileClient", () => {
           lastName: "Петров",
           patronymic: "Иванович",
           heightCm: 180,
+          weeklyWorkloadCount: null,
           gender: "female",
           dateOfBirth: null,
           occupation: null,
+          miscellaneous: "",
           timezone: "Europe/Moscow",
         }
       );
@@ -163,9 +169,11 @@ describe("useProfileClient", () => {
           lastName: null as unknown as string,
           patronymic: null as unknown as string,
           heightCm: 172,
+          weeklyWorkloadCount: 6,
           gender: "female",
           dateOfBirth: "1990-04-12",
           occupation: "work",
+          miscellaneous: "Спринты по вторникам",
           timezone: "Etc/UTC",
         }),
       })
@@ -179,9 +187,11 @@ describe("useProfileClient", () => {
       lastName: " ",
       patronymic: " Сергеевна ",
       heightCm: null,
+      weeklyWorkloadCount: 4,
       gender: "female",
       dateOfBirth: dayjs("1990-04-12"),
       occupation: "work",
+      miscellaneous: "  Спринты по вторникам  ",
       timezone: "Etc/UTC",
     } as any);
 
@@ -191,9 +201,11 @@ describe("useProfileClient", () => {
         lastName: " ",
         patronymic: " Сергеевна ",
         heightCm: null,
+        weeklyWorkloadCount: 4,
         gender: "female",
         dateOfBirth: dayjs("1990-04-12"),
         occupation: "work",
+        miscellaneous: "  Спринты по вторникам  ",
         timezone: "Etc/UTC",
       });
     });
@@ -209,9 +221,11 @@ describe("useProfileClient", () => {
       lastName: "",
       patronymic: "Сергеевна",
       heightCm: null,
+      weeklyWorkloadCount: 4,
       gender: "female",
       dateOfBirth: "1990-04-12",
       occupation: "work",
+      miscellaneous: "Спринты по вторникам",
       timezone: "Etc/UTC",
     });
     expect(result.current.userData).toEqual(
@@ -221,8 +235,10 @@ describe("useProfileClient", () => {
         lastName: "",
         patronymic: "",
         heightCm: 172,
+        weeklyWorkloadCount: 6,
         dateOfBirth: "1990-04-12",
         occupation: "work",
+        miscellaneous: "Спринты по вторникам",
       })
     );
     expect(profileSessionMocks.updateMock).toHaveBeenCalled();
@@ -238,9 +254,11 @@ describe("useProfileClient", () => {
       lastName: "Петров",
       patronymic: "Иванович",
       heightCm: 180,
+      weeklyWorkloadCount: null,
       gender: "male",
       dateOfBirth: null,
       occupation: null,
+      miscellaneous: "",
       timezone: "Europe/Moscow",
     } as any);
 

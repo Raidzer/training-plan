@@ -23,9 +23,11 @@ describe("profileUtils", () => {
       lastName: "  Петров  ",
       patronymic: "  Иванович  ",
       heightCm: 180,
+      weeklyWorkloadCount: 5,
       gender: "male",
       dateOfBirth: dayjs("1990-04-12"),
       occupation: "work",
+      miscellaneous: "  Бег по выходным  ",
       timezone: "Europe/Moscow",
     };
 
@@ -34,9 +36,11 @@ describe("profileUtils", () => {
       lastName: "Петров",
       patronymic: "Иванович",
       heightCm: 180,
+      weeklyWorkloadCount: 5,
       gender: "male",
       dateOfBirth: "1990-04-12",
       occupation: "work",
+      miscellaneous: "Бег по выходным",
       timezone: "Europe/Moscow",
     });
   });
@@ -50,9 +54,11 @@ describe("profileUtils", () => {
       lastName: "",
       patronymic: "",
       heightCm: null,
+      weeklyWorkloadCount: null,
       gender: "unknown",
       dateOfBirth: null,
       occupation: "unknown",
+      miscellaneous: "",
       timezone: "",
       role: "athlete",
     };
@@ -64,9 +70,11 @@ describe("profileUtils", () => {
       lastName: "",
       patronymic: "",
       heightCm: null,
+      weeklyWorkloadCount: null,
       gender: "male",
       dateOfBirth: null,
       occupation: null,
+      miscellaneous: "",
       timezone: DEFAULT_TIMEZONE,
     });
   });
@@ -77,9 +85,11 @@ describe("profileUtils", () => {
       lastName: "Петров",
       patronymic: "Иванович",
       heightCm: 180,
+      weeklyWorkloadCount: 5,
       gender: "male",
       dateOfBirth: dayjs("1990-04-12"),
       occupation: "work",
+      miscellaneous: "Бег по выходным",
       timezone: "Europe/Moscow",
     };
 
@@ -90,9 +100,11 @@ describe("profileUtils", () => {
           lastName: "Петров  ",
           patronymic: " Иванович ",
           heightCm: 180,
+          weeklyWorkloadCount: 5,
           gender: "male",
           dateOfBirth: dayjs("1990-04-12"),
           occupation: "work",
+          miscellaneous: "  Бег по выходным  ",
           timezone: "Europe/Moscow",
         },
         currentValues
@@ -106,9 +118,11 @@ describe("profileUtils", () => {
           lastName: "Сидоров",
           patronymic: "Иванович",
           heightCm: 180,
+          weeklyWorkloadCount: 5,
           gender: "male",
           dateOfBirth: dayjs("1990-04-12"),
           occupation: "work",
+          miscellaneous: "Бег по выходным",
           timezone: "Europe/Moscow",
         },
         currentValues
@@ -125,9 +139,11 @@ describe("profileUtils", () => {
       lastName: null,
       patronymic: null,
       heightCm: null,
+      weeklyWorkloadCount: null,
       gender: "male",
       dateOfBirth: "1990-04-12",
       occupation: "study",
+      miscellaneous: null,
       timezone: "Europe/Moscow",
       role: "coach",
     };
@@ -140,9 +156,11 @@ describe("profileUtils", () => {
       lastName: "",
       patronymic: "",
       heightCm: null,
+      weeklyWorkloadCount: null,
       gender: "male",
       dateOfBirth: "1990-04-12",
       occupation: "study",
+      miscellaneous: "",
       timezone: "Europe/Moscow",
       role: "coach",
     });
