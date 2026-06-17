@@ -12,23 +12,35 @@ export type ProfileUserData = {
   lastName: string;
   patronymic: string;
   heightCm: number | null;
+  weeklyWorkloadCount: number | null;
   gender: string;
   dateOfBirth: string | null;
   occupation: string | null;
+  miscellaneous: string;
   timezone: string;
   role: string;
 };
 
 export type ProfileApiUserData = Omit<
   ProfileUserData,
-  "id" | "lastName" | "patronymic" | "heightCm" | "dateOfBirth" | "occupation" | "role"
+  | "id"
+  | "lastName"
+  | "patronymic"
+  | "heightCm"
+  | "weeklyWorkloadCount"
+  | "dateOfBirth"
+  | "occupation"
+  | "miscellaneous"
+  | "role"
 > & {
   id: string | number;
   lastName?: string | null;
   patronymic?: string | null;
   heightCm?: number | null;
+  weeklyWorkloadCount?: number | null;
   dateOfBirth?: string | null;
   occupation?: string | null;
+  miscellaneous?: string | null;
   role?: string;
 };
 
@@ -37,9 +49,11 @@ export type ProfileFormValues = {
   lastName: string;
   patronymic: string;
   heightCm: number | null;
+  weeklyWorkloadCount: number | null;
   gender: Gender;
   dateOfBirth: Dayjs | null;
   occupation: Occupation | null;
+  miscellaneous: string;
   timezone: string;
 };
 
@@ -48,9 +62,11 @@ export type ProfilePayload = {
   lastName: string;
   patronymic: string;
   heightCm: number | null;
+  weeklyWorkloadCount: number | null;
   gender: Gender;
   dateOfBirth: string | null;
   occupation: Occupation | null;
+  miscellaneous: string;
   timezone: string;
 };
 

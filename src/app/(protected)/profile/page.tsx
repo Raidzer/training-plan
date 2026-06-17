@@ -24,8 +24,10 @@ export default async function Profile() {
         lastName: user.lastName ?? "",
         patronymic: user.patronymic ?? "",
         heightCm: user.heightCm ?? null,
+        weeklyWorkloadCount: user.weeklyWorkloadCount ?? null,
         dateOfBirth: user.dateOfBirth ?? null,
         occupation: user.occupation ?? null,
+        miscellaneous: user.miscellaneous ?? "",
       }}
     />
   );

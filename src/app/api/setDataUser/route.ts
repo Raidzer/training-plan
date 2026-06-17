@@ -73,6 +73,14 @@ const schema = z
       .nullable()
       .optional()
       .transform((value) => value ?? null),
+    weeklyWorkloadCount: z
+      .number()
+      .int()
+      .min(0)
+      .max(21)
+      .nullable()
+      .optional()
+      .transform((value) => value ?? null),
     gender: z.enum(PROFILE_GENDERS),
     dateOfBirth: z
       .string()
@@ -97,6 +105,13 @@ const schema = z
       .nullable()
       .optional()
       .transform((value) => value ?? null),
+    miscellaneous: z
+      .string()
+      .trim()
+      .max(2000)
+      .nullable()
+      .optional()
+      .transform((value) => value || null),
     timezone: z
       .string()
       .trim()
@@ -128,16 +143,28 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
     }
 
-    const { name, lastName, patronymic, heightCm, gender, dateOfBirth, occupation, timezone } =
-      parsed.data;
+    const {
+      name,
+      lastName,
+      patronymic,
+      heightCm,
+      weeklyWorkloadCount,
+      gender,
+      dateOfBirth,
+      occupation,
+      miscellaneous,
+      timezone,
+    } = parsed.data;
     const updatedUser = await updateUserProfileById(userId, {
       name,
       lastName,
       patronymic,
       heightCm,
+      weeklyWorkloadCount,
       gender,
       dateOfBirth,
       occupation,
+      miscellaneous,
       timezone,
     });
     if (!updatedUser) {
