@@ -386,13 +386,12 @@ const applyPersonProfileBodyCellStyle = (cell: ExcelJS.Cell, columnNumber: numbe
   cell.border = {
     left: {
       style: columnNumber === 1 ? "medium" : "thin",
-      color: { indexed: 64 },
     },
-    bottom: { style: "thin", color: { indexed: 64 } },
+    bottom: { style: "thin" },
   };
 
   if (columnNumber !== 6) {
-    cell.border.right = { style: "thin", color: { indexed: 64 } };
+    cell.border.right = { style: "thin" };
   }
 
   cell.alignment =
@@ -454,10 +453,10 @@ const applyPersonRowStyle = (
   row: ExcelJS.Row,
   fromColumn: number,
   toColumn: number,
-  handler: (cell: ExcelJS.Cell) => void
+  handler: (cell: ExcelJS.Cell, columnNumber: number) => void
 ) => {
   for (let columnNumber = fromColumn; columnNumber <= toColumn; columnNumber += 1) {
-    handler(row.getCell(columnNumber));
+    handler(row.getCell(columnNumber), columnNumber);
   }
 };
 
@@ -487,8 +486,8 @@ const addPersonProfileBlock = (sheet: ExcelJS.Worksheet, data: PersonSheetData) 
   valueRow.getCell(6).value = data.profile.weeklyWorkloadCount ?? "";
   valueRow.getCell(6).numFmt = EXCEL_TIME_TEXT_FORMAT;
   valueRow.getCell(7).value = data.profile.miscellaneous ?? "";
-  applyPersonRowStyle(valueRow, 1, PERSON_PROFILE_COLUMNS.length, (cell) => {
-    applyPersonProfileBodyCellStyle(cell, cell.col);
+  applyPersonRowStyle(valueRow, 1, PERSON_PROFILE_COLUMNS.length, (cell, columnNumber) => {
+    applyPersonProfileBodyCellStyle(cell, columnNumber);
   });
 
   sheet.mergeCells("A3:G3");
