@@ -155,8 +155,10 @@ describe("TemplateEditor and TemplateManager", () => {
       expect(templateMocks.deleteTemplateMock).toHaveBeenCalledWith(1);
     });
 
-    expect(templateMocks.routerRefreshMock).toHaveBeenCalled();
-    expect(screen.queryByText("Кросс")).toBeNull();
+    await waitFor(() => {
+      expect(templateMocks.routerRefreshMock).toHaveBeenCalled();
+      expect(screen.queryByText("Кросс")).toBeNull();
+    });
     expect(screen.getByText("Глобальный")).toBeTruthy();
   });
 });

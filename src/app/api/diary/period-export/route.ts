@@ -88,6 +88,13 @@ const PERSON_HEADER_FILL: ExcelJS.Fill = {
   bgColor: { argb: "FF92D050" },
 };
 
+const PERSON_PROFILE_HEADER_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FF92D050" },
+  bgColor: { argb: "FFFFFF00" },
+};
+
 const PERSON_BLUE_FILL: ExcelJS.Fill = {
   type: "pattern",
   pattern: "solid",
@@ -149,6 +156,13 @@ const PERSON_BODY_FONT: Partial<ExcelJS.Font> = {
   charset: 204,
 };
 
+const PERSON_PROFILE_BODY_FONT: Partial<ExcelJS.Font> = {
+  size: 11,
+  name: "Calibri",
+  family: 2,
+  charset: 204,
+};
+
 const PERSON_COMPETITION_BODY_FONT: Partial<ExcelJS.Font> = {
   size: 11,
   color: { argb: "FF000000" },
@@ -159,10 +173,12 @@ const PERSON_COMPETITION_BODY_FONT: Partial<ExcelJS.Font> = {
 
 const PERSON_PROFILE_COLUMNS = [
   { header: "Фио", key: "fullName", width: 32.875 },
-  { header: "Дата рождения", key: "dateOfBirth", width: 110 },
+  { header: "Дата рождения", key: "dateOfBirth", width: 79.875 },
   { header: "Рост", key: "heightCm", width: 19.625 },
   { header: "Вес", key: "weightKg", width: 9.375 },
   { header: "Работа/учёба", key: "occupation", width: 23.5 },
+  { header: "Количество нагрузок в неделю", key: "weeklyWorkloadCount", width: 29.625 },
+  { header: "Разное", key: "miscellaneous", width: 27.875 },
 ] as const;
 
 const htmlToRichText = (html: string | null | undefined): ExcelJS.RichText[] | string => {
@@ -329,6 +345,28 @@ const applyPersonHeaderCellStyle = (cell: ExcelJS.Cell) => {
   };
 };
 
+const applyPersonProfileHeaderCellStyle = (cell: ExcelJS.Cell, columnNumber: number) => {
+  cell.font = PERSON_HEADER_FONT;
+  cell.fill = PERSON_PROFILE_HEADER_FILL;
+  cell.border =
+    columnNumber === 6
+      ? {
+          top: { style: "medium", color: { argb: "FF000000" } },
+          left: { style: "medium", color: { argb: "FF000000" } },
+          bottom: { style: "medium", color: { argb: "FF000000" } },
+        }
+      : PERSON_HEADER_BORDER;
+  cell.alignment =
+    columnNumber === 6
+      ? {
+          horizontal: "center",
+          wrapText: true,
+        }
+      : {
+          horizontal: "center",
+        };
+};
+
 const applyPersonBodyCellStyle = (cell: ExcelJS.Cell) => {
   cell.font = PERSON_BODY_FONT;
   cell.border = PERSON_THIN_BORDER;
@@ -337,6 +375,35 @@ const applyPersonBodyCellStyle = (cell: ExcelJS.Cell) => {
     vertical: "middle",
     wrapText: true,
   };
+};
+
+const applyPersonProfileBodyCellStyle = (cell: ExcelJS.Cell, columnNumber: number) => {
+  cell.font = PERSON_PROFILE_BODY_FONT;
+  cell.fill = {
+    type: "pattern",
+    pattern: "none",
+  };
+  cell.border = {
+    left: {
+      style: columnNumber === 1 ? "medium" : "thin",
+    },
+    bottom: { style: "thin" },
+  };
+
+  if (columnNumber !== 6) {
+    cell.border.right = { style: "thin" };
+  }
+
+  cell.alignment =
+    columnNumber >= 6
+      ? {
+          horizontal: "left",
+        }
+      : {
+          horizontal: "left",
+          vertical: "middle",
+          wrapText: columnNumber === 5,
+        };
 };
 
 const applyPersonalRecordDistanceStyle = (cell: ExcelJS.Cell) => {
@@ -386,10 +453,10 @@ const applyPersonRowStyle = (
   row: ExcelJS.Row,
   fromColumn: number,
   toColumn: number,
-  handler: (cell: ExcelJS.Cell) => void
+  handler: (cell: ExcelJS.Cell, columnNumber: number) => void
 ) => {
   for (let columnNumber = fromColumn; columnNumber <= toColumn; columnNumber += 1) {
-    handler(row.getCell(columnNumber));
+    handler(row.getCell(columnNumber), columnNumber);
   }
 };
 
@@ -405,7 +472,7 @@ const addPersonProfileBlock = (sheet: ExcelJS.Worksheet, data: PersonSheetData) 
   PERSON_PROFILE_COLUMNS.forEach((column, index) => {
     const cell = headerRow.getCell(index + 1);
     cell.value = column.header;
-    applyPersonHeaderCellStyle(cell);
+    applyPersonProfileHeaderCellStyle(cell, index + 1);
   });
 
   const valueRow = sheet.getRow(2);
@@ -416,9 +483,14 @@ const addPersonProfileBlock = (sheet: ExcelJS.Worksheet, data: PersonSheetData) 
   valueRow.getCell(3).value = data.profile.heightCm ?? "";
   valueRow.getCell(4).value = formatLatestWeight(data.latestWeightKg);
   valueRow.getCell(5).value = formatOccupation(data.profile.occupation ?? null);
-  applyPersonRowStyle(valueRow, 1, PERSON_PROFILE_COLUMNS.length, applyPersonBodyCellStyle);
+  valueRow.getCell(6).value = data.profile.weeklyWorkloadCount ?? "";
+  valueRow.getCell(6).numFmt = EXCEL_TIME_TEXT_FORMAT;
+  valueRow.getCell(7).value = data.profile.miscellaneous ?? "";
+  applyPersonRowStyle(valueRow, 1, PERSON_PROFILE_COLUMNS.length, (cell, columnNumber) => {
+    applyPersonProfileBodyCellStyle(cell, columnNumber);
+  });
 
-  sheet.mergeCells("A3:E3");
+  sheet.mergeCells("A3:G3");
   sheet.getRow(3).height = PERSON_DEFAULT_ROW_HEIGHT;
 };
 
