@@ -133,6 +133,32 @@ export function ProfileDetailsForm({
         <InputNumber className={styles.numberInput} min={50} max={250} precision={0} />
       </Form.Item>
       <Form.Item
+        label={PROFILE_LABELS.weeklyWorkloadCountLabel}
+        name="weeklyWorkloadCount"
+        rules={[
+          {
+            type: "number",
+            min: 0,
+            max: 21,
+            message: PROFILE_LABELS.invalidWeeklyWorkloadCount,
+          },
+        ]}
+      >
+        <InputNumber className={styles.numberInput} min={0} max={21} precision={0} />
+      </Form.Item>
+      <Form.Item
+        label={PROFILE_LABELS.miscellaneousLabel}
+        name="miscellaneous"
+        rules={[
+          {
+            max: 2000,
+            message: PROFILE_LABELS.tooLongMiscellaneous,
+          },
+        ]}
+      >
+        <Input.TextArea autoSize={{ minRows: 3, maxRows: 6 }} />
+      </Form.Item>
+      <Form.Item
         label={PROFILE_LABELS.timezoneLabel}
         name="timezone"
         rules={[

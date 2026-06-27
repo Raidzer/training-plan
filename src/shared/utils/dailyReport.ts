@@ -109,23 +109,7 @@ const joinValues = (values: Array<string | null | undefined>) => {
   return normalized.join("; ");
 };
 
-const formatShoeMileage = (value?: string | null) => {
-  if (value === null || value === undefined || value === "") {
-    return "";
-  }
-  const parsed = Number(String(value).replace(",", "."));
-  if (!Number.isFinite(parsed)) {
-    return "";
-  }
-  return `${new Intl.NumberFormat("ru-RU", {
-    maximumFractionDigits: 2,
-  }).format(parsed)} км`;
-};
-
-const formatShoeLabel = (shoe: { name: string; mileageKm?: string | null }) => {
-  const mileage = formatShoeMileage(shoe.mileageKm);
-  return mileage ? `${shoe.name} (${mileage})` : shoe.name;
-};
+const formatShoeLabel = (shoe: { name: string }) => shoe.name;
 
 const formatRecoveryFlags = (entry: DailyReportRecoveryEntry) => {
   const flags = [

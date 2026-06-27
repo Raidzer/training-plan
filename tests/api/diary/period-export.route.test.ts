@@ -157,9 +157,11 @@ describe("GET /api/diary/period-export", () => {
       lastName: "Петров",
       patronymic: "Сергеевич",
       heightCm: 180,
+      weeklyWorkloadCount: 6,
       gender: "male",
       dateOfBirth: "1990-02-03",
       occupation: "work",
+      miscellaneous: "ОФП и плавание",
       timezone: "Europe/Moscow",
       role: "athlete",
     });
@@ -379,15 +381,25 @@ describe("GET /api/diary/period-export", () => {
     const profileHeaders = [1, 2, 3, 4, 5, 6, 7].map((columnNumber) =>
       getStringCellValue(personSheet, 1, columnNumber)
     );
-    expect(profileHeaders).toEqual(["Фио", "Дата рождения", "Рост", "Вес", "Работа/учёба", "", ""]);
-    expect(profileHeaders).not.toContain("Количество нагрузок в неделю");
-    expect(profileHeaders).not.toContain("Разное");
+    expect(profileHeaders).toEqual([
+      "Фио",
+      "Дата рождения",
+      "Рост",
+      "Вес",
+      "Работа/учёба",
+      "Количество нагрузок в неделю",
+      "Разное",
+    ]);
     expect(getStringCellValue(personSheet, 2, 1)).toBe("Петров Иван Сергеевич");
     expect(personSheet.getCell("B2").value).toBeInstanceOf(Date);
     expect((personSheet.getCell("B2").value as Date).toISOString().slice(0, 10)).toBe("1990-02-03");
     expect(personSheet.getCell("C2").value).toBe(180);
     expect(personSheet.getCell("D2").value).toBe(70.5);
     expect(getStringCellValue(personSheet, 2, 5)).toBe("Работа");
+    expect(personSheet.getCell("F2").value).toBe(6);
+    expect(getStringCellValue(personSheet, 2, 7)).toBe("ОФП и плавание");
+    expect(personSheet.getCell("A3").isMerged).toBe(true);
+    expect(personSheet.getCell("G3").isMerged).toBe(true);
 
     expect(getStringCellValue(personSheet, 4, 1)).toBe("Личный рекорд");
     expect(getStringCellValue(personSheet, 5, 2)).toBe("Марафон");
@@ -397,7 +409,13 @@ describe("GET /api/diary/period-export", () => {
     expect(getStringCellValue(personSheet, 7, 3)).toBe("23.05.2026");
 
     expect(getStringCellValue(personSheet, 17, 1)).toBe("Дата");
-    expect(personSheet.getColumn(2).width).toBe(110);
+    expect(personSheet.getColumn(2).width).toBe(79.875);
+    expect(personSheet.getColumn(6).width).toBe(29.625);
+    expect(personSheet.getColumn(7).width).toBe(27.875);
+    expect(personSheet.getCell("F1").alignment).toEqual(
+      expect.objectContaining({ horizontal: "center", wrapText: true })
+    );
+    expect(personSheet.getCell("F2").numFmt).toBe("@");
     expect(getStringCellValue(personSheet, 18, 1)).toBe("Подготовка");
     expect(personSheet.getCell("A18").isMerged).toBe(true);
     expect(getStringCellValue(personSheet, 19, 2)).toBe("Москва, 21.1 км");

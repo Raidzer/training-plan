@@ -32,9 +32,11 @@ const validPayload = {
   lastName: "  Petrov  ",
   patronymic: "  Ivanovich  ",
   heightCm: 180,
+  weeklyWorkloadCount: 5,
   gender: "male",
   dateOfBirth: "1990-04-12",
   occupation: "work",
+  miscellaneous: "  Starts on Tuesday  ",
   timezone: "Europe/Moscow",
 };
 
@@ -49,9 +51,11 @@ describe("PATCH /api/setDataUser", () => {
       lastName: "Petrov",
       patronymic: "Ivanovich",
       heightCm: 180,
+      weeklyWorkloadCount: 5,
       gender: "male",
       dateOfBirth: "1990-04-12",
       occupation: "work",
+      miscellaneous: "Starts on Tuesday",
       timezone: "Europe/Moscow",
     });
   });
@@ -128,6 +132,22 @@ describe("PATCH /api/setDataUser", () => {
     expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
   });
 
+  it("должен возвращать 400 при невалидном количестве нагрузок", async () => {
+    const request = createJsonRequest({
+      url: "http://localhost/api/setDataUser",
+      method: "PATCH",
+      body: {
+        ...validPayload,
+        weeklyWorkloadCount: 22,
+      },
+    });
+
+    const response = await PATCH(request);
+
+    await expectJsonError(response, 400, "invalid_payload");
+    expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
+  });
+
   it("должен возвращать 400 при невалидной дате рождения или занятости", async () => {
     const invalidDateRequest = createJsonRequest({
       url: "http://localhost/api/setDataUser",
@@ -179,8 +199,10 @@ describe("PATCH /api/setDataUser", () => {
         lastName: "   ",
         patronymic: "   ",
         heightCm: null,
+        weeklyWorkloadCount: null,
         dateOfBirth: null,
         occupation: null,
+        miscellaneous: "   ",
       },
     });
 
@@ -197,9 +219,11 @@ describe("PATCH /api/setDataUser", () => {
       lastName: null,
       patronymic: null,
       heightCm: null,
+      weeklyWorkloadCount: null,
       gender: "male",
       dateOfBirth: null,
       occupation: null,
+      miscellaneous: null,
       timezone: "Europe/Moscow",
     });
   });

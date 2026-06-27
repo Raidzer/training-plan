@@ -23,9 +23,11 @@ export const normalizeProfileValues = (values: ProfileFormValues): ProfilePayloa
   lastName: values.lastName?.trim() ?? "",
   patronymic: values.patronymic?.trim() ?? "",
   heightCm: values.heightCm ?? null,
+  weeklyWorkloadCount: values.weeklyWorkloadCount ?? null,
   gender: values.gender,
   dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format(PROFILE_DATE_FORMAT) : null,
   occupation: values.occupation ?? null,
+  miscellaneous: values.miscellaneous?.trim() ?? "",
   timezone: values.timezone,
 });
 
@@ -34,9 +36,11 @@ export const toProfileFormValues = (userData: ProfileUserData): ProfileFormValue
   lastName: userData.lastName,
   patronymic: userData.patronymic,
   heightCm: userData.heightCm,
+  weeklyWorkloadCount: userData.weeklyWorkloadCount,
   gender: userData.gender === "female" ? "female" : "male",
   dateOfBirth: userData.dateOfBirth ? dayjs(userData.dateOfBirth, PROFILE_DATE_FORMAT) : null,
   occupation: normalizeOccupation(userData.occupation),
+  miscellaneous: userData.miscellaneous,
   timezone: userData.timezone || DEFAULT_TIMEZONE,
 });
 
@@ -52,9 +56,11 @@ export const hasProfileValuesChanged = (
     normalizedDraft.lastName !== normalizedCurrent.lastName ||
     normalizedDraft.patronymic !== normalizedCurrent.patronymic ||
     normalizedDraft.heightCm !== normalizedCurrent.heightCm ||
+    normalizedDraft.weeklyWorkloadCount !== normalizedCurrent.weeklyWorkloadCount ||
     normalizedDraft.gender !== normalizedCurrent.gender ||
     normalizedDraft.dateOfBirth !== normalizedCurrent.dateOfBirth ||
     normalizedDraft.occupation !== normalizedCurrent.occupation ||
+    normalizedDraft.miscellaneous !== normalizedCurrent.miscellaneous ||
     normalizedDraft.timezone !== normalizedCurrent.timezone
   );
 };
@@ -65,8 +71,10 @@ export const normalizeProfileUserData = (userData: ProfileApiUserData): ProfileU
   lastName: userData.lastName ?? "",
   patronymic: userData.patronymic ?? "",
   heightCm: userData.heightCm ?? null,
+  weeklyWorkloadCount: userData.weeklyWorkloadCount ?? null,
   dateOfBirth: userData.dateOfBirth ?? null,
   occupation: userData.occupation ?? null,
+  miscellaneous: userData.miscellaneous ?? "",
   role: userData.role ?? "",
 });
 
