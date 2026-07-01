@@ -5,6 +5,7 @@ import {
   ClearOutlined,
   DeleteOutlined,
   EllipsisOutlined,
+  FlagOutlined,
   LockOutlined,
   StopOutlined,
   TrophyOutlined,
@@ -118,7 +119,7 @@ export function AdminUsersTable({
       {
         title: ADMIN_USERS_LABELS.actionsColumn,
         key: "actions",
-        width: 180,
+        width: 320,
         fixed: "right",
         render: (_, record) => {
           const isActive = record.isActive;
@@ -190,6 +191,11 @@ export function AdminUsersTable({
                   {ADMIN_USERS_LABELS.recordsButton}
                 </Button>
               </Link>
+              <Link href={`/admin/users/${record.id}/competitions`}>
+                <Button size="small" icon={<FlagOutlined />}>
+                  {ADMIN_USERS_LABELS.competitionsButton}
+                </Button>
+              </Link>
               <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
                 <Button
                   aria-label={ADMIN_USERS_LABELS.actionsMenuButton}
@@ -223,7 +229,7 @@ export function AdminUsersTable({
       columns={columns}
       dataSource={rows}
       pagination={{ pageSize: 10 }}
-      scroll={{ x: 1310 }}
+      scroll={{ x: 1450 }}
     />
   );
 }
