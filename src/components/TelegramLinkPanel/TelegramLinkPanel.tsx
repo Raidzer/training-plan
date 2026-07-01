@@ -1,11 +1,13 @@
 "use client";
 
+import { ExportOutlined } from "@ant-design/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Input, Switch, Typography, message } from "antd";
 import styles from "./TelegramLinkPanel.module.scss";
 
 type StatusResponse = {
   linked: boolean;
+  botUrl: string | null;
   telegram: {
     username: string | null;
     firstName: string | null;
@@ -167,7 +169,18 @@ export function TelegramLinkPanel() {
 
   const linked = Boolean(status?.linked);
   const telegramLabel = getTelegramLabel(status);
+  const telegramBotUrl = status?.botUrl ?? null;
 
+  const botLinkButton = telegramBotUrl ? (
+    <Button
+      icon={<ExportOutlined aria-hidden />}
+      href={telegramBotUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Перейти в Telegram-бота
+    </Button>
+  ) : null;
   const subscriptionInfo = useMemo(() => {
     if (!status?.subscription) {
       return "Рассылка не настроена";
@@ -342,9 +355,12 @@ export function TelegramLinkPanel() {
                 </Button>
               </div>
               <div className={styles.actions}>
-                <Button danger onClick={handleUnlink} loading={unlinking}>
-                  Отвязать Telegram
-                </Button>
+                <div className={styles.actionButtons}>
+                  {botLinkButton}
+                  <Button danger onClick={handleUnlink} loading={unlinking}>
+                    Отвязать Telegram
+                  </Button>
+                </div>
                 <Typography.Text type="secondary">
                   При отвязке рассылка отключится. Можно будет связать другой аккаунт.
                 </Typography.Text>
@@ -354,9 +370,12 @@ export function TelegramLinkPanel() {
 
           {!linked && (
             <div className={styles.actions}>
-              <Button aria-label="Получить ссылку" onClick={handleIssueCode} loading={sending}>
-                Получить ссылку
-              </Button>
+              <div className={styles.actionButtons}>
+                <Button aria-label="Получить ссылку" onClick={handleIssueCode} loading={sending}>
+                  Получить ссылку
+                </Button>
+                {botLinkButton}
+              </div>
               <Typography.Text type="secondary">
                 {activeCodeInfo || "Ссылка и код действуют 15 минут. Новая выдача заменит старую."}
               </Typography.Text>
@@ -369,7 +388,13 @@ export function TelegramLinkPanel() {
                 <>
                   <Typography.Text>Откройте Telegram, чтобы завершить привязку:</Typography.Text>
                   <div className={styles.linkAction}>
-                    <Button type="primary" href={issuedLinkUrl} target="_blank" rel="noreferrer">
+                    <Button
+                      type="primary"
+                      icon={<ExportOutlined aria-hidden />}
+                      href={issuedLinkUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       Открыть Telegram
                     </Button>
                   </div>

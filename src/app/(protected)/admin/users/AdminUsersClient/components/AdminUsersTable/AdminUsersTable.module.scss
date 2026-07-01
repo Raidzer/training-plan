@@ -24,5 +24,8 @@
 }
 
 .actionsCell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   white-space: nowrap;
 }

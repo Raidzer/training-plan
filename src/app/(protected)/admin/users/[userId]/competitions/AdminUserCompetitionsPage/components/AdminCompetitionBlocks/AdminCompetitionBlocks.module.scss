@@ -1,0 +1,63 @@
+.list {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.block {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.blockHeader {
+  display: grid;
+  min-width: 0;
+}
+
+.blockTitleGroup {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.blockTitleLine {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.blockTitle {
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table {
+  width: 100%;
+  min-width: 0;
+}
+
+.mainCompetitionRow > td {
+  background: rgba(250, 204, 21, 0.2) !important;
+}
+
+.mainCompetitionRow:hover > td {
+  background: rgba(250, 204, 21, 0.28) !important;
+}
+
+@media (max-width: 640px) {
+  .block {
+    padding: 12px;
+  }
+
+  .blockTitle {
+    white-space: normal;
+  }
+}

@@ -6,6 +6,7 @@ export const ADMIN_USERS_LABELS = {
   invitesButton: "Приглашения",
   dashboardButton: "В кабинет",
   recordsButton: "Рекорды",
+  competitionsButton: "Соревнования",
   actionsMenuButton: "Действия пользователя",
   roleButton: "Роль",
   passwordButton: "Пароль",

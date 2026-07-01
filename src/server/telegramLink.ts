@@ -33,16 +33,25 @@ export const normalizeTelegramBotUsername = (value: string | null | undefined) =
   return username;
 };
 
+export const buildTelegramBotUrl = (username: string | null | undefined) => {
+  const normalizedUsername = normalizeTelegramBotUsername(username);
+  if (!normalizedUsername) {
+    return null;
+  }
+
+  return `https://t.me/${normalizedUsername}`;
+};
+
 export const buildTelegramDeepLinkUrl = (params: {
   username: string | null | undefined;
   payload: string;
 }) => {
-  const username = normalizeTelegramBotUsername(params.username);
-  if (!username) {
+  const botUrl = buildTelegramBotUrl(params.username);
+  if (!botUrl) {
     return null;
   }
 
-  return `https://t.me/${username}?start=${params.payload}`;
+  return `${botUrl}?start=${params.payload}`;
 };
 
 export type TelegramLinkIssueResult = {

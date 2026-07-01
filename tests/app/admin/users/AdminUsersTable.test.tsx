@@ -121,6 +121,9 @@ describe("AdminUsersTable", () => {
     const activeUserRecordsButton = within(activeUserRow).getByRole("button", {
       name: new RegExp(ADMIN_USERS_LABELS.recordsButton),
     }) as HTMLButtonElement;
+    const activeUserCompetitionsButton = within(activeUserRow).getByRole("button", {
+      name: new RegExp(ADMIN_USERS_LABELS.competitionsButton),
+    }) as HTMLButtonElement;
 
     await clickRowMenuItem(container, 0, ADMIN_USERS_LABELS.roleButton);
     await clickRowMenuItem(container, 0, ADMIN_USERS_LABELS.passwordButton);
@@ -136,6 +139,13 @@ describe("AdminUsersTable", () => {
     expect(screen.getByText(ADMIN_USERS_LABELS.activeStatus)).toBeTruthy();
     expect(screen.getByText(ADMIN_USERS_LABELS.disabledStatus)).toBeTruthy();
     expect(activeUserRecordsButton.disabled).toBe(false);
+    expect(activeUserRecordsButton.closest("a")?.getAttribute("href")).toBe(
+      `/admin/users/${activeUser.id}/records`
+    );
+    expect(activeUserCompetitionsButton.disabled).toBe(false);
+    expect(activeUserCompetitionsButton.closest("a")?.getAttribute("href")).toBe(
+      `/admin/users/${activeUser.id}/competitions`
+    );
     expect(onOpenRoleModal).toHaveBeenCalledWith(activeUser);
     expect(onOpenPasswordModal).toHaveBeenCalledWith(activeUser);
     expect(onStatusToggle).toHaveBeenNthCalledWith(1, activeUser);
