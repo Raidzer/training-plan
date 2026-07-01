@@ -8,12 +8,14 @@ import {
 
 const {
   authMock,
+  buildTelegramBotUrlMock,
   getTelegramAccountSummaryMock,
   getTelegramSubscriptionSummaryMock,
   getLatestTelegramLinkCodeSummaryMock,
 } = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
+    buildTelegramBotUrlMock: vi.fn(),
     getTelegramAccountSummaryMock: vi.fn(),
     getTelegramSubscriptionSummaryMock: vi.fn(),
     getLatestTelegramLinkCodeSummaryMock: vi.fn(),
@@ -23,6 +25,12 @@ const {
 vi.mock("@/auth", () => {
   return {
     auth: authMock,
+  };
+});
+
+vi.mock("@/server/telegramLink", () => {
+  return {
+    buildTelegramBotUrl: buildTelegramBotUrlMock,
   };
 });
 
@@ -40,6 +48,8 @@ describe("GET /api/telegram/status", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMock.mockResolvedValue(createSession({ id: "12" }));
+    process.env.TELEGRAM_BOT_USERNAME = "RunLogBot";
+    buildTelegramBotUrlMock.mockReturnValue("https://t.me/RunLogBot");
     getTelegramAccountSummaryMock.mockResolvedValue(null);
     getTelegramSubscriptionSummaryMock.mockResolvedValue(null);
     getLatestTelegramLinkCodeSummaryMock.mockResolvedValue(null);
@@ -65,6 +75,7 @@ describe("GET /api/telegram/status", () => {
     const response = await GET();
     const payload = await expectJsonSuccess<{
       linked: boolean;
+      botUrl: string | null;
       telegram: unknown;
       subscription: unknown;
       codeExpiresAt: string | null;
@@ -72,6 +83,7 @@ describe("GET /api/telegram/status", () => {
     }>(response, 200);
 
     expect(payload.linked).toBe(false);
+    expect(payload.botUrl).toBe("https://t.me/RunLogBot");
     expect(payload.telegram).toBeNull();
     expect(payload.subscription).toBeNull();
     expect(payload.codeExpiresAt).toBeNull();
@@ -79,6 +91,7 @@ describe("GET /api/telegram/status", () => {
     expect(getTelegramAccountSummaryMock).toHaveBeenCalledWith(12);
     expect(getTelegramSubscriptionSummaryMock).toHaveBeenCalledWith(12);
     expect(getLatestTelegramLinkCodeSummaryMock).toHaveBeenCalledWith(12);
+    expect(buildTelegramBotUrlMock).toHaveBeenCalledWith("RunLogBot");
   });
 
   it("должен возвращать связанный пейлоад с telegram и деталями подписки", async () => {
@@ -104,6 +117,7 @@ describe("GET /api/telegram/status", () => {
     expect(response.status).toBe(200);
     const payload = await readJsonResponse<{
       linked: boolean;
+      botUrl: string | null;
       telegram: { username: string; firstName: string; linkedAt: string } | null;
       subscription: { enabled: boolean; timezone: string; sendTime: string } | null;
       codeExpiresAt: string | null;
@@ -111,6 +125,7 @@ describe("GET /api/telegram/status", () => {
     }>(response);
 
     expect(payload.linked).toBe(true);
+    expect(payload.botUrl).toBe("https://t.me/RunLogBot");
     expect(payload.telegram).toEqual({
       username: "runner",
       firstName: "Ivan",
