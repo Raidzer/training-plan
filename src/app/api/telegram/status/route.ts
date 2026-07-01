@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { buildTelegramBotUrl } from "@/server/telegramLink";
 import {
   getLatestTelegramLinkCodeSummary,
   getTelegramAccountSummary,
@@ -16,9 +17,11 @@ export async function GET() {
   const account = await getTelegramAccountSummary(userId);
   const subscription = await getTelegramSubscriptionSummary(userId);
   const codeRow = await getLatestTelegramLinkCodeSummary(userId);
+  const botUrl = buildTelegramBotUrl(process.env.TELEGRAM_BOT_USERNAME);
 
   return NextResponse.json({
     linked: Boolean(account),
+    botUrl,
     telegram: account
       ? {
           username: account.username,

@@ -160,6 +160,14 @@ describe("server/telegramLink", () => {
     codeSpy.mockRestore();
   });
 
+  it("buildTelegramBotUrl должен собирать ссылку при валидном username", () => {
+    expect(telegramLinkModule.buildTelegramBotUrl("@RunLogBot")).toBe("https://t.me/RunLogBot");
+  });
+
+  it("buildTelegramBotUrl должен возвращать null без валидного username", () => {
+    expect(telegramLinkModule.buildTelegramBotUrl("bad name")).toBeNull();
+  });
+
   it("buildTelegramDeepLinkUrl должен собирать ссылку при валидном username", () => {
     expect(
       telegramLinkModule.buildTelegramDeepLinkUrl({

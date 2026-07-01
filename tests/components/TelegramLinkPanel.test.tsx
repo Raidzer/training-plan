@@ -4,6 +4,7 @@ import { TelegramLinkPanel } from "@/components/TelegramLinkPanel/TelegramLinkPa
 
 const unlinkedStatus = {
   linked: false,
+  botUrl: "https://t.me/RunLogBot",
   telegram: null,
   subscription: null,
   codeExpiresAt: null,
@@ -50,6 +51,8 @@ describe("TelegramLinkPanel", () => {
     render(<TelegramLinkPanel />);
 
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
+    const botLink = screen.getByRole("link", { name: "Перейти в Telegram-бота" });
+    expect(botLink.getAttribute("href")).toBe("https://t.me/RunLogBot");
     fireEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     const telegramLink = await screen.findByRole("link", { name: "Открыть Telegram" });
@@ -67,6 +70,7 @@ describe("TelegramLinkPanel", () => {
         new Response(
           JSON.stringify({
             linked: true,
+            botUrl: "https://t.me/RunLogBot",
             telegram: {
               username: "runner",
               firstName: "Runner",
@@ -98,6 +102,8 @@ describe("TelegramLinkPanel", () => {
     expect(screen.getByRole("switch", { name: "Подписка на рассылку" })).toBeTruthy();
     expect(screen.getByLabelText("Время рассылки")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Сохранить настройки рассылки" })).toBeTruthy();
+    const botLink = screen.getByRole("link", { name: "Перейти в Telegram-бота" });
+    expect(botLink.getAttribute("href")).toBe("https://t.me/RunLogBot");
     expect(screen.getByRole("button", { name: "Отвязать Telegram" })).toBeTruthy();
   });
 
@@ -187,6 +193,8 @@ describe("TelegramLinkPanel", () => {
       expect(fetchMock).toHaveBeenCalledWith("/api/telegram/unlink", { method: "POST" });
     });
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
+    const botLink = screen.getByRole("link", { name: "Перейти в Telegram-бота" });
+    expect(botLink.getAttribute("href")).toBe("https://t.me/RunLogBot");
   });
 
   it("показывает fallback при ошибке загрузки статуса", async () => {
@@ -208,6 +216,7 @@ describe("TelegramLinkPanel", () => {
         new Response(
           JSON.stringify({
             linked: true,
+            botUrl: "https://t.me/RunLogBot",
             telegram: {
               username: null,
               firstName: null,
@@ -307,6 +316,8 @@ describe("TelegramLinkPanel", () => {
     render(<TelegramLinkPanel />);
 
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
+    const botLink = screen.getByRole("link", { name: "Перейти в Telegram-бота" });
+    expect(botLink.getAttribute("href")).toBe("https://t.me/RunLogBot");
     fireEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     expect(await screen.findByText("999000")).toBeTruthy();
