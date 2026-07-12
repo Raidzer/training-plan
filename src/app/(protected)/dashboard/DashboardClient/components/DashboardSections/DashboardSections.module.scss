@@ -1,0 +1,18 @@
+.sections {
+  display: grid;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .sections {
+    gap: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sections {
+    gap: 48px;
+  }
+}

@@ -1,9 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { Session } from "next-auth";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardClient } from "@/app/(protected)/dashboard/DashboardClient/DashboardClient";
-import { DASHBOARD_CARDS } from "@/app/(protected)/dashboard/DashboardClient/constants/dashboardConstants";
+
+const { signOutMock } = vi.hoisted(() => ({
+  signOutMock: vi.fn(),
+}));
 
 vi.mock("next/link", () => {
   return {
@@ -24,40 +27,100 @@ vi.mock("next/link", () => {
 });
 
 vi.mock("next-auth/react", () => ({
-  signOut: vi.fn(),
+  signOut: signOutMock,
 }));
 
-const createSession = (role: "admin" | "user", email = "test@example.com"): Session =>
+type DashboardRole = "admin" | "athlete" | "coach";
+
+type DashboardLinkContract = {
+  title: string;
+  href: string;
+};
+
+const ADMIN_LINKS: DashboardLinkContract[] = [
+  { title: "Пользователи", href: "/admin/users" },
+  { title: "Приглашения", href: "/admin/invites" },
+  { title: "Шаблоны", href: "/tools/templates" },
+];
+
+const PUBLIC_LINKS: DashboardLinkContract[] = [
+  { title: "План", href: "/plan" },
+  { title: "Ежедневный отчёт", href: "/diary" },
+  { title: "Дневник", href: "/diary/period" },
+  { title: "Обувь", href: "/profile/shoes" },
+  { title: "Рекорды", href: "/profile/records" },
+  { title: "Соревнования", href: "/profile/competitions" },
+];
+
+const createSession = (
+  role: DashboardRole,
+  name: string | null = "Test User",
+  email = "test@example.com"
+): Session =>
   ({
     expires: "2099-01-01T00:00:00.000Z",
     user: {
       email,
-      name: "Test User",
+      name,
       role,
     },
   }) as Session;
 
+function expectDashboardLink({ title, href }: DashboardLinkContract) {
+  const heading = screen.getByRole("heading", { level: 3, name: title });
+  const link = heading.closest("a");
+
+  expect(link).not.toBeNull();
+  expect(link?.getAttribute("href")).toBe(href);
+}
+
 describe("DashboardClient", () => {
-  it("показывает admin-only карточки администратору", () => {
-    render(<DashboardClient session={createSession("admin")} />);
-
-    for (const card of DASHBOARD_CARDS) {
-      const link = screen.getByRole("link", { name: new RegExp(card.title) });
-
-      expect(link.getAttribute("href")).toBe(card.href);
-    }
+  beforeEach(() => {
+    signOutMock.mockReset();
   });
 
-  it("скрывает admin-only карточки для обычного пользователя", () => {
-    render(<DashboardClient session={createSession("user")} />);
+  it("показывает администратору полный контракт ссылок", () => {
+    render(<DashboardClient session={createSession("admin")} />);
 
-    expect(screen.queryByText("Администрирование")).toBeNull();
-    expect(screen.queryByText("Шаблоны")).toBeNull();
-
-    for (const card of DASHBOARD_CARDS.filter((item) => !item.adminOnly)) {
-      const link = screen.getByRole("link", { name: new RegExp(card.title) });
-
-      expect(link.getAttribute("href")).toBe(card.href);
+    for (const link of [...ADMIN_LINKS, ...PUBLIC_LINKS]) {
+      expectDashboardLink(link);
     }
+
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(9);
+  });
+
+  it.each(["athlete", "coach"] as const)("скрывает admin-only ссылки для роли %s", (role) => {
+    render(<DashboardClient session={createSession(role)} />);
+
+    for (const link of ADMIN_LINKS) {
+      expect(screen.queryByRole("heading", { level: 3, name: link.title })).toBeNull();
+    }
+
+    for (const link of PUBLIC_LINKS) {
+      expectDashboardLink(link);
+    }
+
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(6);
+  });
+
+  it("показывает корректный заголовок и семантическую ссылку профиля", () => {
+    render(<DashboardClient session={createSession("athlete")} />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "Личный кабинет" })).toBeTruthy();
+
+    const profileLink = screen.getByRole("link", { name: "Профиль" });
+
+    expect(profileLink.getAttribute("href")).toBe("/profile");
+    expect(profileLink.querySelector("button")).toBeNull();
+  });
+
+  it("выходит из аккаунта с возвратом на страницу входа", async () => {
+    render(<DashboardClient session={createSession("athlete")} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Выйти" }));
+
+    await waitFor(() => {
+      expect(signOutMock).toHaveBeenCalledWith({ callbackUrl: "/login" });
+    });
   });
 });
