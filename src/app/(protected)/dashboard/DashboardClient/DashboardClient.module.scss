@@ -1,9 +1,13 @@
 .wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(40px, 6vw, 64px);
   width: 100%;
   min-width: 0;
 }
 
-.panel {
-  width: 100%;
-  min-width: 0;
+@media (max-width: 639px) {
+  .wrapper {
+    gap: 36px;
+  }
 }
