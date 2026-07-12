@@ -9,6 +9,7 @@ export type DashboardCardId =
   | "invites"
   | "templates"
   | "plan"
+  | "daily-report"
   | "diary"
   | "shoes"
   | "records"

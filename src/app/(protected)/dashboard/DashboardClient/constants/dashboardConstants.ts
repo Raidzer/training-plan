@@ -49,10 +49,16 @@ export const DASHBOARD_SECTIONS = [
         href: "/plan",
       },
       {
+        id: "daily-report",
+        title: "Ежедневный отчёт",
+        description: "Заполняйте тренировку, самочувствие и показатели восстановления.",
+        href: "/diary",
+      },
+      {
         id: "diary",
         title: "Дневник",
-        description: "Записи, графики и метрики восстановления.",
-        href: "/diary",
+        description: "Просматривайте тренировки и показатели за выбранный период.",
+        href: "/diary/period",
       },
     ],
   },
