@@ -1,17 +1,18 @@
 "use client";
 
-import { App, Card } from "antd";
-import Link from "next/link";
-import { BackButton } from "@/components/BackButton/BackButton";
+import { App } from "antd";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
-import { PageHeader } from "@/components/PageHeader";
 import { TelegramLinkPanel } from "@/components/TelegramLinkPanel/TelegramLinkPanel";
+import { AccountSecuritySection } from "./components/AccountSecuritySection/AccountSecuritySection";
 import { ChangeEmailModal } from "./components/ChangeEmailModal/ChangeEmailModal";
 import { ChangePasswordModal } from "./components/ChangePasswordModal/ChangePasswordModal";
 import { DeleteProfileModal } from "./components/DeleteProfileModal/DeleteProfileModal";
 import { DeleteProfileSection } from "./components/DeleteProfileSection/DeleteProfileSection";
 import { ProfileDetailsForm } from "./components/ProfileDetailsForm/ProfileDetailsForm";
-import { PROFILE_LABELS } from "./constants/profileConstants";
+import { ProfileHeader } from "./components/ProfileHeader/ProfileHeader";
+import { ProfileOverview } from "./components/ProfileOverview/ProfileOverview";
+import { ProfileSection } from "./components/ProfileSection/ProfileSection";
+import { PROFILE_SECTIONS } from "./constants/profileConstants";
 import { useProfileClient } from "./hooks/useProfileClient";
 import type { ProfileClientProps } from "./types/profileTypes";
 import styles from "./ProfileClient.module.scss";
@@ -53,42 +54,46 @@ export const ProfileClient = ({ userData: initialUserData }: ProfileClientProps)
   });
 
   return (
-    <main className={styles.profile}>
-      <Card className={styles.panel}>
-        <PageHeader
-          title={PROFILE_LABELS.title}
-          actions={
-            <Link href="/dashboard">
-              <BackButton />
-            </Link>
-          }
-        />
+    <div className={styles.profile}>
+      <ProfileHeader hasUnsavedChanges={hasProfileChanges} />
+      <EmailVerificationBanner />
 
-        <EmailVerificationBanner />
+      <div className={styles.layout}>
+        <ProfileOverview userData={userData} canDeleteProfile={canDeleteProfile} />
 
-        <ProfileDetailsForm
-          form={profileForm}
-          userData={userData}
-          initialValues={initialValues}
-          timezoneOptions={timezoneOptions}
-          hasProfileChanges={hasProfileChanges}
-          isEmailVerified={isEmailVerified}
-          savingProfile={savingProfile}
-          onValuesChange={handleProfileValuesChange}
-          onSaveProfile={handleSaveProfile}
-          onOpenEmailModal={openEmailModal}
-          onOpenPasswordModal={openPasswordModal}
-        />
+        <div className={styles.settingsPanel}>
+          <ProfileDetailsForm
+            form={profileForm}
+            initialValues={initialValues}
+            timezoneOptions={timezoneOptions}
+            hasProfileChanges={hasProfileChanges}
+            savingProfile={savingProfile}
+            onValuesChange={handleProfileValuesChange}
+            onSaveProfile={handleSaveProfile}
+          />
 
-        <div className={styles.telegramSection}>
-          <TelegramLinkPanel />
+          <ProfileSection
+            id={PROFILE_SECTIONS.TELEGRAM.id}
+            index={PROFILE_SECTIONS.TELEGRAM.index}
+            title={PROFILE_SECTIONS.TELEGRAM.title}
+            description={PROFILE_SECTIONS.TELEGRAM.description}
+          >
+            <TelegramLinkPanel showHeader={false} />
+          </ProfileSection>
+
+          <AccountSecuritySection
+            email={userData.email}
+            isEmailVerified={isEmailVerified}
+            onOpenEmailModal={openEmailModal}
+            onOpenPasswordModal={openPasswordModal}
+          />
+
+          <DeleteProfileSection
+            canDeleteProfile={canDeleteProfile}
+            onOpenDeleteModal={openDeleteProfileModal}
+          />
         </div>
-
-        <DeleteProfileSection
-          canDeleteProfile={canDeleteProfile}
-          onOpenDeleteModal={openDeleteProfileModal}
-        />
-      </Card>
+      </div>
 
       <ChangeEmailModal
         form={emailForm}
@@ -113,6 +118,6 @@ export const ProfileClient = ({ userData: initialUserData }: ProfileClientProps)
         onCancel={closeDeleteProfileModal}
         onSubmit={handleDeleteProfile}
       />
-    </main>
+    </div>
   );
 };

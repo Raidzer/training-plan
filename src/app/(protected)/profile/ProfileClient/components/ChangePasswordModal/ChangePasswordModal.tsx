@@ -1,7 +1,7 @@
 "use client";
 
 import { Form, Input, Modal } from "antd";
-import { PROFILE_LABELS } from "../../constants/profileConstants";
+import { PROFILE_FORM_IDS, PROFILE_LABELS } from "../../constants/profileConstants";
 import type { PasswordFormInstance, PasswordFormValues } from "../../types/profileTypes";
 
 type ChangePasswordModalProps = {
@@ -25,11 +25,27 @@ export function ChangePasswordModal({
       open={open}
       onCancel={onCancel}
       confirmLoading={saving}
-      onOk={onSubmit}
       okText={PROFILE_LABELS.saveButton}
+      okButtonProps={{ size: "large", htmlType: "submit", form: PROFILE_FORM_IDS.PASSWORD }}
       cancelText={PROFILE_LABELS.cancelButton}
+      cancelButtonProps={{ size: "large" }}
     >
-      <Form<PasswordFormValues> layout="vertical" form={form}>
+      <Form<PasswordFormValues>
+        id={PROFILE_FORM_IDS.PASSWORD}
+        layout="vertical"
+        size="large"
+        form={form}
+        onFinish={onSubmit}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter") {
+            return;
+          }
+
+          event.preventDefault();
+          form.submit();
+        }}
+        scrollToFirstError={{ focus: true }}
+      >
         <Form.Item
           label={PROFILE_LABELS.currentPasswordLabel}
           name="currentPassword"
@@ -68,6 +84,7 @@ export function ChangePasswordModal({
         >
           <Input.Password autoComplete="new-password" />
         </Form.Item>
+        <button type="submit" hidden aria-hidden tabIndex={-1} />
       </Form>
     </Modal>
   );

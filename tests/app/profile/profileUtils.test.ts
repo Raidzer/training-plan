@@ -5,6 +5,9 @@ import { DEFAULT_TIMEZONE } from "@/shared/constants/timezones";
 import {
   hasProfileValuesChanged,
   canDeleteProfileRole,
+  getProfileDisplayName,
+  getProfileInitials,
+  getProfileRoleLabel,
   normalizeProfileUserData,
   normalizeProfileValues,
   readJson,
@@ -170,6 +173,39 @@ describe("profileUtils", () => {
     expect(canDeleteProfileRole("athlete")).toBe(true);
     expect(canDeleteProfileRole("coach")).toBe(true);
     expect(canDeleteProfileRole("admin")).toBe(false);
+  });
+
+  it("подготавливает отображаемые данные для паспорта спортсмена", () => {
+    expect(
+      getProfileDisplayName({
+        name: " Иван ",
+        lastName: " Петров ",
+        login: "runner",
+      })
+    ).toBe("Иван Петров");
+    expect(
+      getProfileInitials({
+        name: " Иван ",
+        lastName: " Петров ",
+        login: "runner",
+      })
+    ).toBe("ИП");
+    expect(
+      getProfileInitials({
+        name: "",
+        lastName: "",
+        login: "runner",
+      })
+    ).toBe("RU");
+    expect(
+      getProfileDisplayName({
+        name: "",
+        lastName: "",
+        login: "runner",
+      })
+    ).toBe("runner");
+    expect(getProfileRoleLabel("coach")).toBe("Тренер");
+    expect(getProfileRoleLabel("unknown")).toBe("Участник клуба");
   });
 
   it("reads JSON response and falls back to null for invalid JSON", async () => {

@@ -3,15 +3,37 @@
   min-width: 0;
 }
 
-.panel {
-  width: 100%;
-  min-width: 0;
+.layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  margin-block-start: 24px;
 }
 
-.telegramSection {
-  width: 100%;
-  max-width: 640px;
-  margin: 32px auto 0;
-  padding-top: 24px;
-  border-top: 1px solid var(--ant-color-border-secondary);
+.settingsPanel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-bg);
+}
+
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .profile :global(.ant-btn) {
+    min-height: 44px;
+  }
+
+  .settingsPanel :global(.ant-input),
+  .settingsPanel :global(.ant-input-number-input),
+  .settingsPanel :global(.ant-picker-input > input),
+  .settingsPanel :global(.ant-select-selector) {
+    font-size: 1rem !important;
+  }
 }
