@@ -35,6 +35,12 @@ type SubscriptionUpdateResponse = {
 
 const DEFAULT_SEND_TIME = "07:30";
 const SEND_TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const STATUS_ERROR_TITLE = "Не удалось загрузить статус Telegram";
+const STATUS_ERROR_DESCRIPTION = "Проверьте соединение и повторите загрузку.";
+
+type TelegramLinkPanelProps = {
+  showHeader?: boolean;
+};
 
 const getApiError = (value: unknown) => {
   if (!value || typeof value !== "object") {
@@ -89,9 +95,10 @@ const normalizeStatus = (status: StatusResponse) => {
   return status;
 };
 
-export function TelegramLinkPanel() {
+export function TelegramLinkPanel({ showHeader = true }: TelegramLinkPanelProps) {
   const [messageApi, contextHolder] = message.useMessage();
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [statusError, setStatusError] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [sending, setSending] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
@@ -104,6 +111,7 @@ export function TelegramLinkPanel() {
 
   const applyStatus = useCallback((nextStatus: StatusResponse) => {
     const normalizedStatus = normalizeStatus(nextStatus);
+    setStatusError(false);
     setStatus(normalizedStatus);
     setSubscriptionEnabled(normalizedStatus.subscription?.enabled ?? false);
     setSendTime(normalizedStatus.subscription?.sendTime ?? DEFAULT_SEND_TIME);
@@ -112,6 +120,7 @@ export function TelegramLinkPanel() {
   const loadStatus = useCallback(
     async (showError = true) => {
       setLoadingStatus(true);
+      setStatusError(false);
       try {
         const res = await fetch("/api/telegram/status");
         const data = await res.json().catch(() => null);
@@ -121,10 +130,12 @@ export function TelegramLinkPanel() {
             messageApi.error(apiError?.error ?? "Не удалось загрузить статус");
           }
           setStatus(null);
+          setStatusError(true);
           return;
         }
         applyStatus(data as StatusResponse);
       } catch (error) {
+        setStatusError(true);
         if (showError) {
           messageApi.error("Не удалось загрузить статус");
         }
@@ -146,6 +157,7 @@ export function TelegramLinkPanel() {
         }
         if (!res.ok) {
           setStatus(null);
+          setStatusError(true);
           return;
         }
         applyStatus(data as StatusResponse);
@@ -154,6 +166,7 @@ export function TelegramLinkPanel() {
         if (!active) {
           return;
         }
+        setStatusError(true);
         console.error(error);
       })
       .finally(() => {
@@ -294,19 +307,40 @@ export function TelegramLinkPanel() {
       setSavingSubscription(false);
     }
   };
+  const PanelRoot = showHeader ? "section" : "div";
 
   return (
-    <section className={styles.panel}>
+    <PanelRoot className={styles.panel}>
       {contextHolder}
-      <Typography.Title level={4} className={styles.title}>
-        Telegram
-      </Typography.Title>
-      <Typography.Paragraph type="secondary" className={styles.subtitle}>
-        Получите ссылку, откройте Telegram и подтвердите привязку в боте.
-      </Typography.Paragraph>
+      {showHeader ? (
+        <>
+          <Typography.Title level={4} className={styles.title}>
+            Telegram
+          </Typography.Title>
+          <Typography.Paragraph type="secondary" className={styles.subtitle}>
+            Получите ссылку, откройте Telegram и подтвердите привязку в боте.
+          </Typography.Paragraph>
+        </>
+      ) : null}
 
       {loadingStatus ? (
-        <Typography.Text>Загрузка...</Typography.Text>
+        <Typography.Text aria-live="polite">Загрузка...</Typography.Text>
+      ) : statusError ? (
+        <Alert
+          type="error"
+          title={STATUS_ERROR_TITLE}
+          description={STATUS_ERROR_DESCRIPTION}
+          action={
+            <Button
+              onClick={() => {
+                void loadStatus(false);
+              }}
+            >
+              Повторить
+            </Button>
+          }
+          showIcon
+        />
       ) : (
         <>
           <Alert
@@ -324,19 +358,23 @@ export function TelegramLinkPanel() {
                 {subscriptionInfo}
               </Typography.Paragraph>
               <div className={styles.subscriptionSettings}>
-                <div className={styles.settingRow}>
+                <label className={styles.settingRow} htmlFor="telegram-subscription-switch">
                   <Typography.Text>Подписка на рассылку</Typography.Text>
-                  <Switch
-                    checked={subscriptionEnabled}
-                    onChange={(checked) => {
-                      setSubscriptionEnabled(checked);
-                    }}
-                    aria-label="Подписка на рассылку"
-                  />
-                </div>
+                  <span className={styles.switchTarget}>
+                    <Switch
+                      id="telegram-subscription-switch"
+                      checked={subscriptionEnabled}
+                      onChange={(checked) => {
+                        setSubscriptionEnabled(checked);
+                      }}
+                      aria-label="Подписка на рассылку"
+                    />
+                  </span>
+                </label>
                 <label className={styles.timeField}>
                   <Typography.Text>Время рассылки</Typography.Text>
                   <Input
+                    size="large"
                     aria-label="Время рассылки"
                     type="time"
                     value={sendTime}
@@ -405,9 +443,7 @@ export function TelegramLinkPanel() {
               ) : (
                 <Typography.Text>Ссылка на бота не настроена. Отправьте боту код:</Typography.Text>
               )}
-              <Typography.Title level={4} className={styles.code}>
-                {issuedCode}
-              </Typography.Title>
+              <Typography.Text className={styles.code}>{issuedCode}</Typography.Text>
               <Typography.Text type="secondary">
                 Код действует до {formatDate(issuedExpiresAt)}.
               </Typography.Text>
@@ -415,6 +451,6 @@ export function TelegramLinkPanel() {
           )}
         </>
       )}
-    </section>
+    </PanelRoot>
   );
 }

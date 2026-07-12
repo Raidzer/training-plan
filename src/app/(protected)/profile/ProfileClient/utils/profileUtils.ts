@@ -1,7 +1,11 @@
 import { DEFAULT_TIMEZONE } from "@/shared/constants/timezones";
 import { ROLES } from "@/shared/constants";
 import dayjs from "dayjs";
-import { PROFILE_DATE_FORMAT } from "../constants/profileConstants";
+import {
+  PROFILE_DATE_FORMAT,
+  PROFILE_ROLE_FALLBACK,
+  PROFILE_ROLE_LABELS,
+} from "../constants/profileConstants";
 import type {
   Occupation,
   ProfileApiUserData,
@@ -80,6 +84,38 @@ export const normalizeProfileUserData = (userData: ProfileApiUserData): ProfileU
 
 export const canDeleteProfileRole = (role: string) => {
   return role !== ROLES.ADMIN;
+};
+
+export const getProfileDisplayName = (
+  userData: Pick<ProfileUserData, "name" | "lastName" | "login">
+) => {
+  const displayName = [userData.name, userData.lastName]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(" ");
+
+  return displayName || userData.login;
+};
+
+export const getProfileInitials = (
+  userData: Pick<ProfileUserData, "name" | "lastName" | "login">
+) => {
+  const initials = [userData.name, userData.lastName]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((value) => Array.from(value)[0]?.toLocaleUpperCase("ru-RU") ?? "")
+    .join("");
+
+  if (initials) {
+    return initials;
+  }
+
+  return Array.from(userData.login.trim()).slice(0, 2).join("").toLocaleUpperCase("ru-RU");
+};
+
+export const getProfileRoleLabel = (role: string) => {
+  return PROFILE_ROLE_LABELS[role] ?? PROFILE_ROLE_FALLBACK;
 };
 
 export async function readJson<T>(response: Response): Promise<T | null> {
