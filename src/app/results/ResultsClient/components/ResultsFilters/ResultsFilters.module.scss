@@ -39,7 +39,7 @@
 
 .tabActive {
   background: var(--accent-color);
-  color: #fff;
+  color: var(--accent-contrast);
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
 }
 

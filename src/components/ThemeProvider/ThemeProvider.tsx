@@ -1,23 +1,15 @@
 "use client";
-import { App, ConfigProvider, theme as antdTheme } from "antd";
+import { App, ConfigProvider } from "antd";
 import ruRU from "antd/locale/ru_RU";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import styles from "./ThemeProvider.module.scss";
 import { Header } from "../Header/Header";
+import { APP_THEME } from "./themeConfig";
 
-export type Mode = "light" | "dark";
-type ThemeContextValue = { mode: Mode; setMode: (next: Mode) => void };
-
-const ThemeContext = createContext<ThemeContextValue>({
-  mode: "light",
-  setMode: () => undefined,
-});
-
-const STORAGE_KEY = "ui-theme";
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
 const GIT_SHA = process.env.NEXT_PUBLIC_GIT_SHA;
 const APP_VERSION_TITLE =
@@ -25,14 +17,7 @@ const APP_VERSION_TITLE =
 
 dayjs.locale("ru");
 
-export function ThemeProvider({
-  children,
-  initialTheme,
-}: {
-  children: ReactNode;
-  initialTheme: Mode;
-}) {
-  const [mode, setMode] = useState<Mode>(initialTheme);
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isTelegramRoute = pathname.startsWith("/telegram/");
   const isFullWidthRoute = pathname.startsWith("/tools/templates/");
@@ -44,60 +29,32 @@ export function ThemeProvider({
     pathname.startsWith("/admin") ||
     pathname === "/tools/templates";
 
-  const handleSetMode = (next: Mode) => {
-    setMode(next);
-    localStorage.setItem(STORAGE_KEY, next);
-
-    // Set cookie for 1 year
-    document.cookie = `ui-theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
-
-    if (next === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  };
-
-  const algorithm = useMemo(
-    () => (mode === "dark" ? [antdTheme.darkAlgorithm] : [antdTheme.defaultAlgorithm]),
-    [mode]
-  );
-
   return (
-    <ThemeContext.Provider value={{ mode, setMode: handleSetMode }}>
-      <ConfigProvider
-        theme={{
-          algorithm,
-          token: {
-            colorPrimary: mode === "dark" ? "#6ea8ff" : "#3056d3",
-            borderRadius: 10,
-          },
-        }}
-        locale={ruRU}
-      >
-        <App>
-          <div className={styles.root}>
-            {!isTelegramRoute && <Header mode={mode} onToggle={handleSetMode} />}
-            <main
-              className={clsx(
-                styles.main,
-                isWideRoute && styles.mainWide,
-                isFullWidthRoute && styles.mainFull,
-                isTelegramRoute && styles.mainTelegram
-              )}
-            >
-              {children}
-            </main>
-            {!isTelegramRoute && (
-              <footer className={styles.footer} title={APP_VERSION_TITLE}>
-                v{APP_VERSION}
-              </footer>
+    <ConfigProvider theme={APP_THEME} locale={ruRU}>
+      <App>
+        <div className={styles.root}>
+          <a className={styles.skipLink} href="#main-content">
+            Перейти к содержимому
+          </a>
+          {isTelegramRoute ? null : <Header />}
+          <main
+            id="main-content"
+            className={clsx(
+              styles.main,
+              isWideRoute && styles.mainWide,
+              isFullWidthRoute && styles.mainFull,
+              isTelegramRoute && styles.mainTelegram
             )}
-          </div>
-        </App>
-      </ConfigProvider>
-    </ThemeContext.Provider>
+          >
+            {children}
+          </main>
+          {isTelegramRoute ? null : (
+            <footer className={styles.footer} title={APP_VERSION_TITLE}>
+              СПИРОС · v{APP_VERSION}
+            </footer>
+          )}
+        </div>
+      </App>
+    </ConfigProvider>
   );
 }
-
-export const useThemeMode = () => useContext(ThemeContext);

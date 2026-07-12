@@ -3,7 +3,7 @@
   top: 0;
   z-index: 5;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
   align-items: center;
   width: 100%;
@@ -13,8 +13,7 @@
 }
 
 .allToolsLink,
-.tabLink,
-.themeButton {
+.tabLink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -28,13 +27,6 @@
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;
-}
-
-.themeButton {
-  justify-self: end;
-  width: 36px;
-  padding: 0;
-  cursor: pointer;
 }
 
 .allToolsLink {
@@ -68,23 +60,17 @@
 
 @media (max-width: 560px) {
   .navigation {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "all theme"
-      "tabs tabs";
+      "all"
+      "tabs";
     margin-bottom: 12px;
   }
 
   .allToolsLink,
-  .tabLink,
-  .themeButton {
+  .tabLink {
     min-height: 34px;
     font-size: 13px;
-  }
-
-  .themeButton {
-    grid-area: theme;
-    width: 34px;
   }
 
   .allToolsLink {
