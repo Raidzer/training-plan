@@ -228,6 +228,7 @@ function createDiaryData(overrides: Record<string, unknown> = {}) {
     loadingMarks: false,
     dayData: {
       status: {
+        date: "2026-05-11",
         dayHasReport: true,
         hasWeightMorning: true,
         hasWeightEvening: false,
@@ -401,11 +402,21 @@ describe("DiaryClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "open-report" }));
 
-    expect(screen.getByText("Ежедневный отчет")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: "Ежедневный отчёт",
+      })
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "close-report" }));
 
-    expect(screen.queryByText("Ежедневный отчет")).toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        level: 3,
+        name: "Ежедневный отчёт",
+      })
+    ).toBeNull();
   });
 
   it("должен отключать отчет когда данные дня еще не загружены", () => {
@@ -420,6 +431,7 @@ describe("DiaryClient", () => {
 
     render(<DiaryClient userId={20} />);
 
-    expect(screen.getByRole("button", { name: "open-report" })).toHaveProperty("disabled", true);
+    expect(screen.getByRole("status")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "open-report" })).toBeNull();
   });
 });
