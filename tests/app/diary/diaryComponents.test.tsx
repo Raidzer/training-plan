@@ -149,9 +149,9 @@ describe("DiaryClient components", () => {
     fireEvent.click(screen.getByRole("button", { name: "Отчет" }));
 
     expect(screen.getByText("День заполнен")).toBeTruthy();
-    expect(screen.getByText("Вес: У / -")).toBeTruthy();
-    expect(screen.getByText("Сон: Да")).toBeTruthy();
-    expect(screen.getByText("Тренировки: 1/2")).toBeTruthy();
+    expect(screen.getByText("Вес").closest("li")?.textContent).toBe("ВесУ: Да · В: —");
+    expect(screen.getByText("Сон").closest("li")?.textContent).toBe("СонДа");
+    expect(screen.getByText("Тренировки").closest("li")?.textContent).toBe("Тренировки1/2");
     expect(onOpenReport).toHaveBeenCalled();
   });
 
@@ -197,7 +197,7 @@ describe("DiaryClient components", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Скопировать отчет" }));
+    fireEvent.click(screen.getByRole("button", { name: "Скопировать отчёт" }));
 
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledWith("Текст отчета");
@@ -233,7 +233,7 @@ describe("DiaryClient components", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Скопировать отчет" }));
+    fireEvent.click(screen.getByRole("button", { name: "Скопировать отчёт" }));
 
     await waitFor(() => {
       expect(execCommandMock).toHaveBeenCalledWith("copy");

@@ -1,0 +1,48 @@
+.fieldset {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend,
+.label {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.legend {
+  margin-block-end: 6px;
+  padding: 0;
+}
+
+.shoeSelect {
+  width: 100%;
+}
+
+.mileageList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.mileageField {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  overflow-wrap: anywhere;
+}
+
+.fieldset :global(.ant-select-selector),
+.fieldset :global(.ant-input) {
+  min-height: 44px;
+  font-size: 16px;
+}
