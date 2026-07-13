@@ -1,0 +1,57 @@
+.marker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(28px, 1fr));
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.segment {
+  display: grid;
+  place-items: center;
+  min-height: 30px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.active {
+  border-color: var(--control-border-hover);
+  color: var(--text-primary);
+  background: var(--interactive-active);
+}
+
+.workload {
+  box-shadow: inset 0 -3px 0 var(--text-secondary);
+}
+
+.today {
+  outline: 1px solid var(--text-secondary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 479px) {
+  .marker {
+    grid-template-columns: repeat(7, minmax(24px, 1fr));
+  }
+
+  .segment {
+    min-height: 28px;
+    font-size: 0.625rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .active,
+  .today {
+    border-color: CanvasText;
+    outline-color: CanvasText;
+  }
+}
