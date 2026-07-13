@@ -1,13 +1,12 @@
 "use client";
 
-import { HomeOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
-import { App, Button, Card, Space, Switch, Typography } from "antd";
-import Link from "next/link";
-import { PageHeader } from "@/components/PageHeader";
+import { App } from "antd";
 import { PLAN_TEXT } from "./constants/planText";
 import { PlanEditorModal } from "./components/PlanEditorModal/PlanEditorModal";
-import { PlanEntriesTable } from "./components/PlanEntriesTable/PlanEntriesTable";
+import { PlanHeader } from "./components/PlanHeader/PlanHeader";
+import { PlanSchedule } from "./components/PlanSchedule/PlanSchedule";
 import { PlanShiftModal } from "./components/PlanShiftModal/PlanShiftModal";
+import { PlanToolbar, type PlanFilterValue } from "./components/PlanToolbar/PlanToolbar";
 import { usePlanEditor } from "./hooks/usePlanEditor";
 import { usePlanEntries } from "./hooks/usePlanEntries";
 import { usePlanShift } from "./hooks/usePlanShift";
@@ -19,6 +18,7 @@ function PlanClientContent() {
     entries,
     setEntries,
     filteredEntries,
+    loadError,
     loading,
     currentPage,
     setCurrentPage,
@@ -56,78 +56,80 @@ function PlanClientContent() {
     handleSaveShift,
   } = usePlanShift({ msgApi, loadEntries });
 
+  const handleFilterChange = (value: PlanFilterValue) => {
+    setOnlyWithoutReports(value === "without-reports");
+  };
+
   return (
-    <main className={styles.mainContainer}>
-      <Card className={styles.cardStyle}>
-        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
-          <PageHeader
-            title={PLAN_TEXT.header.title}
-            subtitle={PLAN_TEXT.header.description}
-            actions={
-              <>
-                <Link href="/dashboard" passHref>
-                  <Button icon={<HomeOutlined />}>{PLAN_TEXT.actions.dashboard}</Button>
-                </Link>
-                <Button icon={<PlusOutlined />} onClick={openCreateModal}>
-                  {PLAN_TEXT.actions.addDay}
-                </Button>
-                <Button icon={<ReloadOutlined />} onClick={loadEntries} loading={loading}>
-                  {PLAN_TEXT.actions.reload}
-                </Button>
-              </>
-            }
-          />
-          <div className={styles.importActions}>
-            <Link href="/plan/import" passHref>
-              <Button type="primary" block>
-                {PLAN_TEXT.actions.importExcel}
-              </Button>
-            </Link>
-            <Link href="/diary/import" passHref>
-              <Button block>{PLAN_TEXT.actions.importDiary}</Button>
-            </Link>
-          </div>
-          <Space size="small" align="center">
-            <Switch checked={onlyWithoutReports} onChange={setOnlyWithoutReports} />
-            <Typography.Text>{PLAN_TEXT.filter.onlyWithoutReports}</Typography.Text>
-          </Space>
-          <PlanEditorModal
-            open={editorOpen}
-            draft={draft}
-            saving={saving}
-            dateValue={draftDateValue}
-            onCancel={handleCancelEditor}
-            onSave={handleSaveDraft}
-            onDateChange={handleDateChange}
-            onWorkloadChange={handleWorkloadChange}
-            onEntryChange={updateEntry}
-            onAddEntry={addEntry}
-            onRemoveEntry={confirmRemoveEntry}
-            onDeleteDay={handleDeleteDay}
-          />
-          <PlanShiftModal
-            open={shiftOpen}
-            draft={shiftDraft}
-            saving={shiftSaving}
-            dateValue={shiftDateValue}
-            onCancel={handleCancelShift}
-            onSave={handleSaveShift}
-            onDateChange={handleShiftDateChange}
-            onDirectionChange={handleShiftDirectionChange}
-            onDaysChange={handleShiftDaysChange}
-          />
-          <PlanEntriesTable
-            entries={filteredEntries}
-            loading={loading}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-            onEditDay={openEditModal}
-            onShiftPlanFromDate={openShiftModal}
-            today={today}
-          />
-        </Space>
-      </Card>
-    </main>
+    <div className={styles.mainContainer}>
+      <div className={styles.pageStack}>
+        <PlanHeader
+          eyebrow={PLAN_TEXT.header.eyebrow}
+          title={PLAN_TEXT.header.title}
+          subtitle={PLAN_TEXT.header.description}
+          dashboardHref="/dashboard"
+          dashboardLabel={PLAN_TEXT.actions.dashboard}
+          addDayLabel={PLAN_TEXT.actions.addDay}
+          onAddDay={openCreateModal}
+        />
+
+        <PlanToolbar
+          filterValue={onlyWithoutReports ? "without-reports" : "all"}
+          allDaysLabel={PLAN_TEXT.filter.all}
+          withoutReportsLabel={PLAN_TEXT.filter.onlyWithoutReports}
+          importPlanHref="/plan/import"
+          importPlanLabel={PLAN_TEXT.actions.importExcel}
+          importDiaryHref="/diary/import"
+          importDiaryLabel={PLAN_TEXT.actions.importDiary}
+          reloadLabel={PLAN_TEXT.actions.reload}
+          loading={loading}
+          onFilterChange={handleFilterChange}
+          onReload={() => {
+            void loadEntries();
+          }}
+        />
+
+        <PlanSchedule
+          entries={filteredEntries}
+          loading={loading}
+          loadError={loadError}
+          isFiltered={onlyWithoutReports}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          onEditDay={openEditModal}
+          onShiftPlanFromDate={openShiftModal}
+          onAddDay={openCreateModal}
+          onRetry={loadEntries}
+          today={today}
+        />
+      </div>
+
+      <PlanEditorModal
+        open={editorOpen}
+        draft={draft}
+        saving={saving}
+        dateValue={draftDateValue}
+        onCancel={handleCancelEditor}
+        onSave={handleSaveDraft}
+        onDateChange={handleDateChange}
+        onWorkloadChange={handleWorkloadChange}
+        onEntryChange={updateEntry}
+        onAddEntry={addEntry}
+        onRemoveEntry={confirmRemoveEntry}
+        onDeleteDay={handleDeleteDay}
+      />
+      <PlanShiftModal
+        open={shiftOpen}
+        draft={shiftDraft}
+        saving={shiftSaving}
+        dateValue={shiftDateValue}
+        onCancel={handleCancelShift}
+        onSave={handleSaveShift}
+        onDateChange={handleShiftDateChange}
+        onDirectionChange={handleShiftDirectionChange}
+        onDaysChange={handleShiftDaysChange}
+      />
+    </div>
   );
 }
 

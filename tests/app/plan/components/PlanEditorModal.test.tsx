@@ -39,9 +39,12 @@ describe("PlanEditorModal", () => {
       />
     );
 
-    const dateInput = document.querySelector(".ant-picker-input input") as HTMLInputElement | null;
+    const dateInput = screen.getByLabelText(PLAN_TEXT.editor.dateLabel) as HTMLInputElement;
 
     expect(screen.getByText(PLAN_TEXT.editor.dateLockedByReport)).toBeTruthy();
-    expect(dateInput?.disabled).toBe(true);
+    expect(dateInput.disabled).toBe(true);
+    expect(screen.getByLabelText(PLAN_TEXT.editor.taskLabel)).toBeTruthy();
+    expect(screen.getByLabelText(PLAN_TEXT.editor.commentLabel)).toBeTruthy();
+    expect(screen.getByLabelText(PLAN_TEXT.editor.deleteWorkoutAria(1))).toBeTruthy();
   });
 });

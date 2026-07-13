@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlanClient } from "@/app/(protected)/plan/PlanClient/PlanClient";
 
@@ -6,6 +6,9 @@ const planClientMocks = vi.hoisted(() => ({
   usePlanEntriesMock: vi.fn(),
   usePlanEditorMock: vi.fn(),
   usePlanShiftMock: vi.fn(),
+  loadEntriesMock: vi.fn(),
+  openCreateModalMock: vi.fn(),
+  setOnlyWithoutReportsMock: vi.fn(),
 }));
 
 vi.mock("next/link", () => {
@@ -47,8 +50,8 @@ vi.mock("@/app/(protected)/plan/PlanClient/components/PlanShiftModal/PlanShiftMo
   PlanShiftModal: () => <div data-testid="plan-shift-modal" />,
 }));
 
-vi.mock("@/app/(protected)/plan/PlanClient/components/PlanEntriesTable/PlanEntriesTable", () => ({
-  PlanEntriesTable: () => <div data-testid="plan-entries-table" />,
+vi.mock("@/app/(protected)/plan/PlanClient/components/PlanSchedule/PlanSchedule", () => ({
+  PlanSchedule: () => <div data-testid="plan-schedule" />,
 }));
 
 beforeAll(() => {
@@ -70,24 +73,26 @@ beforeAll(() => {
 describe("PlanClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    planClientMocks.loadEntriesMock.mockResolvedValue(undefined);
     planClientMocks.usePlanEntriesMock.mockReturnValue({
       entries: [],
       setEntries: vi.fn(),
       filteredEntries: [],
+      loadError: null,
       loading: false,
       currentPage: 1,
       setCurrentPage: vi.fn(),
       onlyWithoutReports: false,
-      setOnlyWithoutReports: vi.fn(),
+      setOnlyWithoutReports: planClientMocks.setOnlyWithoutReportsMock,
       today: "2026-06-10",
-      loadEntries: vi.fn(),
+      loadEntries: planClientMocks.loadEntriesMock,
     });
     planClientMocks.usePlanEditorMock.mockReturnValue({
       editorOpen: false,
       saving: false,
       draft: null,
       draftDateValue: null,
-      openCreateModal: vi.fn(),
+      openCreateModal: planClientMocks.openCreateModalMock,
       openEditModal: vi.fn(),
       handleCancelEditor: vi.fn(),
       handleDateChange: vi.fn(),
@@ -115,11 +120,30 @@ describe("PlanClient", () => {
   it("должен показывать импорт плана и импорт дневника рядом", () => {
     render(<PlanClient />);
 
-    expect(screen.getByRole("link", { name: "Загрузить план из Excel" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "Импорт плана" }).getAttribute("href")).toBe(
       "/plan/import"
     );
-    expect(
-      screen.getByRole("link", { name: "Загрузить дневник из Excel" }).getAttribute("href")
-    ).toBe("/diary/import");
+    expect(screen.getByRole("link", { name: "Импорт дневника" }).getAttribute("href")).toBe(
+      "/diary/import"
+    );
+    expect(screen.getByTestId("plan-schedule")).toBeTruthy();
+  });
+
+  it("должен переключать фильтр дней", () => {
+    render(<PlanClient />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Требуют отчёта" }));
+
+    expect(planClientMocks.setOnlyWithoutReportsMock).toHaveBeenCalledWith(true);
+  });
+
+  it("должен открывать добавление дня и обновлять план", () => {
+    render(<PlanClient />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Добавить день" }));
+    fireEvent.click(screen.getByRole("button", { name: "Обновить" }));
+
+    expect(planClientMocks.openCreateModalMock).toHaveBeenCalledOnce();
+    expect(planClientMocks.loadEntriesMock).toHaveBeenCalledOnce();
   });
 });

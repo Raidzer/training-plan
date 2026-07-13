@@ -1,5 +1,35 @@
+.modal :global(.ant-modal-content) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.modal :global(.ant-modal-body) {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.modal :global(.ant-modal-footer) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.modal :global(.ant-modal-footer .ant-btn + .ant-btn) {
+  margin-inline-start: 0;
+}
+
+.modal :global(.ant-modal-footer .ant-btn) {
+  min-height: 44px;
+}
+
 .shiftForm {
   width: 100%;
+  gap: 20px !important;
 }
 
 .shiftField {
@@ -9,6 +39,44 @@
   width: 100%;
 }
 
+.fieldLabel {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.summary {
+  border-color: var(--surface-border);
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+}
+
+.summary :global(.ant-alert-icon),
+.summary :global(.ant-alert-title) {
+  color: inherit;
+}
+
+.shiftField :global(.ant-picker),
+.daysInput {
+  width: 100%;
+  min-height: 44px;
+}
+
+.shiftField :global(.ant-segmented) {
+  min-height: 44px;
+  padding: 3px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-soft);
+}
+
+.shiftField :global(.ant-segmented-item-label) {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+}
+
 .directionLabel {
   display: inline-flex;
   align-items: center;
@@ -16,6 +84,24 @@
   gap: 6px;
 }
 
-.daysInput {
-  width: 100%;
+@media (max-width: 639px) {
+  .modal :global(.ant-modal-content) {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .modal :global(.ant-modal-footer) {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .modal :global(.ant-modal-footer .ant-btn) {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .summary,
+  .shiftField :global(.ant-segmented) {
+    border-color: CanvasText;
+  }
 }

@@ -1,9 +1,12 @@
-import { BookOutlined, CheckCircleOutlined, EditOutlined, SwapOutlined } from "@ant-design/icons";
-import { Button, Tag, Tooltip } from "antd";
+import { BookOutlined, EditOutlined, SwapOutlined } from "@ant-design/icons";
+import { Button, Tooltip } from "antd";
 import Link from "next/link";
 import { PLAN_TEXT } from "../../constants/planText";
 import type { PlanDayEntry } from "../../types/planTypes";
-import { formatDateWithWeekday } from "../../utils/planUtils";
+import { getPlanDateParts } from "../../utils/planUtils";
+import { MicrocycleMarker } from "../MicrocycleMarker/MicrocycleMarker";
+import { PlanStatusBadge } from "../PlanStatusBadge/PlanStatusBadge";
+import { PlanWorkoutBlock } from "../PlanWorkoutBlock/PlanWorkoutBlock";
 import styles from "./PlanDayCard.module.scss";
 
 type PlanDayCardProps = {
@@ -14,84 +17,100 @@ type PlanDayCardProps = {
 };
 
 export function PlanDayCard({ entry, isToday, onEditDay, onShiftPlanFromDate }: PlanDayCardProps) {
+  const dateParts = getPlanDateParts(entry.date);
   const className = [
-    styles.mobileDayCard,
-    entry.isWorkload ? styles.mobileWorkloadCard : "",
-    isToday ? styles.mobileTodayCard : "",
+    styles.card,
+    entry.isWorkload ? styles.workloadCard : "",
+    isToday ? styles.todayCard : "",
   ]
     .filter(Boolean)
     .join(" ");
+  const reportValue = entry.reportedWorkoutCount + "/" + entry.workoutCount;
+  const shiftTooltip = entry.hasAnyReport
+    ? PLAN_TEXT.table.shiftDisabledTooltip
+    : PLAN_TEXT.table.shiftTooltip;
 
   return (
     <article className={className} data-plan-entry-key={entry.date}>
-      <div className={styles.mobileDayHeader}>
-        <div className={styles.mobileDayTitle}>
-          <span className={styles.mobileDate}>{formatDateWithWeekday(entry.date)}</span>
-          <div className={styles.mobileTags}>
-            {isToday ? <Tag color="blue">{PLAN_TEXT.table.todayTag}</Tag> : null}
-            {entry.isWorkload ? <Tag color="orange">{PLAN_TEXT.table.workloadTag}</Tag> : null}
-            {entry.hasReport ? (
-              <Tag icon={<CheckCircleOutlined />} color="green">
-                {PLAN_TEXT.table.reportTag}
-              </Tag>
-            ) : (
-              <Tag>{PLAN_TEXT.table.reportMissingTag}</Tag>
-            )}
-          </div>
+      <header className={styles.cardHeader}>
+        <div className={styles.markerBlock}>
+          <MicrocycleMarker
+            activeDayIndex={dateParts.weekdayIndex}
+            isToday={isToday}
+            isWorkload={entry.isWorkload}
+          />
         </div>
-        <div className={styles.mobileActions}>
-          <Tooltip title={PLAN_TEXT.table.editTooltip}>
-            <Button
-              size="small"
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => onEditDay(entry.date)}
-              aria-label={PLAN_TEXT.table.editAria(entry.date)}
-            />
-          </Tooltip>
-          <Tooltip
-            title={
-              entry.hasReport ? PLAN_TEXT.table.shiftDisabledTooltip : PLAN_TEXT.table.shiftTooltip
-            }
-          >
-            <Button
-              size="small"
-              type="text"
-              icon={<SwapOutlined />}
-              onClick={() => onShiftPlanFromDate(entry.date)}
-              disabled={entry.hasReport}
-              aria-label={PLAN_TEXT.table.shiftAria(entry.date)}
-            />
-          </Tooltip>
-          <Tooltip title={PLAN_TEXT.table.diaryTooltip}>
-            <Link
-              href={`/diary?date=${entry.date}`}
-              passHref
-              aria-label={PLAN_TEXT.table.diaryAria(entry.date)}
-            >
-              <Button
-                size="small"
-                type="text"
-                icon={<BookOutlined />}
-                aria-label={PLAN_TEXT.table.diaryAria(entry.date)}
-              />
-            </Link>
-          </Tooltip>
-        </div>
-      </div>
-      <PlanCardSection title={PLAN_TEXT.table.task} html={entry.taskText} />
-      {entry.commentText ? (
-        <PlanCardSection title={PLAN_TEXT.table.comment} html={entry.commentText} />
-      ) : null}
-    </article>
-  );
-}
 
-function PlanCardSection({ title, html }: { title: string; html: string }) {
-  return (
-    <section className={styles.mobileSection}>
-      <div className={styles.mobileSectionTitle}>{title}</div>
-      <div className={styles.multilineText} dangerouslySetInnerHTML={{ __html: html }} />
-    </section>
+        <div className={styles.dateBlock}>
+          <h3 className={styles.dateHeading}>
+            <time dateTime={entry.date} aria-current={isToday ? "date" : undefined}>
+              <span className={styles.dateLabel}>{dateParts.dateLabel}</span>
+              <span className={styles.dateMeta}>
+                {dateParts.weekdayLabel}, {dateParts.yearLabel}
+              </span>
+            </time>
+          </h3>
+        </div>
+
+        <div className={styles.statuses} aria-label="Статусы дня">
+          {isToday ? <PlanStatusBadge value={PLAN_TEXT.day.today} emphasized /> : null}
+          {entry.isWorkload ? <PlanStatusBadge value={PLAN_TEXT.day.workload} /> : null}
+          <PlanStatusBadge
+            label={PLAN_TEXT.day.reports}
+            value={reportValue}
+            emphasized={entry.hasAllReports}
+          />
+        </div>
+      </header>
+
+      <div className={styles.workouts}>
+        {entry.workouts.map((workout, index) => (
+          <PlanWorkoutBlock
+            key={workout.id}
+            workout={workout}
+            index={index}
+            workoutsCount={entry.workoutCount}
+          />
+        ))}
+      </div>
+
+      <footer className={styles.actions} role="group" aria-label={"Действия на " + entry.date}>
+        <Button
+          className={styles.actionButton}
+          icon={<EditOutlined aria-hidden />}
+          onClick={() => {
+            onEditDay(entry.date);
+          }}
+          aria-label={PLAN_TEXT.table.editAria(entry.date)}
+        >
+          {PLAN_TEXT.day.editAction}
+        </Button>
+
+        <Tooltip title={shiftTooltip}>
+          <span className={styles.actionControl}>
+            <Button
+              className={styles.actionButton}
+              icon={<SwapOutlined aria-hidden />}
+              onClick={() => {
+                onShiftPlanFromDate(entry.date);
+              }}
+              disabled={entry.hasAnyReport}
+              aria-label={PLAN_TEXT.table.shiftAria(entry.date)}
+            >
+              {PLAN_TEXT.day.shiftAction}
+            </Button>
+          </span>
+        </Tooltip>
+
+        <Link
+          href={"/diary?date=" + entry.date}
+          className={styles.diaryLink}
+          aria-label={PLAN_TEXT.table.diaryAria(entry.date)}
+        >
+          <BookOutlined aria-hidden />
+          <span>{PLAN_TEXT.day.diaryAction}</span>
+        </Link>
+      </footer>
+    </article>
   );
 }
