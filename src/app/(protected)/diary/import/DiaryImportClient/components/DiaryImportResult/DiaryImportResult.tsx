@@ -39,7 +39,7 @@ function IssueList({ title, issues, type }: IssueListProps) {
 export function DiaryImportResult({ result }: DiaryImportResultProps) {
   return (
     <Card type="inner" title={DIARY_IMPORT_TEXT.page.resultTitle}>
-      <Space direction="vertical" size="small" className={styles.resultStack}>
+      <Space orientation="vertical" size="small" className={styles.resultStack}>
         <Typography.Paragraph className={styles.resultParagraph}>
           {DIARY_IMPORT_TEXT.result.summary({
             sheetName: result.sheetName,

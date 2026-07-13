@@ -20,7 +20,7 @@ export function DiaryImportClient() {
     <main className={styles.mainContainer}>
       {contextHolder}
       <Card className={styles.cardStyle}>
-        <Space direction="vertical" size="large" className={styles.spaceStyle}>
+        <Space orientation="vertical" size="large" className={styles.spaceStyle}>
           <PageHeader
             title={DIARY_IMPORT_TEXT.page.title}
             subtitle={DIARY_IMPORT_TEXT.page.description}
