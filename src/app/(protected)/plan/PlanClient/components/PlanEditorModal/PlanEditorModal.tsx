@@ -52,7 +52,7 @@ export function PlanEditorModal({
       okText={PLAN_TEXT.editor.save}
       cancelText={PLAN_TEXT.editor.cancel}
       confirmLoading={saving}
-      maskClosable={!saving}
+      mask={{ closable: !saving }}
       closable={!saving}
       destroyOnHidden
       okButtonProps={{

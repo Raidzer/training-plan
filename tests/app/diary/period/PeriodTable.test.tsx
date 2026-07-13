@@ -31,6 +31,7 @@ describe("PeriodTable", () => {
             date: "2026-06-02",
             hasWeightMorning: false,
             hasWeightEvening: true,
+            hasSleep: false,
             hasBath: false,
             hasMfr: true,
             hasMassage: false,
@@ -43,15 +44,20 @@ describe("PeriodTable", () => {
       />
     );
 
-    expect(screen.getByText("01.06.2026")).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Сон" })).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Открыть отчёт: 01.06.2026" }).getAttribute("href")
+    ).toBe("/diary?date=2026-06-01");
     expect(screen.getByText("У / -")).toBeTruthy();
     expect(screen.getByText("12.35")).toBeTruthy();
     expect(screen.getByText("Б / - / М")).toBeTruthy();
     expect(screen.getByText("1/2")).toBeTruthy();
-    expect(screen.getByText("Заполнено")).toBeTruthy();
-    expect(screen.getByText("02.06.2026")).toBeTruthy();
+    expect(screen.getAllByText("Заполнено")).toHaveLength(2);
+    expect(
+      screen.getByRole("link", { name: "Открыть отчёт: 02.06.2026" }).getAttribute("href")
+    ).toBe("/diary?date=2026-06-02");
     expect(screen.getByText("- / В")).toBeTruthy();
     expect(screen.getByText("- / МФР / -")).toBeTruthy();
-    expect(screen.getByText("Не заполнено")).toBeTruthy();
+    expect(screen.getAllByText("Не заполнено")).toHaveLength(2);
   });
 });
