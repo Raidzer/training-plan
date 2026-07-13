@@ -6,14 +6,14 @@ export type DiaryImportIssue = {
 };
 
 export type DiaryImportResult = {
-  sheetName: string;
-  parsedRows: number;
-  matchedRows: number;
-  reportsUpserted: number;
-  reportsSkipped: number;
-  weightEntriesUpserted: number;
-  recoveryEntriesUpserted: number;
-  skippedRows: number;
+  sheetName?: string;
+  parsedRows?: number;
+  matchedRows?: number;
+  reportsUpserted?: number;
+  reportsSkipped?: number;
+  weightEntriesUpserted?: number;
+  recoveryEntriesUpserted?: number;
+  skippedRows?: number;
   errors?: DiaryImportIssue[];
   warnings?: DiaryImportIssue[];
   error?: string;
