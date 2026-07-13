@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card, message } from "antd";
+import { Empty, Skeleton, message } from "antd";
 import { useRouter } from "next/navigation";
 import styles from "./DiaryClient.module.scss";
 import { buildDailyReportText } from "@/shared/utils/dailyReport";
@@ -17,6 +17,7 @@ import { WorkoutEditModal } from "./components/WorkoutEditModal/WorkoutEditModal
 import { DailyReportModal } from "./components/DailyReportModal/DailyReportModal";
 import {
   CALENDAR_LABELS,
+  DAY_LABELS,
   DIARY_MESSAGES,
   HEADER_LABELS,
   RECOVERY_LABELS,
@@ -157,21 +158,25 @@ export function DiaryClient({ userId }: { userId: number }) {
     });
   };
 
-  const status = dayData?.status;
+  const selectedDateKey = formatDate(selectedDate);
+  const visibleDayData = dayData?.status.date === selectedDateKey ? dayData : null;
+  const showBlockingDayLoader = loadingDay && !visibleDayData;
+  const status = visibleDayData?.status;
   const workoutsComplete = status
     ? status.workoutsTotal === 0 || status.workoutsWithFullReport === status.workoutsTotal
     : false;
   const reportText = useMemo(
     () =>
       buildDailyReportText({
-        date: formatDate(selectedDate),
-        day: dayData,
+        date: selectedDateKey,
+        day: visibleDayData,
       }),
-    [dayData, selectedDate]
+    [selectedDateKey, visibleDayData]
   );
+  const selectedDateLabel = selectedDate.format("D MMMM YYYY");
 
   return (
-    <main className={styles.mainContainer}>
+    <div className={styles.mainContainer}>
       {contextHolder}
       <div className={styles.pageStack}>
         <DiaryHeader
@@ -194,21 +199,27 @@ export function DiaryClient({ userId }: { userId: number }) {
             />
           </div>
           <div className={styles.dayBlock}>
-            <Card
-              title={`Выбранный день: ${formatDate(selectedDate)}`}
-              loading={loadingDay && !dayData}
-              className={styles.dayCard}
+            <section
+              className={styles.dayWorkspace}
+              aria-label={`Отчёт за ${selectedDateLabel}`}
+              aria-busy={showBlockingDayLoader}
             >
-              <div className={styles.dayContent}>
-                <DiaryStatusBlock
-                  status={status}
-                  workoutsComplete={workoutsComplete}
-                  disabledReport={!dayData}
-                  labels={STATUS_LABELS}
-                  onOpenReport={() => setIsReportOpen(true)}
-                />
-                <div className={styles.dayLayout}>
-                  <div className={styles.weightRecoveryBlock}>
+              {showBlockingDayLoader ? (
+                <div className={styles.loadingState} role="status" aria-live="polite">
+                  <span className={styles.loadingLabel}>{DAY_LABELS.loading}</span>
+                  <Skeleton active paragraph={{ rows: 8 }} title={{ width: "45%" }} />
+                </div>
+              ) : visibleDayData ? (
+                <div className={styles.dayContent}>
+                  <DiaryStatusBlock
+                    dateLabel={selectedDateLabel}
+                    status={status}
+                    workoutsComplete={workoutsComplete}
+                    disabledReport={!visibleDayData}
+                    labels={STATUS_LABELS}
+                    onOpenReport={() => setIsReportOpen(true)}
+                  />
+                  <div className={styles.metricsGrid}>
                     <WeightCard
                       title={WEIGHT_LABELS.title}
                       morningPlaceholder={WEIGHT_LABELS.morningPlaceholder}
@@ -240,52 +251,58 @@ export function DiaryClient({ userId }: { userId: number }) {
                       onSave={handleSaveRecovery}
                     />
                   </div>
-                  <div className={styles.workoutsBlock}>
-                    <WorkoutsCard
-                      userId={userId}
-                      messageApi={messageApi}
-                      title={WORKOUT_LABELS.title}
-                      emptyLabel={WORKOUT_LABELS.emptyLabel}
-                      completeLabel={WORKOUT_LABELS.completeLabel}
-                      incompleteLabel={WORKOUT_LABELS.incompleteLabel}
-                      startTimePlaceholder={WORKOUT_LABELS.startTimePlaceholder}
-                      resultPlaceholder={WORKOUT_LABELS.resultPlaceholder}
-                      distancePlaceholder={WORKOUT_LABELS.distancePlaceholder}
-                      overallScoreLabel={WORKOUT_LABELS.overallScoreLabel}
-                      functionalScoreLabel={WORKOUT_LABELS.functionalScoreLabel}
-                      muscleScoreLabel={WORKOUT_LABELS.muscleScoreLabel}
-                      scorePlaceholder={WORKOUT_LABELS.scorePlaceholder}
-                      surfacePlaceholder={WORKOUT_LABELS.surfacePlaceholder}
-                      shoePlaceholder={WORKOUT_LABELS.shoePlaceholder}
-                      shoeMileagePlaceholder={WORKOUT_LABELS.shoeMileagePlaceholder}
-                      weatherPlaceholder={WORKOUT_LABELS.weatherPlaceholder}
-                      windPlaceholder={WORKOUT_LABELS.windPlaceholder}
-                      temperaturePlaceholder={WORKOUT_LABELS.temperaturePlaceholder}
-                      commentPlaceholder={WORKOUT_LABELS.commentPlaceholder}
-                      saveReportLabel={WORKOUT_LABELS.saveReportLabel}
-                      editWorkoutLabel={WORKOUT_LABELS.editWorkoutLabel}
-                      surfaceOptions={SURFACE_OPTIONS}
-                      shoeOptions={shoeOptions}
-                      weatherOptions={WEATHER_OPTIONS}
-                      windOptions={WIND_OPTIONS}
-                      shoeLoading={loadingShoes}
-                      entries={dayData?.planEntries ?? []}
-                      workoutForm={workoutForm}
-                      savingWorkouts={savingWorkouts}
-                      onChange={handleWorkoutChange}
-                      onSave={handleSaveWorkout}
-                      onEditWorkout={openWorkoutEdit}
-                    />
-                  </div>
+                  <WorkoutsCard
+                    userId={userId}
+                    messageApi={messageApi}
+                    title={WORKOUT_LABELS.title}
+                    emptyLabel={WORKOUT_LABELS.emptyLabel}
+                    completeLabel={WORKOUT_LABELS.completeLabel}
+                    incompleteLabel={WORKOUT_LABELS.incompleteLabel}
+                    startTimePlaceholder={WORKOUT_LABELS.startTimePlaceholder}
+                    resultPlaceholder={WORKOUT_LABELS.resultPlaceholder}
+                    distancePlaceholder={WORKOUT_LABELS.distancePlaceholder}
+                    overallScoreLabel={WORKOUT_LABELS.overallScoreLabel}
+                    functionalScoreLabel={WORKOUT_LABELS.functionalScoreLabel}
+                    muscleScoreLabel={WORKOUT_LABELS.muscleScoreLabel}
+                    scorePlaceholder={WORKOUT_LABELS.scorePlaceholder}
+                    surfacePlaceholder={WORKOUT_LABELS.surfacePlaceholder}
+                    shoePlaceholder={WORKOUT_LABELS.shoePlaceholder}
+                    shoeMileagePlaceholder={WORKOUT_LABELS.shoeMileagePlaceholder}
+                    weatherPlaceholder={WORKOUT_LABELS.weatherPlaceholder}
+                    windPlaceholder={WORKOUT_LABELS.windPlaceholder}
+                    temperaturePlaceholder={WORKOUT_LABELS.temperaturePlaceholder}
+                    commentPlaceholder={WORKOUT_LABELS.commentPlaceholder}
+                    saveReportLabel={WORKOUT_LABELS.saveReportLabel}
+                    editWorkoutLabel={WORKOUT_LABELS.editWorkoutLabel}
+                    surfaceOptions={SURFACE_OPTIONS}
+                    shoeOptions={shoeOptions}
+                    weatherOptions={WEATHER_OPTIONS}
+                    windOptions={WIND_OPTIONS}
+                    shoeLoading={loadingShoes}
+                    entries={visibleDayData.planEntries}
+                    workoutForm={workoutForm}
+                    savingWorkouts={savingWorkouts}
+                    onChange={handleWorkoutChange}
+                    onSave={handleSaveWorkout}
+                    onEditWorkout={openWorkoutEdit}
+                  />
                 </div>
-              </div>
-            </Card>
+              ) : (
+                <Empty
+                  className={styles.emptyState}
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={DAY_LABELS.unavailable}
+                />
+              )}
+            </section>
           </div>
         </div>
       </div>
       <DailyReportModal
         open={isReportOpen}
         title={REPORT_LABELS.title}
+        copyLabel={REPORT_LABELS.copyLabel}
+        copiedLabel={REPORT_LABELS.copiedLabel}
         closeLabel={REPORT_LABELS.closeLabel}
         reportText={reportText}
         onClose={() => setIsReportOpen(false)}
@@ -300,6 +317,6 @@ export function DiaryClient({ userId }: { userId: number }) {
         onCancel={closeWorkoutEdit}
         onSave={handleSaveWorkoutEdit}
       />
-    </main>
+    </div>
   );
 }

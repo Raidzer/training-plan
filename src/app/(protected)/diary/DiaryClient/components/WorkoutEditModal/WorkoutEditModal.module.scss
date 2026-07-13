@@ -5,5 +5,38 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.modal :global(.ant-modal-content) {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.modal :global(.ant-modal-footer .ant-btn) {
+  min-height: 44px;
+}
+
+@media (max-width: 639px) {
+  .modal :global(.ant-modal-footer) {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .modal :global(.ant-modal-footer .ant-btn) {
+    width: 100%;
+    margin-inline-start: 0;
+  }
+
+  .form :global(.ant-input) {
+    font-size: 1rem;
+  }
 }

@@ -9,7 +9,7 @@
 .pageStack {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 32px;
   width: 100%;
   min-width: 0;
 }
@@ -17,7 +17,8 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 24px;
+  align-items: start;
 }
 
 .calendarBlock {
@@ -29,74 +30,80 @@
   width: 100%;
 }
 
-.dayCard {
+.dayWorkspace {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
+  min-width: 0;
+  min-height: 320px;
+  padding: 24px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
 }
 
 .dayContent {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   width: 100%;
   min-width: 0;
 }
 
-.dayLayout {
-  display: flex;
-  flex-direction: row;
-  gap: 14px;
-  align-items: stretch;
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  min-width: 0;
 }
 
-.weightRecoveryBlock {
+.loadingState {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  flex: 0 0 280px;
-  max-width: 280px;
-  min-width: 220px;
+  gap: 20px;
 }
 
-.workoutsBlock {
-  flex: 1 1 0;
-  min-width: 0;
+.loadingLabel {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.emptyState {
+  display: grid;
+  min-height: 272px;
+  place-content: center;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .metricsGrid {
+    grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr);
+  }
 }
 
 @media (min-width: 1024px) {
   .grid {
-    grid-template-columns: 320px minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  }
+
+  .calendarBlock {
+    position: sticky;
+    top: 24px;
   }
 }
 
-@media (max-width: 900px) {
-  .dayLayout {
-    flex-direction: column;
+@media (max-width: 767px) {
+  .pageStack {
+    gap: 24px;
   }
 
-  .weightRecoveryBlock {
-    flex: 1 1 auto;
-    max-width: none;
-    min-width: 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .dayCard :global(.ant-card-body) {
-    padding: 12px !important;
+  .grid,
+  .dayContent {
+    gap: 16px;
   }
 
-  .dayCard :global(.ant-card-head) {
-    padding-inline: 12px !important;
-  }
-
-  .dayLayout {
-    gap: 12px;
-  }
-
-  .weightRecoveryBlock {
-    gap: 12px;
+  .dayWorkspace {
+    min-height: 280px;
+    padding: 16px;
   }
 }

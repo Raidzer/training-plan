@@ -1,39 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import {
-  AutoComplete,
-  Button,
-  Input,
-  InputNumber,
-  Select,
-  Space,
-  Tag,
-  Typography,
-  Tooltip,
-} from "antd";
-import { BuildOutlined, EditOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { Tabs, Typography } from "antd";
 import type { MessageInstance } from "antd/es/message/interface";
-import type { PlanEntry, SavingWorkoutsState, WorkoutFormState } from "../../types/diaryTypes";
-import { normalizeStartTimeInput } from "../../utils/diaryUtils";
-import { WorkoutShoeMileageFields } from "../WorkoutShoeMileageFields/WorkoutShoeMileageFields";
+import { WORKOUT_LABELS } from "../../constants/diaryConstants";
+import type {
+  PlanEntry,
+  SavingWorkoutsState,
+  WorkoutFormEntry,
+  WorkoutFormState,
+} from "../../types/diaryTypes";
 import { TemplateConstructorModal } from "@/components/templates/TemplateConstructorModal";
+import { WorkoutReportCard } from "../WorkoutReportCard/WorkoutReportCard";
+import type { WorkoutField } from "../WorkoutReportCard/WorkoutReportCard.types";
 import styles from "./WorkoutsCard.module.scss";
-
-type WorkoutField =
-  | "startTime"
-  | "resultText"
-  | "distanceKm"
-  | "commentText"
-  | "overallScore"
-  | "functionalScore"
-  | "muscleScore"
-  | "weather"
-  | "hasWind"
-  | "temperatureC"
-  | "surface"
-  | "shoeIds"
-  | "shoeMileageKm";
 
 type WorkoutsCardProps = {
   userId: number;
@@ -75,8 +56,49 @@ type WorkoutsCardProps = {
   onEditWorkout?: (entryId: number) => void;
 };
 
-const normalizeOptions = (options: readonly { value: string | number; label: string }[]) =>
-  options.map((option) => ({ value: option.value, label: option.label }));
+type ConstructorState = {
+  visible: boolean;
+  entryId: number | null;
+  taskText: string;
+};
+
+const INITIAL_CONSTRUCTOR_STATE: ConstructorState = {
+  visible: false,
+  entryId: null,
+  taskText: "",
+};
+
+const isWorkoutComplete = (form: WorkoutFormEntry | undefined) =>
+  Boolean(form?.resultText?.trim()) && Boolean(form?.commentText?.trim());
+
+const getWorkoutTabLabel = (
+  entry: PlanEntry,
+  form: WorkoutFormEntry | undefined,
+  completeLabel: string,
+  incompleteLabel: string
+) => {
+  const isComplete = isWorkoutComplete(form);
+  const statusLabel = isComplete ? completeLabel : incompleteLabel;
+
+  return (
+    <span className={styles.tabLabel}>
+      {isComplete ? (
+        <CheckCircleOutlined className={styles.tabIcon} aria-hidden />
+      ) : (
+        <ClockCircleOutlined className={styles.tabIcon} aria-hidden />
+      )}
+      <span className={styles.tabText}>
+        <span className={styles.tabTitle}>
+          {WORKOUT_LABELS.sessionLabel} {entry.sessionOrder}
+        </span>
+        <span className={styles.tabStatus} aria-hidden>
+          {statusLabel}
+        </span>
+        <span className={styles.srOnly}>, {statusLabel}</span>
+      </span>
+    </span>
+  );
+};
 
 export function WorkoutsCard({
   userId,
@@ -113,33 +135,9 @@ export function WorkoutsCard({
   onSave,
   onEditWorkout,
 }: WorkoutsCardProps) {
-  const getDisplayValue = (
-    val: string | null | undefined,
-    opts: readonly { value: string | number; label: string }[]
-  ) => {
-    if (!val) return "";
-    const match = opts.find((o) => o.value === val);
-    return match ? match.label : val;
-  };
-
-  const surfaceOptionsAC = surfaceOptions.map((o) => ({ value: o.label, label: o.label }));
-  const weatherOptionsAC = weatherOptions.map((o) => ({ value: o.label, label: o.label }));
-
-  const normalizedShoeOptions = shoeOptions.map((option) => ({
-    value: option.value,
-    label: option.label,
-  }));
-  const normalizedWindOptions = normalizeOptions(windOptions);
-
-  const [constructorState, setConstructorState] = useState<{
-    visible: boolean;
-    entryId: number | null;
-    taskText: string;
-  }>({
-    visible: false,
-    entryId: null,
-    taskText: "",
-  });
+  const [constructorState, setConstructorState] =
+    useState<ConstructorState>(INITIAL_CONSTRUCTOR_STATE);
+  const [activeWorkoutKey, setActiveWorkoutKey] = useState<string | null>(null);
 
   const openConstructor = (entryId: number, taskText: string) => {
     setConstructorState({
@@ -150,233 +148,83 @@ export function WorkoutsCard({
   };
 
   const closeConstructor = () => {
-    setConstructorState((prev) => ({ ...prev, visible: false }));
+    setConstructorState((previousState) => ({ ...previousState, visible: false }));
   };
 
   const applyConstructorResult = (resultText: string) => {
     if (constructorState.entryId !== null) {
       onChange(constructorState.entryId, "resultText", resultText);
     }
+
     closeConstructor();
   };
 
+  const workoutItems = entries.map((entry) => {
+    const form = workoutForm[entry.id];
+
+    return {
+      key: String(entry.id),
+      label: getWorkoutTabLabel(entry, form, completeLabel, incompleteLabel),
+      children: (
+        <WorkoutReportCard
+          entry={entry}
+          form={form}
+          saving={Boolean(savingWorkouts[entry.id])}
+          completeLabel={completeLabel}
+          incompleteLabel={incompleteLabel}
+          startTimeLabel={startTimePlaceholder}
+          resultLabel={resultPlaceholder}
+          distanceLabel={distancePlaceholder}
+          overallScoreLabel={overallScoreLabel}
+          functionalScoreLabel={functionalScoreLabel}
+          muscleScoreLabel={muscleScoreLabel}
+          scorePlaceholder={scorePlaceholder}
+          surfaceLabel={surfacePlaceholder}
+          shoeLabel={shoePlaceholder}
+          shoeMileageLabel={shoeMileagePlaceholder}
+          weatherLabel={weatherPlaceholder}
+          windLabel={windPlaceholder}
+          temperatureLabel={temperaturePlaceholder}
+          commentLabel={commentPlaceholder}
+          saveReportLabel={saveReportLabel}
+          editWorkoutLabel={editWorkoutLabel}
+          surfaceOptions={surfaceOptions}
+          shoeOptions={shoeOptions}
+          weatherOptions={weatherOptions}
+          windOptions={windOptions}
+          shoeLoading={shoeLoading}
+          onChange={onChange}
+          onSave={onSave}
+          onOpenConstructor={openConstructor}
+          onEditWorkout={onEditWorkout}
+        />
+      ),
+    };
+  });
+  const resolvedActiveWorkoutKey = workoutItems.some((item) => item.key === activeWorkoutKey)
+    ? (activeWorkoutKey ?? "")
+    : (workoutItems[0]?.key ?? "");
+
   return (
-    <section className={`${styles.sectionPanel} ${styles.workoutsPanel}`}>
+    <section className={styles.sectionPanel} aria-labelledby="daily-workouts-title">
       <div className={styles.sectionHeader}>
-        <h3 className={styles.sectionTitle}>{title}</h3>
+        <h3 id="daily-workouts-title" className={styles.sectionTitle}>
+          {title}
+        </h3>
       </div>
-      {entries.length ? (
-        <Space orientation="vertical" size="middle" className={styles.workoutList}>
-          {entries.map((entry) => {
-            const form = workoutForm[entry.id];
 
-            const surfaceVal = form?.surface;
-            const isIndoorSurface =
-              surfaceVal === "manezh" ||
-              surfaceVal === "treadmill" ||
-              surfaceVal === "Манеж" ||
-              surfaceVal === "Беговая дорожка";
-
-            const surfaceValue = form?.surface ? form.surface : null;
-            const shoeValue = Array.isArray(form?.shoeIds) ? form.shoeIds : [];
-            const shoeMileageValue = form?.shoeMileageKm ?? {};
-            const weatherValue = form?.weather ? form.weather : null;
-            const windValue = form?.hasWind ? form.hasWind : null;
-            const isComplete =
-              Boolean(form?.resultText?.trim()) && Boolean(form?.commentText?.trim());
-
-            // Strip HTML from task text for matching logic, but keep it for display if needed
-            // Actually findMatchingTemplate expects plain text ideally
-            const rawTaskText = entry.taskText.replace(/<[^>]*>?/gm, "");
-
-            return (
-              <div key={entry.id} className={styles.workoutItem}>
-                <div className={styles.workoutHeader}>
-                  <div className={styles.workoutTextBlock}>
-                    <Typography.Text strong>
-                      {entry.sessionOrder}.{" "}
-                      <span
-                        className={styles.multilineText}
-                        dangerouslySetInnerHTML={{ __html: entry.taskText }}
-                      />
-                    </Typography.Text>
-                    {entry.commentText ? (
-                      <Typography.Paragraph type="secondary" className={styles.commentParagraph}>
-                        <span
-                          className={styles.multilineText}
-                          dangerouslySetInnerHTML={{ __html: entry.commentText }}
-                        />
-                      </Typography.Paragraph>
-                    ) : null}
-                  </div>
-                  <div className={styles.workoutHeaderActions}>
-                    {onEditWorkout && editWorkoutLabel ? (
-                      <Tooltip title={editWorkoutLabel}>
-                        <Button
-                          aria-label={`${editWorkoutLabel} ${entry.sessionOrder}`}
-                          icon={<EditOutlined />}
-                          size="small"
-                          type="text"
-                          onClick={() => onEditWorkout(entry.id)}
-                        />
-                      </Tooltip>
-                    ) : null}
-                    <Tag color={isComplete ? "green" : "default"}>
-                      {isComplete ? completeLabel : incompleteLabel}
-                    </Tag>
-                  </div>
-                </div>
-                <div className={styles.workoutInputs}>
-                  <Input
-                    value={form?.startTime ?? ""}
-                    maxLength={5}
-                    placeholder={startTimePlaceholder}
-                    onChange={(event) =>
-                      onChange(entry.id, "startTime", normalizeStartTimeInput(event.target.value))
-                    }
-                  />
-                  <div style={{ position: "relative" }}>
-                    <Input.TextArea
-                      value={form?.resultText ?? ""}
-                      autoSize={{ minRows: 4, maxRows: 12 }}
-                      placeholder={resultPlaceholder}
-                      onChange={(event) => onChange(entry.id, "resultText", event.target.value)}
-                      style={{ paddingRight: 40 }}
-                    />
-                    <Tooltip title="Конструктор отчета">
-                      <Button
-                        aria-label="Конструктор отчета"
-                        icon={<BuildOutlined />}
-                        size="small"
-                        type="text"
-                        style={{ position: "absolute", top: 8, right: 8, zIndex: 1, opacity: 0.6 }}
-                        onClick={() => openConstructor(entry.id, rawTaskText)}
-                      />
-                    </Tooltip>
-                  </div>
-                  <Input
-                    value={form?.distanceKm ?? ""}
-                    placeholder={distancePlaceholder}
-                    onChange={(event) => onChange(entry.id, "distanceKm", event.target.value)}
-                  />
-                  <div className={styles.workoutScores}>
-                    <div className={styles.workoutScoreField}>
-                      <Typography.Text>{overallScoreLabel}</Typography.Text>
-                      <InputNumber
-                        className={styles.workoutScoreInput}
-                        min={1}
-                        max={10}
-                        step={1}
-                        precision={0}
-                        placeholder={scorePlaceholder}
-                        value={form?.overallScore ?? null}
-                        onChange={(value) => onChange(entry.id, "overallScore", value)}
-                      />
-                    </div>
-                    <div className={styles.workoutScoreField}>
-                      <Typography.Text>{functionalScoreLabel}</Typography.Text>
-                      <InputNumber
-                        className={styles.workoutScoreInput}
-                        min={1}
-                        max={10}
-                        step={1}
-                        precision={0}
-                        placeholder={scorePlaceholder}
-                        value={form?.functionalScore ?? null}
-                        onChange={(value) => onChange(entry.id, "functionalScore", value)}
-                      />
-                    </div>
-                    <div className={styles.workoutScoreField}>
-                      <Typography.Text>{muscleScoreLabel}</Typography.Text>
-                      <InputNumber
-                        className={styles.workoutScoreInput}
-                        min={1}
-                        max={10}
-                        step={1}
-                        precision={0}
-                        placeholder={scorePlaceholder}
-                        value={form?.muscleScore ?? null}
-                        onChange={(value) => onChange(entry.id, "muscleScore", value)}
-                      />
-                    </div>
-                  </div>
-                  <div className={styles.workoutMetaGrid}>
-                    <AutoComplete
-                      value={getDisplayValue(surfaceValue, surfaceOptions)}
-                      placeholder={surfacePlaceholder}
-                      options={surfaceOptionsAC}
-                      allowClear
-                      onChange={(value: string) => onChange(entry.id, "surface", value)}
-                      filterOption={(inputValue, option) =>
-                        (option?.label ?? "").toUpperCase().includes(inputValue.toUpperCase())
-                      }
-                    />
-                    {isIndoorSurface ? null : (
-                      <>
-                        <AutoComplete
-                          value={getDisplayValue(weatherValue, weatherOptions)}
-                          placeholder={weatherPlaceholder}
-                          options={weatherOptionsAC}
-                          allowClear
-                          onChange={(value: string) => onChange(entry.id, "weather", value)}
-                          filterOption={(inputValue, option) =>
-                            (option?.label ?? "").toUpperCase().includes(inputValue.toUpperCase())
-                          }
-                        />
-                        <Select<string | null>
-                          value={windValue}
-                          placeholder={windPlaceholder}
-                          options={normalizedWindOptions}
-                          allowClear
-                          onChange={(value) => onChange(entry.id, "hasWind", value ?? "")}
-                        />
-                        <Input
-                          value={form?.temperatureC ?? ""}
-                          placeholder={temperaturePlaceholder}
-                          onChange={(event) =>
-                            onChange(entry.id, "temperatureC", event.target.value)
-                          }
-                        />
-                      </>
-                    )}
-                  </div>
-                  <WorkoutShoeMileageFields
-                    selectedShoeIds={shoeValue}
-                    shoeMileageKm={shoeMileageValue}
-                    shoeOptions={normalizedShoeOptions}
-                    shoeLoading={shoeLoading}
-                    shoePlaceholder={shoePlaceholder}
-                    mileagePlaceholder={shoeMileagePlaceholder}
-                    onShoeIdsChange={(value) => onChange(entry.id, "shoeIds", value)}
-                    onMileageChange={(shoeId, value) =>
-                      onChange(entry.id, "shoeMileageKm", {
-                        ...shoeMileageValue,
-                        [shoeId]: value,
-                      })
-                    }
-                  />
-                  <Input.TextArea
-                    value={form?.commentText ?? ""}
-                    autoSize={{ minRows: 3, maxRows: 10 }}
-                    placeholder={commentPlaceholder}
-                    onChange={(event) => onChange(entry.id, "commentText", event.target.value)}
-                  />
-                </div>
-                <div className={styles.workoutActions}>
-                  <Button
-                    type="primary"
-                    loading={savingWorkouts[entry.id]}
-                    onClick={() => onSave(entry.id)}
-                  >
-                    {saveReportLabel}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </Space>
+      {entries.length > 0 ? (
+        <Tabs
+          className={styles.tabs}
+          activeKey={resolvedActiveWorkoutKey}
+          destroyOnHidden={false}
+          items={workoutItems}
+          onChange={setActiveWorkoutKey}
+        />
       ) : (
-        <Typography.Text type="secondary">{emptyLabel}</Typography.Text>
+        <Typography.Text type="secondary" className={styles.emptyState}>
+          {emptyLabel}
+        </Typography.Text>
       )}
 
       <TemplateConstructorModal

@@ -1,4 +1,4 @@
-import { Input, Modal, Space, Typography } from "antd";
+import { Input, Modal, Space } from "antd";
 import type { WorkoutEditForm } from "../../types/diaryTypes";
 import styles from "./WorkoutEditModal.module.scss";
 
@@ -37,6 +37,7 @@ export function WorkoutEditModal({
     <Modal
       open={open}
       title={labels.title}
+      className={styles.modal}
       onCancel={onCancel}
       onOk={onSave}
       okText={labels.saveLabel}
@@ -54,16 +55,24 @@ export function WorkoutEditModal({
     >
       <Space orientation="vertical" size="middle" className={styles.form}>
         <div className={styles.field}>
-          <Typography.Text type="secondary">{labels.taskLabel}</Typography.Text>
+          <label className={styles.label} htmlFor="workout-edit-task">
+            {labels.taskLabel}
+          </label>
           <TextArea
+            id="workout-edit-task"
+            name="taskText"
             value={form.taskText}
             onChange={(event) => onTaskTextChange(event.target.value)}
             autoSize={{ minRows: 3, maxRows: 8 }}
           />
         </div>
         <div className={styles.field}>
-          <Typography.Text type="secondary">{labels.commentLabel}</Typography.Text>
+          <label className={styles.label} htmlFor="workout-edit-comment">
+            {labels.commentLabel}
+          </label>
           <TextArea
+            id="workout-edit-comment"
+            name="commentText"
             value={form.commentText}
             onChange={(event) => onCommentTextChange(event.target.value)}
             autoSize={{ minRows: 2, maxRows: 6 }}

@@ -1,12 +1,13 @@
 .sectionPanel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
-  padding: 14px;
+  height: 100%;
+  padding: 20px;
   border: 1px solid var(--surface-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-bg);
 }
 
@@ -20,25 +21,73 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.35;
 }
 
 .weightGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.weightForm {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.fieldLabel {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .weightRow {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+  min-width: 0;
 }
 
-@media (max-width: 640px) {
+.sectionPanel :global(.ant-input),
+.sectionPanel :global(.ant-btn) {
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+}
+
+.sectionPanel :global(.ant-input) {
+  min-width: 0;
+  color: var(--text-primary);
+  background: var(--control-bg);
+}
+
+.sectionPanel :global(.ant-input:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .sectionPanel {
+    padding: 16px;
+  }
+
   .weightRow {
     grid-template-columns: 1fr;
+  }
+
+  .weightRow :global(.ant-btn) {
+    width: 100%;
+  }
+
+  .sectionPanel :global(.ant-input) {
+    font-size: 1rem;
   }
 }

@@ -41,18 +41,28 @@ export const DIARY_MESSAGES = {
 } as const;
 
 export const HEADER_LABELS = {
-  title: "Дневник за день",
-  subtitle: "Отмечайте вес и отчеты о тренировках за выбранный день.",
+  title: "Ежедневный отчёт",
+  subtitle: "Фиксируйте тренировку, восстановление и показатели выбранного дня.",
   periodLabel: "Просмотр периода",
   dashboardLabel: "Назад",
 } as const;
 
 export const CALENDAR_LABELS = {
   title: "Календарь",
+  collapse: "Скрыть календарь",
+  expand: "Показать календарь",
+  loading: "Загрузка календаря",
+  reportComplete: "Отчёт заполнен",
+} as const;
+
+export const DAY_LABELS = {
+  loading: "Загружаем данные за выбранный день",
+  unavailable: "Данные выбранного дня недоступны",
 } as const;
 
 export const STATUS_LABELS = {
-  reportButton: "Ежедневный отчет",
+  reportButton: "Сформировать ежедневный отчёт",
+  dayStatusLabel: "Статус дня",
   dayComplete: "День заполнен",
   dayIncomplete: "День не заполнен",
   weightLabel: "Вес",
@@ -73,6 +83,7 @@ export const WEIGHT_LABELS = {
 
 export const RECOVERY_LABELS = {
   title: "Восстановление",
+  methodsLabel: "Способы восстановления",
   bathLabel: "Баня",
   mfrLabel: "МФР",
   massageLabel: "Массаж",
@@ -91,6 +102,11 @@ export const RECOVERY_LABELS = {
 
 export const WORKOUT_LABELS = {
   title: "Тренировки",
+  sessionLabel: "Тренировка",
+  coachCommentLabel: "Комментарий тренера",
+  constructorLabel: "Конструктор отчёта",
+  assessmentSectionLabel: "Оценка тренировки",
+  conditionsSectionLabel: "Условия и экипировка",
   emptyLabel: "На эту дату тренировки не запланированы.",
   completeLabel: "Заполнено",
   incompleteLabel: "Не заполнено",
@@ -121,6 +137,8 @@ export const WORKOUT_EDIT_LABELS = {
 } as const;
 
 export const REPORT_LABELS = {
-  title: "Ежедневный отчет",
+  title: "Ежедневный отчёт",
+  copyLabel: "Скопировать отчёт",
+  copiedLabel: "Отчёт скопирован",
   closeLabel: "Закрыть",
 } as const;
