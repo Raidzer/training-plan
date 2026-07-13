@@ -10,10 +10,12 @@ type PeriodMobileListProps = {
 
 export function PeriodMobileList({ days }: PeriodMobileListProps) {
   return (
-    <div className={styles.mobilePeriodList}>
+    <ul className={styles.mobilePeriodList} role="list">
       {days.map((day) => (
-        <PeriodDayCard key={day.date} day={day} />
+        <li className={styles.item} key={day.date}>
+          <PeriodDayCard day={day} />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

@@ -23,57 +23,79 @@ export const useDiaryPeriod = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [range, setRange] = useState<PeriodRange>(() => createPeriodRange(14));
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportingAll, setExportingAll] = useState(false);
   const [days, setDays] = useState<DayStatus[]>([]);
   const [totals, setTotals] = useState<PeriodTotals>(INITIAL_PERIOD_TOTALS);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    let active = true;
+    const abortController = new AbortController();
     const from = formatPeriodApiDate(range[0]);
     const to = formatPeriodApiDate(range[1]);
 
-    fetch(`/api/diary/period?from=${from}&to=${to}`)
-      .then(async (response) => {
+    const loadPeriod = async () => {
+      try {
+        const response = await fetch(`/api/diary/period?from=${from}&to=${to}`, {
+          signal: abortController.signal,
+        });
         const data = (await response.json().catch(() => null)) as DiaryPeriodApiResponse | null;
 
-        if (!active) {
+        if (abortController.signal.aborted) {
           return;
         }
         if (!response.ok || !data?.days || !data?.totals) {
-          messageApi.error(data?.error ?? DIARY_PERIOD_LABELS.loadFail);
+          const errorMessage = data?.error ?? DIARY_PERIOD_LABELS.loadFail;
+          setDays([]);
+          setTotals(INITIAL_PERIOD_TOTALS);
+          setError(errorMessage);
+          messageApi.error(errorMessage);
           return;
         }
 
         setDays(data.days);
         setTotals(data.totals);
-      })
-      .catch((error) => {
-        if (!active) {
+        setError(null);
+      } catch (error) {
+        if (abortController.signal.aborted) {
           return;
         }
         console.error(error);
+        setDays([]);
+        setTotals(INITIAL_PERIOD_TOTALS);
+        setError(DIARY_PERIOD_LABELS.loadFail);
         messageApi.error(DIARY_PERIOD_LABELS.loadFail);
-      })
-      .finally(() => {
-        if (active) {
+      } finally {
+        if (!abortController.signal.aborted) {
           setLoading(false);
         }
-      });
+      }
+    };
+
+    void loadPeriod();
 
     return () => {
-      active = false;
+      abortController.abort();
     };
-  }, [messageApi, range]);
+  }, [messageApi, range, reloadKey]);
 
   const handleRangeChange = (nextRange: PeriodRange) => {
     setLoading(true);
+    setError(null);
     setRange(nextRange);
   };
 
   const handlePresetRange = (daysCount: number) => {
     setLoading(true);
+    setError(null);
     setRange(createPeriodRange(daysCount));
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    setReloadKey((currentKey) => currentKey + 1);
   };
 
   const downloadExport = useCallback(
@@ -133,6 +155,7 @@ export const useDiaryPeriod = () => {
     contextHolder,
     range,
     loading,
+    error,
     exporting,
     exportingAll,
     days,
@@ -141,5 +164,6 @@ export const useDiaryPeriod = () => {
     handlePresetRange,
     handleExport,
     handleExportAll,
+    handleRetry,
   };
 };

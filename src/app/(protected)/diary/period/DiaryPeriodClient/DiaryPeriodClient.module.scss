@@ -6,24 +6,16 @@
   min-width: 0;
 }
 
-.cardStyle {
-  width: 100%;
-}
-
-.spaceStyle {
+.pageStack {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
   width: 100%;
   min-width: 0;
 }
 
-@media (max-width: 640px) {
-  .cardStyle :global(.ant-card-body) {
-    padding: 12px !important;
-  }
-
-  .cardStyle :global(.ant-card-head) {
-    padding-inline: 12px !important;
+@media (max-width: 767px) {
+  .pageStack {
+    gap: 24px;
   }
 }

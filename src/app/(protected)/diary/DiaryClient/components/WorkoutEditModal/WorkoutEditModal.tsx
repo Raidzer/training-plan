@@ -43,7 +43,7 @@ export function WorkoutEditModal({
       okText={labels.saveLabel}
       cancelText={labels.cancelLabel}
       confirmLoading={saving}
-      maskClosable={!saving}
+      mask={{ closable: !saving }}
       closable={!saving}
       destroyOnHidden
       okButtonProps={{

@@ -1,19 +1,133 @@
-.summaryRow {
+.summarySection {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-  gap: 12px;
-}
-
-.summaryCard {
+  gap: 16px;
   min-width: 0;
 }
 
-.summaryCard :global(.ant-card-body) {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.sectionTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
-.summaryCard :global(.ant-typography) {
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
   margin: 0;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 136px;
+  padding: 20px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-bg);
+}
+
+.summaryLabel {
+  min-height: 40px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.summaryContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: auto 0 0;
+}
+
+.summaryValue {
+  color: var(--text-primary);
+  font-size: clamp(1.5rem, 2vw, 1.875rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.summaryDetail {
+  min-height: 20px;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.valueSkeleton,
+.detailSkeleton {
+  display: block;
+  border-radius: var(--radius-xs);
+  background: var(--interactive-active);
+  animation: skeletonPulse 900ms ease-in-out infinite alternate;
+}
+
+.valueSkeleton {
+  width: 72px;
+  height: 35px;
+}
+
+.detailSkeleton {
+  width: min(100%, 116px);
+  height: 19px;
+}
+
+@keyframes skeletonPulse {
+  from {
+    opacity: 0.45;
+  }
+
+  to {
+    opacity: 0.85;
+  }
+}
+
+@media (max-width: 1023px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .summaryGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .summaryCard {
+    min-height: 124px;
+    padding: 16px;
+  }
+
+  .summaryLabel {
+    min-height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valueSkeleton,
+  .detailSkeleton {
+    animation: none;
+    opacity: 0.65;
+  }
+}
+
+@media (forced-colors: active) {
+  .summaryCard {
+    border-color: CanvasText;
+  }
+
+  .valueSkeleton,
+  .detailSkeleton {
+    background: CanvasText;
+  }
 }

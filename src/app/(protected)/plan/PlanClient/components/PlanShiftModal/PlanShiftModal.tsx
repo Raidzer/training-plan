@@ -42,7 +42,7 @@ export function PlanShiftModal({
       okText={PLAN_TEXT.shift.save}
       cancelText={PLAN_TEXT.shift.cancel}
       confirmLoading={saving}
-      maskClosable={!saving}
+      mask={{ closable: !saving }}
       closable={!saving}
       destroyOnHidden
       okButtonProps={{
