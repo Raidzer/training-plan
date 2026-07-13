@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { MessageInstance } from "antd/es/message/interface";
 import { PLAN_TEXT } from "../constants/planText";
 import type { PlanImportFile, PlanImportResult } from "../types/planTypes";
@@ -20,17 +20,24 @@ export const usePlanImport = ({ msgApi }: UsePlanImportParams): UsePlanImportRes
   const [fileList, setFileList] = useState<PlanImportFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PlanImportResult | null>(null);
+  const uploadInProgressRef = useRef(false);
 
   const handleFileChange = (nextFileList: PlanImportFile[]) => {
     setFileList(nextFileList.slice(-1));
+    setResult(null);
   };
 
   const handleFileRemove = () => {
     setFileList([]);
+    setResult(null);
     return true;
   };
 
   const handleUpload = async () => {
+    if (uploadInProgressRef.current) {
+      return;
+    }
+
     const selected = fileList[0];
     const file = selected?.originFileObj as File | undefined;
 
@@ -39,6 +46,7 @@ export const usePlanImport = ({ msgApi }: UsePlanImportParams): UsePlanImportRes
       return;
     }
 
+    uploadInProgressRef.current = true;
     setLoading(true);
     setResult(null);
 
@@ -53,10 +61,9 @@ export const usePlanImport = ({ msgApi }: UsePlanImportParams): UsePlanImportRes
       const data = (await response.json().catch(() => null)) as PlanImportResult | null;
 
       if (!response.ok || !data) {
-        if (data) {
-          setResult(data);
-        }
-        msgApi.error(data?.error ?? PLAN_TEXT.messages.importFailed);
+        const errorMessage = data?.error ?? PLAN_TEXT.messages.importFailed;
+        setResult(data ?? { error: errorMessage });
+        msgApi.error(errorMessage);
         return;
       }
 
@@ -71,8 +78,10 @@ export const usePlanImport = ({ msgApi }: UsePlanImportParams): UsePlanImportRes
       msgApi.success(PLAN_TEXT.messages.importSuccess(data.inserted ?? 0));
     } catch (error) {
       console.error(error);
+      setResult({ error: PLAN_TEXT.messages.importRequestError });
       msgApi.error(PLAN_TEXT.messages.importRequestError);
     } finally {
+      uploadInProgressRef.current = false;
       setLoading(false);
     }
   };
