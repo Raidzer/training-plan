@@ -1,182 +1,202 @@
 import {
   CaretDownOutlined,
   CaretRightOutlined,
+  CloseOutlined,
   DeleteOutlined,
   EditOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
-import { Button, Tag, Tooltip, Typography } from "antd";
-import { CompetitionBlockEditForm } from "../CompetitionBlockEditForm/CompetitionBlockEditForm";
-import { CompetitionCreateForm } from "../CompetitionCreateForm/CompetitionCreateForm";
-import { CompetitionTable } from "../CompetitionTable/CompetitionTable";
+import { Button } from "antd";
+import { useState } from "react";
 import { competitionsLabels } from "../../constants/competitionsConstants";
 import type {
-  CompetitionBlockFormState,
-  CompetitionBlockFormUpdate,
+  CompetitionBlockEditorController,
   CompetitionBlockItem,
-  CompetitionFormState,
-  CompetitionItem,
+  CompetitionCreatorController,
+  CompetitionEditorController,
 } from "../../types/competitionsTypes";
-import { formatBlockPeriod } from "../../utils/competitionsUtils";
+import { formatBlockPeriod, formatCompetitionCount } from "../../utils/competitionsUtils";
+import { CompetitionBlockEditForm } from "../CompetitionBlockEditForm/CompetitionBlockEditForm";
+import { CompetitionCreateForm } from "../CompetitionCreateForm/CompetitionCreateForm";
+import { CompetitionList } from "../CompetitionList/CompetitionList";
 import styles from "./CompetitionBlockCard.module.scss";
 
 type CompetitionBlockCardProps = {
   block: CompetitionBlockItem;
   collapsed: boolean;
-  editingBlockId: number | null;
-  editingBlockForm: CompetitionBlockFormState;
-  updatingBlockId: number | null;
-  deletingBlockId: number | null;
-  creatingCompetitionBlockId: number | null;
-  editingCompetitionId: number | null;
-  editingCompetitionForm: CompetitionFormState;
-  updatingCompetitionId: number | null;
-  deletingCompetitionId: number | null;
-  competitionForm: CompetitionFormState;
-  onToggleBlock: (blockId: number) => void;
-  onStartBlockEdit: (block: CompetitionBlockItem) => void;
-  onChangeBlockEdit: CompetitionBlockFormUpdate;
-  onSaveBlockEdit: () => void;
-  onCancelBlockEdit: () => void;
-  onDeleteBlock: (block: CompetitionBlockItem) => void;
-  onChangeCompetitionForm: <Key extends keyof CompetitionFormState>(
-    blockId: number,
-    key: Key,
-    value: CompetitionFormState[Key]
-  ) => void;
-  onCreateCompetition: (blockId: number) => void;
-  onStartCompetitionEdit: (competition: CompetitionItem) => void;
-  onChangeCompetitionEdit: <Key extends keyof CompetitionFormState>(
-    key: Key,
-    value: CompetitionFormState[Key]
-  ) => void;
-  onSaveCompetitionEdit: () => void;
-  onCancelCompetitionEdit: () => void;
-  onDeleteCompetition: (competition: CompetitionItem) => void;
+  blockEditor: CompetitionBlockEditorController;
+  competitionCreator: CompetitionCreatorController;
+  competitionEditor: CompetitionEditorController;
+  onToggle: (blockId: number) => void;
 };
 
 export function CompetitionBlockCard({
   block,
   collapsed,
-  editingBlockId,
-  editingBlockForm,
-  updatingBlockId,
-  deletingBlockId,
-  creatingCompetitionBlockId,
-  editingCompetitionId,
-  editingCompetitionForm,
-  updatingCompetitionId,
-  deletingCompetitionId,
-  competitionForm,
-  onToggleBlock,
-  onStartBlockEdit,
-  onChangeBlockEdit,
-  onSaveBlockEdit,
-  onCancelBlockEdit,
-  onDeleteBlock,
-  onChangeCompetitionForm,
-  onCreateCompetition,
-  onStartCompetitionEdit,
-  onChangeCompetitionEdit,
-  onSaveCompetitionEdit,
-  onCancelCompetitionEdit,
-  onDeleteCompetition,
+  blockEditor,
+  competitionCreator,
+  competitionEditor,
+  onToggle,
 }: CompetitionBlockCardProps) {
-  const isEditingBlock = editingBlockId === block.id;
-  const isUpdatingBlock = updatingBlockId === block.id;
-  const isDeletingBlock = deletingBlockId === block.id;
-  const blockActionsDisabled =
-    updatingBlockId !== null || deletingBlockId !== null || isEditingBlock;
+  const [createFormOpen, setCreateFormOpen] = useState(false);
+  const isEditingBlock = blockEditor.editingId === block.id;
+  const isUpdatingBlock = blockEditor.updatingId === block.id;
+  const isDeletingBlock = blockEditor.deletingId === block.id;
+  const actionsDisabled =
+    blockEditor.editingId !== null ||
+    blockEditor.updatingId !== null ||
+    blockEditor.deletingId !== null ||
+    competitionCreator.creatingBlockId !== null ||
+    competitionEditor.editingId !== null ||
+    competitionEditor.updatingId !== null ||
+    competitionEditor.deletingId !== null;
+  const blockTitleId = "competition-block-" + block.id + "-title";
+  const blockBodyId = "competition-block-" + block.id + "-body";
+  const createFormIdPrefix = "competition-create-" + block.id;
+
+  const handleCreateCompetition = async () => {
+    const created = await competitionCreator.onCreate(block.id);
+    if (created) {
+      setCreateFormOpen(false);
+    }
+
+    return created;
+  };
+
+  if (isEditingBlock) {
+    return (
+      <article className={styles.blockCard}>
+        <CompetitionBlockEditForm
+          blockId={block.id}
+          form={blockEditor.form}
+          error={blockEditor.error}
+          validationAttempt={blockEditor.validationAttempt}
+          updating={isUpdatingBlock}
+          onChange={blockEditor.onChange}
+          onSave={blockEditor.onSave}
+          onCancel={blockEditor.onCancel}
+        />
+      </article>
+    );
+  }
 
   return (
-    <article className={styles.blockCard}>
-      <div className={styles.blockHeader}>
-        <Tooltip title={competitionsLabels.toggleBlockAria}>
-          <Button
-            type="text"
-            size="small"
-            icon={collapsed ? <CaretRightOutlined /> : <CaretDownOutlined />}
-            onClick={() => {
-              onToggleBlock(block.id);
-            }}
-            aria-label={competitionsLabels.toggleBlockAria}
-          />
-        </Tooltip>
+    <article className={styles.blockCard} aria-labelledby={blockTitleId}>
+      <header className={styles.blockHeader}>
+        <Button
+          type="text"
+          className={styles.toggleButton}
+          icon={collapsed ? <CaretRightOutlined /> : <CaretDownOutlined />}
+          onClick={() => {
+            onToggle(block.id);
+          }}
+          aria-label={
+            (collapsed
+              ? competitionsLabels.expandBlockAria
+              : competitionsLabels.collapseBlockAria) +
+            ": " +
+            block.title
+          }
+          aria-expanded={!collapsed}
+          aria-controls={blockBodyId}
+        />
 
-        <div className={styles.blockMain}>
-          {isEditingBlock ? (
-            <CompetitionBlockEditForm
-              form={editingBlockForm}
-              updating={isUpdatingBlock}
-              onChange={onChangeBlockEdit}
-              onSave={onSaveBlockEdit}
-              onCancel={onCancelBlockEdit}
-            />
-          ) : (
-            <div className={styles.blockTitleGroup}>
-              <div className={styles.blockTitleLine}>
-                <Typography.Title level={5} className={styles.blockTitle}>
-                  {block.title}
-                </Typography.Title>
-                <Tag>{block.competitions.length}</Tag>
-              </div>
-              <Typography.Text type="secondary">{formatBlockPeriod(block)}</Typography.Text>
-            </div>
-          )}
+        <div className={styles.blockInfo}>
+          <h3 id={blockTitleId}>{block.title}</h3>
+          <div className={styles.blockMeta}>
+            <span>{formatBlockPeriod(block)}</span>
+            <span aria-label={formatCompetitionCount(block.competitions.length)}>
+              {formatCompetitionCount(block.competitions.length)}
+            </span>
+          </div>
         </div>
 
-        {!isEditingBlock ? (
-          <div className={styles.blockActions}>
-            <Tooltip title={competitionsLabels.editButton}>
-              <Button
-                type="text"
-                icon={<EditOutlined />}
-                onClick={() => {
-                  onStartBlockEdit(block);
-                }}
-                disabled={blockActionsDisabled}
-                aria-label={competitionsLabels.editBlockAria}
-              />
-            </Tooltip>
-            <Tooltip title={competitionsLabels.deleteButton}>
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => {
-                  onDeleteBlock(block);
-                }}
-                disabled={blockActionsDisabled}
-                loading={isDeletingBlock}
-                aria-label={competitionsLabels.deleteBlockAria}
-              />
-            </Tooltip>
-          </div>
-        ) : null}
-      </div>
+        <div className={styles.blockActions}>
+          <Button
+            icon={<EditOutlined aria-hidden />}
+            aria-label={competitionsLabels.editBlockAria + ": " + block.title}
+            disabled={actionsDisabled}
+            onClick={() => {
+              blockEditor.onStart(block);
+            }}
+          >
+            {competitionsLabels.editButton}
+          </Button>
+          <Button
+            danger
+            icon={<DeleteOutlined aria-hidden />}
+            aria-label={competitionsLabels.deleteBlockAria + ": " + block.title}
+            disabled={actionsDisabled}
+            loading={isDeletingBlock}
+            onClick={() => {
+              blockEditor.onDelete(block);
+            }}
+          >
+            {competitionsLabels.deleteButton}
+          </Button>
+        </div>
+      </header>
 
       {!collapsed ? (
-        <div className={styles.blockBody}>
-          <CompetitionCreateForm
-            form={competitionForm}
-            saving={creatingCompetitionBlockId === block.id}
-            onChange={(key, value) => {
-              onChangeCompetitionForm(block.id, key, value);
-            }}
-            onSubmit={() => {
-              onCreateCompetition(block.id);
-            }}
-          />
-          <CompetitionTable
+        <div className={styles.blockBody} id={blockBodyId}>
+          <div className={styles.competitionsHeader}>
+            <div>
+              <h4>{competitionsLabels.blockCompetitionsTitle}</h4>
+              <span>{formatCompetitionCount(block.competitions.length)}</span>
+            </div>
+            <Button
+              icon={createFormOpen ? <CloseOutlined aria-hidden /> : <PlusOutlined aria-hidden />}
+              disabled={actionsDisabled}
+              aria-expanded={createFormOpen}
+              aria-controls={createFormIdPrefix + "-panel"}
+              aria-label={
+                (createFormOpen
+                  ? competitionsLabels.closeCompetitionFormButton
+                  : competitionsLabels.openCompetitionFormButton) +
+                ": " +
+                block.title
+              }
+              onClick={() => {
+                setCreateFormOpen((previous) => !previous);
+              }}
+            >
+              {createFormOpen
+                ? competitionsLabels.closeCompetitionFormButton
+                : competitionsLabels.openCompetitionFormButton}
+            </Button>
+          </div>
+
+          {createFormOpen ? (
+            <div id={createFormIdPrefix + "-panel"}>
+              <CompetitionCreateForm
+                idPrefix={createFormIdPrefix}
+                form={competitionCreator.getForm(block.id)}
+                error={competitionCreator.getError(block.id)}
+                validationAttempt={competitionCreator.getValidationAttempt(block.id)}
+                saving={competitionCreator.creatingBlockId === block.id}
+                disabled={actionsDisabled}
+                onChange={(key, value) => {
+                  competitionCreator.onChange(block.id, key, value);
+                }}
+                onSubmit={handleCreateCompetition}
+              />
+            </div>
+          ) : null}
+
+          <CompetitionList
+            idPrefix={"competition-list-" + block.id}
             competitions={block.competitions}
-            editingCompetitionId={editingCompetitionId}
-            editingCompetitionForm={editingCompetitionForm}
-            updatingCompetitionId={updatingCompetitionId}
-            deletingCompetitionId={deletingCompetitionId}
-            onStartEdit={onStartCompetitionEdit}
-            onChangeEdit={onChangeCompetitionEdit}
-            onSaveEdit={onSaveCompetitionEdit}
-            onCancelEdit={onCancelCompetitionEdit}
-            onDelete={onDeleteCompetition}
+            editingCompetitionId={competitionEditor.editingId}
+            editingCompetitionForm={competitionEditor.form}
+            editingCompetitionFormError={competitionEditor.error}
+            editingCompetitionValidationAttempt={competitionEditor.validationAttempt}
+            updatingCompetitionId={competitionEditor.updatingId}
+            deletingCompetitionId={competitionEditor.deletingId}
+            onStartEdit={competitionEditor.onStart}
+            onChangeEdit={competitionEditor.onChange}
+            onSaveEdit={competitionEditor.onSave}
+            onCancelEdit={competitionEditor.onCancel}
+            onDelete={competitionEditor.onDelete}
           />
         </div>
       ) : null}

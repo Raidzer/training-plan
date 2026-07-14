@@ -30,7 +30,7 @@ describe("RecordsClient", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders profile navigation and selects the first completed record", async () => {
+  it("renders dashboard navigation and selects the first completed record", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       createJsonResponse({
         records: [
@@ -51,7 +51,7 @@ describe("RecordsClient", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: RECORDS_LABELS.title })).toBeTruthy();
     const backLink = screen.getByRole("link", { name: RECORDS_LABELS.backButton });
-    expect(backLink.getAttribute("href")).toBe("/profile");
+    expect(backLink.getAttribute("href")).toBe("/dashboard");
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { level: 2, name: "10 км" })).toBeTruthy();

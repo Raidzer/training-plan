@@ -1,32 +1,42 @@
 .page {
+  --competition-error: #ff7875;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.page :global(.ant-btn),
+.page :global(.ant-input),
+.page :global(.ant-picker) {
+  min-height: 44px;
+}
+
+.workspace {
   display: grid;
-  justify-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   align-items: start;
-  width: 100%;
+  gap: 24px;
   min-width: 0;
-  min-height: 70vh;
+  margin-block-start: 28px;
 }
 
-.card {
-  width: 100%;
-  max-width: 1180px;
+.blocksColumn,
+.createColumn {
   min-width: 0;
 }
 
-.header {
-  margin-bottom: 20px;
+@media (max-width: 1023px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .createColumn {
+    order: -1;
+  }
 }
 
-.title {
-  margin: 0 0 8px !important;
-}
-
-.subtitle {
-  margin: 0 !important;
-}
-
-@media (max-width: 640px) {
-  .card :global(.ant-card-body) {
-    padding: 16px !important;
+@media (max-width: 767px) {
+  .page :global(.ant-input) {
+    font-size: 1rem;
   }
 }

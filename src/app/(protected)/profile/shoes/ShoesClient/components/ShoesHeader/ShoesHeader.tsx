@@ -17,7 +17,7 @@ export function ShoesHeader() {
         </Typography.Paragraph>
       </div>
 
-      <Link href="/profile" className={styles.backLink}>
+      <Link href="/dashboard" className={styles.backLink}>
         <ArrowLeftOutlined aria-hidden />
         <span>{shoesLabels.backButton}</span>
       </Link>

@@ -5,7 +5,7 @@ export const RECORDS_LABELS = {
   title: "Личные рекорды",
   subtitle:
     "Соберите лучшие результаты на одной странице и дополняйте их данными старта и протоколом.",
-  backButton: "Назад в профиль",
+  backButton: "Назад в главное меню",
   overviewLabel: "Сводка по личным рекордам",
   totalDistancesLabel: "Дистанций доступно",
   completedRecordsLabel: "Рекордов заполнено",

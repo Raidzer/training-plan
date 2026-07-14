@@ -6,7 +6,7 @@ export const shoesLabels = {
   eyebrow: "Спортивный профиль",
   subtitle:
     "Ведите ротацию тренировочных пар, контролируйте их пробег и заранее получайте уведомления о лимите.",
-  backButton: "Назад в профиль",
+  backButton: "Назад в главное меню",
   overviewLabel: "Сводка по обуви",
   overviewLoading: "Данные загружаются",
   overviewUnavailable: "Данные недоступны",

@@ -49,7 +49,47 @@ export const createCompetitionFormFromItem = (item: CompetitionItem): Competitio
 });
 
 export const formatBlockPeriod = (block: CompetitionBlockItem) =>
-  `${formatCompetitionDate(block.startDate)} - ${formatCompetitionDate(block.endDate)}`;
+  `${formatCompetitionDate(block.startDate)} — ${formatCompetitionDate(block.endDate)}`;
+
+export const formatCompetitionCount = (count: number) => {
+  const remainder100 = count % 100;
+  const remainder10 = count % 10;
+
+  if (remainder100 >= 11 && remainder100 <= 14) {
+    return `${count} стартов`;
+  }
+
+  if (remainder10 === 1) {
+    return `${count} старт`;
+  }
+
+  if (remainder10 >= 2 && remainder10 <= 4) {
+    return `${count} старта`;
+  }
+
+  return `${count} стартов`;
+};
+
+export const getCompetitionsOverviewStats = (blocks: CompetitionBlockItem[]) => {
+  let totalCompetitions = 0;
+  let mainCompetitions = 0;
+
+  for (const block of blocks) {
+    totalCompetitions += block.competitions.length;
+
+    for (const competition of block.competitions) {
+      if (competition.priority === COMPETITION_PRIORITIES.MAIN) {
+        mainCompetitions += 1;
+      }
+    }
+  }
+
+  return {
+    totalBlocks: blocks.length,
+    totalCompetitions,
+    mainCompetitions,
+  };
+};
 
 export const sortCompetitionBlocks = (blocks: CompetitionBlockItem[]): CompetitionBlockItem[] =>
   blocks
@@ -88,22 +128,48 @@ export const sortCompetitions = (items: CompetitionItem[]): CompetitionItem[] =>
 
 export const validateBlockForm = (
   form: CompetitionBlockFormState
-): ValidationResult<CompetitionBlockPayload> => {
+): ValidationResult<CompetitionBlockPayload, keyof CompetitionBlockFormState> => {
   const title = form.title.trim();
   if (!title) {
-    return { ok: false, error: competitionsLabels.blockTitleRequired };
+    return {
+      ok: false,
+      error: competitionsLabels.blockTitleRequired,
+      field: "title",
+    };
   }
+
   if (title.length > MAX_COMPETITION_BLOCK_TITLE_LENGTH) {
-    return { ok: false, error: competitionsLabels.blockTitleTooLong };
+    return {
+      ok: false,
+      error: competitionsLabels.blockTitleTooLong,
+      field: "title",
+    };
   }
-  if (!form.startDate || !form.endDate) {
-    return { ok: false, error: competitionsLabels.blockDateRequired };
+
+  if (!form.startDate) {
+    return {
+      ok: false,
+      error: competitionsLabels.blockDateRequired,
+      field: "startDate",
+    };
+  }
+
+  if (!form.endDate) {
+    return {
+      ok: false,
+      error: competitionsLabels.blockDateRequired,
+      field: "endDate",
+    };
   }
 
   const startDate = form.startDate.format(COMPETITIONS_DATE_FORMAT);
   const endDate = form.endDate.format(COMPETITIONS_DATE_FORMAT);
   if (startDate > endDate) {
-    return { ok: false, error: competitionsLabels.blockPeriodInvalid };
+    return {
+      ok: false,
+      error: competitionsLabels.blockPeriodInvalid,
+      field: "endDate",
+    };
   }
 
   return {
@@ -118,30 +184,56 @@ export const validateBlockForm = (
 
 export const validateCompetitionForm = (
   form: CompetitionFormState
-): ValidationResult<CompetitionPayload> => {
+): ValidationResult<CompetitionPayload, keyof CompetitionFormState> => {
   if (!form.date) {
-    return { ok: false, error: competitionsLabels.competitionDateRequired };
+    return {
+      ok: false,
+      error: competitionsLabels.competitionDateRequired,
+      field: "date",
+    };
   }
 
   const nameLocation = form.nameLocation.trim();
   if (!nameLocation) {
-    return { ok: false, error: competitionsLabels.nameLocationRequired };
+    return {
+      ok: false,
+      error: competitionsLabels.nameLocationRequired,
+      field: "nameLocation",
+    };
   }
+
   if (nameLocation.length > MAX_COMPETITION_NAME_LOCATION_LENGTH) {
-    return { ok: false, error: competitionsLabels.nameLocationTooLong };
+    return {
+      ok: false,
+      error: competitionsLabels.nameLocationTooLong,
+      field: "nameLocation",
+    };
   }
 
   const distanceLabel = form.distanceLabel.trim();
   if (!distanceLabel) {
-    return { ok: false, error: competitionsLabels.distanceRequired };
+    return {
+      ok: false,
+      error: competitionsLabels.distanceRequired,
+      field: "distanceLabel",
+    };
   }
+
   if (distanceLabel.length > MAX_COMPETITION_DISTANCE_LABEL_LENGTH) {
-    return { ok: false, error: competitionsLabels.distanceTooLong };
+    return {
+      ok: false,
+      error: competitionsLabels.distanceTooLong,
+      field: "distanceLabel",
+    };
   }
 
   const result = form.result.trim();
   if (result.length > MAX_COMPETITION_RESULT_LENGTH) {
-    return { ok: false, error: competitionsLabels.resultTooLong };
+    return {
+      ok: false,
+      error: competitionsLabels.resultTooLong,
+      field: "result",
+    };
   }
 
   return {

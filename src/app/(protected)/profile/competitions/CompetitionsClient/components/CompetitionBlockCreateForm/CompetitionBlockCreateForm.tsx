@@ -1,68 +1,76 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, DatePicker, Input, Typography } from "antd";
-import {
-  COMPETITIONS_DISPLAY_DATE_FORMAT,
-  competitionsLabels,
-} from "../../constants/competitionsConstants";
+import { Button, Typography } from "antd";
 import type {
+  CompetitionBlockFormError,
   CompetitionBlockFormState,
   CompetitionBlockFormUpdate,
 } from "../../types/competitionsTypes";
+import { competitionsLabels } from "../../constants/competitionsConstants";
+import { CompetitionBlockFields } from "../CompetitionBlockFields/CompetitionBlockFields";
 import styles from "./CompetitionBlockCreateForm.module.scss";
 
 type CompetitionBlockCreateFormProps = {
   form: CompetitionBlockFormState;
+  error: CompetitionBlockFormError | null;
+  validationAttempt: number;
   saving: boolean;
+  disabled: boolean;
   onChange: CompetitionBlockFormUpdate;
-  onSubmit: () => void;
+  onSubmit: () => Promise<boolean> | boolean | void;
 };
 
 export function CompetitionBlockCreateForm({
   form,
+  error,
+  validationAttempt,
   saving,
+  disabled,
   onChange,
   onSubmit,
 }: CompetitionBlockCreateFormProps) {
+  const formDisabled = disabled || saving;
+
   return (
-    <section className={styles.formSection}>
-      <Typography.Title level={5} className={styles.formTitle}>
-        {competitionsLabels.blockCreateTitle}
-      </Typography.Title>
-      <div className={styles.formRow}>
-        <Input
-          value={form.title}
-          onChange={(event) => {
-            onChange("title", event.target.value);
-          }}
-          placeholder={competitionsLabels.blockTitlePlaceholder}
-          disabled={saving}
-          className={styles.titleInput}
-          maxLength={255}
+    <section className={styles.panel} aria-labelledby="competition-block-create-heading">
+      <header className={styles.header}>
+        <Typography.Title level={2} id="competition-block-create-heading" className={styles.title}>
+          {competitionsLabels.blockCreateTitle}
+        </Typography.Title>
+        <Typography.Paragraph type="secondary" className={styles.description}>
+          {competitionsLabels.blockCreateDescription}
+        </Typography.Paragraph>
+      </header>
+
+      <form
+        className={styles.form}
+        noValidate
+        aria-labelledby="competition-block-create-heading"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSubmit();
+        }}
+      >
+        <CompetitionBlockFields
+          idPrefix="competition-block-create"
+          form={form}
+          error={error}
+          validationAttempt={validationAttempt}
+          disabled={formDisabled}
+          onChange={onChange}
         />
-        <DatePicker
-          value={form.startDate}
-          onChange={(date) => {
-            onChange("startDate", date);
-          }}
-          placeholder={competitionsLabels.startDatePlaceholder}
-          disabled={saving}
-          format={COMPETITIONS_DISPLAY_DATE_FORMAT}
-          className={styles.dateInput}
-        />
-        <DatePicker
-          value={form.endDate}
-          onChange={(date) => {
-            onChange("endDate", date);
-          }}
-          placeholder={competitionsLabels.endDatePlaceholder}
-          disabled={saving}
-          format={COMPETITIONS_DISPLAY_DATE_FORMAT}
-          className={styles.dateInput}
-        />
-        <Button type="primary" icon={<PlusOutlined />} onClick={onSubmit} loading={saving}>
+
+        <Button
+          type="primary"
+          htmlType="submit"
+          icon={<PlusOutlined aria-hidden />}
+          loading={saving}
+          disabled={formDisabled}
+          aria-label={competitionsLabels.createBlockButton}
+          className={styles.submitButton}
+        >
           {competitionsLabels.createBlockButton}
         </Button>
-      </div>
+      </form>
     </section>
   );
 }

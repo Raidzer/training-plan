@@ -193,4 +193,121 @@ describe("useCompetitions", () => {
     expect(hook.result.current.blocks[0].competitions).toEqual([competition]);
     expect(messageApi.success).toHaveBeenCalledWith(competitionsLabels.competitionSaveOk);
   });
+
+  it("должен показывать ошибку загрузки и восстанавливаться после retry", async () => {
+    const block = createBlock();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500))
+      .mockResolvedValueOnce(createJsonResponse({ blocks: [block] }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+    const modalApi = createModalApi();
+
+    const hook = renderHook(() =>
+      useCompetitions({
+        messageApi,
+        modalApi,
+      })
+    );
+
+    await waitFor(() => {
+      expect(hook.result.current.loading).toBe(false);
+    });
+
+    expect(hook.result.current.loadError).toBe(true);
+    expect(hook.result.current.blocks).toEqual([]);
+
+    await act(async () => {
+      await hook.result.current.handleRetry();
+    });
+
+    expect(hook.result.current.loadError).toBe(false);
+    expect(hook.result.current.blocks).toEqual([block]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("должен обновлять блок локально и закрывать редактор", async () => {
+    const block = createBlock();
+    const updated = createBlock({ title: "Весна — марафон" });
+    const { hook, fetchMock, messageApi } = await renderUseCompetitions([block]);
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ block: updated }));
+
+    act(() => {
+      hook.result.current.handleStartBlockEdit(block);
+      hook.result.current.updateEditingBlockForm("title", "Весна — марафон");
+    });
+
+    await act(async () => {
+      await hook.result.current.handleSaveBlockEdit();
+    });
+
+    const request = fetchMock.mock.calls[1]?.[1] as RequestInit;
+
+    expect(String(fetchMock.mock.calls[1]?.[0])).toBe("/api/competition-blocks/1");
+    expect(request.method).toBe("PATCH");
+    expect(hook.result.current.blocks[0].title).toBe("Весна — марафон");
+    expect(hook.result.current.editingBlockId).toBeNull();
+    expect(messageApi.success).toHaveBeenCalledWith(competitionsLabels.blockUpdateOk);
+  });
+
+  it("должен удалять подтверждённый блок без повторной загрузки", async () => {
+    const competition = createCompetition();
+    const block = createBlock({ competitions: [competition] });
+    const { hook, fetchMock, modalApi } = await renderUseCompetitions([block]);
+    const confirmMock = modalApi.confirm as unknown as ReturnType<typeof vi.fn>;
+    confirmMock.mockResolvedValueOnce(true);
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ deleted: true }));
+
+    act(() => {
+      hook.result.current.handleStartCompetitionEdit(competition);
+    });
+
+    await act(async () => {
+      await hook.result.current.handleDeleteBlock(block);
+    });
+
+    expect(String(fetchMock.mock.calls[1]?.[0])).toBe("/api/competition-blocks/1");
+    expect(fetchMock.mock.calls[1]?.[1]?.method).toBe("DELETE");
+    expect(hook.result.current.blocks).toEqual([]);
+    expect(hook.result.current.editingCompetitionId).toBeNull();
+  });
+
+  it("должен обновлять соревнование внутри выбранного блока", async () => {
+    const competition = createCompetition({ result: null });
+    const block = createBlock({ competitions: [competition] });
+    const updatedCompetition = createCompetition({ result: "39:30" });
+    const { hook, fetchMock, messageApi } = await renderUseCompetitions([block]);
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ competition: updatedCompetition }));
+
+    act(() => {
+      hook.result.current.handleStartCompetitionEdit(competition);
+      hook.result.current.updateEditingCompetitionForm("result", "39:30");
+    });
+
+    await act(async () => {
+      await hook.result.current.handleSaveCompetitionEdit();
+    });
+
+    expect(String(fetchMock.mock.calls[1]?.[0])).toBe("/api/competitions/10");
+    expect(fetchMock.mock.calls[1]?.[1]?.method).toBe("PATCH");
+    expect(hook.result.current.blocks[0].competitions[0].result).toBe("39:30");
+    expect(hook.result.current.editingCompetitionId).toBeNull();
+    expect(messageApi.success).toHaveBeenCalledWith(competitionsLabels.competitionUpdateOk);
+  });
+
+  it("не должен удалять соревнование после отмены подтверждения", async () => {
+    const competition = createCompetition();
+    const block = createBlock({ competitions: [competition] });
+    const { hook, fetchMock, modalApi } = await renderUseCompetitions([block]);
+    const confirmMock = modalApi.confirm as unknown as ReturnType<typeof vi.fn>;
+    confirmMock.mockResolvedValueOnce(false);
+
+    await act(async () => {
+      await hook.result.current.handleDeleteCompetition(competition);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.blocks[0].competitions).toEqual([competition]);
+  });
 });

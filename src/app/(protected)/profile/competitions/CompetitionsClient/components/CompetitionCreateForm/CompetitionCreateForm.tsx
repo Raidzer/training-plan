@@ -1,83 +1,79 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, DatePicker, Input, Select } from "antd";
-import { TimeInput } from "@/components/inputs/TimeInput";
-import {
-  COMPETITION_PRIORITY_OPTIONS,
-  COMPETITIONS_DISPLAY_DATE_FORMAT,
-  competitionsLabels,
-} from "../../constants/competitionsConstants";
-import type { CompetitionFormState } from "../../types/competitionsTypes";
-import { CompetitionDistanceInput } from "../CompetitionDistanceInput/CompetitionDistanceInput";
+import { Button, Typography } from "antd";
+import { competitionsLabels } from "../../constants/competitionsConstants";
+import type {
+  CompetitionFormError,
+  CompetitionFormState,
+  CompetitionFormUpdate,
+} from "../../types/competitionsTypes";
+import { CompetitionFormFields } from "../CompetitionFormFields/CompetitionFormFields";
 import styles from "./CompetitionCreateForm.module.scss";
 
 type CompetitionCreateFormProps = {
+  idPrefix: string;
   form: CompetitionFormState;
+  error?: CompetitionFormError | null;
+  validationAttempt?: number;
   saving: boolean;
-  onChange: <Key extends keyof CompetitionFormState>(
-    key: Key,
-    value: CompetitionFormState[Key]
-  ) => void;
-  onSubmit: () => void;
+  disabled?: boolean;
+  onChange: CompetitionFormUpdate;
+  onSubmit: () => Promise<boolean> | boolean | void;
 };
 
 export function CompetitionCreateForm({
+  idPrefix,
   form,
+  error = null,
+  validationAttempt = 0,
   saving,
+  disabled = false,
   onChange,
   onSubmit,
 }: CompetitionCreateFormProps) {
+  const titleId = idPrefix + "-title";
+  const formDisabled = disabled || saving;
+
   return (
-    <div className={styles.form}>
-      <DatePicker
-        value={form.date}
-        onChange={(date) => {
-          onChange("date", date);
+    <section className={styles.panel} aria-labelledby={titleId}>
+      <header className={styles.header}>
+        <Typography.Title level={4} id={titleId} className={styles.title}>
+          {competitionsLabels.competitionCreateTitle}
+        </Typography.Title>
+        <Typography.Paragraph type="secondary" className={styles.description}>
+          {competitionsLabels.competitionCreateDescription}
+        </Typography.Paragraph>
+      </header>
+
+      <form
+        className={styles.form}
+        noValidate
+        aria-labelledby={titleId}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSubmit();
         }}
-        placeholder={competitionsLabels.competitionDatePlaceholder}
-        disabled={saving}
-        format={COMPETITIONS_DISPLAY_DATE_FORMAT}
-        className={styles.dateInput}
-      />
-      <Input
-        value={form.nameLocation}
-        onChange={(event) => {
-          onChange("nameLocation", event.target.value);
-        }}
-        placeholder={competitionsLabels.nameLocationPlaceholder}
-        disabled={saving}
-        maxLength={255}
-        className={styles.nameInput}
-      />
-      <CompetitionDistanceInput
-        value={form.distanceLabel}
-        onChange={(value) => {
-          onChange("distanceLabel", value);
-        }}
-        disabled={saving}
-        className={styles.distanceInput}
-      />
-      <Select
-        value={form.priority}
-        onChange={(value) => {
-          onChange("priority", value);
-        }}
-        options={[...COMPETITION_PRIORITY_OPTIONS]}
-        disabled={saving}
-        className={styles.priorityInput}
-      />
-      <TimeInput
-        value={form.result}
-        onChange={(value) => {
-          onChange("result", value);
-        }}
-        placeholder={competitionsLabels.resultPlaceholder}
-        disabled={saving}
-        maxLength={32}
-        className={styles.resultInput}
-      />
-      <Button type="primary" icon={<PlusOutlined />} onClick={onSubmit} loading={saving}>
-        {competitionsLabels.addCompetitionButton}
-      </Button>
-    </div>
+      >
+        <CompetitionFormFields
+          idPrefix={idPrefix}
+          form={form}
+          error={error}
+          validationAttempt={validationAttempt}
+          disabled={formDisabled}
+          onChange={onChange}
+        />
+        <div className={styles.actions}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            icon={<PlusOutlined aria-hidden />}
+            loading={saving}
+            disabled={formDisabled}
+            aria-label={competitionsLabels.addCompetitionButton}
+          >
+            {competitionsLabels.addCompetitionButton}
+          </Button>
+        </div>
+      </form>
+    </section>
   );
 }
