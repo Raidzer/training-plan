@@ -4,6 +4,7 @@ import type {
   NameValidation,
   ShoeFormState,
   ShoeItem,
+  ShoeMileageProgress,
   ShoeNotificationAvailability,
 } from "../types/shoesTypes";
 
@@ -68,6 +69,65 @@ export const formatNotifications = (item: ShoeItem) => {
     channels.push(shoesLabels.telegramNotification);
   }
   return channels.length > 0 ? channels.join(", ") : shoesLabels.notificationsOff;
+};
+
+export const getPairCountLabel = (count: number) => {
+  const absoluteCount = Math.abs(count);
+  const lastTwoDigits = absoluteCount % 100;
+  const lastDigit = absoluteCount % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return shoesLabels.pairCountMany;
+  }
+
+  if (lastDigit === 1) {
+    return shoesLabels.pairCountOne;
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return shoesLabels.pairCountFew;
+  }
+
+  return shoesLabels.pairCountMany;
+};
+
+const parseMileage = (value: string | null) => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+};
+
+export const getShoeMileageProgress = (item: ShoeItem): ShoeMileageProgress => {
+  const currentKm = parseMileage(item.currentMileageKm) ?? 0;
+  const limitKm = parseMileage(item.mileageLimitKm);
+
+  if (limitKm === null) {
+    return {
+      currentKm,
+      limitKm: null,
+      percentage: null,
+      remainingKm: null,
+      limitReached: false,
+    };
+  }
+
+  const limitReached = currentKm >= limitKm;
+  const percentage = limitKm === 0 ? 100 : Math.min((currentKm / limitKm) * 100, 100);
+
+  return {
+    currentKm,
+    limitKm,
+    percentage,
+    remainingKm: Math.max(limitKm - currentKm, 0),
+    limitReached,
+  };
 };
 
 export const createEmptyForm = (): ShoeFormState => ({
