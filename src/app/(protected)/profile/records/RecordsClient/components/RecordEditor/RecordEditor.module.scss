@@ -1,0 +1,294 @@
+.editor {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-bg);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 24px;
+  padding: clamp(20px, 3vw, 28px);
+  border-block-end: 1px solid var(--surface-border);
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: block;
+  margin-block-end: 6px;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.375rem, 1.2rem + 0.5vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.statusFilled,
+.statusEmpty,
+.statusInvalid {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-block-start: 10px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.statusMarker {
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.statusFilled .statusMarker {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+}
+
+.statusInvalid .statusMarker {
+  border-color: #ff7875;
+  background: #ff7875;
+}
+
+.timePreview {
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+.guide {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin: 20px clamp(20px, 3vw, 28px) 0;
+  padding-block-end: 20px;
+  border-block-end: 1px solid var(--surface-border);
+}
+
+.guideIcon {
+  margin-block-start: 3px;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.guide strong {
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.guide p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.form {
+  display: grid;
+  min-width: 0;
+  gap: 24px;
+  padding: clamp(20px, 3vw, 28px);
+}
+
+.resultGrid,
+.eventGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.field label {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.requiredMark {
+  margin-inline-start: 4px;
+  color: #ff7875;
+}
+
+.field :global(.ant-input),
+.field :global(.ant-picker),
+.field :global(.ant-input-affix-wrapper) {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.timeInput {
+  font-size: 1.125rem !important;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.control {
+  width: 100%;
+}
+
+.hintText,
+.errorText {
+  min-height: 18px;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.hintText {
+  color: var(--text-secondary);
+}
+
+.errorText {
+  color: #ff7875;
+}
+
+.eventDetails {
+  min-width: 0;
+  margin: 0;
+  padding: 22px 0 0;
+  border: 0;
+  border-block-start: 1px solid var(--surface-border);
+}
+
+.eventDetails legend {
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.eventDescription {
+  margin: 4px 0 18px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.protocolField {
+  grid-column: 1 / -1;
+}
+
+.clearRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 16px;
+  padding-block-start: 4px;
+}
+
+.clearRow span {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  text-align: end;
+}
+
+.saveError {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 120, 117, 0.45);
+  border-radius: var(--radius-sm);
+  color: #ffccc7;
+  background: rgba(255, 77, 79, 0.08);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 16px;
+  padding-block-start: 20px;
+  border-block-start: 1px solid var(--surface-border);
+}
+
+.savedState,
+.unsavedState {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.actions :global(.ant-btn),
+.clearRow :global(.ant-btn) {
+  min-height: 44px;
+}
+
+@media (max-width: 639px) {
+  .header {
+    gap: 16px;
+  }
+
+  .timePreview {
+    max-width: 46%;
+    font-size: 1.5rem;
+  }
+
+  .resultGrid,
+  .eventGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .protocolField {
+    grid-column: auto;
+  }
+
+  .field :global(.ant-input),
+  .field :global(.ant-picker-input > input) {
+    font-size: 1rem !important;
+  }
+
+  .clearRow,
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .clearRow span {
+    text-align: start;
+  }
+
+  .actions :global(.ant-btn),
+  .clearRow :global(.ant-btn) {
+    width: 100%;
+  }
+}
