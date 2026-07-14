@@ -35,6 +35,18 @@ function createApiRecord(overrides: Partial<ApiRecord> = {}): ApiRecord {
   };
 }
 
+function createDeferredResponse() {
+  let resolveResponse!: (response: Response) => void;
+  const promise = new Promise<Response>((resolve) => {
+    resolveResponse = resolve;
+  });
+
+  return {
+    promise,
+    resolve: resolveResponse,
+  };
+}
+
 describe("useRecords", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,6 +84,8 @@ describe("useRecords", () => {
       raceCity: "Moscow",
     });
     expect(fiveKmRow?.recordDate?.format("YYYY-MM-DD")).toBe("2026-05-10");
+    expect(result.current.loadError).toBe(false);
+    expect(result.current.hasChanges).toBe(false);
   });
 
   it("shows validation errors before save request", async () => {
@@ -96,10 +110,12 @@ describe("useRecords", () => {
       });
     });
 
+    let saveResult;
     await act(async () => {
-      await result.current.handleSave();
+      saveResult = await result.current.handleSave();
     });
 
+    expect(saveResult).toEqual({ status: "invalid", invalidDistanceKey: "5k" });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(messageApi.error).toHaveBeenCalledWith(RECORDS_LABELS.invalidTime);
     expect(result.current.errors["5k"]).toEqual({
@@ -177,7 +193,7 @@ describe("useRecords", () => {
     }
   );
 
-  it("clears row errors when field changes", async () => {
+  it("clears only the validation errors related to changed fields", async () => {
     const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ records: [] }));
     global.fetch = fetchMock as unknown as typeof fetch;
     const messageApi = createMessageApi();
@@ -209,7 +225,16 @@ describe("useRecords", () => {
       });
     });
 
+    expect(result.current.errors["5k"]).toEqual({ date: true });
+
+    act(() => {
+      result.current.handleFieldChange("5k", {
+        recordDate: dayjs("2026-05-10"),
+      });
+    });
+
     expect(result.current.errors).toEqual({});
+    expect(result.current.hasChanges).toBe(true);
   });
 
   it("saves normalized records and refreshes rows from response", async () => {
@@ -268,13 +293,15 @@ describe("useRecords", () => {
       timeText: "00:18.30",
       raceName: "Spring Run",
     });
+    expect(result.current.hasChanges).toBe(false);
+    expect(result.current.saveError).toBe(false);
   });
 
-  it("shows save error for failed response and network error", async () => {
+  it("keeps edits and shows save error for malformed response and network error", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(createJsonResponse({ records: [] }))
-      .mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500))
+      .mockResolvedValueOnce(createJsonResponse({ records: "invalid" }))
       .mockRejectedValueOnce(new Error("network"));
     global.fetch = fetchMock as unknown as typeof fetch;
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -307,13 +334,18 @@ describe("useRecords", () => {
 
     expect(messageApi.error).toHaveBeenCalledWith(RECORDS_LABELS.saveFail);
     expect(messageApi.error).toHaveBeenCalledTimes(2);
+    expect(result.current.saveError).toBe(true);
+    expect(result.current.hasChanges).toBe(true);
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("falls back to default rows when initial load fails", async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500));
+  it("blocks editing after load failure and restores records on retry", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500))
+      .mockResolvedValueOnce(createJsonResponse({ records: [createApiRecord()] }));
     global.fetch = fetchMock as unknown as typeof fetch;
     const messageApi = createMessageApi();
 
@@ -328,10 +360,144 @@ describe("useRecords", () => {
       expect(result.current.loading).toBe(false);
     });
 
+    expect(result.current.loadError).toBe(true);
     expect(result.current.rows.find((row) => row.distanceKey === "5k")).toMatchObject({
       timeText: "",
       recordDate: null,
     });
+
+    let blockedResult;
+    await act(async () => {
+      blockedResult = await result.current.handleSave();
+    });
+    expect(blockedResult).toEqual({ status: "blocked" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await result.current.handleRetry();
+    });
+
+    expect(result.current.loadError).toBe(false);
+    expect(result.current.rows.find((row) => row.distanceKey === "5k")?.timeText).toBe("00:18:30");
     expect(messageApi.error).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed successful load response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
+        records: [{ ...createApiRecord(), recordDate: null }],
+      })
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+
+    const { result } = renderHook(() =>
+      useRecords({
+        apiUrl: "/api/personal-records",
+        messageApi,
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.loadError).toBe(true);
+    expect(result.current.rows.every((row) => row.timeText === "")).toBe(true);
+  });
+
+  it("clears a record draft and its validation errors", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(createJsonResponse({ records: [createApiRecord()] }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+
+    const { result } = renderHook(() =>
+      useRecords({
+        apiUrl: "/api/personal-records",
+        messageApi,
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    act(() => {
+      result.current.handleFieldChange("5k", { timeText: "bad-time" });
+    });
+    await act(async () => {
+      await result.current.handleSave();
+    });
+    expect(result.current.errors["5k"]?.time).toBe(true);
+
+    act(() => {
+      result.current.handleClearRecord("5k");
+    });
+
+    expect(result.current.rows.find((row) => row.distanceKey === "5k")).toMatchObject({
+      timeText: "",
+      recordDate: null,
+      protocolUrl: "",
+      raceName: "",
+      raceCity: "",
+    });
+    expect(result.current.errors["5k"]).toBeUndefined();
+    expect(result.current.hasChanges).toBe(true);
+  });
+
+  it("blocks duplicate save requests until the active request completes", async () => {
+    const deferredResponse = createDeferredResponse();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({ records: [] }))
+      .mockImplementationOnce(() => deferredResponse.promise);
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+
+    const { result } = renderHook(() =>
+      useRecords({
+        apiUrl: "/api/personal-records",
+        messageApi,
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    act(() => {
+      result.current.handleFieldChange("5k", {
+        timeText: "00:18:30",
+        recordDate: dayjs("2026-05-10"),
+      });
+    });
+
+    let activeSave!: ReturnType<typeof result.current.handleSave>;
+    act(() => {
+      activeSave = result.current.handleSave();
+    });
+
+    await waitFor(() => {
+      expect(result.current.saving).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    let duplicateResult;
+    await act(async () => {
+      duplicateResult = await result.current.handleSave();
+    });
+
+    expect(duplicateResult).toEqual({ status: "blocked" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    deferredResponse.resolve(createJsonResponse({ records: [createApiRecord()] }));
+    await act(async () => {
+      await activeSave;
+    });
+
+    expect(result.current.saving).toBe(false);
+    expect(messageApi.success).toHaveBeenCalledWith(RECORDS_LABELS.saveOk);
   });
 });

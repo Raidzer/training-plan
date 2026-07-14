@@ -10,7 +10,13 @@ import {
 import {
   buildDefaultRows,
   buildRecordsPayload,
+  clearChangedFieldErrors,
+  clearRecordRow,
+  getFirstInvalidDistanceKey,
   getRecordsFromResponse,
+  getRecordsOverviewStats,
+  hasRecordDraft,
+  isRecordFilled,
   mapRecordsToRows,
   normalizeTimeText,
   validateRows,
@@ -62,8 +68,19 @@ describe("recordsUtils", () => {
     };
 
     expect(getRecordsFromResponse({ records: [validRecord] })).toEqual([validRecord]);
-    expect(getRecordsFromResponse({ records: "invalid" })).toEqual([]);
-    expect(getRecordsFromResponse(null)).toEqual([]);
+    expect(getRecordsFromResponse({ records: "invalid" })).toBeNull();
+    expect(
+      getRecordsFromResponse({ records: [{ ...validRecord, distanceKey: "unknown" }] })
+    ).toBeNull();
+    expect(getRecordsFromResponse({ records: [validRecord, validRecord] })).toBeNull();
+    expect(
+      getRecordsFromResponse({ records: [{ ...validRecord, timeText: "bad-time" }] })
+    ).toBeNull();
+    expect(
+      getRecordsFromResponse({ records: [{ ...validRecord, recordDate: "10.05.2026" }] })
+    ).toBeNull();
+    expect(getRecordsFromResponse({ records: [{ ...validRecord, recordDate: null }] })).toBeNull();
+    expect(getRecordsFromResponse(null)).toBeNull();
   });
 
   it("maps API records to editable rows and ignores unknown distances", () => {
@@ -122,6 +139,10 @@ describe("recordsUtils", () => {
         timeText: "01:24:00",
         recordDate: null,
       }),
+      createRecordRow({
+        distanceKey: "3k",
+        raceName: "Draft race",
+      }),
     ]);
 
     expect(result.hasTimeError).toBe(true);
@@ -139,6 +160,9 @@ describe("recordsUtils", () => {
     });
     expect(result.errors["21_1k"]).toEqual({
       date: true,
+    });
+    expect(result.errors["3k"]).toEqual({
+      time: true,
     });
   });
 
@@ -178,5 +202,103 @@ describe("recordsUtils", () => {
         raceCity: null,
       },
     ]);
+  });
+
+  it("detects filled records, drafts, and overview metrics", () => {
+    const emptyRow = createRecordRow();
+    const draftRow = createRecordRow({
+      distanceKey: "10k",
+      protocolUrl: " https://example.com/draft ",
+    });
+    const completedRow = createRecordRow({
+      distanceKey: "21_1k",
+      timeText: " 01:24:00 ",
+      protocolUrl: " https://example.com/protocol ",
+    });
+
+    expect(isRecordFilled(emptyRow)).toBe(false);
+    expect(hasRecordDraft(emptyRow)).toBe(false);
+    expect(isRecordFilled(draftRow)).toBe(false);
+    expect(hasRecordDraft(draftRow)).toBe(true);
+    expect(isRecordFilled(completedRow)).toBe(true);
+    expect(getRecordsOverviewStats([emptyRow, draftRow, completedRow])).toEqual({
+      totalDistances: 3,
+      completedRecords: 1,
+      recordsWithProtocol: 1,
+    });
+  });
+
+  it("clears all editable values while preserving record identity", () => {
+    const row = createRecordRow({
+      timeText: "00:18:30",
+      recordDate: dayjs("2026-05-10"),
+      protocolUrl: "https://example.com/protocol",
+      raceName: "Spring Run",
+      raceCity: "Moscow",
+    });
+
+    expect(clearRecordRow(row)).toEqual({
+      distanceKey: "5k",
+      label: "5 км",
+      timeText: "",
+      recordDate: null,
+      protocolUrl: "",
+      raceName: "",
+      raceCity: "",
+    });
+    expect(row.timeText).toBe("00:18:30");
+  });
+
+  it("returns the first invalid distance in row order", () => {
+    const rows = [createRecordRow({ distanceKey: "5k" }), createRecordRow({ distanceKey: "10k" })];
+
+    expect(
+      getFirstInvalidDistanceKey(rows, {
+        "10k": { date: true },
+        "5k": { time: true },
+      })
+    ).toBe("5k");
+    expect(getFirstInvalidDistanceKey(rows, {})).toBeNull();
+  });
+
+  it("clears only errors related to the changed field", () => {
+    const errors = {
+      "5k": {
+        time: true,
+        date: true,
+        url: true,
+        raceName: true,
+        raceCity: true,
+      },
+      "10k": { date: true },
+    };
+
+    const timeChangedErrors = clearChangedFieldErrors(errors, "5k", {
+      timeText: "00:18:30",
+    });
+
+    expect(timeChangedErrors).toEqual({
+      "5k": {
+        date: true,
+        url: true,
+        raceName: true,
+        raceCity: true,
+      },
+      "10k": { date: true },
+    });
+    expect(errors["5k"].time).toBe(true);
+
+    expect(
+      clearChangedFieldErrors(timeChangedErrors, "5k", {
+        timeText: "",
+      })
+    ).toEqual({
+      "5k": {
+        url: true,
+        raceName: true,
+        raceCity: true,
+      },
+      "10k": { date: true },
+    });
   });
 });

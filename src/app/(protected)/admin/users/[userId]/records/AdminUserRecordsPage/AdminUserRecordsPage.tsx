@@ -14,18 +14,18 @@ type AdminUserRecordsContentProps = {
 
 export function AdminUserRecordsContent({ userId, userLabel }: AdminUserRecordsContentProps) {
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <div className={styles.actions}>
         <Link href="/admin/users">
           <Button icon={<ArrowLeftOutlined />}>{ADMIN_USER_RECORDS_LABELS.backToUsers}</Button>
         </Link>
       </div>
 
-      <h3 className={styles.title}>
+      <h1 className={styles.title}>
         {ADMIN_USER_RECORDS_LABELS.titlePrefix}: {userLabel}
-      </h3>
+      </h1>
 
-      <RecordsClient apiUrl={`/api/admin/users/${userId}/records`} />
-    </main>
+      <RecordsClient apiUrl={`/api/admin/users/${userId}/records`} variant="embedded" />
+    </div>
   );
 }
