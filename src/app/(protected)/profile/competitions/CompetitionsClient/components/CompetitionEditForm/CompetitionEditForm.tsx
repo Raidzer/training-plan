@@ -1,27 +1,27 @@
 import { CloseOutlined, SaveOutlined } from "@ant-design/icons";
-import { Button } from "antd";
-import type {
-  CompetitionBlockFormError,
-  CompetitionBlockFormState,
-  CompetitionBlockFormUpdate,
-} from "../../types/competitionsTypes";
+import { Button, Typography } from "antd";
 import { competitionsLabels } from "../../constants/competitionsConstants";
-import { CompetitionBlockFields } from "../CompetitionBlockFields/CompetitionBlockFields";
-import styles from "./CompetitionBlockEditForm.module.scss";
+import type {
+  CompetitionFormError,
+  CompetitionFormState,
+  CompetitionFormUpdate,
+} from "../../types/competitionsTypes";
+import { CompetitionFormFields } from "../CompetitionFormFields/CompetitionFormFields";
+import styles from "./CompetitionEditForm.module.scss";
 
-type CompetitionBlockEditFormProps = {
-  blockId: number;
-  form: CompetitionBlockFormState;
-  error: CompetitionBlockFormError | null;
+type CompetitionEditFormProps = {
+  competitionId: number;
+  form: CompetitionFormState;
+  error: CompetitionFormError | null;
   validationAttempt: number;
   updating: boolean;
-  onChange: CompetitionBlockFormUpdate;
+  onChange: CompetitionFormUpdate;
   onSave: () => Promise<boolean | void> | boolean | void;
   onCancel: () => void;
 };
 
-export function CompetitionBlockEditForm({
-  blockId,
+export function CompetitionEditForm({
+  competitionId,
   form,
   error,
   validationAttempt,
@@ -29,12 +29,15 @@ export function CompetitionBlockEditForm({
   onChange,
   onSave,
   onCancel,
-}: CompetitionBlockEditFormProps) {
-  const titleId = "competition-block-edit-" + blockId + "-title";
+}: CompetitionEditFormProps) {
+  const idPrefix = "competition-edit-" + competitionId;
+  const titleId = idPrefix + "-title";
 
   return (
     <section className={styles.editor} aria-labelledby={titleId}>
-      <h3 id={titleId}>{competitionsLabels.editBlockTitle}</h3>
+      <Typography.Title level={4} id={titleId} className={styles.title}>
+        {competitionsLabels.competitionEditTitle}
+      </Typography.Title>
       <form
         className={styles.form}
         noValidate
@@ -43,13 +46,12 @@ export function CompetitionBlockEditForm({
           void onSave();
         }}
       >
-        <CompetitionBlockFields
-          idPrefix={"competition-block-edit-" + blockId}
+        <CompetitionFormFields
+          idPrefix={idPrefix}
           form={form}
           error={error}
           validationAttempt={validationAttempt}
           disabled={updating}
-          inline
           onChange={onChange}
         />
         <div className={styles.actions}>
@@ -63,7 +65,7 @@ export function CompetitionBlockEditForm({
           >
             {competitionsLabels.saveButton}
           </Button>
-          <Button icon={<CloseOutlined aria-hidden />} onClick={onCancel} disabled={updating}>
+          <Button icon={<CloseOutlined aria-hidden />} disabled={updating} onClick={onCancel}>
             {competitionsLabels.cancelButton}
           </Button>
         </div>

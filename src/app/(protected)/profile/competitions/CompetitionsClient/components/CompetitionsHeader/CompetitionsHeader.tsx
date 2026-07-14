@@ -1,25 +1,25 @@
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import Link from "next/link";
-import { RECORDS_LABELS } from "../../constants/recordsConstants";
-import styles from "./RecordsHeader.module.scss";
+import { competitionsLabels } from "../../constants/competitionsConstants";
+import styles from "./CompetitionsHeader.module.scss";
 
-export function RecordsHeader() {
+export function CompetitionsHeader() {
   return (
     <header className={styles.header}>
       <div className={styles.text}>
-        <span className={styles.eyebrow}>{RECORDS_LABELS.eyebrow}</span>
+        <span className={styles.eyebrow}>{competitionsLabels.eyebrow}</span>
         <Typography.Title level={1} className={styles.title}>
-          {RECORDS_LABELS.title}
+          {competitionsLabels.title}
         </Typography.Title>
         <Typography.Paragraph type="secondary" className={styles.subtitle}>
-          {RECORDS_LABELS.subtitle}
+          {competitionsLabels.subtitle}
         </Typography.Paragraph>
       </div>
 
       <Link href="/dashboard" className={styles.backLink}>
         <ArrowLeftOutlined aria-hidden />
-        <span>{RECORDS_LABELS.backButton}</span>
+        <span>{competitionsLabels.backButton}</span>
       </Link>
     </header>
   );
