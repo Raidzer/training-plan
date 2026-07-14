@@ -135,6 +135,9 @@ describe("useShoes", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.nameRequired);
+    expect(hook.result.current.newFormErrors).toEqual({
+      name: shoesLabels.nameRequired,
+    });
   });
 
   it("validates mileage before create request", async () => {
@@ -151,6 +154,9 @@ describe("useShoes", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(messageApi.warning).toHaveBeenCalledWith(shoesLabels.mileageInvalid);
+    expect(hook.result.current.newFormErrors).toEqual({
+      mileageLimitKm: shoesLabels.mileageInvalid,
+    });
   });
 
   it("creates shoe and resets create form", async () => {
@@ -184,6 +190,34 @@ describe("useShoes", () => {
     expect(hook.result.current.items).toEqual([created]);
     expect(hook.result.current.newForm.name).toBe("");
     expect(messageApi.success).toHaveBeenCalledWith(shoesLabels.saveOk);
+  });
+
+  it("prevents duplicate create requests while mutation is in flight", async () => {
+    const created = createShoe({ id: 2 });
+    const { hook, fetchMock } = await renderUseShoes();
+    let resolveCreate: ((response: Response) => void) | undefined;
+    const createResponse = new Promise<Response>((resolve) => {
+      resolveCreate = resolve;
+    });
+    fetchMock.mockReturnValueOnce(createResponse);
+
+    act(() => {
+      hook.result.current.updateNewForm("name", "Daily Trainer");
+    });
+
+    let requests: Promise<void>[] = [];
+    act(() => {
+      requests = [hook.result.current.handleCreate(), hook.result.current.handleCreate()];
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      resolveCreate?.(createJsonResponse({ shoe: created }, 201));
+      await Promise.all(requests);
+    });
+
+    expect(hook.result.current.items).toEqual([created]);
   });
 
   it("updates selected shoe and exits edit mode", async () => {
@@ -359,7 +393,7 @@ describe("useShoes", () => {
     expect(hook.result.current.editingId).toBeNull();
   });
 
-  it("handles failed initial load without showing silent mount error", async () => {
+  it("exposes failed initial load inline and retries without a toast", async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error("load-network"));
     global.fetch = fetchMock as unknown as typeof fetch;
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -378,8 +412,19 @@ describe("useShoes", () => {
     });
 
     expect(hook.result.current.items).toEqual([]);
+    expect(hook.result.current.loadError).toBe(true);
     expect(messageApi.error).not.toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+
+    const shoe = createShoe();
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ shoes: [shoe] }));
+
+    await act(async () => {
+      await hook.result.current.handleRetry();
+    });
+
+    expect(hook.result.current.loadError).toBe(false);
+    expect(hook.result.current.items).toEqual([shoe]);
 
     consoleErrorSpy.mockRestore();
   });

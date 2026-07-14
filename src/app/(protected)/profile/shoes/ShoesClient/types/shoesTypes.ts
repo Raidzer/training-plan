@@ -16,6 +16,8 @@ export type ShoeFormState = {
   notifyOnLimitTelegram: boolean;
 };
 
+export type ShoeFormErrors = Partial<Record<"name" | "mileageLimitKm", string>>;
+
 export type ShoeNotificationAvailability = {
   emailAvailable: boolean;
   emailReady: boolean;
@@ -39,4 +41,12 @@ export type ShoeMutationPayload = {
   mileageLimitKm?: number | null;
   notifyOnLimitEmail: boolean;
   notifyOnLimitTelegram: boolean;
+};
+
+export type ShoeMileageProgress = {
+  currentKm: number;
+  limitKm: number | null;
+  percentage: number | null;
+  remainingKm: number | null;
+  limitReached: boolean;
 };
