@@ -1,17 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { FormProps } from "antd";
-import type { MessageInstance } from "antd/es/message/interface";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { buildTimezoneOptions } from "@/shared/constants/timezones";
+import { getInternalAuthRedirect } from "@/shared/utils/authRedirect";
 import { REGISTER_TEXT } from "../constants/registerConstants";
-import type { RegisterApiResponse, RegisterFields } from "../types/registerTypes";
+import type {
+  RegisterApiResponse,
+  RegisterFields,
+  RegisterMessageApi,
+} from "../types/registerTypes";
+import { getRegisterErrorMessage, normalizeRegisterPayload } from "../utils/registerUtils";
 
-export const useRegisterForm = (messageApi: MessageInstance) => {
+export const useRegisterForm = (messageApi: RegisterMessageApi) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
   const searchParams = useSearchParams();
   const inviteToken = (searchParams.get("invite") ?? "").trim();
   const hasInvite = inviteToken.length >= 10;
@@ -26,16 +32,12 @@ export const useRegisterForm = (messageApi: MessageInstance) => {
       return;
     }
 
-    const payload = {
-      name: values.name,
-      lastName: values.lastName,
-      gender: values.gender,
-      login: values.login,
-      email: values.email,
-      password: values.password,
-      timezone: values.timezone,
-    };
+    if (submittingRef.current) {
+      return;
+    }
 
+    const payload = normalizeRegisterPayload(values);
+    submittingRef.current = true;
     setLoading(true);
 
     try {
@@ -48,24 +50,7 @@ export const useRegisterForm = (messageApi: MessageInstance) => {
       const data = (await response.json().catch(() => null)) as RegisterApiResponse | null;
 
       if (!response.ok) {
-        const apiError = data?.error;
-
-        if (apiError === "invite_invalid") {
-          messageApi.error(REGISTER_TEXT.inviteInvalid);
-          return;
-        }
-
-        if (apiError === "invite_used") {
-          messageApi.error(REGISTER_TEXT.inviteUsed);
-          return;
-        }
-
-        if (apiError === "invite_expired") {
-          messageApi.error(REGISTER_TEXT.inviteExpired);
-          return;
-        }
-
-        messageApi.error(data?.error ?? REGISTER_TEXT.registerFailed);
+        messageApi.error(getRegisterErrorMessage(data?.error));
         return;
       }
 
@@ -73,22 +58,23 @@ export const useRegisterForm = (messageApi: MessageInstance) => {
 
       const loginResponse = await signIn("credentials", {
         redirect: false,
-        email: values.email,
-        password: values.password,
+        email: payload.email,
+        password: payload.password,
         callbackUrl: "/dashboard",
       });
 
-      if (loginResponse?.error) {
+      if (!loginResponse || loginResponse.error || loginResponse.ok === false) {
         messageApi.warning(REGISTER_TEXT.autoLoginFailed);
         router.push("/login");
         return;
       }
 
-      router.push(loginResponse?.url ?? "/dashboard");
+      router.push(getInternalAuthRedirect(loginResponse.url));
     } catch (error) {
       messageApi.error(REGISTER_TEXT.requestError);
       console.error(error);
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

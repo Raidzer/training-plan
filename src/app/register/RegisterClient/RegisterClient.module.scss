@@ -1,49 +1,44 @@
-.page {
-  display: grid;
-  justify-items: center;
-  align-items: start;
-  min-height: 70vh;
-  width: 100%;
+.content {
+  width: min(100%, 640px);
   min-width: 0;
 }
 
-.card {
-  width: min(100%, 420px);
-  min-width: 0;
+.header {
+  margin-bottom: clamp(24px, 4vw, 32px);
 }
 
-.card :global(.ant-card-body),
-.card :global(.ant-form),
-.card :global(.ant-form-item-control-input),
-.card :global(.ant-input-affix-wrapper),
-.card :global(.ant-select) {
-  min-width: 0;
-}
-
-.card :global(.ant-radio-group) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
+.eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .title {
-  margin-top: 0;
-  margin-bottom: 8px;
+  max-width: 20ch;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.75rem, 1.5rem + 0.85vw, 2.25rem);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 
 .subtitle {
-  margin-bottom: 0px;
-  margin-top: 12px;
+  max-width: 56ch;
+  margin: 14px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
-.notice {
-  display: grid;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-@media (max-width: 640px) {
-  .card :global(.ant-card-body) {
-    padding: 16px !important;
+@media (max-width: 599px) {
+  .subtitle {
+    font-size: 1rem;
   }
 }
