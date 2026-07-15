@@ -1,67 +1,97 @@
 .panel {
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-bg);
-  box-shadow: var(--surface-shadow);
   min-width: 0;
+  padding: clamp(18px, 3vw, 28px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
 }
 
 .sectionHeaderRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 6px;
+}
+
+.sectionIndex {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .sectionTitle {
   margin: 0;
-  font-size: 18px;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  line-height: 1.35;
 }
 
 .sectionHint {
-  margin: 0;
-  font-size: 13px;
+  margin: 7px 0 18px;
   color: var(--text-muted);
-  line-height: 1.4;
-}
-
-.splitColumns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 12px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
 }
 
 .splitList {
-  list-style: none;
-  padding: 0;
+  max-height: 520px;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 0;
+  overflow-y: auto;
+  border-top: 1px solid var(--surface-border);
+  list-style: none;
+  scrollbar-color: var(--control-border) transparent;
+  scrollbar-width: thin;
 }
 
 .splitItem {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  min-height: 44px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--surface-border);
   font-variant-numeric: tabular-nums;
-  min-width: 0;
+}
+
+.splitNumber,
+.splitLabel,
+.splitTime {
+  font-family: var(--font-data);
+}
+
+.splitNumber {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+}
+
+.splitLabel {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.splitTime {
+  color: var(--text-primary);
+  font-size: 0.875rem;
 }
 
 .emptyState {
+  min-height: 96px;
   margin: 0;
+  padding: 20px;
+  border: 1px dashed var(--control-border);
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
+  background: var(--surface-soft);
+  font-size: 0.8125rem;
+  line-height: 1.5;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .panel {
     padding: 16px;
-  }
-
-  .splitColumns {
-    grid-template-columns: 1fr;
   }
 }

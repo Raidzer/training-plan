@@ -1,0 +1,11 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 4vw, 44px);
+  width: 100%;
+  min-width: 0;
+}
+
+.workspace {
+  min-width: 0;
+}
