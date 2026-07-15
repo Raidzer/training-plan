@@ -1,6 +1,6 @@
 import type { ClubRecord } from "@/server/personalRecords";
 import type { PersonalRecordDistanceKey } from "@/shared/constants/personalRecords.constants";
-import { RESULTS_TIME_EPSILON } from "../constants/resultsConstants";
+import { RESULTS_LABELS, RESULTS_TIME_EPSILON } from "../constants/resultsConstants";
 import type {
   ResultsDistanceKey,
   ResultsEntry,
@@ -154,6 +154,23 @@ export const buildMetaItems = (item: ResultsEntry) => {
   }
 
   return meta;
+};
+
+export const formatResultsCount = (count: number) => {
+  const absoluteCount = Math.abs(count);
+  const lastTwoDigits = absoluteCount % 100;
+  const lastDigit = absoluteCount % 10;
+  let suffix: string = RESULTS_LABELS.resultCountMany;
+
+  if (lastTwoDigits < 11 || lastTwoDigits > 14) {
+    if (lastDigit === 1) {
+      suffix = RESULTS_LABELS.resultCountOne;
+    } else if (lastDigit >= 2 && lastDigit <= 4) {
+      suffix = RESULTS_LABELS.resultCountFew;
+    }
+  }
+
+  return `${count} ${suffix}`;
 };
 
 export const sortResults = (items: ResultsEntry[]) =>

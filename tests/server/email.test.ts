@@ -30,6 +30,7 @@ describe("email (Отправка писем)", () => {
       expect(sendMailMock).toHaveBeenCalledTimes(1);
 
       const callArgs = sendMailMock.mock.calls[0][0];
+      expect(callArgs.from).toBe('"Сервис бегового клуба СПИРОС" <noreply@training-plan.com>');
       expect(callArgs.to).toBe(email);
       expect(callArgs.subject).toBe("Подтверждение Email");
       expect(callArgs.html).toContain(token);

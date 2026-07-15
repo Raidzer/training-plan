@@ -8,27 +8,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import appIcon from "@/app/icon.png";
+import { PUBLIC_TOOL_LINKS } from "@/shared/constants/publicTools";
 import styles from "./Header.module.scss";
 
-const TOOL_LINKS = [
-  {
-    key: "result-equivalent",
-    href: "/tools/result-equivalent",
-    label: "Калькулятор прогноза результата",
-  },
-  {
-    key: "pace-calculator",
-    href: "/tools/pace-calculator",
-    label: "Калькулятор расчета темпа и результата на забеге",
-  },
-  {
-    key: "speed-to-pace",
-    href: "/tools/speed-to-pace",
-    label: "Калькулятор перевода скорости в темп",
-  },
-] as const;
-
-const usefulItems: NonNullable<MenuProps["items"]> = TOOL_LINKS.map((tool) => ({
+const usefulItems: NonNullable<MenuProps["items"]> = PUBLIC_TOOL_LINKS.map((tool) => ({
   key: tool.href,
   label: (
     <Link href={tool.href} className={styles.dropdownLink}>
@@ -49,7 +32,7 @@ const drawerItems: NonNullable<MenuProps["items"]> = [
   {
     key: "tools",
     label: "Полезное",
-    children: TOOL_LINKS.map((tool) => ({
+    children: PUBLIC_TOOL_LINKS.map((tool) => ({
       key: tool.href,
       label: (
         <Link href={tool.href} className={styles.drawerLink}>

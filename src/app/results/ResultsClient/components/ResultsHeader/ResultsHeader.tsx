@@ -1,13 +1,21 @@
-"use client";
+import { PublicPageHero } from "@/components/PublicPageHero/PublicPageHero";
+import { DISTANCE_TABS, RESULTS_LABELS } from "../../constants/resultsConstants";
 
-import { RESULTS_LABELS } from "../../constants/resultsConstants";
-import styles from "./ResultsHeader.module.scss";
+type ResultsHeaderProps = {
+  totalResults: number;
+};
 
-export function ResultsHeader() {
+export function ResultsHeader({ totalResults }: ResultsHeaderProps) {
   return (
-    <header className={styles.header}>
-      <h1 className={styles.title}>{RESULTS_LABELS.title}</h1>
-      <p className={styles.subtitle}>{RESULTS_LABELS.subtitle}</p>
-    </header>
+    <PublicPageHero
+      eyebrow={RESULTS_LABELS.eyebrow}
+      title={RESULTS_LABELS.title}
+      description={RESULTS_LABELS.subtitle}
+      titleId="results-page-title"
+      stats={[
+        { label: RESULTS_LABELS.totalResultsStat, value: totalResults },
+        { label: RESULTS_LABELS.distancesStat, value: DISTANCE_TABS.length },
+      ]}
+    />
   );
 }

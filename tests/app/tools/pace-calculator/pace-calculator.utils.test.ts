@@ -56,6 +56,14 @@ describe("app/tools/pace-calculator.utils", () => {
             createdAt: "2026-02-09T00:00:00.000Z",
           },
           { id: "bad" },
+          {
+            id: "invalid-values",
+            distanceMeters: Number.POSITIVE_INFINITY,
+            resultSeconds: 0,
+            paceSeconds: 220,
+            lapSeconds: 88,
+            createdAt: "not-a-date",
+          },
         ])
       )
     ).toHaveLength(1);

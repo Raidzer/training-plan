@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildMetaItems,
   formatResultDate,
+  formatResultsCount,
   groupResultsByDistance,
   mapClubRecordsToResults,
   sortResults,
@@ -175,6 +176,15 @@ describe("resultsUtils", () => {
         })
       )
     ).toEqual([]);
+  });
+
+  it("formats result count with Russian plural forms", () => {
+    expect(formatResultsCount(0)).toBe("0 финишей");
+    expect(formatResultsCount(1)).toBe("1 финиш");
+    expect(formatResultsCount(2)).toBe("2 финиша");
+    expect(formatResultsCount(5)).toBe("5 финишей");
+    expect(formatResultsCount(11)).toBe("11 финишей");
+    expect(formatResultsCount(21)).toBe("21 финиш");
   });
 
   it("sorts results by time, date, athlete and id", () => {

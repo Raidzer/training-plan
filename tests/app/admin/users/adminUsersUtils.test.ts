@@ -130,6 +130,10 @@ describe("adminUsersUtils", () => {
   });
 
   it("должен форматировать пол и API-ошибки", () => {
+    expect(ADMIN_USERS_LABELS.disableConfirmText).toBe(
+      "Пользователь не сможет входить в личный кабинет до обратного включения."
+    );
+    expect(ADMIN_USERS_LABELS.unauthorized).toBe("Нужно войти в личный кабинет.");
     expect(getGenderLabel("male")).toBe(ADMIN_USERS_LABELS.maleGender);
     expect(getGenderLabel("female")).toBe(ADMIN_USERS_LABELS.femaleGender);
     expect(getGenderLabel("")).toBe("-");

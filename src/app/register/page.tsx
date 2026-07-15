@@ -5,8 +5,9 @@ import { RegisterClient } from "./RegisterClient/RegisterClient";
 import { RegisterLoadingState } from "./RegisterClient/components/RegisterLoadingState/RegisterLoadingState";
 
 export const metadata: Metadata = {
-  title: "Регистрация | СПИРОС",
-  description: "Создание аккаунта участника СПИРОС по персональному приглашению.",
+  title: "Регистрация в личном кабинете | СПИРОС",
+  description:
+    "Создание аккаунта для личного кабинета бегового клуба СПИРОС по персональному приглашению.",
 };
 
 export default function RegisterPage() {

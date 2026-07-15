@@ -6,7 +6,11 @@ import { RESULT_EQUIVALENT_TEXT } from "./constants/resultEquivalentConstants";
 import { useResultEquivalent } from "./hooks/useResultEquivalent";
 import styles from "./ResultEquivalentClient.module.scss";
 
-export function ResultEquivalentClient() {
+type ResultEquivalentClientProps = {
+  showIntro?: boolean;
+};
+
+export function ResultEquivalentClient({ showIntro = true }: ResultEquivalentClientProps) {
   const {
     sourceDistanceInputValue,
     sourceTime,
@@ -21,13 +25,15 @@ export function ResultEquivalentClient() {
   } = useResultEquivalent();
 
   return (
-    <section className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>{RESULT_EQUIVALENT_TEXT.header.title}</h1>
-        <div className={styles.titleLine} />
-        <p className={styles.description}>{RESULT_EQUIVALENT_TEXT.header.description}</p>
-        <p className={styles.description}>{RESULT_EQUIVALENT_TEXT.header.hint}</p>
-      </header>
+    <div className={styles.page}>
+      {showIntro ? (
+        <header className={styles.header}>
+          <p className={styles.eyebrow}>{RESULT_EQUIVALENT_TEXT.header.eyebrow}</p>
+          <h1 className={styles.title}>{RESULT_EQUIVALENT_TEXT.header.title}</h1>
+          <p className={styles.description}>{RESULT_EQUIVALENT_TEXT.header.description}</p>
+          <p className={styles.description}>{RESULT_EQUIVALENT_TEXT.header.hint}</p>
+        </header>
+      ) : null}
 
       <div className={styles.calculatorGrid}>
         <InputPanel
@@ -43,6 +49,6 @@ export function ResultEquivalentClient() {
         />
         <EquivalentTable equivalents={equivalents} />
       </div>
-    </section>
+    </div>
   );
 }

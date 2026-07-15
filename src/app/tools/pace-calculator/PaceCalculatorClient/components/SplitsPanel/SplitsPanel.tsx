@@ -4,32 +4,32 @@ import styles from "./SplitsPanel.module.scss";
 
 type SplitsPanelProps = {
   splits: SplitItem[];
-  splitGroups: SplitItem[][];
 };
 
-export function SplitsPanel({ splits, splitGroups }: SplitsPanelProps) {
+export function SplitsPanel({ splits }: SplitsPanelProps) {
   return (
-    <div className={styles.panel}>
+    <section className={styles.panel} aria-labelledby="pace-splits-title">
       <div className={styles.sectionHeaderRow}>
-        <h2 className={styles.sectionTitle}>{PACE_CALCULATOR_TEXT.splits.title}</h2>
+        <p className={styles.sectionIndex}>Отсечки</p>
+        <h2 className={styles.sectionTitle} id="pace-splits-title">
+          {PACE_CALCULATOR_TEXT.splits.title}
+        </h2>
       </div>
       <p className={styles.sectionHint}>{PACE_CALCULATOR_TEXT.splits.hint}</p>
+
       {splits.length > 0 ? (
-        <div className={styles.splitColumns}>
-          {splitGroups.map((group, groupIndex) => (
-            <ul className={styles.splitList} key={`group-${groupIndex}`}>
-              {group.map((item) => (
-                <li className={styles.splitItem} key={item.label}>
-                  <span>{item.label}</span>
-                  <span>{item.time}</span>
-                </li>
-              ))}
-            </ul>
+        <ol className={styles.splitList} aria-label="Накопленное время по отметкам" role="list">
+          {splits.map((item, index) => (
+            <li className={styles.splitItem} key={item.label}>
+              <span className={styles.splitNumber}>{String(index + 1).padStart(2, "0")}</span>
+              <span className={styles.splitLabel}>{item.label}</span>
+              <strong className={styles.splitTime}>{item.time}</strong>
+            </li>
           ))}
-        </div>
+        </ol>
       ) : (
         <p className={styles.emptyState}>{PACE_CALCULATOR_TEXT.splits.empty}</p>
       )}
-    </div>
+    </section>
   );
 }

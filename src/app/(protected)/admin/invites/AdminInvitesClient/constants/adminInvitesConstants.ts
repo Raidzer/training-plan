@@ -69,7 +69,7 @@ export const ADMIN_INVITES_LABELS = {
   linkUnavailable: "Ссылка недоступна.",
   createOk: "Ссылка создана.",
   createFail: "Не удалось создать ссылку.",
-  unauthorized: "Нужно войти в систему.",
+  unauthorized: "Нужно войти в личный кабинет.",
   forbidden: "Недостаточно прав для создания приглашений.",
   invalidPayload: "Некорректные данные.",
 } as const;

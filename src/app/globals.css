@@ -8,6 +8,7 @@
   --page-bottom-gap: clamp(40px, 6vw, 64px);
   --page-footer-gap: 20px;
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-data: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -15,7 +16,7 @@
   --brand-color: #f5f5f5;
   --text-primary: #f5f5f5;
   --text-secondary: #b8b8b8;
-  --text-muted: #8c8c8c;
+  --text-muted: #9b9b9b;
   --surface-bg: #292929;
   --surface-card: #292929;
   --surface-elevated: #303030;

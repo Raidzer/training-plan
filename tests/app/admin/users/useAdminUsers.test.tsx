@@ -346,6 +346,9 @@ describe("useAdminUsers", () => {
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
 
     expect(confirmMock).toHaveBeenCalledTimes(1);
+    expect(confirmMock).toHaveBeenCalledWith(
+      expect.objectContaining({ content: ADMIN_USERS_LABELS.disableConfirmText })
+    );
     expect(JSON.parse(String(request.body))).toEqual({ isActive: false });
     expect(result.current.rows[0].isActive).toBe(false);
     expect(messageApi.success).toHaveBeenCalledWith(ADMIN_USERS_LABELS.userDisabled);
