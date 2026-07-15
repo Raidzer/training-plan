@@ -1,20 +1,38 @@
 "use client";
 
-import { Form } from "antd";
-import type { MessageInstance } from "antd/es/message/interface";
-import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
+import { App, Form } from "antd";
 import { useState } from "react";
 import { ADMIN_USERS_LABELS } from "../constants/adminUsersConstants";
+import {
+  AdminUsersApiError,
+  clearAdminUserTrainingData,
+  deleteAdminUser,
+  updateAdminUserPassword,
+  updateAdminUserRole,
+  updateAdminUserStatus,
+} from "../services/adminUsersApi";
 import type { AdminUserRow, PasswordFormValues, RoleFormValues } from "../types/adminUsersTypes";
 import { canDeleteAdminUser, getApiErrorMessage, getUserLabel } from "../utils/adminUsersUtils";
 
 type UseAdminUsersParams = {
   users: AdminUserRow[];
-  messageApi: MessageInstance;
-  modalApi: ModalHookAPI;
+  messageApi: ReturnType<typeof App.useApp>["message"];
+  modalApi: ReturnType<typeof App.useApp>["modal"];
 };
 
-export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersParams) => {
+const isFormValidationError = (error: unknown) => {
+  return Boolean(error && typeof error === "object" && "errorFields" in error);
+};
+
+const getRequestErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof AdminUsersApiError) {
+    return getApiErrorMessage(error.responseData, fallback);
+  }
+
+  return fallback;
+};
+
+export function useAdminUsers({ users, messageApi, modalApi }: UseAdminUsersParams) {
   const [roleForm] = Form.useForm<RoleFormValues>();
   const [passwordForm] = Form.useForm<PasswordFormValues>();
   const [rows, setRows] = useState<AdminUserRow[]>(users);
@@ -73,23 +91,17 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
       }
 
       setSavingRole(true);
-      const response = await fetch(`/api/admin/users/${activeUser.id}/role`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: values.role }),
-      });
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        messageApi.error(getApiErrorMessage(data, ADMIN_USERS_LABELS.roleUpdateFail));
-        return;
-      }
+      await updateAdminUserRole(activeUser.id, values.role);
 
       updateRow(activeUser.id, { role: values.role });
       messageApi.success(ADMIN_USERS_LABELS.roleUpdateOk);
       closeRoleModal();
-    } catch {
-      return;
+    } catch (error) {
+      if (isFormValidationError(error)) {
+        return;
+      }
+
+      messageApi.error(getRequestErrorMessage(error, ADMIN_USERS_LABELS.roleUpdateFail));
     } finally {
       setSavingRole(false);
     }
@@ -105,22 +117,16 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
       }
 
       setSavingPassword(true);
-      const response = await fetch(`/api/admin/users/${activeUser.id}/password`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: values.newPassword }),
-      });
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        messageApi.error(getApiErrorMessage(data, ADMIN_USERS_LABELS.passwordUpdateFail));
-        return;
-      }
+      await updateAdminUserPassword(activeUser.id, values.newPassword);
 
       messageApi.success(ADMIN_USERS_LABELS.passwordUpdateOk);
       closePasswordModal();
-    } catch {
-      return;
+    } catch (error) {
+      if (isFormValidationError(error)) {
+        return;
+      }
+
+      messageApi.error(getRequestErrorMessage(error, ADMIN_USERS_LABELS.passwordUpdateFail));
     } finally {
       setSavingPassword(false);
     }
@@ -130,24 +136,14 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     setSavingStatusId(user.id);
 
     try {
-      const response = await fetch(`/api/admin/users/${user.id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive }),
-      });
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        messageApi.error(getApiErrorMessage(data, ADMIN_USERS_LABELS.statusUpdateFail));
-        return;
-      }
+      await updateAdminUserStatus(user.id, isActive);
 
       updateRow(user.id, { isActive });
       messageApi.success(
         isActive ? ADMIN_USERS_LABELS.userEnabled : ADMIN_USERS_LABELS.userDisabled
       );
-    } catch {
-      messageApi.error(ADMIN_USERS_LABELS.statusUpdateFail);
+    } catch (error) {
+      messageApi.error(getRequestErrorMessage(error, ADMIN_USERS_LABELS.statusUpdateFail));
     } finally {
       setSavingStatusId(null);
     }
@@ -157,20 +153,12 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     setDeletingUserId(user.id);
 
     try {
-      const response = await fetch(`/api/admin/users/${user.id}`, {
-        method: "DELETE",
-      });
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        messageApi.error(getApiErrorMessage(data, ADMIN_USERS_LABELS.deleteUpdateFail));
-        return;
-      }
+      await deleteAdminUser(user.id);
 
       setRows((prev) => prev.filter((row) => row.id !== user.id));
       messageApi.success(ADMIN_USERS_LABELS.deleteUpdateOk);
-    } catch {
-      messageApi.error(ADMIN_USERS_LABELS.deleteUpdateFail);
+    } catch (error) {
+      messageApi.error(getRequestErrorMessage(error, ADMIN_USERS_LABELS.deleteUpdateFail));
     } finally {
       setDeletingUserId(null);
     }
@@ -180,19 +168,13 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     setClearingUserDataId(user.id);
 
     try {
-      const response = await fetch(`/api/admin/users/${user.id}/training-data`, {
-        method: "DELETE",
-      });
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        messageApi.error(getApiErrorMessage(data, ADMIN_USERS_LABELS.clearTrainingDataUpdateFail));
-        return;
-      }
+      await clearAdminUserTrainingData(user.id);
 
       messageApi.success(ADMIN_USERS_LABELS.clearTrainingDataUpdateOk);
-    } catch {
-      messageApi.error(ADMIN_USERS_LABELS.clearTrainingDataUpdateFail);
+    } catch (error) {
+      messageApi.error(
+        getRequestErrorMessage(error, ADMIN_USERS_LABELS.clearTrainingDataUpdateFail)
+      );
     } finally {
       setClearingUserDataId(null);
     }
@@ -284,4 +266,4 @@ export const useAdminUsers = ({ users, messageApi, modalApi }: UseAdminUsersPara
     handleClearUserTrainingData,
     handleDeleteUser,
   };
-};
+}
