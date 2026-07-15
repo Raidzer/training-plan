@@ -1,0 +1,133 @@
+.loading,
+.error {
+  width: min(100%, 1240px);
+  min-width: 0;
+  margin-inline: auto;
+  padding: clamp(28px, 4vw, 48px) var(--page-gutter) var(--page-bottom-gap);
+}
+
+.loading {
+  display: grid;
+  gap: 18px;
+}
+
+.loadingHeader {
+  display: grid;
+  gap: 10px;
+  padding-block-end: 24px;
+  border-block-end: 1px solid var(--surface-border);
+}
+
+.loadingHeader span,
+.loadingPanel {
+  background: var(--surface-card);
+  animation: loadingPulse 1.4s ease-in-out infinite;
+}
+
+.loadingHeader span:nth-child(1) {
+  width: 120px;
+  height: 12px;
+}
+
+.loadingHeader span:nth-child(2) {
+  width: min(420px, 72%);
+  height: 36px;
+}
+
+.loadingHeader span:nth-child(3) {
+  width: min(620px, 90%);
+  height: 18px;
+}
+
+.loadingPanel {
+  min-height: 220px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+}
+
+.error {
+  display: grid;
+  justify-items: start;
+  min-height: 60vh;
+  align-content: center;
+}
+
+.errorCode {
+  margin-block-end: 14px;
+  padding: 6px 8px;
+  border: 1px solid var(--surface-border);
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.error h1 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: clamp(1.75rem, 1.55rem + 0.7vw, 2.25rem);
+  line-height: 1.2;
+}
+
+.error p {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.errorActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-block-start: 24px;
+}
+
+.errorLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding-inline: 18px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--surface-bg);
+  text-decoration: none;
+}
+
+.errorLink:hover {
+  border-color: var(--control-border-hover);
+  color: var(--text-primary);
+  background: var(--interactive-hover);
+}
+
+@keyframes loadingPulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (max-width: 479px) {
+  .loading,
+  .error {
+    padding-inline: 12px;
+  }
+
+  .errorActions {
+    display: grid;
+    width: 100%;
+  }
+
+  .errorActions :global(.ant-btn),
+  .errorLink {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingHeader span,
+  .loadingPanel {
+    animation: none;
+  }
+}
