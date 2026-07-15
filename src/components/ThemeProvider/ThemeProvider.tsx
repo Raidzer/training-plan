@@ -12,8 +12,9 @@ import { APP_THEME } from "./themeConfig";
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
 const GIT_SHA = process.env.NEXT_PUBLIC_GIT_SHA;
+const APP_VERSION_LABEL = APP_VERSION === "dev" ? "dev-сборка" : `версия ${APP_VERSION}`;
 const APP_VERSION_TITLE =
-  GIT_SHA && GIT_SHA !== "local" ? `Версия ${APP_VERSION}, сборка ${GIT_SHA}` : undefined;
+  GIT_SHA && GIT_SHA !== "local" ? `${APP_VERSION_LABEL}, сборка ${GIT_SHA}` : undefined;
 
 dayjs.locale("ru");
 
@@ -50,7 +51,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           </main>
           {isTelegramRoute ? null : (
             <footer className={styles.footer} title={APP_VERSION_TITLE}>
-              СПИРОС · v{APP_VERSION}
+              Сервис бегового клуба СПИРОС · {APP_VERSION_LABEL}
             </footer>
           )}
         </div>

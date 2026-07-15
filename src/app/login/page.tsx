@@ -6,8 +6,8 @@ import { AuthPageShell } from "@/components/AuthPageShell/AuthPageShell";
 import { LoginClient } from "./LoginClient/LoginClient";
 
 export const metadata: Metadata = {
-  title: "Вход | СПИРОС",
-  description: "Вход в тренировочную систему бегового клуба СПИРОС.",
+  title: "Вход в личный кабинет | СПИРОС",
+  description: "Вход в личный кабинет бегового клуба СПИРОС.",
 };
 
 export default async function LoginPage() {

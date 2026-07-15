@@ -133,6 +133,7 @@ describe("adminInvitesUtils", () => {
   });
 
   it("возвращает понятные API-ошибки и fallback", () => {
+    expect(ADMIN_INVITES_LABELS.unauthorized).toBe("Нужно войти в личный кабинет.");
     expect(getApiErrorMessage({ error: "unauthorized" }, "fallback")).toBe(
       ADMIN_INVITES_LABELS.unauthorized
     );

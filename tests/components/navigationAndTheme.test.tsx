@@ -81,6 +81,7 @@ describe("ThemeProvider", () => {
     expect(screen.getByRole("link", { name: "Перейти к содержимому" }).getAttribute("href")).toBe(
       "#main-content"
     );
+    expect(screen.getByRole("contentinfo").textContent).toContain("Сервис бегового клуба СПИРОС");
     expect(document.getElementById("main-content")).toBeTruthy();
     expect(screen.queryByRole("switch")).toBeNull();
   });

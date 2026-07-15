@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Результаты клуба | СПИРОС",
-  description: "Лучшие результаты участников СПИРОС на дистанциях от 5 километров до марафона.",
+  description:
+    "Лучшие результаты участников бегового клуба СПИРОС на дистанциях от 5 километров до марафона.",
 };
 
 export default async function ResultsPage() {

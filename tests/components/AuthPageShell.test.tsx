@@ -10,7 +10,9 @@ describe("AuthPageShell", () => {
       </AuthPageShell>
     );
 
-    const shell = screen.getByRole("region", { name: "Доступ к системе СПИРОС" });
+    const shell = screen.getByRole("region", {
+      name: "Личный кабинет бегового клуба СПИРОС",
+    });
     expect(shell.getAttribute("data-mode")).toBe("login");
     expect(within(shell).getByRole("heading", { level: 1, name: "Форма входа" })).toBeTruthy();
     expect(
@@ -34,10 +36,12 @@ describe("AuthPageShell", () => {
       </AuthPageShell>
     );
 
-    const shell = screen.getByRole("region", { name: "Доступ к системе СПИРОС" });
+    const shell = screen.getByRole("region", {
+      name: "Личный кабинет бегового клуба СПИРОС",
+    });
     expect(shell.getAttribute("data-mode")).toBe("register");
     expect(within(shell).getByText("Регистрационная форма")).toBeTruthy();
-    expect(within(shell).getByText("Вступление в клуб")).toBeTruthy();
+    expect(within(shell).getByText("Беговой клуб СПИРОС")).toBeTruthy();
     expect(
       within(shell).getByRole("heading", {
         level: 2,

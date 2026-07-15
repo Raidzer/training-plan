@@ -14,7 +14,11 @@ export function AuthPageShell({ mode, children }: AuthPageShellProps) {
   const contextTitleId = `${mode}-auth-context-title`;
 
   return (
-    <section className={styles.shell} data-mode={mode} aria-label="Доступ к системе СПИРОС">
+    <section
+      className={styles.shell}
+      data-mode={mode}
+      aria-label="Личный кабинет бегового клуба СПИРОС"
+    >
       <div className={styles.formPanel}>{children}</div>
 
       <aside className={styles.contextPanel} aria-labelledby={contextTitleId}>
