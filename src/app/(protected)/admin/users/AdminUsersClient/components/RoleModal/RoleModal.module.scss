@@ -1,0 +1,21 @@
+.modal :global(.ant-modal-content) {
+  border: 1px solid var(--surface-border);
+}
+
+.description {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.modal :global(.ant-select),
+.modal :global(.ant-select-selector) {
+  min-height: 44px;
+}
+
+.modal :global(.ant-select-selection-item),
+.modal :global(.ant-select-selection-placeholder) {
+  display: flex;
+  align-items: center;
+}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { HookAPI as ModalHookAPI } from "antd/es/modal/useModal";
 import { useSession } from "next-auth/react";
 import { shoesLabels } from "../constants/shoesConstants";
 import type {
   ShoeFormState,
+  ShoeFormErrors,
   ShoeFormUpdate,
   ShoeItem,
   ShoeMutationPayload,
@@ -28,16 +29,34 @@ type UseShoesParams = {
   modalApi: ModalHookAPI;
 };
 
+const fetchShoesList = async () => {
+  const response = await fetch("/api/shoes", { cache: "no-store" });
+  const data = await response.json().catch(() => null);
+
+  return {
+    ok: response.ok,
+    items: response.ok ? getShoesFromResponse(data) : [],
+  };
+};
+
 export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
   const { data: session, status: sessionStatus } = useSession();
   const [items, setItems] = useState<ShoeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newForm, setNewForm] = useState<ShoeFormState>(() => createEmptyForm());
+  const [newFormErrors, setNewFormErrors] = useState<ShoeFormErrors>({});
+  const [newValidationAttempt, setNewValidationAttempt] = useState(0);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingForm, setEditingForm] = useState<ShoeFormState>(() => createEmptyForm());
+  const [editingFormErrors, setEditingFormErrors] = useState<ShoeFormErrors>({});
+  const [editingValidationAttempt, setEditingValidationAttempt] = useState(0);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const createInFlightRef = useRef(false);
+  const updateInFlightRef = useRef(false);
+  const deleteInFlightIdsRef = useRef(new Set<number>());
   const [telegramStatus, setTelegramStatus] = useState({
     available: false,
     ready: false,
@@ -55,22 +74,22 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/shoes", { cache: "no-store" })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null);
+    fetchShoesList()
+      .then((result) => {
         if (!active) {
           return;
         }
-        if (!response.ok) {
-          setItems([]);
-          return;
-        }
-        setItems(getShoesFromResponse(data));
+
+        setItems(result.items);
+        setLoadError(!result.ok);
       })
       .catch((error) => {
         if (!active) {
           return;
         }
+
+        setItems([]);
+        setLoadError(true);
         console.error(error);
       })
       .finally(() => {
@@ -143,6 +162,11 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     if (value === true && !canEnableNotification(key)) {
       return;
     }
+
+    if (key === "name" || key === "mileageLimitKm") {
+      setNewFormErrors((previous) => ({ ...previous, [key]: undefined }));
+    }
+
     setNewForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -150,6 +174,11 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     if (value === true && !canEnableNotification(key)) {
       return;
     }
+
+    if (key === "name" || key === "mileageLimitKm") {
+      setEditingFormErrors((previous) => ({ ...previous, [key]: undefined }));
+    }
+
     setEditingForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -179,14 +208,30 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     return true;
   };
 
-  const buildPayload = (form: ShoeFormState, emptyMileageValue: null | undefined) => {
+  const buildPayload = (
+    form: ShoeFormState,
+    emptyMileageValue: null | undefined,
+    setFormErrors: (errors: ShoeFormErrors) => void
+  ) => {
     const name = validateName(form.name);
+    const mileageLimit = validateMileageLimit(form.mileageLimitKm, emptyMileageValue);
+    const formErrors: ShoeFormErrors = {};
+
+    if (!name.ok) {
+      formErrors.name = name.error;
+    }
+
+    if (!mileageLimit.ok) {
+      formErrors.mileageLimitKm = mileageLimit.error;
+    }
+
+    setFormErrors(formErrors);
+
     if (!name.ok) {
       messageApi.warning(name.error);
       return null;
     }
 
-    const mileageLimit = validateMileageLimit(form.mileageLimitKm, emptyMileageValue);
     if (!mileageLimit.ok) {
       messageApi.warning(mileageLimit.error);
       return null;
@@ -211,11 +256,17 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
   };
 
   const handleCreate = async () => {
-    const payload = buildPayload(newForm, undefined);
-    if (!payload) {
+    if (createInFlightRef.current) {
       return;
     }
 
+    const payload = buildPayload(newForm, undefined, setNewFormErrors);
+    if (!payload) {
+      setNewValidationAttempt((previous) => previous + 1);
+      return;
+    }
+
+    createInFlightRef.current = true;
     setSaving(true);
     try {
       const response = await fetch("/api/shoes", {
@@ -238,11 +289,13 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
 
       setItems((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
       setNewForm(createEmptyForm());
+      setNewFormErrors({});
       messageApi.success(shoesLabels.saveOk);
     } catch (error) {
       messageApi.error(shoesLabels.saveFail);
       console.error(error);
     } finally {
+      createInFlightRef.current = false;
       setSaving(false);
     }
   };
@@ -250,26 +303,31 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
   const handleStartEdit = (item: ShoeItem) => {
     setEditingId(item.id);
     setEditingForm(sanitizeNotificationForm(createFormFromShoe(item), notificationAvailability));
+    setEditingFormErrors({});
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingForm(createEmptyForm());
+    setEditingFormErrors({});
   };
 
   const handleSaveEdit = async () => {
-    if (editingId === null) {
+    if (editingId === null || updateInFlightRef.current) {
       return;
     }
 
-    const payload = buildPayload(editingForm, null);
+    const payload = buildPayload(editingForm, null, setEditingFormErrors);
     if (!payload) {
+      setEditingValidationAttempt((previous) => previous + 1);
       return;
     }
 
-    setUpdatingId(editingId);
+    const shoeId = editingId;
+    updateInFlightRef.current = true;
+    setUpdatingId(shoeId);
     try {
-      const response = await fetch(`/api/shoes/${editingId}`, {
+      const response = await fetch(`/api/shoes/${shoeId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -294,6 +352,7 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
       messageApi.error(shoesLabels.updateFail);
       console.error(error);
     } finally {
+      updateInFlightRef.current = false;
       setUpdatingId(null);
     }
   };
@@ -316,8 +375,14 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     });
 
   const handleDelete = async (item: ShoeItem) => {
+    if (deleteInFlightIdsRef.current.has(item.id)) {
+      return;
+    }
+
+    deleteInFlightIdsRef.current.add(item.id);
     const confirmed = await confirmDelete(item.name);
     if (!confirmed) {
+      deleteInFlightIdsRef.current.delete(item.id);
       return;
     }
 
@@ -340,17 +405,39 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
       messageApi.error(shoesLabels.deleteFail);
       console.error(error);
     } finally {
+      deleteInFlightIdsRef.current.delete(item.id);
       setDeletingId(null);
+    }
+  };
+
+  const handleRetry = async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const result = await fetchShoesList();
+      setItems(result.items);
+      setLoadError(!result.ok);
+    } catch (error) {
+      setItems([]);
+      setLoadError(true);
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
     items,
     loading,
+    loadError,
     saving,
     newForm,
+    newFormErrors,
+    newValidationAttempt,
     editingId,
     editingForm,
+    editingFormErrors,
+    editingValidationAttempt,
     notificationAvailability,
     updatingId,
     deletingId,
@@ -361,5 +448,6 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     handleCancelEdit,
     handleSaveEdit,
     handleDelete,
+    handleRetry,
   };
 };

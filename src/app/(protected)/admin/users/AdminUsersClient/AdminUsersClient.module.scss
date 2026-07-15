@@ -1,23 +1,50 @@
 .page {
+  display: flex;
   width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: clamp(24px, 4vw, 36px);
+}
+
+.page :global(.ant-btn),
+.page :global(.ant-input),
+.page :global(.ant-select-selector) {
+  min-height: 44px;
+}
+
+.directory {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 18px;
+  container-name: admin-users-directory;
+  container-type: inline-size;
+}
+
+.directoryHeader {
   min-width: 0;
 }
 
-.card {
-  width: 100%;
-  min-width: 0;
+.directoryTitle {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: clamp(1.375rem, 1.25rem + 0.4vw, 1.625rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.018em;
 }
 
-.pageHeader {
-  margin-bottom: 16px;
+.directorySubtitle {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-wrap: pretty;
 }
 
-@media (max-width: 640px) {
-  .card :global(.ant-card-body) {
-    padding: 16px !important;
-  }
-
-  .pageHeader :global(.ant-btn) {
-    width: 100%;
+@media (max-width: 767px) {
+  .page :global(.ant-input) {
+    font-size: 1rem;
   }
 }

@@ -1,23 +1,65 @@
 .page {
+  display: flex;
   width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: clamp(24px, 4vw, 36px);
+}
+
+.page :global(.ant-btn),
+.page :global(.ant-input),
+.page :global(.ant-input-affix-wrapper),
+.page :global(.ant-select-selector) {
+  min-height: 44px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.7fr);
+  align-items: start;
+  gap: clamp(20px, 3vw, 32px);
   min-width: 0;
 }
 
-.card {
-  width: 100%;
+.registry {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 18px;
+  container-name: admin-invites-registry;
+  container-type: inline-size;
+}
+
+.registryHeader {
   min-width: 0;
 }
 
-.pageHeader {
-  margin-bottom: 16px;
+.registryTitle {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: clamp(1.375rem, 1.25rem + 0.4vw, 1.625rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.018em;
 }
 
-@media (max-width: 640px) {
-  .card :global(.ant-card-body) {
-    padding: 16px !important;
+.registrySubtitle {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+@media (max-width: 1099px) {
+  .workspace {
+    grid-template-columns: 1fr;
   }
+}
 
-  .pageHeader :global(.ant-btn) {
-    width: 100%;
+@media (max-width: 767px) {
+  .page :global(.ant-input) {
+    font-size: 1rem;
   }
 }

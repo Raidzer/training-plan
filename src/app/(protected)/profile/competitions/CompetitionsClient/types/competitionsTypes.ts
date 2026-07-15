@@ -50,7 +50,58 @@ export type CompetitionFormUpdate = <Key extends keyof CompetitionFormState>(
   value: CompetitionFormState[Key]
 ) => void;
 
-export type ValidationResult<T> = { ok: true; value: T } | { ok: false; error: string };
+export type FormFieldError<Field extends PropertyKey> = {
+  field: Field;
+  message: string;
+};
+
+export type CompetitionBlockFormError = FormFieldError<keyof CompetitionBlockFormState>;
+export type CompetitionFormError = FormFieldError<keyof CompetitionFormState>;
+
+export type ValidationResult<T, Field extends PropertyKey> =
+  | { ok: true; value: T }
+  | { ok: false; error: string; field: Field };
+
+export type CompetitionBlockEditorController = {
+  editingId: number | null;
+  form: CompetitionBlockFormState;
+  error: CompetitionBlockFormError | null;
+  validationAttempt: number;
+  updatingId: number | null;
+  deletingId: number | null;
+  onStart: (block: CompetitionBlockItem) => void;
+  onChange: CompetitionBlockFormUpdate;
+  onSave: () => Promise<boolean | void> | boolean | void;
+  onCancel: () => void;
+  onDelete: (block: CompetitionBlockItem) => void;
+};
+
+export type CompetitionCreatorController = {
+  creatingBlockId: number | null;
+  getForm: (blockId: number) => CompetitionFormState;
+  getError: (blockId: number) => CompetitionFormError | null;
+  getValidationAttempt: (blockId: number) => number;
+  onChange: <Key extends keyof CompetitionFormState>(
+    blockId: number,
+    key: Key,
+    value: CompetitionFormState[Key]
+  ) => void;
+  onCreate: (blockId: number) => Promise<boolean> | boolean;
+};
+
+export type CompetitionEditorController = {
+  editingId: number | null;
+  form: CompetitionFormState;
+  error: CompetitionFormError | null;
+  validationAttempt: number;
+  updatingId: number | null;
+  deletingId: number | null;
+  onStart: (competition: CompetitionItem) => void;
+  onChange: CompetitionFormUpdate;
+  onSave: () => Promise<boolean | void> | boolean | void;
+  onCancel: () => void;
+  onDelete: (competition: CompetitionItem) => void;
+};
 
 export type CompetitionBlockPayload = {
   title: string;

@@ -41,7 +41,7 @@ describe("usePlanEntries", () => {
     global.fetch = vi.fn() as unknown as typeof fetch;
   });
 
-  it("loads entries and groups workouts by day", async () => {
+  it("загружает записи и группирует тренировки по дням", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       createJsonResponse({
         entries: [
@@ -70,17 +70,23 @@ describe("usePlanEntries", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith("/api/plans");
+    expect(result.current.loadError).toBeNull();
     expect(result.current.entries).toHaveLength(2);
     expect(result.current.filteredEntries).toHaveLength(1);
     expect(result.current.filteredEntries[0]).toMatchObject({
       date: "2026-05-10",
-      taskText: "1) Intervals\n2) Cooldown",
-      commentText: "1) Track\n2) Easy",
-      hasReport: false,
+      hasAnyReport: false,
+      hasAllReports: false,
+      reportedWorkoutCount: 0,
+      workoutCount: 2,
     });
+    expect(result.current.filteredEntries[0].workouts.map((workout) => workout.taskText)).toEqual([
+      "Intervals",
+      "Cooldown",
+    ]);
   });
 
-  it("filters grouped days without reports", async () => {
+  it("оставляет в фильтре незавершенные и частично заполненные дни", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       createJsonResponse({
         entries: [
@@ -91,7 +97,18 @@ describe("usePlanEntries", () => {
           }),
           createPlanEntry({
             id: 2,
+            date: "2026-05-10",
+            sessionOrder: 2,
+            hasReport: false,
+          }),
+          createPlanEntry({
+            id: 3,
             date: "2026-05-11",
+            hasReport: true,
+          }),
+          createPlanEntry({
+            id: 4,
+            date: "2026-05-12",
             hasReport: false,
           }),
         ],
@@ -103,7 +120,7 @@ describe("usePlanEntries", () => {
     const { result } = renderHook(() => usePlanEntries({ msgApi }));
 
     await waitFor(() => {
-      expect(result.current.filteredEntries).toHaveLength(2);
+      expect(result.current.filteredEntries).toHaveLength(3);
     });
 
     act(() => {
@@ -112,13 +129,18 @@ describe("usePlanEntries", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.filteredEntries.map((entry) => entry.date)).toEqual(["2026-05-11"]);
+      expect(result.current.filteredEntries.map((entry) => entry.date)).toEqual([
+        "2026-05-10",
+        "2026-05-12",
+      ]);
     });
 
+    expect(result.current.filteredEntries[0].hasAnyReport).toBe(true);
+    expect(result.current.filteredEntries[0].hasAllReports).toBe(false);
     expect(result.current.currentPage).toBe(1);
   });
 
-  it("shows load error and clears loading state", async () => {
+  it("показывает ошибку загрузки и очищает состояние загрузки", async () => {
     const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ error: "Нет доступа" }, 403));
     global.fetch = fetchMock as unknown as typeof fetch;
     const msgApi = createMessageApi();
@@ -130,6 +152,7 @@ describe("usePlanEntries", () => {
     });
 
     expect(result.current.entries).toEqual([]);
+    expect(result.current.loadError).toBe("Нет доступа");
     expect(msgApi.error).toHaveBeenCalledWith("Нет доступа");
     expect(msgApi.error).not.toHaveBeenCalledWith(PLAN_TEXT.messages.loadFailed);
   });

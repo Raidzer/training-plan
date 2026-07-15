@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
-import { STORAGE_KEY } from "../constants/paceCalculatorConstants";
+import { useMemo, useState, useSyncExternalStore, type ChangeEvent } from "react";
+import { MAX_DISTANCE_METERS, STORAGE_KEY } from "../constants/paceCalculatorConstants";
 import type {
   LastEdited,
   SavedResult,
@@ -18,12 +18,56 @@ import {
 
 const DEFAULT_RESULT_SECONDS = 37 * 60 + 30;
 const DEFAULT_INPUT_VALUE = formatTime(DEFAULT_RESULT_SECONDS);
+const STORAGE_CHANGE_EVENT = "pace-calculator:results-change";
 
-const readSavedResults = () => {
-  if (typeof window === "undefined") {
-    return [];
+const getSafeDistance = (value: number) => {
+  if (!Number.isFinite(value)) {
+    return 0;
   }
-  return safeParseSaved(window.localStorage.getItem(STORAGE_KEY));
+
+  return Math.min(MAX_DISTANCE_METERS, Math.max(0, Math.floor(value)));
+};
+
+const getSavedResultsSnapshot = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const getServerSavedResultsSnapshot = () => null;
+
+const subscribeToSavedResults = (onStoreChange: () => void) => {
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY || event.key === null) {
+      onStoreChange();
+    }
+  };
+  const handleLocalChange = () => {
+    onStoreChange();
+  };
+
+  window.addEventListener("storage", handleStorageChange);
+  window.addEventListener(STORAGE_CHANGE_EVENT, handleLocalChange);
+
+  return () => {
+    window.removeEventListener("storage", handleStorageChange);
+    window.removeEventListener(STORAGE_CHANGE_EVENT, handleLocalChange);
+  };
+};
+
+const persistSavedResults = (results: SavedResult[]) => {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(results));
+    window.dispatchEvent(new Event(STORAGE_CHANGE_EVENT));
+  } catch {
+    // The calculator remains usable when browser storage is unavailable.
+  }
 };
 
 export const usePaceCalculator = (): UsePaceCalculatorReturn => {
@@ -36,13 +80,14 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   const [lapMinutes, setLapMinutes] = useState(1);
   const [lapSeconds, setLapSeconds] = useState(30);
   const [lastEdited, setLastEdited] = useState<LastEdited>("result");
-  const [savedResults, setSavedResults] = useState<SavedResult[]>(readSavedResults);
   const [inputValue, setInputValue] = useState<string>(DEFAULT_INPUT_VALUE);
   const [distanceInputValue, setDistanceInputValue] = useState("10000");
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedResults));
-  }, [savedResults]);
+  const savedResultsSnapshot = useSyncExternalStore(
+    subscribeToSavedResults,
+    getSavedResultsSnapshot,
+    getServerSavedResultsSnapshot
+  );
+  const savedResults = useMemo(() => safeParseSaved(savedResultsSnapshot), [savedResultsSnapshot]);
 
   const resultTotalSeconds = resultHours * 3600 + resultMinutes * 60 + resultSeconds;
   const paceTotalSeconds = paceMinutes * 60 + paceSeconds;
@@ -141,23 +186,24 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   };
 
   const updateDistance = (nextDistance: number) => {
-    setDistance(nextDistance);
+    const safeDistance = getSafeDistance(nextDistance);
+    setDistance(safeDistance);
     if (lastEdited === "pace") {
-      syncFromPace(paceTotalSeconds, nextDistance);
+      syncFromPace(paceTotalSeconds, safeDistance);
       return;
     }
     if (lastEdited === "lap") {
-      syncFromLap(lapTotalSeconds, nextDistance);
+      syncFromLap(lapTotalSeconds, safeDistance);
       return;
     }
     // Default or result
-    syncFromResult(resultTotalSeconds, nextDistance);
+    syncFromResult(resultTotalSeconds, safeDistance);
   };
 
   const handleDistanceChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextInputValue = normalizeDistanceInputValue(event.target.value);
-    const nextValue = toNonNegativeInt(nextInputValue);
-    setDistanceInputValue(nextInputValue);
+    const normalizedInputValue = normalizeDistanceInputValue(event.target.value);
+    const nextValue = getSafeDistance(toNonNegativeInt(normalizedInputValue));
+    setDistanceInputValue(normalizedInputValue ? String(nextValue) : "");
     updateDistance(nextValue);
   };
 
@@ -167,8 +213,9 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
   };
 
   const handleDistancePreset = (value: number) => {
-    setDistanceInputValue(String(value));
-    updateDistance(value);
+    const safeValue = getSafeDistance(value);
+    setDistanceInputValue(String(safeValue));
+    updateDistance(safeValue);
   };
 
   const resultTimeString = useMemo(() => {
@@ -232,11 +279,11 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
       lapSeconds: lapTotalSeconds,
       createdAt: now.toISOString(),
     };
-    setSavedResults((prev) => [nextItem, ...prev]);
+    persistSavedResults([nextItem, ...savedResults]);
   };
 
   const handleDeleteResult = (id: string) => {
-    setSavedResults((prev) => prev.filter((item) => item.id !== id));
+    persistSavedResults(savedResults.filter((item) => item.id !== id));
   };
 
   const splits = useMemo(() => {
@@ -255,18 +302,14 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     const secondsPerMeter = paceTotalSeconds / 1000;
     for (let index = 1; index <= segmentCount; index += 1) {
       const endMeters = Math.min(distance, segmentMeters * index);
-      const label = `${endMeters / 1000} км`;
+      const label = `${(endMeters / 1000).toLocaleString("ru-RU", {
+        maximumFractionDigits: 3,
+      })} км`;
       const seconds = Math.ceil(secondsPerMeter * endMeters);
       items.push({ label, time: formatTime(seconds) });
     }
     return items;
   }, [distance, paceTotalSeconds]);
-
-  const splitGroups = useMemo(() => {
-    const mid = Math.ceil(splits.length / 2);
-    const groups = [splits.slice(0, mid), splits.slice(mid)];
-    return groups.filter((group) => group.length > 0);
-  }, [splits]);
 
   const canSave = distance > 0 && resultTotalSeconds > 0 && paceTotalSeconds > 0;
 
@@ -281,7 +324,6 @@ export const usePaceCalculator = (): UsePaceCalculatorReturn => {
     lapSeconds,
     distanceInputValue,
     splits,
-    splitGroups,
     savedResults,
     canSave,
     handleDistanceChange,

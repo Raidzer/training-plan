@@ -1,48 +1,116 @@
 .periodDayCard {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  background: var(--surface-bg);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
 }
 
 .periodDayHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 
-.periodDayHeader :global(.ant-tag) {
-  margin-inline-end: 0;
-  flex: 0 0 auto;
+.dateLink {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dateLink:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.dateLink span {
+  overflow-wrap: anywhere;
 }
 
 .periodDayGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  border-block-start: 1px solid var(--surface-border);
 }
 
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  min-height: 76px;
+  gap: 6px;
   min-width: 0;
+  padding: 14px 0;
 }
 
-.metric :global(.ant-typography) {
-  margin: 0;
+.metric:nth-child(odd) {
+  padding-inline-end: 16px;
+}
+
+.metric:nth-child(even) {
+  padding-inline-start: 16px;
+  border-inline-start: 1px solid var(--surface-border);
+}
+
+.metric:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  padding-inline-end: 0;
+}
+
+.metricLabel,
+.metricValue {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 640px) {
+.metricLabel {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.metricValue {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@media (max-width: 479px) {
+  .periodDayHeader {
+    flex-direction: column;
+  }
+
   .periodDayGrid {
     grid-template-columns: 1fr;
+  }
+
+  .metric,
+  .metric:nth-child(odd),
+  .metric:nth-child(even) {
+    min-height: 0;
+    padding: 12px 0;
+    border-inline-start: 0;
+    grid-column: auto;
+  }
+
+  .metric + .metric {
+    border-block-start: 1px solid var(--surface-border);
+  }
+}
+
+@media (forced-colors: active) {
+  .periodDayCard {
+    border-color: CanvasText;
   }
 }

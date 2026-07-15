@@ -1,39 +1,106 @@
 export const DIARY_IMPORT_TEXT = {
   page: {
-    title: "Импорт дневника из Excel",
+    eyebrow: "Дневник тренировок",
+    title: "Импорт дневника",
     description:
-      "Сначала импортируйте план. Дневник привяжет отчеты к существующим тренировкам по дате и порядку в дне.",
-    dragText: "Перетащите файл дневника сюда или кликните для выбора",
-    dragHint:
-      "Поддерживается лист, название которого начинается с «Дневник», например «Дневник(2026)».",
-    resultTitle: "Результат импорта",
-    errorsTitle: "Ошибки строк:",
-    warningsTitle: "Предупреждения:",
+      "Перенесите отчёты, вес и восстановление из Excel. Данные будут связаны с уже созданными тренировками по дате и порядку в дне.",
   },
   actions: {
-    backToPlan: "Обратно к плану",
-    upload: "Загрузить дневник",
+    backToPlan: "К плану",
+    upload: "Импортировать дневник",
   },
   messages: {
     fileRequired: "Выберите файл Excel",
     importFailed: "Не удалось импортировать дневник",
-    importRequestError: "Ошибка запроса",
+    importRequestError: "Не удалось отправить файл. Проверьте соединение и повторите попытку.",
     importWithWarnings: (reportsUpserted: number, warningsCount: number) =>
-      `Отчетов сохранено: ${reportsUpserted}, предупреждений: ${warningsCount}`,
-    importSuccess: (reportsUpserted: number) => `Отчетов сохранено: ${reportsUpserted}`,
+      `Отчётов сохранено: ${reportsUpserted}, замечаний: ${warningsCount}`,
+    importSuccess: (reportsUpserted: number) => `Отчётов сохранено: ${reportsUpserted}`,
+    importEmpty: "В выбранном листе нет строк для импорта",
+    resultReady: "Импорт завершён. Результат доступен сразу после формы загрузки.",
+  },
+  upload: {
+    title: "Файл дневника",
+    description: "Выберите одну книгу Excel с листом дневника.",
+    format: "XLSX · один файл",
+    dragTitle: "Перетащите книгу Excel",
+    dragAction: "или нажмите, чтобы выбрать файл",
+    hint: "Файл будет загружен только после подтверждения импорта.",
+    idle: "Файл ещё не выбран",
+    selected: (fileName: string) => `Готов к импорту: ${fileName}`,
+    loading: "Сопоставляем строки с планом и сохраняем данные дневника.",
+  },
+  guide: {
+    eyebrow: "Логика импорта",
+    title: "Как строки связываются с планом",
+    description: "Каждая тренировка ищется по двум признакам — дате и порядку в дне.",
+    matchTitle: "Маршрут привязки строки",
+    matchSteps: [
+      {
+        key: "source",
+        label: "Строка Excel",
+        value: "15.06.2026 · № 2 в дне",
+      },
+      {
+        key: "plan",
+        label: "Тренировка плана",
+        value: "Дата и порядок совпали",
+      },
+      {
+        key: "diary",
+        label: "Данные дневника",
+        value: "Отчёт · вес · восстановление",
+      },
+    ],
+    dataTitle: "Какие колонки распознаются",
+    dataGroups: [
+      {
+        key: "match",
+        title: "Для привязки",
+        items: ["Дата", "Порядок тренировки в дне"],
+      },
+      {
+        key: "report",
+        title: "Отчёт",
+        items: ["Результат", "Комментарий", "Оценка", "Объём"],
+      },
+      {
+        key: "condition",
+        title: "Самочувствие",
+        items: ["Сон", "Вес", "Восстановление"],
+      },
+    ],
+    notesTitle: "Перед загрузкой",
+    notes: [
+      "Сначала добавьте тренировки на страницу плана.",
+      "Название нужного листа должно начинаться со слова «Дневник».",
+      "Первая строка должна содержать колонки «Дата» и «Задание».",
+      "Уже заполненный день пропускается целиком — существующие данные не перезаписываются.",
+    ],
   },
   result: {
-    summary: (params: {
-      sheetName: string;
-      parsedRows: number;
-      matchedRows: number;
-      skippedRows: number;
-    }) =>
-      `Лист «${params.sheetName}»: строк прочитано ${params.parsedRows}, привязано ${params.matchedRows}, пропущено ${params.skippedRows}.`,
-    reports: (count: number) => `Отчеты: ${count}`,
-    skippedReports: (count: number) => `Отчеты пропущены: ${count}`,
-    weights: (count: number) => `Записи веса: ${count}`,
-    recovery: (count: number) => `Записи восстановления: ${count}`,
+    eyebrow: "Результат импорта",
+    successTitle: "Дневник импортирован",
+    successDescription: "Данные из файла сохранены в найденные тренировочные дни.",
+    issuesTitle: "Импорт завершён с замечаниями",
+    issuesDescription: "Часть данных сохранена, но некоторые строки потребовали внимания.",
+    emptyTitle: "В файле нет данных для импорта",
+    emptyDescription: "Лист найден, но после строки заголовков нет распознанных записей.",
+    failedTitle: "Импорт не выполнен",
+    failedDescription: "Проверьте сообщение ниже и повторите загрузку.",
+    parsedRows: "Прочитано строк",
+    matchedRows: "Привязано",
+    reportsUpserted: "Отчётов сохранено",
+    skippedRows: "Строк пропущено",
+    reportsSkipped: "Отчёты не перезаписаны",
+    weightEntriesUpserted: "Записи веса",
+    recoveryEntriesUpserted: "Дни восстановления",
+    sheet: "Лист",
+    detailsTitle: "Сохранённые данные",
+    errorsTitle: "Ошибки строк",
+    warningsTitle: "Предупреждения",
+    openDiary: "Открыть дневник за период",
+    openPlan: "Открыть план",
     issue: (row: number, message: string) => `Строка ${row}: ${message}`,
   },
 } as const;

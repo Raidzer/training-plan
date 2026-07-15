@@ -1,32 +1,53 @@
-.formRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 16px;
+.form {
+  min-width: 0;
 }
 
-.formRow :global(.ant-form-item) {
-  flex: 0 1 260px;
-  margin-bottom: 0;
+.form :global(.ant-form-item) {
+  margin-block-end: 18px;
 }
 
-.formRow :global(.ant-select),
-.formRow :global(.ant-btn) {
+.form :global(.ant-form-item-label > label) {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.form :global(.ant-form-item-extra) {
+  margin-block-start: 7px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.form :global(.ant-radio-group) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   width: 100%;
 }
 
-@media (max-width: 640px) {
-  .formRow {
-    display: grid;
+.form :global(.ant-radio-button-wrapper) {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--control-border) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--control-bg);
+}
+
+.form :global(.ant-radio-button-wrapper::before) {
+  display: none;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (max-width: 379px) {
+  .form :global(.ant-radio-group) {
     grid-template-columns: 1fr;
-  }
-
-  .formRow :global(.ant-form-item) {
-    width: 100%;
-  }
-
-  .formRow :global(.ant-btn) {
-    width: 100%;
   }
 }

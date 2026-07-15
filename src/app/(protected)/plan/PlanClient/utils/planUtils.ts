@@ -1,37 +1,43 @@
 import type { PlanDayEntry, PlanDraftEntry, PlanEntry } from "../types/planTypes";
 
-export type { PlanDayEntry, PlanDraft, PlanDraftEntry, PlanEntry } from "../types/planTypes";
+export type {
+  PlanDayEntry,
+  PlanDayWorkout,
+  PlanDraft,
+  PlanDraftEntry,
+  PlanEntry,
+} from "../types/planTypes";
+
+const SHORT_WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"] as const;
+const LONG_WEEKDAYS = [
+  "Воскресенье",
+  "Понедельник",
+  "Вторник",
+  "Среда",
+  "Четверг",
+  "Пятница",
+  "Суббота",
+] as const;
+const MONTHS_GENITIVE = [
+  "января",
+  "февраля",
+  "марта",
+  "апреля",
+  "мая",
+  "июня",
+  "июля",
+  "августа",
+  "сентября",
+  "октября",
+  "ноября",
+  "декабря",
+] as const;
 
 export const createEmptyDraftEntry = (): PlanDraftEntry => ({
   taskText: "",
   commentText: "",
   hasReport: false,
 });
-
-export const formatNumberedLines = (
-  values: Array<string | null | undefined>,
-  options?: { emptyValue?: string; includeIfAllEmpty?: boolean }
-) => {
-  const emptyValue = options?.emptyValue ?? "-";
-  if (!values.length) {
-    return options?.includeIfAllEmpty ? emptyValue : "";
-  }
-  const normalized = values.map((value) => {
-    if (value === null || value === undefined) {
-      return emptyValue;
-    }
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : emptyValue;
-  });
-  const hasNonEmpty = normalized.some((value) => value !== emptyValue);
-  if (!hasNonEmpty && !options?.includeIfAllEmpty) {
-    return "";
-  }
-  if (normalized.length === 1) {
-    return normalized[0];
-  }
-  return normalized.map((value, index) => `${index + 1}) ${value}`).join("\n");
-};
 
 export const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
   const grouped = new Map<string, PlanEntry[]>();
@@ -47,17 +53,21 @@ export const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
   const rows: PlanDayEntry[] = [];
   for (const [date, dayEntries] of grouped) {
     const sorted = [...dayEntries].sort((a, b) => a.sessionOrder - b.sessionOrder);
-    const tasks = sorted.map((entry) => entry.taskText);
-    const comments = sorted.map((entry) => entry.commentText ?? "");
-    const commentText = formatNumberedLines(comments, {
-      includeIfAllEmpty: false,
-    });
+    const reportedWorkoutCount = sorted.filter((entry) => entry.hasReport).length;
     rows.push({
       date,
-      taskText: formatNumberedLines(tasks, { includeIfAllEmpty: true }),
-      commentText: commentText.length ? commentText : null,
+      workouts: sorted.map((entry) => ({
+        id: entry.id,
+        sessionOrder: entry.sessionOrder,
+        taskText: entry.taskText,
+        commentText: entry.commentText,
+        hasReport: entry.hasReport,
+      })),
       isWorkload: sorted.some((entry) => entry.isWorkload),
-      hasReport: sorted.every((entry) => entry.hasReport),
+      hasAnyReport: reportedWorkoutCount > 0,
+      hasAllReports: reportedWorkoutCount === sorted.length,
+      reportedWorkoutCount,
+      workoutCount: sorted.length,
     });
   }
   return rows;
@@ -71,8 +81,28 @@ export const sortPlanEntries = (items: PlanEntry[]) =>
     return b.date.localeCompare(a.date);
   });
 
+export type PlanDateParts = {
+  dateLabel: string;
+  yearLabel: string;
+  weekdayLabel: string;
+  shortWeekdayLabel: string;
+  weekdayIndex: number;
+};
+
+export const getPlanDateParts = (dateStr: string): PlanDateParts => {
+  const date = new Date(dateStr + "T00:00:00.000Z");
+  const weekday = date.getUTCDay();
+
+  return {
+    dateLabel: date.getUTCDate() + " " + MONTHS_GENITIVE[date.getUTCMonth()],
+    yearLabel: String(date.getUTCFullYear()),
+    weekdayLabel: LONG_WEEKDAYS[weekday],
+    shortWeekdayLabel: SHORT_WEEKDAYS[weekday],
+    weekdayIndex: (weekday + 6) % 7,
+  };
+};
+
 export const formatDateWithWeekday = (dateStr: string) => {
-  const date = new Date(dateStr);
-  const days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-  return `${dateStr} (${days[date.getUTCDay()]})`;
+  const date = new Date(dateStr + "T00:00:00.000Z");
+  return dateStr + " (" + SHORT_WEEKDAYS[date.getUTCDay()] + ")";
 };

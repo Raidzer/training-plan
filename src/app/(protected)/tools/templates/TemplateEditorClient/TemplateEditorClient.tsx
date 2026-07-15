@@ -1,22 +1,36 @@
 "use client";
 
-import { TemplateEditor } from "@/components/templates/TemplateEditor";
+import { TemplateEditorForm } from "./components/TemplateEditorForm/TemplateEditorForm";
 import { TemplateEditorHeader } from "./components/TemplateEditorHeader/TemplateEditorHeader";
-import { TEMPLATE_EDITOR_LABELS } from "./constants/templateEditorConstants";
-import { useTemplateEditorSave } from "./hooks/useTemplateEditorSave";
+import { useTemplateEditor } from "./hooks/useTemplateEditor";
 import type { TemplateEditorClientProps } from "./types/templateEditorTypes";
 import styles from "./TemplateEditorClient.module.scss";
 
-export function TemplateEditorClient({ template, userId }: TemplateEditorClientProps) {
-  const { handleSave, handleBack } = useTemplateEditorSave({ template, userId });
-  const title = template
-    ? `${TEMPLATE_EDITOR_LABELS.editTitlePrefix}: ${template.name}`
-    : TEMPLATE_EDITOR_LABELS.newTemplateTitle;
+export function TemplateEditorClient(props: TemplateEditorClientProps) {
+  const editor = useTemplateEditor(props);
 
   return (
-    <main className={styles.page}>
-      <TemplateEditorHeader title={title} onBack={handleBack} />
-      <TemplateEditor initialValues={template || {}} onSave={handleSave} onCancel={handleBack} />
-    </main>
+    <div className={styles.page}>
+      <TemplateEditorHeader
+        title={editor.title}
+        subtitle={editor.subtitle}
+        saveStatus={editor.saveStatus}
+        saveStatusLabel={editor.saveStatusLabel}
+        onBack={editor.handleBack}
+      />
+
+      <div className={styles.workspace}>
+        <TemplateEditorForm
+          form={editor.form}
+          initialValues={editor.initialValues}
+          isSaving={editor.isSaving}
+          saveStatus={editor.saveStatus}
+          saveStatusLabel={editor.saveStatusLabel}
+          onValuesChange={editor.handleValuesChange}
+          onSave={editor.handleSave}
+          onCancel={editor.handleBack}
+        />
+      </div>
+    </div>
   );
 }

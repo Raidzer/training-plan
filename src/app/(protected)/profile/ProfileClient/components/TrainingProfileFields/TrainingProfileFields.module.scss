@@ -1,0 +1,27 @@
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+}
+
+.fields :global(.ant-form-item) {
+  min-width: 0;
+}
+
+.fields .control {
+  width: 100%;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+}

@@ -6,23 +6,16 @@
   min-width: 0;
 }
 
-.cardStyle {
+.pageStack {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
   width: 100%;
+  min-width: 0;
 }
 
-.spaceStyle {
-  width: 100%;
-}
-
-.importActions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  width: 100%;
-}
-
-@media (max-width: 640px) {
-  .importActions {
-    grid-template-columns: 1fr;
+@media (max-width: 767px) {
+  .pageStack {
+    gap: 24px;
   }
 }

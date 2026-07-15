@@ -1,24 +1,163 @@
 .calendarCard {
   width: 100%;
-  border-radius: 8px;
+  min-width: 0;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
   overflow: hidden;
 }
 
-.markDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #52c41a;
-  display: block;
-  margin: 4px auto 0;
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
 }
 
-@media (max-width: 640px) {
-  .calendarCard :global(.ant-card-body) {
-    padding: 12px !important;
+.headerText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.legend,
+.loadingIndicator {
+  width: fit-content;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.legend :global(.ant-badge-status-text) {
+  color: var(--text-secondary);
+  font-size: inherit;
+}
+
+.loadingIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggleButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  gap: 8px;
+  margin-block: -4px;
+  padding-inline: 10px !important;
+  color: var(--text-primary) !important;
+}
+
+.toggleIcon {
+  transition: transform var(--motion-duration-fast) ease;
+}
+
+.toggleIconExpanded {
+  transform: rotate(180deg);
+}
+
+.calendarPanel {
+  display: none;
+  padding: 0 4px 12px;
+  border-block-start: 1px solid var(--surface-border);
+}
+
+.calendarPanelExpanded {
+  display: block;
+}
+
+.loadingState {
+  min-height: 304px;
+  padding: 20px 12px 8px;
+}
+
+.calendar {
+  background: transparent;
+}
+
+.calendar :global(.ant-picker-calendar-header) {
+  gap: 8px;
+  padding: 12px 12px 8px;
+}
+
+.calendar :global(.ant-select-selector) {
+  min-height: 44px !important;
+  align-items: center;
+}
+
+.calendar :global(.ant-picker-cell) {
+  min-block-size: 44px;
+  padding-block: 0;
+}
+
+.calendar :global(.ant-picker-cell-inner) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-block-size: 44px;
+}
+
+.reportMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 8px;
+  margin-block-start: 2px;
+  line-height: 0;
+}
+
+.reportMark :global(.ant-badge-status-dot) {
+  inline-size: 6px;
+  block-size: 6px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 640px) {
+  .toggleButton {
+    display: none !important;
   }
 
-  .calendarCard :global(.ant-card-head) {
-    padding-inline: 12px !important;
+  .calendarPanel {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggleIcon {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .calendarCard :global(.ant-badge-status-success) {
+    background-color: Highlight;
   }
 }

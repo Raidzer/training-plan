@@ -1,0 +1,99 @@
+.guide {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-block-end: 16px;
+}
+
+.mark {
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  background: var(--control-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.heading h3 {
+  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.groups {
+  display: grid;
+  gap: 8px;
+}
+
+.group {
+  border-block-start: 1px solid var(--surface-border);
+}
+
+.group summary {
+  min-height: 44px;
+  padding-block: 12px;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.group summary:hover {
+  color: var(--text-primary);
+}
+
+.group summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.group ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0 0 14px;
+  list-style: none;
+}
+
+.group li {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.group code {
+  display: block;
+  max-width: 100%;
+  color: var(--text-primary);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.group li span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}

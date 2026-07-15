@@ -1,3 +1,5 @@
+import type { App, FormProps } from "antd";
+
 export type RegisterFields = {
   name: string;
   lastName?: string;
@@ -5,10 +7,20 @@ export type RegisterFields = {
   login: string;
   email: string;
   password: string;
-  confirmPassword: string;
   timezone: string;
 };
 
 export type RegisterApiResponse = {
-  error?: string;
+  error?: unknown;
 };
+
+export type RegisterPayload = Omit<RegisterFields, "lastName"> & {
+  lastName?: string;
+};
+
+export type RegisterSubmitHandler = NonNullable<FormProps<RegisterFields>["onFinish"]>;
+
+export type RegisterMessageApi = Pick<
+  ReturnType<typeof App.useApp>["message"],
+  "error" | "success" | "warning"
+>;

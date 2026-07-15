@@ -27,7 +27,6 @@ export type UsePaceCalculatorReturn = {
   lapSeconds: number;
   distanceInputValue: string;
   splits: SplitItem[];
-  splitGroups: SplitItem[][];
   savedResults: SavedResult[];
   canSave: boolean;
   handleDistanceChange: (event: ChangeEvent<HTMLInputElement>) => void;

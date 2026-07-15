@@ -4,8 +4,6 @@ export const TELEGRAM_TOOLS_TEXT = {
   openLabel: "Открыть",
   navigationLabel: "Навигация по калькуляторам",
   allToolsLabel: "Все",
-  enableDarkThemeLabel: "Включить темную тему",
-  enableLightThemeLabel: "Включить светлую тему",
 } as const;
 
 export const TELEGRAM_TOOL_LINKS = [

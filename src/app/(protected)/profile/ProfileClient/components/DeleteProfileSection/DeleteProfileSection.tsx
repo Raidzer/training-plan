@@ -1,8 +1,9 @@
 "use client";
 
 import { DeleteOutlined } from "@ant-design/icons";
-import { Button, Typography } from "antd";
-import { PROFILE_LABELS } from "../../constants/profileConstants";
+import { Button } from "antd";
+import { PROFILE_LABELS, PROFILE_SECTIONS } from "../../constants/profileConstants";
+import { ProfileSection } from "../ProfileSection/ProfileSection";
 import styles from "./DeleteProfileSection.module.scss";
 
 type DeleteProfileSectionProps = {
@@ -19,18 +20,22 @@ export function DeleteProfileSection({
   }
 
   return (
-    <section className={styles.section}>
-      <div className={styles.content}>
-        <Typography.Title level={3} className={styles.title}>
-          {PROFILE_LABELS.deleteProfileTitle}
-        </Typography.Title>
-        <Typography.Paragraph type="secondary" className={styles.description}>
-          {PROFILE_LABELS.deleteProfileDescription}
-        </Typography.Paragraph>
+    <ProfileSection
+      id={PROFILE_SECTIONS.DANGER.id}
+      index={PROFILE_SECTIONS.DANGER.index}
+      title={PROFILE_SECTIONS.DANGER.title}
+      description={PROFILE_SECTIONS.DANGER.description}
+    >
+      <div className={styles.action}>
+        <Button
+          danger
+          size="large"
+          icon={<DeleteOutlined aria-hidden />}
+          onClick={onOpenDeleteModal}
+        >
+          {PROFILE_LABELS.deleteProfileButton}
+        </Button>
       </div>
-      <Button danger icon={<DeleteOutlined />} onClick={onOpenDeleteModal}>
-        {PROFILE_LABELS.deleteProfileButton}
-      </Button>
-    </section>
+    </ProfileSection>
   );
 }

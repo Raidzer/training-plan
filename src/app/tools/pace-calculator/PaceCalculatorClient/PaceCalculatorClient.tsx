@@ -9,10 +9,13 @@ import { usePaceCalculator } from "./hooks/usePaceCalculator";
 import { formatMinutesSeconds, formatTime } from "./utils/paceCalculatorUtils";
 import styles from "./PaceCalculatorClient.module.scss";
 
-export function PaceCalculatorClient() {
+type PaceCalculatorClientProps = {
+  showIntro?: boolean;
+};
+
+export function PaceCalculatorClient({ showIntro = true }: PaceCalculatorClientProps) {
   const {
     splits,
-    splitGroups,
     savedResults,
     distanceInputValue,
     resultTimeString,
@@ -31,13 +34,15 @@ export function PaceCalculatorClient() {
   } = usePaceCalculator();
 
   return (
-    <section className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>{PACE_CALCULATOR_TEXT.header.title}</h1>
-        <div className={styles.titleLine} />
-        <p className={styles.description}>{PACE_CALCULATOR_TEXT.header.description}</p>
-        <p className={styles.description}>{PACE_CALCULATOR_TEXT.header.hint}</p>
-      </header>
+    <div className={styles.page}>
+      {showIntro ? (
+        <header className={styles.header}>
+          <p className={styles.eyebrow}>{PACE_CALCULATOR_TEXT.header.eyebrow}</p>
+          <h1 className={styles.title}>{PACE_CALCULATOR_TEXT.header.title}</h1>
+          <p className={styles.description}>{PACE_CALCULATOR_TEXT.header.description}</p>
+          <p className={styles.description}>{PACE_CALCULATOR_TEXT.header.hint}</p>
+        </header>
+      ) : null}
 
       <div className={styles.calculatorGrid}>
         <div className={styles.panel}>
@@ -59,7 +64,7 @@ export function PaceCalculatorClient() {
             onLapTimeChange={handleLapTimeChange}
           />
         </div>
-        <SplitsPanel splits={splits} splitGroups={splitGroups} />
+        <SplitsPanel splits={splits} />
       </div>
 
       <SavedResultsList
@@ -69,6 +74,6 @@ export function PaceCalculatorClient() {
         formatMinutesSeconds={formatMinutesSeconds}
         getDistanceLabel={getSavedDistanceLabel}
       />
-    </section>
+    </div>
   );
 }

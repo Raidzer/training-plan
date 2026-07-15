@@ -1,0 +1,176 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 0;
+}
+
+.sectionCopy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sectionTitle,
+.sectionDescription {
+  margin: 0;
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.sectionDescription {
+  max-width: 68ch;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.sectionMeta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.errorAlert {
+  border-color: var(--surface-border) !important;
+  background: var(--surface-soft) !important;
+}
+
+.errorAlert :global(.ant-alert-action .ant-btn) {
+  min-height: 44px;
+}
+
+.skeletons,
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.skeletonCard {
+  min-height: 230px;
+  padding: 24px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.emptyState {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  padding: 32px;
+  border: 1px dashed var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.emptyCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 42ch;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.emptyCopy strong {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.emptyState :global(.ant-btn) {
+  min-height: 44px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding-block-start: 4px;
+}
+
+.pagination :global(.ant-pagination-item),
+.pagination :global(.ant-pagination-prev),
+.pagination :global(.ant-pagination-next) {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  line-height: 44px;
+}
+
+.pagination :global(.ant-pagination-item a),
+.pagination :global(.ant-pagination-item-link) {
+  display: grid;
+  place-items: center;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+
+.pagination :global(.ant-pagination-item-link) {
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 639px) {
+  .section {
+    gap: 16px;
+  }
+
+  .sectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .skeletonCard,
+  .emptyState {
+    padding: 20px 16px;
+  }
+
+  .errorAlert {
+    align-items: flex-start;
+  }
+
+  .errorAlert :global(.ant-alert-action) {
+    margin-inline-start: 0;
+    padding-block-start: 12px;
+  }
+
+  .errorAlert :global(.ant-alert-action .ant-btn) {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonCard :global(.ant-skeleton-content .ant-skeleton-title),
+  .skeletonCard :global(.ant-skeleton-content .ant-skeleton-paragraph > li) {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .skeletonCard,
+  .emptyState {
+    border-color: CanvasText;
+  }
+}

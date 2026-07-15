@@ -1,0 +1,186 @@
+.card {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+  padding: clamp(18px, 2.5vw, 24px);
+  border: 1px solid var(--surface-border);
+  border-block-start-color: var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  transition:
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+}
+
+.card:hover {
+  border-color: var(--control-border);
+  background: var(--surface-elevated);
+}
+
+.card[data-status="used"],
+.card[data-status="expired"] {
+  border-block-start-color: var(--surface-border);
+  background: var(--surface-soft);
+}
+
+.topline,
+.roleRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.topline {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.number {
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.status[data-status="active"] {
+  color: var(--text-primary);
+}
+
+.roleRow {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 26px;
+  padding-inline: 9px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.roleBadge[data-role="coach"] {
+  border-color: var(--control-border);
+  color: var(--text-primary);
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+  margin: 0;
+  padding-block: 16px;
+  border-block: 1px solid var(--surface-border);
+}
+
+.detail,
+.detailWide {
+  min-width: 0;
+}
+
+.detailWide {
+  grid-column: 1 / -1;
+}
+
+.detail dt,
+.detailWide dt {
+  margin-block-end: 4px;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.detail dd,
+.detailWide dd {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.copyButton {
+  width: 100%;
+  min-height: 44px;
+  margin-block-start: auto;
+}
+
+.linkState {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-block-start: auto;
+  color: var(--text-secondary);
+}
+
+.linkState > :first-child {
+  font-size: 0.9375rem;
+}
+
+.linkStateTitle,
+.linkStateNote {
+  display: block;
+}
+
+.linkStateTitle {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.linkStateNote {
+  margin-block-start: 2px;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 379px) {
+  .topline {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .detailWide {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

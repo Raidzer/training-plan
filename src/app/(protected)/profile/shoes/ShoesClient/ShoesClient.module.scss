@@ -1,24 +1,30 @@
 .page {
+  width: 100%;
+  min-width: 0;
+}
+
+.page :global(.ant-btn),
+.page :global(.ant-input) {
+  min-height: 44px;
+}
+
+.workspace {
   display: grid;
-  justify-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
   align-items: start;
-  min-height: 70vh;
-  width: 100%;
+  gap: 24px;
+  margin-block-start: 24px;
   min-width: 0;
 }
 
-.card {
-  width: 100%;
-  max-width: 680px;
-  min-width: 0;
+@media (max-width: 1023px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.title {
-  margin: 0 0 8px !important;
-}
-
-@media (max-width: 640px) {
-  .card :global(.ant-card-body) {
-    padding: 16px !important;
+@media (max-width: 767px) {
+  .page :global(.ant-input) {
+    font-size: 1rem;
   }
 }

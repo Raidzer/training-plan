@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ResultsFilters } from "@/app/results/ResultsClient/components/ResultsFilters/ResultsFilters";
 
@@ -16,18 +16,26 @@ describe("ResultsFilters", () => {
       />
     );
 
-    expect(screen.getByRole("tab", { name: "10 км" }).getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByRole("button", { name: "Мужчины" }).getAttribute("aria-pressed")).toBe(
-      "true"
-    );
+    const distanceGroup = screen.getByRole("group", { name: "Выбор дистанции" });
+    const genderGroup = screen.getByRole("group", { name: "Фильтр по полу" });
 
-    fireEvent.click(screen.getByRole("tab", { name: "5 км" }));
-    fireEvent.click(screen.getByRole("tab", { name: "10 км" }));
-    fireEvent.click(screen.getByRole("tab", { name: "21 км" }));
-    fireEvent.click(screen.getByRole("tab", { name: "42 км" }));
-    fireEvent.click(screen.getByRole("button", { name: "Все" }));
-    fireEvent.click(screen.getByRole("button", { name: "Мужчины" }));
-    fireEvent.click(screen.getByRole("button", { name: "Женщины" }));
+    expect(
+      within(distanceGroup).getByRole("button", { name: "10 км" }).getAttribute("aria-pressed")
+    ).toBe("true");
+    expect(
+      within(genderGroup).getByRole("button", { name: "Мужчины" }).getAttribute("aria-pressed")
+    ).toBe("true");
+    expect(
+      within(distanceGroup).getByRole("button", { name: "10 км" }).getAttribute("aria-controls")
+    ).toBe("results-panel");
+
+    fireEvent.click(within(distanceGroup).getByRole("button", { name: "5 км" }));
+    fireEvent.click(within(distanceGroup).getByRole("button", { name: "10 км" }));
+    fireEvent.click(within(distanceGroup).getByRole("button", { name: "21 км" }));
+    fireEvent.click(within(distanceGroup).getByRole("button", { name: "42 км" }));
+    fireEvent.click(within(genderGroup).getByRole("button", { name: "Все" }));
+    fireEvent.click(within(genderGroup).getByRole("button", { name: "Мужчины" }));
+    fireEvent.click(within(genderGroup).getByRole("button", { name: "Женщины" }));
 
     expect(onDistanceChange.mock.calls.map(([value]) => value)).toEqual([
       "5k",

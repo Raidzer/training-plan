@@ -1,0 +1,67 @@
+.fields {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.inline {
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 180px));
+  align-items: start;
+}
+
+.field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.required {
+  margin-inline-start: 4px;
+  color: var(--competition-error);
+}
+
+.required::before {
+  content: "*";
+}
+
+.hint,
+.error {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.hint {
+  color: var(--text-muted);
+}
+
+.error {
+  color: var(--competition-error);
+}
+
+.control {
+  width: 100%;
+}
+
+.fields :global(.ant-input),
+.fields :global(.ant-picker) {
+  min-height: 44px;
+}
+
+@media (max-width: 767px) {
+  .inline {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fields :global(.ant-input),
+  .fields :global(.ant-picker-input > input) {
+    font-size: 1rem !important;
+  }
+}

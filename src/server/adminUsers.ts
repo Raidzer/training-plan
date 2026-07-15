@@ -209,6 +209,7 @@ export async function deleteUserAccountById(userId: number): Promise<DeleteUserA
 
     await tx.delete(planEntries).where(eq(planEntries.userId, userId));
     await tx.delete(planImports).where(eq(planImports.userId, userId));
+    await tx.delete(plans).where(eq(plans.userId, userId));
     await tx.delete(shoes).where(eq(shoes.userId, userId));
     await tx
       .delete(registrationInvites)

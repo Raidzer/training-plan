@@ -20,8 +20,8 @@ export function ResultsClient({ results }: ResultsClientProps) {
   } = useResultsFilters(results);
 
   return (
-    <main className={styles.page}>
-      <ResultsHeader />
+    <section className={styles.page} aria-labelledby="results-page-title">
+      <ResultsHeader totalResults={results.length} />
       <ResultsFilters
         activeDistance={activeDistance}
         activeGender={activeGender}
@@ -29,12 +29,11 @@ export function ResultsClient({ results }: ResultsClientProps) {
         onGenderChange={setActiveGender}
       />
       <ResultsPanel
-        activeDistance={activeDistance}
         activeLabel={activeLabel}
         records={records}
         rest={rest}
         sortedResults={sortedResults}
       />
-    </main>
+    </section>
   );
 }

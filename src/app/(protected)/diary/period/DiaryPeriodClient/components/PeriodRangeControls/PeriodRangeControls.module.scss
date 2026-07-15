@@ -1,12 +1,66 @@
-.rangeRow {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(260px, 1fr) auto auto auto auto;
-  align-items: center;
+.controlsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
 }
 
-.rangeCard {
-  width: 100%;
+.sectionHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.sectionTitle,
+.sectionDescription {
+  margin: 0;
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.sectionDescription {
+  max-width: 68ch;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.controlsLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: end;
+}
+
+.rangeZone {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 16px;
+  min-width: 0;
+}
+
+.rangeField,
+.quickRangeGroup,
+.exportZone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.controlLabel {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .rangePicker {
@@ -14,30 +68,109 @@
   min-width: 0;
 }
 
-@media (max-width: 1023px) {
-  .rangeRow {
-    grid-template-columns: 1fr 1fr;
+.quickRangeButtons,
+.exportButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.exportZone {
+  padding-inline-start: 24px;
+  border-inline-start: 1px solid var(--surface-border);
+}
+
+.controlsSection :global(.ant-picker),
+.controlsSection :global(.ant-btn) {
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+}
+
+.controlsSection :global(.ant-picker) {
+  background: var(--control-bg);
+}
+
+.controlsSection :global(.ant-picker:focus-within),
+.controlsSection :global(.ant-btn:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.quickButton {
+  min-width: 0;
+}
+
+.quickButtonActive {
+  border-color: var(--control-border-hover) !important;
+  background: var(--interactive-active) !important;
+  color: var(--text-primary) !important;
+}
+
+@media (max-width: 1100px) {
+  .controlsLayout {
+    display: flex;
+    flex-wrap: wrap;
   }
 
-  .rangePicker {
-    grid-column: 1 / -1;
+  .rangeZone,
+  .exportZone {
+    flex: 1 1 100%;
+  }
+
+  .exportZone {
+    padding-block-start: 20px;
+    padding-inline-start: 0;
+    border-block-start: 1px solid var(--surface-border);
+    border-inline-start: 0;
   }
 }
 
-@media (max-width: 640px) {
-  .rangeCard :global(.ant-card-body) {
-    padding: 12px !important;
+@media (max-width: 767px) {
+  .rangeZone {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .rangeCard :global(.ant-card-head) {
-    padding-inline: 12px !important;
+  .rangePicker {
+    width: 100%;
+  }
+}
+
+@media (max-width: 639px) {
+  .controlsSection {
+    gap: 20px;
+    padding: 16px;
   }
 
-  .rangeRow {
+  .controlsLayout,
+  .rangeZone {
+    gap: 16px;
+  }
+
+  .quickRangeButtons,
+  .exportButtons {
+    display: grid;
     grid-template-columns: 1fr;
   }
 
-  .rangeRow :global(.ant-btn) {
+  .controlsSection :global(.ant-btn),
+  .controlsSection :global(.ant-picker) {
     width: 100%;
+  }
+
+  .controlsSection :global(.ant-picker-input > input) {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controlsSection :global(.ant-btn),
+  .controlsSection :global(.ant-picker) {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .controlsSection,
+  .exportZone {
+    border-color: CanvasText;
   }
 }

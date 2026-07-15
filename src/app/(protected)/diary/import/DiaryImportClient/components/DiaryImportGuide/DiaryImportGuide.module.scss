@@ -1,0 +1,247 @@
+.guide {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  padding: clamp(20px, 2.5vw, 28px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eyebrow {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.titleIcon {
+  display: grid;
+  flex: 0 0 40px;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: var(--surface-bg);
+  font-size: 1rem;
+}
+
+.title,
+.description,
+.sectionTitle,
+.stepLabel {
+  margin: 0;
+}
+
+.title {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.description {
+  margin-block-start: 5px;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.matchSection,
+.dataSection,
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.matchSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.matchSteps li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding-block-end: 16px;
+}
+
+.matchSteps li:last-child {
+  padding-block-end: 0;
+}
+
+.matchSteps li:not(:last-child)::after {
+  position: absolute;
+  inset-block-start: 34px;
+  inset-block-end: 0;
+  inset-inline-start: 16px;
+  width: 1px;
+  background: var(--surface-border);
+  content: "";
+}
+
+.stepIndex {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  background: var(--surface-bg);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepCopy {
+  min-width: 0;
+  padding: 7px 10px 10px;
+  border-block-end: 1px solid var(--surface-border);
+}
+
+.matchSteps li:last-child .stepCopy {
+  border-block-end: 0;
+}
+
+.stepLabel {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stepCopy strong {
+  display: block;
+  margin-block-start: 4px;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dataGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.dataGroups > div {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.7fr) minmax(0, 1.3fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-bg);
+}
+
+.dataGroups dt,
+.dataGroups dd {
+  min-width: 0;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dataGroups dt {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.dataGroups dd {
+  color: var(--text-secondary);
+}
+
+.notesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notesList li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 9px;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.notesList :global(.anticon) {
+  margin-block-start: 3px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 479px) {
+  .guide {
+    gap: 20px;
+    padding: 18px 16px;
+  }
+
+  .dataGroups > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}
+
+@media (forced-colors: active) {
+  .guide,
+  .titleIcon,
+  .stepIndex,
+  .dataGroups > div {
+    border-color: CanvasText;
+  }
+
+  .matchSteps li:not(:last-child)::after {
+    background: CanvasText;
+  }
+}

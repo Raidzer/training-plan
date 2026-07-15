@@ -1,0 +1,98 @@
+.panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 22px;
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.header {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: block;
+  margin-block-end: 8px;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.rules {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-block: 1px solid var(--surface-border);
+}
+
+.rule {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding-block: 12px;
+}
+
+.rule + .rule {
+  border-block-start: 1px solid var(--surface-border);
+}
+
+.ruleIcon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+}
+
+.rule dt {
+  margin-block-end: 2px;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rule dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+@media (min-width: 1100px) {
+  .panel {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+  }
+}

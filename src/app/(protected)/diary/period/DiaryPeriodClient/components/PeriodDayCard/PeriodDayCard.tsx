@@ -1,6 +1,7 @@
 "use client";
 
-import { Tag, Typography } from "antd";
+import { ArrowRightOutlined } from "@ant-design/icons";
+import Link from "next/link";
 import { DIARY_PERIOD_LABELS } from "../../constants/periodConstants";
 import type { DayStatus } from "../../types/periodTypes";
 import {
@@ -10,6 +11,7 @@ import {
   formatWeightStatus,
   formatWorkoutStatus,
 } from "../../utils/periodUtils";
+import { PeriodStatusBadge } from "../PeriodStatusBadge/PeriodStatusBadge";
 import styles from "./PeriodDayCard.module.scss";
 
 type PeriodDayCardProps = {
@@ -17,17 +19,20 @@ type PeriodDayCardProps = {
 };
 
 export function PeriodDayCard({ day }: PeriodDayCardProps) {
+  const displayDate = formatPeriodDisplayDate(day.date);
+
   return (
     <article className={styles.periodDayCard}>
       <div className={styles.periodDayHeader}>
-        <div>
-          <Typography.Text strong>{formatPeriodDisplayDate(day.date)}</Typography.Text>
-        </div>
-        {day.dayHasReport ? (
-          <Tag color="green">{DIARY_PERIOD_LABELS.completedStatus}</Tag>
-        ) : (
-          <Tag>{DIARY_PERIOD_LABELS.incompleteStatus}</Tag>
-        )}
+        <Link
+          className={styles.dateLink}
+          href={"/diary?date=" + day.date}
+          aria-label={DIARY_PERIOD_LABELS.openDayAction + ": " + displayDate}
+        >
+          <span>{displayDate}</span>
+          <ArrowRightOutlined aria-hidden />
+        </Link>
+        <PeriodStatusBadge completed={day.dayHasReport} />
       </div>
       <div className={styles.periodDayGrid}>
         <Metric
@@ -43,6 +48,12 @@ export function PeriodDayCard({ day }: PeriodDayCardProps) {
           value={formatRecoveryStatus(day.hasBath, day.hasMfr, day.hasMassage)}
         />
         <Metric
+          label={DIARY_PERIOD_LABELS.sleepColumn}
+          value={
+            day.hasSleep ? DIARY_PERIOD_LABELS.sleepCompleted : DIARY_PERIOD_LABELS.sleepMissing
+          }
+        />
+        <Metric
           label={DIARY_PERIOD_LABELS.workoutsColumn}
           value={formatWorkoutStatus(day.workoutsWithFullReport, day.workoutsTotal)}
         />
@@ -54,8 +65,8 @@ export function PeriodDayCard({ day }: PeriodDayCardProps) {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className={styles.metric}>
-      <Typography.Text type="secondary">{label}</Typography.Text>
-      <Typography.Text>{value}</Typography.Text>
+      <span className={styles.metricLabel}>{label}</span>
+      <span className={styles.metricValue}>{value}</span>
     </div>
   );
 }

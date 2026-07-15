@@ -1,65 +1,124 @@
 .recordsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.recordCard {
-  padding: 16px;
-  border-radius: 18px;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-bg);
-  box-shadow: var(--surface-shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 12px;
   min-width: 0;
 }
 
+.recordCard {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-bg);
+}
+
+.recordTopline {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .recordBadge {
-  align-self: flex-start;
-  background: var(--accent-color);
-  color: #fff;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
   font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.recordNumber {
+  color: var(--text-muted);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  line-height: 1.4;
 }
 
 .recordMain {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .recordTime {
-  font-size: 20px;
-  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-data);
+  font-size: clamp(1.65rem, 1.35rem + 1.3vw, 2.4rem);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .recordAthlete {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.recordDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-width: 0;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-border);
 }
 
 .recordMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
+  gap: 6px 16px;
   min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  list-style: none;
   overflow-wrap: anywhere;
+}
+
+.recordMeta li + li {
+  position: relative;
+}
+
+.recordMeta li + li::before {
+  position: absolute;
+  inset-inline-start: -9px;
+  color: var(--surface-border);
+  content: "/";
 }
 
 .protocolLink {
-  color: var(--accent-color);
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
   font-weight: 600;
-  text-decoration: none;
+  line-height: 1.3;
+  text-underline-offset: 4px;
   overflow-wrap: anywhere;
 }
 
-.protocolLink:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .protocolLink:hover {
+    color: var(--text-secondary);
+  }
 }

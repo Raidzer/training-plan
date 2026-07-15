@@ -1,10 +1,9 @@
 "use client";
 
-import { AppstoreOutlined, BulbOutlined, MoonFilled } from "@ant-design/icons";
+import { AppstoreOutlined } from "@ant-design/icons";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useThemeMode } from "@/components/ThemeProvider/ThemeProvider";
 import { TELEGRAM_TOOL_LINKS, TELEGRAM_TOOLS_TEXT } from "../../constants/telegramToolsConstants";
 import styles from "./TelegramToolsNavigation.module.scss";
 
@@ -12,15 +11,6 @@ const TOOLS_INDEX_HREF = "/telegram/tools";
 
 export function TelegramToolsNavigation() {
   const pathname = usePathname();
-  const { mode, setMode } = useThemeMode();
-  const isDarkMode = mode === "dark";
-  const themeButtonLabel = isDarkMode
-    ? TELEGRAM_TOOLS_TEXT.enableLightThemeLabel
-    : TELEGRAM_TOOLS_TEXT.enableDarkThemeLabel;
-
-  const handleThemeToggle = () => {
-    setMode(isDarkMode ? "light" : "dark");
-  };
 
   return (
     <nav className={styles.navigation} aria-label={TELEGRAM_TOOLS_TEXT.navigationLabel}>
@@ -49,16 +39,6 @@ export function TelegramToolsNavigation() {
           );
         })}
       </div>
-
-      <button
-        className={styles.themeButton}
-        type="button"
-        aria-label={themeButtonLabel}
-        title={themeButtonLabel}
-        onClick={handleThemeToggle}
-      >
-        {isDarkMode ? <BulbOutlined aria-hidden="true" /> : <MoonFilled aria-hidden="true" />}
-      </button>
     </nav>
   );
 }

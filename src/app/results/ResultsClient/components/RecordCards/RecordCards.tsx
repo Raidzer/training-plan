@@ -1,5 +1,3 @@
-"use client";
-
 import { RESULTS_LABELS } from "../../constants/resultsConstants";
 import type { ResultsEntry } from "../../types/resultsTypes";
 import { buildMetaItems } from "../../utils/resultsUtils";
@@ -17,23 +15,36 @@ export function RecordCards({ records }: RecordCardsProps) {
 
         return (
           <article className={styles.recordCard} key={item.id}>
-            <span className={styles.recordBadge}>{RESULTS_LABELS.recordBadge}</span>
+            <div className={styles.recordTopline}>
+              <span className={styles.recordBadge}>{RESULTS_LABELS.recordBadge}</span>
+              <span className={styles.recordNumber} aria-hidden="true">
+                01
+              </span>
+            </div>
+
             <div className={styles.recordMain}>
               <span className={styles.recordTime}>{item.timeText}</span>
-              <span className={styles.recordAthlete}>{item.athlete}</span>
+              <h4 className={styles.recordAthlete}>{item.athlete}</h4>
             </div>
-            <div className={styles.recordMeta}>
-              {metaItems.map((value, index) => (
-                <span key={`${item.id}-record-meta-${index}`}>{value}</span>
-              ))}
+
+            <div className={styles.recordDetails}>
+              {metaItems.length > 0 ? (
+                <ul className={styles.recordMeta} role="list">
+                  {metaItems.map((value, index) => (
+                    <li key={`${item.id}-record-meta-${index}`}>{value}</li>
+                  ))}
+                </ul>
+              ) : null}
               {item.protocolUrl ? (
                 <a
                   className={styles.protocolLink}
                   href={item.protocolUrl}
                   target="_blank"
                   rel="noreferrer"
+                  aria-label={`Открыть протокол: ${item.athlete}, ${item.timeText}, результат №${item.id}`}
                 >
                   {RESULTS_LABELS.protocolLink}
+                  <span aria-hidden="true">↗</span>
                 </a>
               ) : null}
             </div>

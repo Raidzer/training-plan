@@ -1,20 +1,32 @@
 import type { DistanceTab, GenderTab } from "../types/resultsTypes";
 
 export const RESULTS_LABELS = {
+  eyebrow: "Клубная статистика",
   title: "Результаты клуба",
-  subtitle:
-    "Быстрые финиши участников по ключевым дистанциям. Сортировка внутри каждой дистанции - от рекордов к полному списку.",
+  subtitle: "Финиши участников на ключевых дистанциях — от клубного рекорда к полному рейтингу.",
+  totalResultsStat: "Всего финишей",
+  distancesStat: "Дистанции",
   distanceFilterLabel: "Выбор дистанции",
   genderFilterLabel: "Фильтр по полу",
-  panelTitlePrefix: "Дистанция",
-  panelSubtitle: "Результаты отсортированы по времени - от быстрого к медленному.",
+  panelEyebrow: "Рейтинг дистанции",
+  panelTitlePrefix: "Финиши на",
+  panelSubtitle: "От самого быстрого результата к более продолжительным финишам.",
+  resultCountOne: "финиш",
+  resultCountFew: "финиша",
+  resultCountMany: "финишей",
+  emptyTitle: "На этом срезе пока нет финишей",
   emptyText: "Пока нет результатов для этой дистанции.",
-  recordsTitle: "Рекорды",
-  recordsSubtitle: "Самые быстрые результаты на выбранной дистанции.",
-  recordBadge: "Рекорд",
-  restTitle: "Остальные результаты",
-  restSubtitle: "Полный список финишей на дистанции.",
+  emptyGuidance: "Выберите другую дистанцию или измените фильтр по полу.",
+  recordsTitle: "Лучшее время",
+  recordsSubtitle: "Клубный ориентир на выбранной дистанции.",
+  recordBadge: "Рекорд дистанции",
+  restTitle: "Полный рейтинг",
+  restSubtitle: "Остальные финиши в порядке результата.",
   protocolLink: "Протокол",
+  rankColumn: "Место",
+  athleteColumn: "Участник и старт",
+  timeColumn: "Время",
+  protocolColumn: "Источник",
 } as const;
 
 export const DISTANCE_TABS: readonly DistanceTab[] = [

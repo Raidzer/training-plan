@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   canDeleteAdminUser,
+  filterAdminUsers,
   formatDate,
+  formatUsersCount,
+  getAdminUsersStats,
   getApiErrorMessage,
   getGenderLabel,
   getRoleMeta,
+  getRosterNumber,
+  getUserInitials,
   getUserLabel,
 } from "@/app/(protected)/admin/users/AdminUsersClient/utils/adminUsersUtils";
 import { ADMIN_USERS_LABELS } from "@/app/(protected)/admin/users/AdminUsersClient/constants/adminUsersConstants";
@@ -38,9 +43,97 @@ describe("adminUsersUtils", () => {
     expect(getUserLabel({ ...baseUser, name: "Runner" })).toBe("Runner");
     expect(getUserLabel({ ...baseUser, email: "runner@example.com" })).toBe("runner@example.com");
     expect(getUserLabel(baseUser)).toBe("ID 10");
+    expect(getUserLabel({ ...baseUser, name: "Анна", lastName: "Иванова" })).toBe("Анна Иванова");
+    expect(getUserInitials({ ...baseUser, name: "Анна", lastName: "Иванова" })).toBe("АИ");
+    expect(getUserInitials({ ...baseUser, email: "runner@example.com" })).toBe("R");
+    expect(getRosterNumber(7)).toBe("0007");
+  });
+
+  it("фильтрует пользователей по запросу, роли и статусу", () => {
+    const users: AdminUserRow[] = [
+      {
+        ...baseUser,
+        id: 1,
+        name: "Иван",
+        lastName: "Петров",
+        email: "ivan@example.com",
+        login: "runner-one",
+        role: "admin",
+        isActive: true,
+      },
+      {
+        ...baseUser,
+        id: 2,
+        name: "Анна",
+        lastName: "Сидорова",
+        email: "anna@example.com",
+        login: "coach-two",
+        role: "coach",
+        isActive: false,
+      },
+      {
+        ...baseUser,
+        id: 3,
+        name: "Олег",
+        lastName: "Волков",
+        email: "oleg@example.com",
+        login: "athlete-three",
+        role: "athlete",
+        isActive: true,
+      },
+    ];
+
+    expect(filterAdminUsers(users, "  АННА СИДОРОВА ", "all", "all")).toEqual([users[1]]);
+    expect(filterAdminUsers(users, "runner-one", "all", "all")).toEqual([users[0]]);
+    expect(filterAdminUsers(users, "2", "all", "all")).toEqual([users[1]]);
+    expect(filterAdminUsers(users, "", "coach", "all")).toEqual([users[1]]);
+    expect(filterAdminUsers(users, "", "all", "disabled")).toEqual([users[1]]);
+    expect(filterAdminUsers(users, "", "athlete", "active")).toEqual([users[2]]);
+    expect(filterAdminUsers(users, "Анна", "athlete", "all")).toEqual([]);
+  });
+
+  it("считает сводку по составу клуба", () => {
+    const users: AdminUserRow[] = [
+      { ...baseUser, id: 1, role: "admin", isActive: true },
+      { ...baseUser, id: 2, role: "coach", isActive: true },
+      { ...baseUser, id: 3, role: "coach", isActive: false },
+      { ...baseUser, id: 4, role: "athlete", isActive: false },
+    ];
+
+    expect(getAdminUsersStats(users)).toEqual({
+      total: 4,
+      active: 2,
+      coaches: 2,
+      disabled: 2,
+    });
+    expect(getAdminUsersStats([])).toEqual({
+      total: 0,
+      active: 0,
+      coaches: 0,
+      disabled: 0,
+    });
+  });
+
+  it.each([
+    [0, "0 пользователей"],
+    [1, "1 пользователь"],
+    [2, "2 пользователя"],
+    [4, "4 пользователя"],
+    [5, "5 пользователей"],
+    [11, "11 пользователей"],
+    [14, "14 пользователей"],
+    [21, "21 пользователь"],
+    [22, "22 пользователя"],
+    [25, "25 пользователей"],
+  ])("склоняет количество пользователей: %i", (count, expected) => {
+    expect(formatUsersCount(count)).toBe(expected);
   });
 
   it("должен форматировать пол и API-ошибки", () => {
+    expect(ADMIN_USERS_LABELS.disableConfirmText).toBe(
+      "Пользователь не сможет входить в личный кабинет до обратного включения."
+    );
+    expect(ADMIN_USERS_LABELS.unauthorized).toBe("Нужно войти в личный кабинет.");
     expect(getGenderLabel("male")).toBe(ADMIN_USERS_LABELS.maleGender);
     expect(getGenderLabel("female")).toBe(ADMIN_USERS_LABELS.femaleGender);
     expect(getGenderLabel("")).toBe("-");

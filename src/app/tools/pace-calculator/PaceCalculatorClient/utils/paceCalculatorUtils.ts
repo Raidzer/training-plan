@@ -84,13 +84,29 @@ export const safeParseSaved = (raw: string | null): SavedResult[] => {
       if (!item || typeof item !== "object") {
         return false;
       }
-      return (
+
+      const hasExpectedShape =
         typeof item.id === "string" &&
         typeof item.distanceMeters === "number" &&
         typeof item.resultSeconds === "number" &&
         typeof item.paceSeconds === "number" &&
         typeof item.lapSeconds === "number" &&
-        typeof item.createdAt === "string"
+        typeof item.createdAt === "string";
+
+      if (!hasExpectedShape) {
+        return false;
+      }
+
+      return (
+        Number.isFinite(item.distanceMeters) &&
+        item.distanceMeters > 0 &&
+        Number.isFinite(item.resultSeconds) &&
+        item.resultSeconds > 0 &&
+        Number.isFinite(item.paceSeconds) &&
+        item.paceSeconds > 0 &&
+        Number.isFinite(item.lapSeconds) &&
+        item.lapSeconds > 0 &&
+        !Number.isNaN(Date.parse(item.createdAt))
       );
     });
   } catch {

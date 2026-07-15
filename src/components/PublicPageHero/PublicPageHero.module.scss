@@ -1,0 +1,145 @@
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  gap: clamp(28px, 5vw, 64px);
+  align-items: end;
+  padding: clamp(8px, 1vw, 16px) 0 clamp(28px, 4vw, 48px);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.hero::after {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -1px;
+  width: clamp(88px, 14vw, 160px);
+  height: 1px;
+  background: var(--text-primary);
+  content: "";
+}
+
+.copy {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 28px;
+  height: 1px;
+  flex: 0 0 28px;
+  background: var(--control-border);
+  content: "";
+}
+
+.title {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(2rem, 1.45rem + 2.2vw, 3.5rem);
+  font-weight: 650;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.description {
+  max-width: 66ch;
+  margin: 20px 0 0;
+  color: var(--text-secondary);
+  font-size: clamp(0.9375rem, 0.9rem + 0.15vw, 1.0625rem);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.stats {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+  border-top: 1px solid var(--surface-border);
+}
+
+.stat {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.stat dt {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.stat dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-data);
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .title {
+    max-width: 22ch;
+  }
+
+  .stats {
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    border: 1px solid var(--surface-border);
+  }
+
+  .stat {
+    padding: 12px 10px;
+    border-bottom: 0;
+  }
+
+  .stat dd {
+    font-size: 0.875rem;
+  }
+
+  .stat + .stat {
+    border-left: 1px solid var(--surface-border);
+  }
+}
+
+@media (max-width: 420px) {
+  .hero {
+    gap: 24px;
+    padding-bottom: 32px;
+  }
+
+  .title {
+    font-size: clamp(1.875rem, 9vw, 2.25rem);
+  }
+}
