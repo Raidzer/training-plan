@@ -1,5 +1,7 @@
 import type { FormInstance } from "antd";
 
+export type InviteRole = "athlete" | "coach";
+
 export type InviteUser = {
   id: number;
   name: string;
@@ -24,17 +26,28 @@ export type AdminInvitesClientProps = {
 };
 
 export type InviteFormValues = {
-  role: "athlete" | "coach";
+  role: InviteRole;
 };
 
 export type InviteMeta = {
   label: string;
-  color?: string;
+  tone: InviteRole | "unknown";
 };
 
 export type InviteStatusMeta = {
   label: string;
-  color: string;
+  tone: InviteStatus;
+};
+
+export type InviteRoleFilter = "all" | InviteRole;
+
+export type InviteStatusFilter = "all" | InviteStatus;
+
+export type AdminInvitesStats = {
+  total: number;
+  active: number;
+  used: number;
+  expired: number;
 };
 
 export type AdminInviteCreateResponse = {

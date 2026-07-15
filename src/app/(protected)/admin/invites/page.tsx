@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { desc, inArray } from "drizzle-orm";
 import { requireAdmin } from "@/server/authGuards";
 import { db } from "@/server/db/client";
 import { registrationInvites, users } from "@/server/db/schema";
 import { AdminInvitesClient } from "./AdminInvitesClient/AdminInvitesClient";
+import { ADMIN_INVITES_HISTORY_LIMIT } from "./AdminInvitesClient/constants/adminInvitesConstants";
 import type { AdminInviteRow, InviteStatus } from "./AdminInvitesClient/types/adminInvitesTypes";
+
+export const metadata: Metadata = {
+  title: "Приглашения клуба | СПИРОС",
+};
 
 const getInviteStatus = (
   invite: {
@@ -37,7 +43,7 @@ export default async function AdminInvitesPage() {
     })
     .from(registrationInvites)
     .orderBy(desc(registrationInvites.createdAt))
-    .limit(200);
+    .limit(ADMIN_INVITES_HISTORY_LIMIT);
 
   const userIds = new Set<number>();
   for (const row of rows) {
