@@ -24,6 +24,7 @@ import {
   updateUserRoleById,
   updateUserStatusById,
 } from "@/server/adminUsers";
+import { plans, users } from "@/server/db/schema";
 
 function mockUpdateReturning(rows: unknown[]) {
   const returningMock = vi.fn().mockResolvedValue(rows);
@@ -174,7 +175,7 @@ describe("server/adminUsers", () => {
         .mockReturnValueOnce(createSelectWhereBuilder([{ id: 10 }]))
         .mockReturnValueOnce(createSelectWhereBuilder([{ id: 20 }]))
         .mockReturnValueOnce(createSelectWhereBuilder([{ id: 30 }])),
-      delete: vi.fn(() => createDeleteBuilder()),
+      delete: vi.fn((_table: unknown) => createDeleteBuilder()),
     };
 
     dbTransactionMock.mockImplementation(async (callback) => {
@@ -184,7 +185,19 @@ describe("server/adminUsers", () => {
     const result = await deleteUserAccountById(2);
 
     expect(result).toEqual({ deleted: true });
-    expect(tx.delete).toHaveBeenCalled();
+    expect(tx.delete).toHaveBeenCalledWith(plans);
+    expect(tx.delete).toHaveBeenCalledWith(users);
+
+    const plansDeleteIndex =
+      tx.delete.mock.invocationCallOrder[
+        tx.delete.mock.calls.findIndex(([table]) => table === plans)
+      ];
+    const userDeleteIndex =
+      tx.delete.mock.invocationCallOrder[
+        tx.delete.mock.calls.findIndex(([table]) => table === users)
+      ];
+
+    expect(plansDeleteIndex).toBeLessThan(userDeleteIndex);
   });
 
   it("clearUserTrainingDataById должен возвращать not_found без delete-запросов", async () => {

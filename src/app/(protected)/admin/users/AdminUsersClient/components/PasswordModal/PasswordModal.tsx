@@ -3,6 +3,9 @@
 import { Form, Input, Modal } from "antd";
 import { ADMIN_USERS_LABELS, PASSWORD_MIN_LENGTH } from "../../constants/adminUsersConstants";
 import type { PasswordFormInstance } from "../../types/adminUsersTypes";
+import styles from "./PasswordModal.module.scss";
+
+const PASSWORD_FORM_ID = "admin-user-password-form";
 
 type PasswordModalProps = {
   form: PasswordFormInstance;
@@ -12,6 +15,7 @@ type PasswordModalProps = {
   hasActiveUser: boolean;
   onSubmit: () => void;
   onCancel: () => void;
+  onAfterClose: () => void;
 };
 
 export function PasswordModal({
@@ -22,20 +26,33 @@ export function PasswordModal({
   hasActiveUser,
   onSubmit,
   onCancel,
+  onAfterClose,
 }: PasswordModalProps) {
   return (
     <Modal
+      className={styles.modal}
       title={`${ADMIN_USERS_LABELS.passwordModalTitle}: ${activeUserLabel}`}
       open={open}
       width="min(520px, calc(100vw - 24px))"
-      onOk={onSubmit}
       onCancel={onCancel}
+      afterOpenChange={(isOpen) => {
+        if (!isOpen) {
+          onAfterClose();
+        }
+      }}
       okText={ADMIN_USERS_LABELS.saveButton}
       cancelText={ADMIN_USERS_LABELS.cancelButton}
       confirmLoading={saving}
-      okButtonProps={{ disabled: !hasActiveUser }}
+      okButtonProps={{ disabled: !hasActiveUser, htmlType: "submit", form: PASSWORD_FORM_ID }}
     >
-      <Form form={form} layout="vertical" requiredMark={false}>
+      <p className={styles.description}>{ADMIN_USERS_LABELS.passwordModalDescription}</p>
+      <Form
+        id={PASSWORD_FORM_ID}
+        form={form}
+        layout="vertical"
+        requiredMark={false}
+        onFinish={onSubmit}
+      >
         <Form.Item
           name="newPassword"
           label={ADMIN_USERS_LABELS.newPasswordLabel}
@@ -47,7 +64,10 @@ export function PasswordModal({
             },
           ]}
         >
-          <Input.Password autoComplete="new-password" />
+          <Input.Password
+            autoComplete="new-password"
+            placeholder={ADMIN_USERS_LABELS.newPasswordPlaceholder}
+          />
         </Form.Item>
         <Form.Item
           name="confirmPassword"
@@ -68,7 +88,10 @@ export function PasswordModal({
             }),
           ]}
         >
-          <Input.Password autoComplete="new-password" />
+          <Input.Password
+            autoComplete="new-password"
+            placeholder={ADMIN_USERS_LABELS.confirmPasswordPlaceholder}
+          />
         </Form.Item>
       </Form>
     </Modal>

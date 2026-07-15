@@ -15,12 +15,26 @@ export type AdminUserRow = {
 
 export type RoleMeta = {
   label: string;
-  color?: string;
+  tone: "admin" | "coach" | "athlete" | "unknown";
 };
 
 export type AdminUsersClientProps = {
   users: AdminUserRow[];
+  currentUserId: number | null;
 };
+
+export type AdminUserRoleFilter = "all" | "admin" | "coach" | "athlete";
+export type AdminUserStatusFilter = "all" | "active" | "disabled";
+
+export type AdminUsersStats = {
+  total: number;
+  active: number;
+  coaches: number;
+  disabled: number;
+};
+
+export type RestoreAdminUserFocus = () => void;
+export type OpenAdminUserModal = (user: AdminUserRow, restoreFocus: RestoreAdminUserFocus) => void;
 
 export type RoleFormValues = {
   role: string;
