@@ -1,0 +1,78 @@
+.emptyState {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+  padding: clamp(40px, 8vw, 72px) 20px;
+  border: 1px dashed var(--control-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-block-end: 18px;
+  border: 1px solid var(--surface-border);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: var(--surface-bg);
+  font-size: 1.125rem;
+}
+
+.title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.description {
+  max-width: 52ch;
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.primaryLink,
+.resetButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-block-start: 22px;
+  gap: 8px;
+  padding-inline: 15px;
+  border: 1px solid var(--accent-color);
+  border-radius: var(--radius-sm);
+  color: var(--accent-contrast);
+  background: var(--accent-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) ease,
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+}
+
+.primaryLink:hover,
+.resetButton:hover {
+  border-color: var(--text-primary);
+  color: var(--accent-contrast);
+  background: var(--text-primary);
+}
+
+.primaryLink:focus-visible,
+.resetButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
