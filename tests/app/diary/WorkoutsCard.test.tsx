@@ -130,7 +130,14 @@ describe("WorkoutsCard", () => {
         />
       );
 
-      const constructorButton = screen.getByRole("button", { name: "Конструктор отчета" });
+      expect(
+        screen.getByRole("tab", {
+          name: "Тренировка 1, Complete",
+        })
+      ).toBeTruthy();
+      expect(screen.getAllByText("Тренировка 1")).toHaveLength(1);
+
+      const constructorButton = screen.getByRole("button", { name: "Конструктор отчёта" });
 
       fireEvent.click(constructorButton);
       fireEvent.click(screen.getByRole("button", { name: "mock-apply-constructor" }));
@@ -142,7 +149,7 @@ describe("WorkoutsCard", () => {
   );
 
   it(
-    "должен показывать отдельную кнопку редактирования для каждой тренировки",
+    "должен переключать тренировки табами и сохранять их отдельные действия",
     () => {
       const onEditWorkout = vi.fn();
 
@@ -204,18 +211,31 @@ describe("WorkoutsCard", () => {
         />
       );
 
-      const firstButton = screen.getByRole("button", {
-        name: "Редактировать тренировку 1",
+      const firstTab = screen.getByRole("tab", {
+        name: "Тренировка 1, Incomplete",
       });
-      const secondButton = screen.getByRole("button", {
-        name: "Редактировать тренировку 2",
+      const secondTab = screen.getByRole("tab", {
+        name: "Тренировка 2, Incomplete",
       });
 
-      fireEvent.click(secondButton);
-      fireEvent.click(firstButton);
+      expect(firstTab.getAttribute("aria-selected")).toBe("true");
+      expect(secondTab.getAttribute("aria-selected")).toBe("false");
 
-      expect(onEditWorkout).toHaveBeenNthCalledWith(1, 2);
-      expect(onEditWorkout).toHaveBeenNthCalledWith(2, 1);
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Редактировать тренировку 1",
+        })
+      );
+      fireEvent.click(secondTab);
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Редактировать тренировку 2",
+        })
+      );
+
+      expect(secondTab.getAttribute("aria-selected")).toBe("true");
+      expect(onEditWorkout).toHaveBeenNthCalledWith(1, 1);
+      expect(onEditWorkout).toHaveBeenNthCalledWith(2, 2);
     },
     WORKOUTS_CARD_TEST_TIMEOUT_MS
   );

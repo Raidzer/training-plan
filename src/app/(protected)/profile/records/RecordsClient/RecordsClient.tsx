@@ -1,60 +1,99 @@
 "use client";
 
-import { App, Button, Card, Typography } from "antd";
-import { InfoCircleOutlined } from "@ant-design/icons";
-import { RecordsGrid } from "./components/RecordsGrid/RecordsGrid";
-import { RECORDS_LABELS } from "./constants/recordsConstants";
+import { App } from "antd";
+import { useEffect, useRef, useState } from "react";
+import type { PersonalRecordDistanceKey } from "@/shared/constants/personalRecords.constants";
+import { RecordEditor } from "./components/RecordEditor/RecordEditor";
+import { RecordsErrorState } from "./components/RecordsErrorState/RecordsErrorState";
+import { RecordsHeader } from "./components/RecordsHeader/RecordsHeader";
+import { RecordsLoadingState } from "./components/RecordsLoadingState/RecordsLoadingState";
+import { RecordsNavigator } from "./components/RecordsNavigator/RecordsNavigator";
+import { RecordsOverview } from "./components/RecordsOverview/RecordsOverview";
+import { DEFAULT_SELECTED_DISTANCE_KEY } from "./constants/recordsConstants";
 import { useRecords } from "./hooks/useRecords";
 import type { RecordsClientProps } from "./types/recordsTypes";
+import { isRecordFilled } from "./utils/recordsUtils";
 import styles from "./RecordsClient.module.scss";
 
-export function RecordsClient({ apiUrl = "/api/personal-records" }: RecordsClientProps) {
+export function RecordsClient({
+  apiUrl = "/api/personal-records",
+  variant = "profile",
+}: RecordsClientProps) {
   const { message: messageApi } = App.useApp();
-  const { rows, loading, saving, errors, handleFieldChange, handleSave } = useRecords({
-    apiUrl,
-    messageApi,
-  });
+  const [selectedDistanceKey, setSelectedDistanceKey] = useState<PersonalRecordDistanceKey>(
+    DEFAULT_SELECTED_DISTANCE_KEY
+  );
+  const initialSelectionSetRef = useRef(false);
+  const {
+    rows,
+    loading,
+    loadError,
+    saving,
+    saveError,
+    hasChanges,
+    errors,
+    validationAttempt,
+    handleFieldChange,
+    handleClearRecord,
+    handleSave,
+    handleRetry,
+  } = useRecords({ apiUrl, messageApi });
+
+  useEffect(() => {
+    if (initialSelectionSetRef.current || loading || loadError) {
+      return;
+    }
+
+    const firstFilledRow = rows.find(isRecordFilled);
+    setSelectedDistanceKey(firstFilledRow?.distanceKey ?? DEFAULT_SELECTED_DISTANCE_KEY);
+    initialSelectionSetRef.current = true;
+  }, [loadError, loading, rows]);
+
+  const selectedRow =
+    rows.find((row) => row.distanceKey === selectedDistanceKey) ?? rows[0] ?? null;
+
+  const handleSubmit = async () => {
+    const result = await handleSave();
+
+    if (result.status === "invalid") {
+      setSelectedDistanceKey(result.invalidDistanceKey);
+    }
+  };
 
   return (
-    <main className={styles.page}>
-      <Card className={styles.card}>
-        <div className={styles.header}>
-          <Typography.Title level={3} className={styles.title}>
-            {RECORDS_LABELS.title}
-          </Typography.Title>
-          <Typography.Paragraph type="secondary" className={styles.subtitle}>
-            {RECORDS_LABELS.subtitle}
-          </Typography.Paragraph>
-        </div>
+    <div className={styles.page}>
+      {variant === "profile" ? <RecordsHeader /> : null}
+      <RecordsOverview rows={rows} loading={loading} loadError={loadError} />
 
-        <div className={styles.helpBox}>
-          <div className={styles.helpIcon}>
-            <InfoCircleOutlined />
+      {loading ? <RecordsLoadingState /> : null}
+
+      {!loading && loadError ? <RecordsErrorState loading={loading} onRetry={handleRetry} /> : null}
+
+      {!loading && !loadError && selectedRow ? (
+        <div className={styles.workspace}>
+          <div className={styles.navigatorColumn}>
+            <RecordsNavigator
+              rows={rows}
+              selectedDistanceKey={selectedDistanceKey}
+              errors={errors}
+              disabled={saving}
+              onSelect={setSelectedDistanceKey}
+            />
           </div>
-          <div className={styles.helpContent}>
-            <Typography.Text strong className={styles.helpTitle}>
-              {RECORDS_LABELS.alertTitle}
-            </Typography.Text>
-            <Typography.Paragraph className={styles.helpText}>
-              {RECORDS_LABELS.alertText}
-            </Typography.Paragraph>
-          </div>
+          <RecordEditor
+            row={selectedRow}
+            errors={errors[selectedRow.distanceKey] ?? {}}
+            saving={saving}
+            disabled={loading || loadError}
+            hasChanges={hasChanges}
+            saveError={saveError}
+            validationAttempt={validationAttempt}
+            onFieldChange={handleFieldChange}
+            onClearRecord={handleClearRecord}
+            onSubmit={handleSubmit}
+          />
         </div>
-
-        <RecordsGrid
-          rows={rows}
-          loading={loading}
-          saving={saving}
-          errors={errors}
-          onFieldChange={handleFieldChange}
-        />
-
-        <div className={styles.actions}>
-          <Button type="primary" onClick={handleSave} loading={saving} disabled={loading || saving}>
-            {RECORDS_LABELS.saveButton}
-          </Button>
-        </div>
-      </Card>
-    </main>
+      ) : null}
+    </div>
   );
 }

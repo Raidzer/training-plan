@@ -1,9 +1,10 @@
 "use client";
 
-import { App, Card, Typography } from "antd";
+import { App } from "antd";
 import { ShoeCreateForm } from "./components/ShoeCreateForm/ShoeCreateForm";
 import { ShoeList } from "./components/ShoeList/ShoeList";
-import { shoesLabels } from "./constants/shoesConstants";
+import { ShoesHeader } from "./components/ShoesHeader/ShoesHeader";
+import { ShoesOverview } from "./components/ShoesOverview/ShoesOverview";
 import { useShoes } from "./hooks/useShoes";
 import styles from "./ShoesClient.module.scss";
 
@@ -12,10 +13,15 @@ export function ShoesClient() {
   const {
     items,
     loading,
+    loadError,
     saving,
     newForm,
+    newFormErrors,
+    newValidationAttempt,
     editingId,
     editingForm,
+    editingFormErrors,
+    editingValidationAttempt,
     notificationAvailability,
     updatingId,
     deletingId,
@@ -26,27 +32,27 @@ export function ShoesClient() {
     handleCancelEdit,
     handleSaveEdit,
     handleDelete,
+    handleRetry,
   } = useShoes({ messageApi, modalApi });
+  const addDisabled =
+    loading || loadError || editingId !== null || updatingId !== null || deletingId !== null;
 
   return (
-    <main className={styles.page}>
-      <Card className={styles.card}>
-        <Typography.Title level={3} className={styles.title}>
-          {shoesLabels.title}
-        </Typography.Title>
-        <ShoeCreateForm
-          form={newForm}
-          saving={saving}
-          notificationAvailability={notificationAvailability}
-          onChange={updateNewForm}
-          onSubmit={handleCreate}
-        />
+    <div className={styles.page}>
+      <ShoesHeader />
+      <ShoesOverview items={items} loading={loading} loadError={loadError} />
+
+      <div className={styles.workspace}>
         <ShoeList
           items={items}
           loading={loading}
+          loadError={loadError}
+          addDisabled={addDisabled}
           saving={saving}
           editingId={editingId}
           editingForm={editingForm}
+          editingFormErrors={editingFormErrors}
+          editingValidationAttempt={editingValidationAttempt}
           notificationAvailability={notificationAvailability}
           updatingId={updatingId}
           deletingId={deletingId}
@@ -55,8 +61,19 @@ export function ShoesClient() {
           onSaveEdit={handleSaveEdit}
           onCancelEdit={handleCancelEdit}
           onDelete={handleDelete}
+          onRetry={handleRetry}
         />
-      </Card>
-    </main>
+        <ShoeCreateForm
+          form={newForm}
+          errors={newFormErrors}
+          validationAttempt={newValidationAttempt}
+          saving={saving}
+          disabled={addDisabled}
+          notificationAvailability={notificationAvailability}
+          onChange={updateNewForm}
+          onSubmit={handleCreate}
+        />
+      </div>
+    </div>
   );
 }

@@ -1,8 +1,242 @@
-.listTitle {
-  margin-top: 8px;
-  margin-bottom: 8px;
+.section {
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 72px;
+  gap: 20px;
+  padding: 0 2px 16px;
+  border-block-end: 1px solid var(--surface-border);
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 6px !important;
+  font-size: 1.25rem !important;
+  line-height: 1.35 !important;
+}
+
+.description {
+  margin: 0 !important;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.addLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--surface-bg);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-decoration: none;
+  transition:
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+}
+
+.addLink:hover {
+  border-color: var(--control-border-hover);
+  color: var(--text-primary);
+  background: var(--interactive-hover);
+}
+
+.addLink:active {
+  background: var(--interactive-active);
+}
+
+.addLink:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.disabledAction {
+  cursor: not-allowed;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.count {
+  flex: 0 0 auto;
+  min-width: 64px;
+  padding: 7px 10px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .list {
-  margin-top: 8px;
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.loadingState {
+  display: grid;
+  gap: 12px;
+  margin-block-start: 16px;
+}
+
+.skeleton {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-bg);
+}
+
+.skeleton span {
+  display: block;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--interactive-hover);
+  animation: skeletonPulse 1.4s ease-in-out infinite alternate;
+}
+
+.skeleton span:nth-child(1) {
+  width: 42%;
+}
+
+.skeleton span:nth-child(2) {
+  width: 68%;
+}
+
+.skeleton span:nth-child(3) {
+  width: 100%;
+  height: 7px;
+}
+
+.state {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  min-height: 250px;
+  margin-block-start: 16px;
+  padding: clamp(24px, 5vw, 44px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-bg);
+}
+
+.stateIcon {
+  margin-block-end: 8px;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+}
+
+.stateTitle {
+  margin: 0 !important;
+  font-size: 1.0625rem !important;
+  line-height: 1.4 !important;
+}
+
+.stateDescription {
+  max-width: 48ch;
+  margin: 0 0 8px !important;
+  line-height: 1.6;
+}
+
+.stateAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--surface-bg);
+  text-decoration: none;
+  transition:
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+}
+
+.stateAction:hover {
+  border-color: var(--control-border-hover);
+  color: var(--text-primary);
+  background: var(--interactive-hover);
+}
+
+.stateAction:active {
+  background: var(--interactive-active);
+}
+
+.stateAction:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes skeletonPulse {
+  from {
+    opacity: 0.45;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 639px) {
+  .header {
+    display: grid;
+    align-items: start;
+  }
+
+  .headerActions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .count {
+    min-width: 56px;
+  }
+
+  .state {
+    min-height: 220px;
+    padding: 28px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton span {
+    animation: none;
+  }
 }

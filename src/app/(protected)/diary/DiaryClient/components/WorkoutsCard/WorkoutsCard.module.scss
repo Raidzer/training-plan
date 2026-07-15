@@ -1,148 +1,132 @@
 .sectionPanel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
-  padding: 14px;
+  padding: clamp(16px, 2vw, 24px);
   border: 1px solid var(--surface-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-bg);
-}
-
-.workoutsPanel {
-  min-width: 0;
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 
 .sectionTitle {
   margin: 0;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.35;
 }
 
-.workoutList {
-  width: 100%;
-  align-items: stretch;
-}
-
-.workoutList :global(.ant-space-item) {
-  width: 100%;
-}
-
-.workoutItem {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-  padding: 14px;
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  background: var(--surface-soft);
-}
-
-.workoutHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.workoutTextBlock {
-  flex: 1 1 220px;
+.tabs {
   min-width: 0;
 }
 
-.workoutHeaderActions {
-  display: flex;
+.tabs :global(.ant-tabs-nav) {
+  margin-block-end: 16px;
+}
+
+.tabs :global(.ant-tabs-nav-wrap) {
+  min-height: 56px;
+}
+
+.tabs :global(.ant-tabs-tab) {
+  min-height: 52px;
+  margin: 0 !important;
+  padding: 8px 16px !important;
+}
+
+.tabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+  margin-inline-start: 8px !important;
+}
+
+.tabs :global(.ant-tabs-tab-btn) {
+  color: var(--text-secondary);
+}
+
+.tabs :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+  color: var(--text-primary) !important;
+}
+
+.tabs :global(.ant-tabs-ink-bar) {
+  background: var(--accent-color);
+}
+
+.tabLabel {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  flex: 0 0 auto;
+  min-width: 0;
+  text-align: start;
 }
 
-.workoutInputs {
+.tabIcon {
+  flex: 0 0 auto;
+  font-size: 1rem;
+}
+
+.tabText {
   display: grid;
-  gap: 8px;
+  gap: 1px;
   min-width: 0;
 }
 
-.workoutInputs :global(.ant-input),
-.workoutInputs :global(.ant-input-number),
-.workoutInputs :global(.ant-select),
-.workoutInputs :global(.ant-select-selector),
-.workoutInputs :global(.ant-select-single),
-.workoutInputs :global(.ant-select-multiple) {
-  width: 100%;
+.tabTitle {
+  color: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
-.workoutScores {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+.tabStatus {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
-.workoutScoreField {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.workoutScoreInput {
-  width: 100%;
+.emptyState {
+  padding-block: 12px;
+  line-height: 1.5;
 }
 
-.workoutMetaGrid {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-}
-
-.workoutActions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.multilineText {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.commentParagraph {
-  margin-bottom: 0px;
-  margin-top: 1em;
-}
-
-@media (max-width: 640px) {
-  .workoutActions {
-    justify-content: stretch;
+@media (max-width: 639px) {
+  .sectionPanel {
+    gap: 12px;
+    padding: 16px;
   }
 
-  .workoutActions :global(.ant-btn) {
-    width: 100%;
+  .tabs :global(.ant-tabs-tab) {
+    padding-inline: 12px !important;
   }
 
-  .workoutItem {
-    padding: 12px;
+  .tabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+    margin-inline-start: 4px !important;
   }
+}
 
-  .workoutHeader {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .workoutScores,
-  .workoutMetaGrid {
-    grid-template-columns: 1fr;
+@media (prefers-reduced-motion: reduce) {
+  .tabs :global(.ant-tabs-ink-bar) {
+    transition: none;
   }
 }

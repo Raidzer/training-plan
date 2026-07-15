@@ -13,9 +13,19 @@ export type PlanEntry = {
 
 export type PlanDayEntry = {
   date: string;
+  workouts: PlanDayWorkout[];
+  isWorkload: boolean;
+  hasAnyReport: boolean;
+  hasAllReports: boolean;
+  reportedWorkoutCount: number;
+  workoutCount: number;
+};
+
+export type PlanDayWorkout = {
+  id: number;
+  sessionOrder: number;
   taskText: string;
   commentText: string | null;
-  isWorkload: boolean;
   hasReport: boolean;
 };
 

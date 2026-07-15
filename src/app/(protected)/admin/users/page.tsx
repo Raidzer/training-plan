@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { desc } from "drizzle-orm";
 import { requireAdmin } from "@/server/authGuards";
 import { db } from "@/server/db/client";
@@ -5,8 +6,12 @@ import { users } from "@/server/db/schema";
 import { AdminUsersClient } from "./AdminUsersClient/AdminUsersClient";
 import type { AdminUserRow } from "./AdminUsersClient/types/adminUsersTypes";
 
+export const metadata: Metadata = {
+  title: "Пользователи клуба | СПИРОС",
+};
+
 export default async function AdminUsersPage() {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const rows = await db
     .select({
@@ -37,5 +42,8 @@ export default async function AdminUsersPage() {
     lastActiveAt: row.lastActiveAt?.toISOString() ?? null,
   }));
 
-  return <AdminUsersClient users={data} />;
+  const parsedCurrentUserId = Number(session.user.id);
+  const currentUserId = Number.isInteger(parsedCurrentUserId) ? parsedCurrentUserId : null;
+
+  return <AdminUsersClient users={data} currentUserId={currentUserId} />;
 }

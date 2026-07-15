@@ -28,6 +28,15 @@ export type RecordFieldErrors = {
   raceCity?: boolean;
 };
 
+export type RecordFieldErrorKey = keyof RecordFieldErrors;
+
+export type RecordSaveResult =
+  | { status: "saved" }
+  | { status: "failed" }
+  | { status: "blocked" }
+  | { status: "invalid"; invalidDistanceKey: PersonalRecordDistanceKey };
+
 export type RecordsClientProps = {
   apiUrl?: string;
+  variant?: "profile" | "embedded";
 };

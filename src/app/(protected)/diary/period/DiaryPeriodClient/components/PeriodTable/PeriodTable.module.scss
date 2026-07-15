@@ -7,8 +7,65 @@
   overflow-x: auto;
 }
 
+.periodTable :global(.ant-table) {
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.periodTable :global(.ant-table-container) {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.periodTable :global(.ant-table-thead > tr > th) {
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.periodTable :global(.ant-table-tbody > tr > td) {
+  border-block-end-color: var(--surface-border);
+  background: var(--surface-card);
+}
+
+.periodTable :global(.ant-table-tbody > tr:hover > td) {
+  background: var(--surface-soft) !important;
+}
+
+.periodTable :global(.ant-pagination-item),
+.periodTable :global(.ant-pagination-prev),
+.periodTable :global(.ant-pagination-next) {
+  min-width: 44px;
+  min-height: 44px;
+  line-height: 42px;
+}
+
+.dateLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--surface-border);
+  text-underline-offset: 4px;
+}
+
+.dateLink:hover {
+  color: var(--text-primary);
+  text-decoration-color: currentColor;
+}
+
 @media (max-width: 1023px) {
   .periodTable {
     display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .periodTable :global(.ant-table-container) {
+    border-color: CanvasText;
   }
 }

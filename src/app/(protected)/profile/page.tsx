@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAuth } from "@/server/authGuards";
 import { getUserProfileById } from "@/server/services/users";
 import { ProfileClient } from "./ProfileClient/ProfileClient";
+
+export const metadata: Metadata = {
+  title: "Профиль | СПИРОС",
+};
 
 export default async function Profile() {
   const session = await requireAuth();

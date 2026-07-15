@@ -199,14 +199,49 @@ describe("TelegramLinkPanel", () => {
 
   it("показывает fallback при ошибке загрузки статуса", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(unlinkedStatus), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<TelegramLinkPanel />);
 
+    expect(await screen.findByText("Не удалось загрузить статус Telegram")).toBeTruthy();
+    expect(screen.queryByText("Аккаунт не связан")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Повторить" }));
+
     expect(await screen.findByText("Аккаунт не связан")).toBeTruthy();
-    expect(screen.getByText("После связки можно получать план и рассылку.")).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it("скрывает собственный заголовок во встроенном режиме", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(unlinkedStatus), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+
+    const { rerender } = render(<TelegramLinkPanel />);
+
+    expect(await screen.findByRole("heading", { level: 4, name: "Telegram" })).toBeTruthy();
+
+    rerender(<TelegramLinkPanel showHeader={false} />);
+
+    expect(screen.queryByRole("heading", { level: 4, name: "Telegram" })).toBeNull();
+    expect(screen.getByText("Аккаунт не связан")).toBeTruthy();
   });
 
   it("показывает fallback для связанного Telegram без имени и ошибку отвязки", async () => {

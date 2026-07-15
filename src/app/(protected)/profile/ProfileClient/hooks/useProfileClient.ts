@@ -3,7 +3,7 @@
 import { Form } from "antd";
 import type { MessageInstance } from "antd/es/message/interface";
 import { signOut, useSession } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { buildTimezoneOptions } from "@/shared/constants/timezones";
 import { PROFILE_LABELS } from "../constants/profileConstants";
 import type {
@@ -56,6 +56,23 @@ export const useProfileClient = ({ initialUserData, messageApi }: UseProfileClie
   );
   const isEmailVerified = Boolean(session?.user?.emailVerified);
   const canDeleteProfile = canDeleteProfileRole(userData.role);
+
+  useEffect(() => {
+    if (!hasProfileChanges) {
+      return;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasProfileChanges]);
 
   const timezoneOptions = useMemo(() => {
     return buildTimezoneOptions(new Date(), [userData.timezone]);

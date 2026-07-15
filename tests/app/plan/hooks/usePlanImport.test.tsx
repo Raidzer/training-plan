@@ -65,10 +65,12 @@ describe("usePlanImport", () => {
 
     expect(result.current.fileList).toEqual([secondFile]);
 
+    let removed = false;
     act(() => {
-      result.current.handleFileRemove();
+      removed = result.current.handleFileRemove();
     });
 
+    expect(removed).toBe(true);
     expect(result.current.fileList).toEqual([]);
   });
 
@@ -98,6 +100,7 @@ describe("usePlanImport", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/plans/import", expect.any(Object));
     expect(uploadRequest.method).toBe("POST");
     expect(uploadRequest.body).toBeInstanceOf(FormData);
+    expect((uploadRequest.body as FormData).get("file")).toBeInstanceOf(File);
     expect(result.current.result).toEqual({
       importId: 7,
       inserted: 12,
@@ -105,6 +108,18 @@ describe("usePlanImport", () => {
       errors: [],
     });
     expect(msgApi.success).toHaveBeenCalledWith(PLAN_TEXT.messages.importSuccess(12));
+
+    act(() => {
+      result.current.handleFileChange([
+        {
+          ...createUploadFile(),
+          uid: "file-2",
+          name: "updated-plan.xlsx",
+        },
+      ]);
+    });
+
+    expect(result.current.result).toBeNull();
   });
 
   it("shows warning when import finishes with row errors", async () => {
@@ -112,8 +127,9 @@ describe("usePlanImport", () => {
       createJsonResponse({
         importId: 8,
         inserted: 3,
-        skipped: 1,
+        skipped: 2,
         errors: [{ row: 4, message: "empty task" }],
+        warnings: [{ row: 5, message: "date already exists" }],
       })
     );
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -128,7 +144,7 @@ describe("usePlanImport", () => {
       await result.current.handleUpload();
     });
 
-    expect(msgApi.warning).toHaveBeenCalledWith(PLAN_TEXT.messages.importWithErrors(3, 1));
+    expect(msgApi.warning).toHaveBeenCalledWith(PLAN_TEXT.messages.importWithErrors(3, 2));
   });
 
   it("stores failed import details from server response", async () => {
@@ -152,5 +168,101 @@ describe("usePlanImport", () => {
 
     expect(result.current.result).toEqual(failedResult);
     expect(msgApi.error).toHaveBeenCalledWith(failedResult.error);
+
+    act(() => {
+      result.current.handleFileRemove();
+    });
+
+    expect(result.current.result).toBeNull();
+  });
+
+  it("shows the request error inline when the network request fails", async () => {
+    const requestError = new Error("network unavailable");
+    const fetchMock = vi.fn().mockRejectedValue(requestError);
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const msgApi = createMessageApi();
+    const { result } = renderHook(() => usePlanImport({ msgApi }));
+
+    act(() => {
+      result.current.handleFileChange([createUploadFile()]);
+    });
+
+    await act(async () => {
+      await result.current.handleUpload();
+    });
+
+    expect(result.current.result).toEqual({
+      error: PLAN_TEXT.messages.importRequestError,
+    });
+    expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.importRequestError);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(requestError);
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("shows a generic inline error when the server response is not JSON", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response("service unavailable", {
+        status: 503,
+        headers: { "content-type": "text/plain" },
+      })
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const msgApi = createMessageApi();
+    const { result } = renderHook(() => usePlanImport({ msgApi }));
+
+    act(() => {
+      result.current.handleFileChange([createUploadFile()]);
+    });
+
+    await act(async () => {
+      await result.current.handleUpload();
+    });
+
+    expect(result.current.result).toEqual({
+      error: PLAN_TEXT.messages.importFailed,
+    });
+    expect(msgApi.error).toHaveBeenCalledWith(PLAN_TEXT.messages.importFailed);
+  });
+
+  it("prevents a repeated request while the current upload is in progress", async () => {
+    let resolveRequest: (response: Response) => void = () => undefined;
+    const pendingResponse = new Promise<Response>((resolve) => {
+      resolveRequest = resolve;
+    });
+    const fetchMock = vi.fn().mockReturnValue(pendingResponse);
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const msgApi = createMessageApi();
+    const { result } = renderHook(() => usePlanImport({ msgApi }));
+
+    act(() => {
+      result.current.handleFileChange([createUploadFile()]);
+    });
+
+    let firstUpload = Promise.resolve();
+    act(() => {
+      firstUpload = result.current.handleUpload();
+    });
+
+    await act(async () => {
+      await result.current.handleUpload();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveRequest(
+        createJsonResponse({
+          importId: 10,
+          inserted: 4,
+          skipped: 0,
+          errors: [],
+        })
+      );
+      await firstUpload;
+    });
+
+    expect(result.current.loading).toBe(false);
   });
 });

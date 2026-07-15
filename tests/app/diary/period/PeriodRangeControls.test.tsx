@@ -68,7 +68,7 @@ describe("PeriodRangeControls", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Последние 7 дней" }));
     fireEvent.click(screen.getByRole("button", { name: "Последние 30 дней" }));
-    fireEvent.click(screen.getByRole("button", { name: "Выгрузить Excel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Выгрузить выбранный период" }));
     fireEvent.click(screen.getByRole("button", { name: "Выгрузить весь дневник" }));
 
     expect(onPresetRange.mock.calls.map(([value]) => value)).toEqual([7, 30]);

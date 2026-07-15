@@ -212,4 +212,107 @@ describe("useDiaryData", () => {
     expect(result.current.recoveryForm.additionalSleepHours).toBe("00:35");
     expect(result.current.weightForm.morning).toBe("71.3");
   });
+
+  it("не должен обновлять старую дату и месяц после переключения во время сохранения", async () => {
+    const day = createDayPayload({
+      totalDistanceKm: 10,
+      workoutResult: "server-initial",
+      hasBath: false,
+      sleepHours: "8",
+      weightMorning: "70.0",
+    });
+    let resolveWeightSave!: (response: Response) => void;
+    const weightSaveRequest = new Promise<Response>((resolve) => {
+      resolveWeightSave = resolve;
+    });
+    const requestsAfterSaveStarted: string[] = [];
+    let saveStarted = false;
+
+    global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (saveStarted && init?.method !== "POST") {
+        requestsAfterSaveStarted.push(url);
+      }
+
+      if (url.startsWith("/api/shoes")) {
+        return Promise.resolve(createJsonResponse({ shoes: [] }) as unknown as Response);
+      }
+
+      if (url.startsWith("/api/diary/marks")) {
+        return Promise.resolve(createJsonResponse({ days: [day.status] }) as unknown as Response);
+      }
+
+      if (url.startsWith("/api/diary/day")) {
+        return Promise.resolve(createJsonResponse(day) as unknown as Response);
+      }
+
+      if (url === "/api/diary/weight" && init?.method === "POST") {
+        saveStarted = true;
+        return weightSaveRequest;
+      }
+
+      return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
+    }) as unknown as typeof fetch;
+
+    const messageApi = {
+      error: vi.fn(),
+      success: vi.fn(),
+    };
+    const { result } = renderHook(() => useDiaryData({ messageApi, messages }));
+
+    await waitFor(() => {
+      expect(result.current.loadingDay).toBe(false);
+      expect(result.current.loadingMarks).toBe(false);
+      expect(result.current.loadingShoes).toBe(false);
+    });
+
+    const initialDate = result.current.selectedDate;
+    const initialPanelDate = result.current.panelDate;
+    const initialDayUrl = `/api/diary/day?date=${initialDate.format("YYYY-MM-DD")}`;
+    const initialMarksUrl =
+      vi
+        .mocked(global.fetch)
+        .mock.calls.map(([input]) => String(input))
+        .find((url) => url.startsWith("/api/diary/marks")) ?? "";
+
+    expect(initialMarksUrl).not.toBe("");
+
+    act(() => {
+      result.current.setWeightForm((previousForm) => ({
+        ...previousForm,
+        morning: "71.3",
+      }));
+    });
+
+    let savePromise!: Promise<void>;
+
+    await act(async () => {
+      savePromise = result.current.handleSaveWeight("morning");
+      await Promise.resolve();
+    });
+
+    const nextDate = initialDate.add(1, "month").startOf("month");
+    const nextPanelDate = initialPanelDate.add(2, "month").startOf("month");
+
+    act(() => {
+      result.current.updateSelectedDate(nextDate);
+      result.current.setPanelDate(nextPanelDate);
+    });
+
+    await waitFor(() => {
+      expect(requestsAfterSaveStarted).toContain(
+        `/api/diary/day?date=${nextDate.format("YYYY-MM-DD")}`
+      );
+      expect(requestsAfterSaveStarted.some((url) => url.startsWith("/api/diary/marks"))).toBe(true);
+    });
+
+    await act(async () => {
+      resolveWeightSave(createJsonResponse({ ok: true }) as unknown as Response);
+      await savePromise;
+    });
+
+    expect(requestsAfterSaveStarted).not.toContain(initialDayUrl);
+    expect(requestsAfterSaveStarted).not.toContain(initialMarksUrl);
+  });
 });

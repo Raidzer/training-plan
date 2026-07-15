@@ -1,12 +1,60 @@
+.modal :global(.ant-modal-content) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.modal :global(.ant-modal-body) {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.modal :global(.ant-modal-footer) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.modal :global(.ant-modal-footer .ant-btn + .ant-btn) {
+  margin-inline-start: 0;
+}
+
+.modal :global(.ant-modal-footer .ant-btn) {
+  min-height: 44px;
+}
+
 .editorForm {
   width: 100%;
+  gap: 20px !important;
 }
 
 .editorTopRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.7fr);
+  align-items: end;
+  gap: 12px !important;
+  width: 100%;
+}
+
+.editorTopRow > :global(.ant-space-item) {
+  min-width: 0;
+}
+
+.editorTopRow > :global(.ant-space-item:last-child) {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.editorTopRow :global(.ant-picker) {
+  width: 100%;
+  min-height: 44px;
 }
 
 .editorField {
@@ -16,12 +64,30 @@
   width: 100%;
 }
 
+.fieldLabel {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .editorEntries {
+  width: 100%;
+  gap: 12px !important;
+}
+
+.editorEntries > :global(.ant-space-item) {
   width: 100%;
 }
 
-.editorEntries :global(.ant-space-item) {
-  width: 100%;
+.editorEntries :global(.ant-card) {
+  border-color: var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.editorEntries :global(.ant-card-body) {
+  padding: 16px;
 }
 
 .editorEntryHeader {
@@ -34,10 +100,75 @@
 .editorEntryBody {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px !important;
   width: 100%;
 }
 
-.editorEntryBody :global(.ant-space-item) {
+.editorEntryBody > :global(.ant-space-item) {
   width: 100%;
+}
+
+.editorEntryBody :global(.ant-input) {
+  background: var(--control-bg);
+}
+
+.deleteWorkoutButton,
+.editorActions :global(.ant-btn) {
+  min-height: 44px;
+}
+
+.editorActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px !important;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+@media (max-width: 639px) {
+  .modal :global(.ant-modal-content) {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .modal :global(.ant-modal-footer) {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .modal :global(.ant-modal-footer .ant-btn) {
+    width: 100%;
+  }
+
+  .editorTopRow {
+    grid-template-columns: 1fr;
+  }
+
+  .editorTopRow > :global(.ant-space-item:last-child) {
+    width: 100%;
+  }
+
+  .editorEntries :global(.ant-card-body) {
+    padding: 14px;
+  }
+
+  .editorEntryBody :global(.ant-input) {
+    font-size: 1rem;
+  }
+
+  .editorActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .editorActions > :global(.ant-space-item),
+  .editorActions :global(.ant-btn) {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .editorEntries :global(.ant-card),
+  .editorTopRow > :global(.ant-space-item:last-child) {
+    border-color: CanvasText;
+  }
 }

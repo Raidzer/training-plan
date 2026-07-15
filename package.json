@@ -1,10 +1,10 @@
 {
   "name": "training-plan",
-  "version": "1.1.0-beta",
+  "version": "1.2.0-beta",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 3100",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

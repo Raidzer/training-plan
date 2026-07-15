@@ -1,0 +1,126 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(24px, 5vw, 64px);
+  padding-block-start: clamp(32px, 5vw, 48px);
+}
+
+.text {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: block;
+  margin-block-end: 8px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: clamp(1.875rem, 1.56rem + 1vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.subtitle {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.backLink,
+.createLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  gap: 8px;
+  padding-inline: 15px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  transition:
+    color var(--motion-duration-fast) ease,
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+}
+
+.backLink {
+  color: var(--text-primary);
+  background: var(--surface-bg);
+}
+
+.backLink:hover {
+  border-color: var(--control-border-hover);
+  color: var(--text-primary);
+  background: var(--interactive-hover);
+}
+
+.createLink {
+  border-color: var(--accent-color);
+  color: var(--accent-contrast);
+  background: var(--accent-color);
+}
+
+.createLink:hover {
+  border-color: var(--text-primary);
+  color: var(--accent-contrast);
+  background: var(--text-primary);
+}
+
+.backLink:active,
+.createLink:active {
+  background: var(--interactive-active);
+}
+
+.backLink:focus-visible,
+.createLink:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 639px) {
+  .actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .backLink,
+  .createLink {
+    width: 100%;
+  }
+}

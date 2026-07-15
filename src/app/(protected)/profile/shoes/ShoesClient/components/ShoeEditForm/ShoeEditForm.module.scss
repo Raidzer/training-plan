@@ -1,30 +1,70 @@
 .editForm {
   display: grid;
-  gap: 8px;
+  gap: 20px;
   min-width: 0;
 }
 
-.editRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+.title {
+  margin: 0 !important;
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(180px, 0.8fr);
+  gap: 16px;
   min-width: 0;
 }
 
-.editInput {
-  flex: 2 1 240px;
+.field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
   min-width: 0;
 }
 
-.limitInput {
-  flex: 1 1 160px;
-  min-width: 0;
+.label {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
-.itemMetaText {
-  font-size: 13px;
-  overflow-wrap: anywhere;
+.required {
+  margin-inline-start: 4px;
+  color: var(--text-secondary);
+}
+
+.hint,
+.error {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.hint {
+  color: var(--text-muted);
+}
+
+.error {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.currentMileage {
+  padding: 12px 14px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.currentMileage strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .editActions {
@@ -35,10 +75,18 @@
   min-width: 0;
 }
 
-@media (max-width: 640px) {
-  .editRow {
+.editActions :global(.ant-btn) {
+  min-height: 44px;
+}
+
+@media (max-width: 639px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editActions {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .editActions :global(.ant-btn) {

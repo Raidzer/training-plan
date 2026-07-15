@@ -99,6 +99,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs());
   const [panelDate, setPanelDate] = useState<Dayjs>(() => dayjs());
   const selectedDateRef = useRef<Dayjs>(selectedDate);
+  const panelDateRef = useRef<Dayjs>(panelDate);
   const marksRequestIdRef = useRef(0);
   const dayRequestIdRef = useRef(0);
   const panelDateKey = formatDate(panelDate);
@@ -137,10 +138,6 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
   const [savingWorkouts, setSavingWorkouts] = useState<SavingWorkoutsState>({});
   const [workoutEditForm, setWorkoutEditForm] = useState<WorkoutEditForm>(EMPTY_WORKOUT_EDIT_FORM);
   const [savingWorkoutEdit, setSavingWorkoutEdit] = useState(false);
-
-  useEffect(() => {
-    selectedDateRef.current = selectedDate;
-  }, [selectedDate]);
 
   useEffect(() => {
     let active = true;
@@ -197,6 +194,8 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     }
     if (!parsed.isSame(selectedDateRef.current, "day")) {
       setSelectedDate(parsed);
+      selectedDateRef.current = parsed;
+      panelDateRef.current = parsed;
       setPanelDate(parsed);
     }
   }, [searchParams]);
@@ -311,6 +310,25 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     [applyDayData, messageApi, messages.dayLoadFailed]
   );
 
+  const refreshDiaryAfterSave = useCallback(
+    async (savedSelectedDate: Dayjs, savedPanelDate: Dayjs) => {
+      const currentSelectedDate = selectedDateRef.current;
+      const currentPanelDate = panelDateRef.current;
+      const refreshRequests: Promise<void>[] = [];
+
+      if (currentSelectedDate.isSame(savedSelectedDate, "day")) {
+        refreshRequests.push(loadDay(currentSelectedDate, { preserveForms: true }));
+      }
+
+      if (currentPanelDate.isSame(savedPanelDate, "month")) {
+        refreshRequests.push(loadMarks(currentPanelDate));
+      }
+
+      await Promise.all(refreshRequests);
+    },
+    [loadDay, loadMarks]
+  );
+
   useEffect(() => {
     let active = true;
     const { from, to } = getMonthRange(panelDate);
@@ -395,7 +413,14 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     };
   }, [applyDayData, messageApi, messages.dayLoadFailed, selectedDateKey]);
 
+  const updatePanelDate = useCallback((value: Dayjs) => {
+    panelDateRef.current = value;
+    setPanelDate(value);
+  }, []);
+
   const updateSelectedDate = useCallback((value: Dayjs) => {
+    selectedDateRef.current = value;
+    panelDateRef.current = value;
     setSelectedDate(value);
     setPanelDate(value);
   }, []);
@@ -488,15 +513,22 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
 
       messageApi.success(messages.workoutEditSaved);
       setWorkoutEditForm(EMPTY_WORKOUT_EDIT_FORM);
-      await loadDay(selectedDate, { preserveForms: true });
-      await loadMarks(panelDate);
+      await refreshDiaryAfterSave(selectedDate, panelDate);
     } catch (err) {
       console.error(err);
       messageApi.error(messages.workoutEditSaveFailed);
     } finally {
       setSavingWorkoutEdit(false);
     }
-  }, [dayData, loadDay, loadMarks, messageApi, messages, panelDate, selectedDate, workoutEditForm]);
+  }, [
+    dayData,
+    messageApi,
+    messages,
+    panelDate,
+    refreshDiaryAfterSave,
+    selectedDate,
+    workoutEditForm,
+  ]);
 
   const handleSaveWeight = useCallback(
     async (period: "morning" | "evening") => {
@@ -526,8 +558,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           return;
         }
         messageApi.success(messages.weightSaved);
-        await loadDay(selectedDate, { preserveForms: true });
-        await loadMarks(panelDate);
+        await refreshDiaryAfterSave(selectedDate, panelDate);
       } catch (err) {
         console.error(err);
         messageApi.error(messages.weightSaveFailed);
@@ -535,7 +566,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         setSavingWeight((prev) => ({ ...prev, [period]: false }));
       }
     },
-    [loadDay, loadMarks, messageApi, messages, panelDate, selectedDate, weightForm]
+    [messageApi, messages, panelDate, refreshDiaryAfterSave, selectedDate, weightForm]
   );
 
   const handleSaveWorkout = useCallback(
@@ -618,8 +649,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           return;
         }
         messageApi.success(messages.workoutSaved);
-        await loadDay(selectedDate, { preserveForms: true });
-        await loadMarks(panelDate);
+        await refreshDiaryAfterSave(selectedDate, panelDate);
       } catch (err) {
         console.error(err);
         messageApi.error(messages.workoutSaveFailed);
@@ -627,7 +657,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         setSavingWorkouts((prev) => ({ ...prev, [planEntryId]: false }));
       }
     },
-    [loadDay, loadMarks, messageApi, messages, panelDate, selectedDate, workoutForm]
+    [messageApi, messages, panelDate, refreshDiaryAfterSave, selectedDate, workoutForm]
   );
 
   const handleSaveRecovery = useCallback(async () => {
@@ -664,20 +694,19 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
         return;
       }
       messageApi.success(messages.recoverySaved);
-      await loadDay(selectedDate, { preserveForms: true });
-      await loadMarks(panelDate);
+      await refreshDiaryAfterSave(selectedDate, panelDate);
     } catch (err) {
       console.error(err);
       messageApi.error(messages.recoverySaveFailed);
     } finally {
       setSavingRecovery(false);
     }
-  }, [loadDay, loadMarks, messageApi, messages, panelDate, recoveryForm, selectedDate]);
+  }, [messageApi, messages, panelDate, recoveryForm, refreshDiaryAfterSave, selectedDate]);
 
   return {
     selectedDate,
     panelDate,
-    setPanelDate,
+    setPanelDate: updatePanelDate,
     marks,
     loadingMarks,
     dayData,

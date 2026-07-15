@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, ArrowRightOutlined } from "@ant-design/icons";
-import { Alert, DatePicker, InputNumber, Modal, Segmented, Space, Typography } from "antd";
+import { Alert, DatePicker, InputNumber, Modal, Segmented, Space } from "antd";
 import type { Dayjs } from "dayjs";
 import { PLAN_DATE_DISPLAY_FORMAT, PLAN_SHIFT_MAX_DAYS } from "../../constants/planConstants";
 import { PLAN_TEXT } from "../../constants/planText";
@@ -37,12 +37,14 @@ export function PlanShiftModal({
     <Modal
       open={open}
       title={PLAN_TEXT.shift.title}
+      width="min(560px, calc(100vw - 24px))"
+      className={styles.modal}
       onCancel={onCancel}
       onOk={onSave}
       okText={PLAN_TEXT.shift.save}
       cancelText={PLAN_TEXT.shift.cancel}
       confirmLoading={saving}
-      maskClosable={!saving}
+      mask={{ closable: !saving }}
       closable={!saving}
       destroyOnHidden
       okButtonProps={{
@@ -53,10 +55,18 @@ export function PlanShiftModal({
       }}
     >
       <Space orientation="vertical" size="middle" className={styles.shiftForm}>
-        <Alert type="info" showIcon message={PLAN_TEXT.shift.summary(draft.fromDate)} />
+        <Alert
+          type="info"
+          showIcon
+          title={PLAN_TEXT.shift.summary(draft.fromDate)}
+          className={styles.summary}
+        />
         <div className={styles.shiftField}>
-          <Typography.Text>{PLAN_TEXT.shift.fromDateLabel}</Typography.Text>
+          <label className={styles.fieldLabel} htmlFor="plan-shift-date">
+            {PLAN_TEXT.shift.fromDateLabel}
+          </label>
           <DatePicker
+            id="plan-shift-date"
             value={dateValue}
             onChange={onDateChange}
             format={PLAN_DATE_DISPLAY_FORMAT}
@@ -64,17 +74,20 @@ export function PlanShiftModal({
           />
         </div>
         <div className={styles.shiftField}>
-          <Typography.Text>{PLAN_TEXT.shift.directionLabel}</Typography.Text>
+          <span id="plan-shift-direction-label" className={styles.fieldLabel}>
+            {PLAN_TEXT.shift.directionLabel}
+          </span>
           <Segmented
             block
             value={draft.direction}
             onChange={(value) => onDirectionChange(value as PlanShiftDirection)}
+            aria-labelledby="plan-shift-direction-label"
             options={[
               {
                 value: "forward",
                 label: (
                   <span className={styles.directionLabel}>
-                    <ArrowRightOutlined />
+                    <ArrowRightOutlined aria-hidden />
                     {PLAN_TEXT.shift.directionForward}
                   </span>
                 ),
@@ -83,7 +96,7 @@ export function PlanShiftModal({
                 value: "backward",
                 label: (
                   <span className={styles.directionLabel}>
-                    <ArrowLeftOutlined />
+                    <ArrowLeftOutlined aria-hidden />
                     {PLAN_TEXT.shift.directionBackward}
                   </span>
                 ),
@@ -92,8 +105,12 @@ export function PlanShiftModal({
           />
         </div>
         <div className={styles.shiftField}>
-          <Typography.Text>{PLAN_TEXT.shift.daysLabel}</Typography.Text>
+          <label className={styles.fieldLabel} htmlFor="plan-shift-days">
+            {PLAN_TEXT.shift.daysLabel}
+          </label>
           <InputNumber
+            id="plan-shift-days"
+            name="planShiftDays"
             min={1}
             max={PLAN_SHIFT_MAX_DAYS}
             precision={0}

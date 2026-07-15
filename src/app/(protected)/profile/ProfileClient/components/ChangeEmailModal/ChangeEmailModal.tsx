@@ -1,7 +1,7 @@
 "use client";
 
 import { Form, Input, Modal } from "antd";
-import { PROFILE_LABELS } from "../../constants/profileConstants";
+import { PROFILE_FORM_IDS, PROFILE_LABELS } from "../../constants/profileConstants";
 import type { EmailFormInstance, EmailFormValues } from "../../types/profileTypes";
 
 type ChangeEmailModalProps = {
@@ -25,11 +25,27 @@ export function ChangeEmailModal({
       open={open}
       onCancel={onCancel}
       confirmLoading={saving}
-      onOk={onSubmit}
       okText={PROFILE_LABELS.saveButton}
+      okButtonProps={{ size: "large", htmlType: "submit", form: PROFILE_FORM_IDS.EMAIL }}
       cancelText={PROFILE_LABELS.cancelButton}
+      cancelButtonProps={{ size: "large" }}
     >
-      <Form<EmailFormValues> layout="vertical" form={form}>
+      <Form<EmailFormValues>
+        id={PROFILE_FORM_IDS.EMAIL}
+        layout="vertical"
+        size="large"
+        form={form}
+        onFinish={onSubmit}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter") {
+            return;
+          }
+
+          event.preventDefault();
+          form.submit();
+        }}
+        scrollToFirstError={{ focus: true }}
+      >
         <Form.Item
           label={PROFILE_LABELS.newEmailLabel}
           name="email"
@@ -48,6 +64,7 @@ export function ChangeEmailModal({
         >
           <Input.Password autoComplete="current-password" />
         </Form.Item>
+        <button type="submit" hidden aria-hidden tabIndex={-1} />
       </Form>
     </Modal>
   );

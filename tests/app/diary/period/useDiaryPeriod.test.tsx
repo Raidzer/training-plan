@@ -47,6 +47,23 @@ function createJsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+interface Deferred<T> {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+}
+
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+
+  return {
+    promise,
+    resolve,
+  };
+}
+
 function createDayStatus(overrides: Partial<DayStatus> = {}): DayStatus {
   return {
     date: "2026-05-10",
@@ -143,6 +160,147 @@ describe("useDiaryPeriod", () => {
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain(
       "/api/diary/period?from=2026-06-01&to=2026-06-07"
     );
+  });
+
+  it("aborts an outdated request and ignores its late response", async () => {
+    const initialRequest = createDeferred<Response>();
+    const latestRequest = createDeferred<Response>();
+    const requestSignals: AbortSignal[] = [];
+    const latestDay = createDayStatus({ date: "2026-06-07" });
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce((_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.signal) {
+          requestSignals.push(init.signal);
+        }
+
+        return initialRequest.promise;
+      })
+      .mockImplementationOnce((_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.signal) {
+          requestSignals.push(init.signal);
+        }
+
+        return latestRequest.promise;
+      });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useDiaryPeriod());
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.handleRangeChange([dayjs("2026-06-01"), dayjs("2026-06-07")]);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    expect(requestSignals).toHaveLength(2);
+    expect(requestSignals[0]?.aborted).toBe(true);
+    expect(requestSignals[1]?.aborted).toBe(false);
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      latestRequest.resolve(
+        createJsonResponse({
+          days: [latestDay],
+          totals: createTotals(),
+        })
+      );
+      await latestRequest.promise;
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.days).toEqual([latestDay]);
+    });
+
+    await act(async () => {
+      initialRequest.resolve(createJsonResponse({ error: "Устаревшая ошибка" }, 500));
+      await initialRequest.promise;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.days).toEqual([latestDay]);
+    expect(result.current.error).toBeNull();
+    expect(result.current.loading).toBe(false);
+    expect(messageApiMock.error).not.toHaveBeenCalled();
+  });
+
+  it("clears a load error and retries the current period", async () => {
+    const retryRequest = createDeferred<Response>();
+    const requestSignals: AbortSignal[] = [];
+    const retryDay = createDayStatus({ date: "2026-07-01" });
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce((_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.signal) {
+          requestSignals.push(init.signal);
+        }
+
+        return Promise.resolve(createJsonResponse({ error: "Сервис временно недоступен" }, 503));
+      })
+      .mockImplementationOnce((_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.signal) {
+          requestSignals.push(init.signal);
+        }
+
+        return retryRequest.promise;
+      });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useDiaryPeriod());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBe("Сервис временно недоступен");
+    });
+
+    expect(result.current.days).toEqual([]);
+    expect(result.current.totals).toEqual({
+      daysComplete: 0,
+      workoutsTotal: 0,
+      workoutsWithFullReport: 0,
+      weightEntries: 0,
+    });
+    expect(messageApiMock.error).toHaveBeenCalledWith("Сервис временно недоступен");
+
+    act(() => {
+      result.current.handleRetry();
+    });
+
+    expect(result.current.loading).toBe(true);
+    expect(result.current.error).toBeNull();
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    expect(requestSignals).toHaveLength(2);
+    expect(requestSignals[0]?.aborted).toBe(true);
+    expect(requestSignals[1]?.aborted).toBe(false);
+
+    await act(async () => {
+      retryRequest.resolve(
+        createJsonResponse({
+          days: [retryDay],
+          totals: createTotals(),
+        })
+      );
+      await retryRequest.promise;
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.days).toEqual([retryDay]);
+      expect(result.current.error).toBeNull();
+    });
+
+    expect(messageApiMock.error).toHaveBeenCalledTimes(1);
   });
 
   it("exports current period with filename from response headers", async () => {

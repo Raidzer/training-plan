@@ -1,33 +1,92 @@
+.panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-bg);
+}
+
+.header {
+  padding-block-end: 20px;
+  border-block-end: 1px solid var(--surface-border);
+}
+
+.title {
+  margin: 0 0 6px !important;
+  font-size: 1.125rem !important;
+  line-height: 1.35 !important;
+}
+
+.description {
+  margin: 0 !important;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
 .form {
   display: grid;
-  gap: 8px;
-  margin: 16px 0;
+  gap: 20px;
+  padding-block-start: 20px;
 }
 
-.formRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.field {
+  display: grid;
+  gap: 7px;
   min-width: 0;
 }
 
-.formInput {
-  flex: 2 1 240px;
-  min-width: 0;
+.label {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
-.limitInput {
-  flex: 1 1 160px;
-  min-width: 0;
+.required {
+  margin-inline-start: 4px;
+  color: var(--text-secondary);
 }
 
-@media (max-width: 640px) {
-  .formRow {
-    display: grid;
-    grid-template-columns: 1fr;
+.hint,
+.error {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.hint {
+  color: var(--text-muted);
+}
+
+.error {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (min-width: 1024px) {
+  .panel {
+    position: sticky;
+    inset-block-start: 24px;
+  }
+}
+
+@media (max-width: 1023px) and (min-width: 640px) {
+  .form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .formRow :global(.ant-btn) {
-    width: 100%;
+  .form > :nth-child(n + 3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 639px) {
+  .panel {
+    padding: 18px 16px;
   }
 }

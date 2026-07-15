@@ -40,7 +40,7 @@ describe("Shoe forms", () => {
     fireEvent.change(screen.getByDisplayValue("800"), { target: { value: "600" } });
     fireEvent.click(screen.getByRole("checkbox", { name: "Email" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Telegram" }));
-    fireEvent.click(screen.getByRole("button", { name: "Добавить" }));
+    fireEvent.submit(screen.getByRole("form", { name: "Добавить пару" }));
 
     expect(onChange).toHaveBeenNthCalledWith(1, "name", "Boston");
     expect(onChange).toHaveBeenNthCalledWith(2, "mileageLimitKm", "600");
@@ -110,5 +110,74 @@ describe("Shoe forms", () => {
     expect((screen.getByRole("checkbox", { name: "Telegram" }) as HTMLInputElement).disabled).toBe(
       false
     );
+    expect(screen.getByText("Подтвердите почту в профиле, чтобы включить Email.")).toBeTruthy();
+  });
+
+  it("ShoeCreateForm связывает ошибки с полями и фокусирует первую ошибку", () => {
+    render(
+      <ShoeCreateForm
+        form={form}
+        errors={{
+          name: "Введите название.",
+          mileageLimitKm: "Проверьте лимит.",
+        }}
+        validationAttempt={1}
+        saving={false}
+        notificationAvailability={availableNotifications}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    );
+
+    const nameInput = screen.getByRole("textbox", { name: "Название пары" });
+    const mileageInput = screen.getByRole("textbox", { name: "Лимит пробега, км" });
+
+    expect(nameInput.getAttribute("aria-invalid")).toBe("true");
+    expect((nameInput as HTMLInputElement).required).toBe(true);
+    expect(mileageInput.getAttribute("aria-invalid")).toBe("true");
+    expect(nameInput.getAttribute("aria-describedby")).toContain("shoe-create-name-error");
+    expect(document.activeElement).toBe(nameInput);
+  });
+
+  it("ShoeCreateForm не переносит фокус при исправлении ошибки соседнего поля", () => {
+    const props = {
+      form,
+      saving: false,
+      notificationAvailability: availableNotifications,
+      onChange: vi.fn(),
+      onSubmit: vi.fn(),
+    };
+    const { rerender } = render(
+      <ShoeCreateForm
+        {...props}
+        errors={{
+          name: "Введите название.",
+          mileageLimitKm: "Проверьте лимит.",
+        }}
+        validationAttempt={1}
+      />
+    );
+
+    const nameInput = screen.getByRole("textbox", { name: "Название пары" });
+    const mileageInput = screen.getByRole("textbox", { name: "Лимит пробега, км" });
+    expect(document.activeElement).toBe(nameInput);
+
+    rerender(
+      <ShoeCreateForm
+        {...props}
+        errors={{ mileageLimitKm: "Проверьте лимит." }}
+        validationAttempt={1}
+      />
+    );
+    expect(document.activeElement).toBe(nameInput);
+
+    rerender(
+      <ShoeCreateForm
+        {...props}
+        errors={{ mileageLimitKm: "Проверьте лимит." }}
+        validationAttempt={2}
+      />
+    );
+    expect(document.activeElement).toBe(mileageInput);
   });
 });

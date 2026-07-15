@@ -1,0 +1,229 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  padding: clamp(20px, 2.5vw, 28px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+}
+
+.title,
+.description,
+.fileState {
+  margin: 0;
+}
+
+.title {
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin-block-start: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.format {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.dropzone {
+  min-width: 0;
+}
+
+.dropzone :global(.ant-upload-drag) {
+  min-height: 276px;
+  overflow: hidden;
+  border-color: var(--control-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--control-bg) !important;
+  transition:
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+}
+
+.dropzone :global(.ant-upload-drag:hover),
+.dropzone :global(.ant-upload-drag-hover) {
+  border-color: var(--control-border-hover) !important;
+  background: var(--interactive-hover) !important;
+}
+
+.dropzone :global(.ant-upload-btn) {
+  display: grid !important;
+  place-items: center;
+  align-content: center;
+  min-height: 276px;
+  padding: 36px 24px !important;
+}
+
+.dropzone :global(.ant-upload-drag-container) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.uploadIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-block-end: 20px;
+  border: 1px solid var(--surface-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  background: var(--surface-bg);
+  font-size: 1.375rem;
+}
+
+.dragTitle,
+.dragAction,
+.hint {
+  display: block;
+  max-width: 46ch;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.dragTitle {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.dragAction {
+  margin-block-start: 4px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.hint {
+  margin-block-start: 14px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.dropzone :global(.ant-upload-list) {
+  margin-block-start: 12px;
+}
+
+.dropzone :global(.ant-upload-list-item) {
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.dropzone :global(.ant-upload-list-item-name) {
+  color: var(--text-primary);
+}
+
+.dropzone :global(.ant-upload-list-item-actions .ant-btn) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+  padding-block-start: 4px;
+}
+
+.fileState {
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.submitButton {
+  flex: 0 0 auto;
+  min-block-size: 48px;
+  padding-inline: 20px !important;
+}
+
+@media (max-width: 639px) {
+  .panel {
+    gap: 20px;
+    padding: 18px 16px;
+  }
+
+  .header,
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .format {
+    align-self: flex-start;
+  }
+
+  .dropzone :global(.ant-upload-drag),
+  .dropzone :global(.ant-upload-btn) {
+    min-height: 236px;
+  }
+
+  .dropzone :global(.ant-upload-btn) {
+    padding: 28px 16px !important;
+  }
+
+  .submitButton {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropzone :global(.ant-upload-drag) {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .panel,
+  .format,
+  .dropzone :global(.ant-upload-drag),
+  .uploadIcon,
+  .dropzone :global(.ant-upload-list-item) {
+    border-color: CanvasText !important;
+  }
+}

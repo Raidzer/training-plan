@@ -1,0 +1,232 @@
+.card {
+  min-width: 0;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.form {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: clamp(16px, 2vw, 24px);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.taskBlock {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 6px;
+  min-width: 0;
+}
+
+.taskTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.multilineText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.coachComment {
+  display: grid;
+  gap: 2px;
+  max-width: 72ch;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.coachCommentLabel {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.headerActions,
+.fieldHeader,
+.actions {
+  display: flex;
+  align-items: center;
+}
+
+.headerActions {
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.fieldHeader {
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.iconButton {
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--text-secondary);
+}
+
+.iconButton:hover,
+.iconButton:focus-visible {
+  color: var(--text-primary) !important;
+  background: var(--interactive-hover) !important;
+}
+
+.statusTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-inline-end: 0;
+  padding-inline: 10px;
+  gap: 6px;
+  border-color: var(--surface-border);
+  color: var(--text-secondary);
+  background: var(--surface-bg);
+  white-space: nowrap;
+}
+
+.primaryFields,
+.field,
+.conditionsStack {
+  display: grid;
+  min-width: 0;
+}
+
+.primaryFields,
+.conditionsStack {
+  gap: 16px;
+}
+
+.field {
+  gap: 6px;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.compactGrid,
+.scoresGrid,
+.conditionsGrid {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.compactGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scoresGrid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+}
+
+.conditionsGrid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+
+.form :global(.ant-input),
+.form :global(.ant-input-number),
+.form :global(.ant-select),
+.form :global(.ant-select-selector) {
+  width: 100%;
+  font-size: 16px;
+}
+
+.form :global(.ant-input),
+.form :global(.ant-input-number),
+.form :global(.ant-select-selector) {
+  min-height: 44px;
+}
+
+.form :global(textarea.ant-input) {
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.collapse {
+  border-block: 1px solid var(--surface-border);
+  border-radius: 0;
+}
+
+.collapse :global(.ant-collapse-item) {
+  border-block-end-color: var(--surface-border);
+}
+
+.collapse :global(.ant-collapse-item:last-child) {
+  border-block-end: 0;
+}
+
+.collapse :global(.ant-collapse-header) {
+  min-height: 48px;
+  padding-inline: 4px !important;
+  color: var(--text-primary) !important;
+  font-weight: 500;
+}
+
+.collapse :global(.ant-collapse-content-box) {
+  padding: 4px 4px 20px !important;
+}
+
+.actions {
+  justify-content: flex-end;
+}
+
+.actions :global(.ant-btn) {
+  min-height: 44px;
+}
+
+@media (max-width: 639px) {
+  .form {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .compactGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .actions :global(.ant-btn) {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .card,
+  .statusTag,
+  .collapse {
+    border-color: CanvasText;
+  }
+}

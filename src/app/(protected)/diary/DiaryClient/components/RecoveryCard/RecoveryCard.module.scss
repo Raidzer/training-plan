@@ -1,12 +1,13 @@
 .sectionPanel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
-  padding: 14px;
+  height: 100%;
+  padding: 20px;
   border: 1px solid var(--surface-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface-bg);
 }
 
@@ -20,27 +21,83 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.35;
 }
 
-.recoveryGrid {
+.recoveryForm {
   display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.recoveryMethods {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.methodsLegend {
+  padding-inline: 4px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.recoveryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.recoveryGrid :global(.ant-checkbox-wrapper) {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  margin-inline-start: 0;
+  padding-inline: 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--control-bg);
+  transition: background-color var(--motion-duration-fast) ease-out;
+}
+
+.recoveryGrid :global(.ant-checkbox-wrapper:hover) {
+  background: var(--interactive-hover);
+}
+
+.recoveryGrid :global(.ant-checkbox-wrapper:focus-within) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .recoveryScores {
   display: grid;
   gap: 12px;
-  margin-top: 12px;
 }
 
 .recoveryField {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .sleepFields {
@@ -53,15 +110,36 @@
   width: 100%;
 }
 
+.sectionPanel :global(.ant-input),
+.sectionPanel :global(.ant-btn) {
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+}
+
+.sectionPanel :global(.ant-input) {
+  min-width: 0;
+  color: var(--text-primary);
+  background: var(--control-bg);
+}
+
+.sectionPanel :global(.ant-input:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 .recoveryActions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-block-start: auto;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
+  .sectionPanel {
+    padding: 16px;
+  }
+
   .recoveryGrid {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
   }
 
   .sleepFields {
@@ -74,5 +152,9 @@
 
   .recoveryActions :global(.ant-btn) {
     width: 100%;
+  }
+
+  .sectionPanel :global(.ant-input) {
+    font-size: 1rem;
   }
 }

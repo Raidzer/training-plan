@@ -1,1 +1,1 @@
-export { ThemeProvider, useThemeMode } from "./ThemeProvider";
+export { ThemeProvider } from "./ThemeProvider";

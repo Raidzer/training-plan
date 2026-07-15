@@ -225,6 +225,67 @@ describe("useAdminUsers", () => {
     expect(messageApi.success).toHaveBeenCalledWith(ADMIN_USERS_LABELS.passwordUpdateOk);
   });
 
+  it("shows role network error and keeps modal state unchanged", async () => {
+    const user = createUser();
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+    const modalApi = createModalApi();
+    const { result } = renderHook(() =>
+      useAdminUsers({
+        users: [user],
+        messageApi,
+        modalApi,
+      })
+    );
+
+    act(() => {
+      result.current.openRoleModal(user);
+      result.current.roleForm.setFieldsValue({ role: "coach" });
+    });
+
+    await act(async () => {
+      await result.current.handleRoleSubmit();
+    });
+
+    expect(result.current.rows[0]).toEqual(user);
+    expect(result.current.roleModalOpen).toBe(true);
+    expect(result.current.savingRole).toBe(false);
+    expect(messageApi.error).toHaveBeenCalledWith(ADMIN_USERS_LABELS.roleUpdateFail);
+  });
+
+  it("shows password network error and keeps modal open", async () => {
+    const user = createUser();
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const messageApi = createMessageApi();
+    const modalApi = createModalApi();
+    const { result } = renderHook(() =>
+      useAdminUsers({
+        users: [user],
+        messageApi,
+        modalApi,
+      })
+    );
+
+    act(() => {
+      result.current.openPasswordModal(user);
+      result.current.passwordForm.setFieldsValue({
+        newPassword: "secret123",
+        confirmPassword: "secret123",
+      });
+    });
+
+    await act(async () => {
+      await result.current.handlePasswordSubmit();
+    });
+
+    expect(result.current.rows[0]).toEqual(user);
+    expect(result.current.passwordModalOpen).toBe(true);
+    expect(result.current.savingPassword).toBe(false);
+    expect(messageApi.error).toHaveBeenCalledWith(ADMIN_USERS_LABELS.passwordUpdateFail);
+  });
+
   it("enables inactive user directly", async () => {
     const user = createUser({
       isActive: false,
@@ -285,6 +346,9 @@ describe("useAdminUsers", () => {
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
 
     expect(confirmMock).toHaveBeenCalledTimes(1);
+    expect(confirmMock).toHaveBeenCalledWith(
+      expect.objectContaining({ content: ADMIN_USERS_LABELS.disableConfirmText })
+    );
     expect(JSON.parse(String(request.body))).toEqual({ isActive: false });
     expect(result.current.rows[0].isActive).toBe(false);
     expect(messageApi.success).toHaveBeenCalledWith(ADMIN_USERS_LABELS.userDisabled);

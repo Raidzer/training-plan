@@ -1,0 +1,119 @@
+.directory {
+  min-width: 0;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItem {
+  min-width: 0;
+}
+
+.empty {
+  display: flex;
+  min-height: 300px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px, 6vw, 56px) 20px;
+  border: 1px dashed var(--control-border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.emptyIcon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-block-end: 18px;
+  place-items: center;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--surface-soft);
+  font-size: 1.25rem;
+}
+
+.emptyTitle {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.emptyText {
+  max-width: 48ch;
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.empty :global(.ant-btn),
+.emptyAction {
+  min-height: 44px;
+}
+
+.emptyAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-inline: 18px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--nav-primary-bg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.emptyAction:hover {
+  border-color: var(--control-border-hover);
+  color: var(--text-primary);
+  background: var(--interactive-hover);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-block-start: 24px;
+}
+
+.pagination :global(.ant-pagination-item),
+.pagination :global(.ant-pagination-prev),
+.pagination :global(.ant-pagination-next) {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.pagination :global(.ant-pagination-item a),
+.pagination :global(.ant-pagination-prev button),
+.pagination :global(.ant-pagination-next button) {
+  display: grid;
+  min-height: 40px;
+  place-items: center;
+}
+
+@container admin-invites-registry (min-width: 880px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .pagination :global(.ant-pagination-options),
+  .pagination :global(.ant-pagination-jump-prev),
+  .pagination :global(.ant-pagination-jump-next) {
+    display: none;
+  }
+}

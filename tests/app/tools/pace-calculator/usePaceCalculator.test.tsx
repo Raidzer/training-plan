@@ -1,7 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ChangeEvent } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { STORAGE_KEY } from "@/app/tools/pace-calculator/PaceCalculatorClient/constants/paceCalculatorConstants";
+import {
+  MAX_DISTANCE_METERS,
+  STORAGE_KEY,
+} from "@/app/tools/pace-calculator/PaceCalculatorClient/constants/paceCalculatorConstants";
 import { usePaceCalculator } from "@/app/tools/pace-calculator/PaceCalculatorClient/hooks/usePaceCalculator";
 
 describe("usePaceCalculator", () => {
@@ -61,6 +64,29 @@ describe("usePaceCalculator", () => {
     expect(persisted).toBe("[]");
   });
 
+  it("должен загружать сохранённые результаты после гидратации без рассинхронизации", async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "saved-result",
+          distanceMeters: 5000,
+          resultSeconds: 1200,
+          paceSeconds: 240,
+          lapSeconds: 96,
+          createdAt: "2026-07-15T10:00:00.000Z",
+        },
+      ])
+    );
+
+    const { result } = renderHook(() => usePaceCalculator());
+
+    await waitFor(() => {
+      expect(result.current.savedResults).toHaveLength(1);
+    });
+    expect(result.current.savedResults[0].id).toBe("saved-result");
+  });
+
   it("должен синхронизировать результат из ручного результата и дистанции", async () => {
     const { result } = renderHook(() => usePaceCalculator());
 
@@ -103,6 +129,24 @@ describe("usePaceCalculator", () => {
     expect(result.current.distanceInputValue).toBe("100");
   });
 
+  it("должен ограничивать дистанцию и количество километровых отсечек", async () => {
+    const { result } = renderHook(() => usePaceCalculator());
+
+    await waitFor(() => {
+      expect(result.current.distanceInputValue).toBe("10000");
+    });
+
+    act(() => {
+      result.current.handleDistanceChange({
+        target: { value: "999999999" },
+      } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(result.current.distance).toBe(MAX_DISTANCE_METERS);
+    expect(result.current.distanceInputValue).toBe(String(MAX_DISTANCE_METERS));
+    expect(result.current.splits).toHaveLength(MAX_DISTANCE_METERS / 1000);
+  });
+
   it("должен очищать ручной ввод дистанции", async () => {
     const { result } = renderHook(() => usePaceCalculator());
 
@@ -142,7 +186,6 @@ describe("usePaceCalculator", () => {
     expect(result.current.resultMinutes).toBe(0);
     expect(result.current.resultSeconds).toBe(0);
     expect(result.current.splits).toEqual([]);
-    expect(result.current.splitGroups).toEqual([]);
     expect(result.current.canSave).toBe(false);
 
     act(() => {

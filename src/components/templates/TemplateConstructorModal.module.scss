@@ -1,7 +1,8 @@
 .modalBody {
   max-height: 70vh;
+  max-height: 70dvh;
   overflow-y: auto;
-  padding-right: 8px;
+  padding-inline-end: 8px;
 }
 
 .modalContent {
@@ -11,10 +12,10 @@
 }
 
 .blockContainer {
-  border: 1px solid #303030;
-  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
   padding: 16px;
-  background-color: #141414;
+  background-color: var(--surface-soft);
   position: relative;
 }
 
@@ -25,7 +26,7 @@
 }
 
 .templateName {
-  color: #177ddc;
+  color: var(--accent-color);
 }
 
 .blockGrid {
@@ -41,7 +42,7 @@
 .emptyState {
   text-align: center;
   padding: 20px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .addBlockContainer {
@@ -51,4 +52,28 @@
 
 .selectTemplate {
   width: 250px;
+}
+
+@media (max-width: 640px) {
+  .modalContent {
+    gap: 16px;
+  }
+
+  .blockContainer {
+    padding: 12px;
+  }
+
+  .blockHeader {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .blockGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .selectTemplate {
+    width: 100%;
+  }
 }

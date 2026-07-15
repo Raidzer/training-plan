@@ -1,133 +1,125 @@
 "use client";
 
+import { DownOutlined, MenuOutlined } from "@ant-design/icons";
+import { Button, Drawer, Dropdown, Menu, type MenuProps } from "antd";
+import clsx from "clsx";
+import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
-import type { Mode } from "../ThemeProvider/ThemeProvider";
-import { Button, Drawer, Dropdown, Menu, Switch, type MenuProps } from "antd";
-import { BulbOutlined, DownOutlined, MenuOutlined, MoonFilled } from "@ant-design/icons";
+import appIcon from "@/app/icon.png";
+import { PUBLIC_TOOL_LINKS } from "@/shared/constants/publicTools";
 import styles from "./Header.module.scss";
 
-const usefulItems = [
+const usefulItems: NonNullable<MenuProps["items"]> = PUBLIC_TOOL_LINKS.map((tool) => ({
+  key: tool.href,
+  label: (
+    <Link href={tool.href} className={styles.dropdownLink}>
+      {tool.label}
+    </Link>
+  ),
+}));
+
+const drawerItems: NonNullable<MenuProps["items"]> = [
   {
-    key: "result-equivalent",
+    key: "/about",
     label: (
-      <Link href="/tools/result-equivalent" className={styles.dropdownLink}>
-        Калькулятор прогноза результата
+      <Link href="/about" className={styles.drawerLink}>
+        О клубе
       </Link>
     ),
   },
   {
-    key: "pace-calculator",
+    key: "tools",
+    label: "Полезное",
+    children: PUBLIC_TOOL_LINKS.map((tool) => ({
+      key: tool.href,
+      label: (
+        <Link href={tool.href} className={styles.drawerLink}>
+          {tool.label}
+        </Link>
+      ),
+    })),
+  },
+  {
+    key: "/results",
     label: (
-      <Link href="/tools/pace-calculator" className={styles.dropdownLink}>
-        Калькулятор расчета темпа и результата на забеге
+      <Link href="/results" className={styles.drawerLink}>
+        Результаты клуба
       </Link>
     ),
   },
   {
-    key: "speed-to-pace",
+    key: "/dashboard",
     label: (
-      <Link href="/tools/speed-to-pace" className={styles.dropdownLink}>
-        Калькулятор перевода скорости в темп
+      <Link href="/dashboard" className={styles.drawerLink}>
+        Личный кабинет
       </Link>
     ),
   },
 ];
 
-export function Header({ mode, onToggle }: { mode: Mode; onToggle: (next: Mode) => void }) {
+export function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const pathname = usePathname();
+  const toolsActive = pathname.startsWith("/tools/");
 
   const closeDrawer = () => setDrawerOpen(false);
-
-  const drawerItems: MenuProps["items"] = [
-    {
-      key: "about",
-      label: (
-        <Link href="/about" className={styles.drawerLink}>
-          О клубе
-        </Link>
-      ),
-    },
-    {
-      key: "tools",
-      label: "Полезное",
-      children: [
-        {
-          key: "result-equivalent",
-          label: (
-            <Link href="/tools/result-equivalent" className={styles.drawerLink}>
-              Калькулятор прогноза результата
-            </Link>
-          ),
-        },
-        {
-          key: "pace-calculator",
-          label: (
-            <Link href="/tools/pace-calculator" className={styles.drawerLink}>
-              Калькулятор расчета темпа и результата
-            </Link>
-          ),
-        },
-        {
-          key: "speed-to-pace",
-          label: (
-            <Link href="/tools/speed-to-pace" className={styles.drawerLink}>
-              Калькулятор перевода скорости в темп
-            </Link>
-          ),
-        },
-      ],
-    },
-    {
-      key: "results",
-      label: (
-        <Link href="/results" className={styles.drawerLink}>
-          Результаты клуба
-        </Link>
-      ),
-    },
-    {
-      key: "dashboard",
-      label: (
-        <Link href="/dashboard" className={styles.drawerLink}>
-          Личный кабинет
-        </Link>
-      ),
-    },
-  ];
 
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-        <Link href="/" className={styles.brand}>
-          Беговой клуб СПИРОС
+        <Link href="/" className={styles.brand} aria-label="Беговой клуб СПИРОС">
+          <Image
+            className={styles.brandIcon}
+            src={appIcon}
+            width={32}
+            height={32}
+            alt=""
+            aria-hidden="true"
+          />
+          <span className={styles.brandWord}>СПИРОС</span>
         </Link>
-        <nav className={styles.nav}>
-          <Link href="/about" className={styles.navLink}>
+
+        <nav className={styles.nav} aria-label="Основная навигация">
+          <Link
+            href="/about"
+            className={clsx(styles.navLink, pathname === "/about" && styles.navLinkActive)}
+            aria-current={pathname === "/about" ? "page" : undefined}
+          >
             О клубе
           </Link>
-          <Dropdown menu={{ items: usefulItems }} trigger={["click"]}>
-            <Button type="text" className={styles.navButton}>
+
+          <Dropdown menu={{ items: usefulItems, selectedKeys: [pathname] }} trigger={["click"]}>
+            <Button
+              type="text"
+              className={clsx(styles.navButton, toolsActive && styles.navLinkActive)}
+            >
               Полезное
               <DownOutlined className={styles.navChevron} />
             </Button>
           </Dropdown>
-          <Link href="/results" className={styles.navLink}>
+
+          <Link
+            href="/results"
+            className={clsx(styles.navLink, pathname === "/results" && styles.navLinkActive)}
+            aria-current={pathname === "/results" ? "page" : undefined}
+          >
             Результаты клуба
           </Link>
-          <Link href="/dashboard" className={styles.navLinkPrimary}>
+
+          <Link
+            href="/dashboard"
+            className={clsx(
+              styles.navLinkPrimary,
+              pathname === "/dashboard" && styles.navLinkPrimaryActive
+            )}
+            aria-current={pathname === "/dashboard" ? "page" : undefined}
+          >
             Личный кабинет
           </Link>
         </nav>
-        <div className={styles.controls}>
-          <span className={styles.themeLabel}>Тема</span>
-          <Switch
-            checked={mode === "dark"}
-            onChange={(checked) => onToggle(checked ? "dark" : "light")}
-            checkedChildren={<MoonFilled />}
-            unCheckedChildren={<BulbOutlined />}
-          />
-        </div>
+
         <Button
           type="text"
           icon={<MenuOutlined />}
@@ -135,17 +127,21 @@ export function Header({ mode, onToggle }: { mode: Mode; onToggle: (next: Mode) 
           aria-label="Открыть меню навигации"
           onClick={() => setDrawerOpen(true)}
         />
-        <Drawer title="Меню" placement="right" size={320} open={drawerOpen} onClose={closeDrawer}>
-          <Menu mode="inline" selectable={false} items={drawerItems} onClick={closeDrawer} />
-          <div className={styles.drawerTheme}>
-            <span className={styles.drawerThemeText}>Тема</span>
-            <Switch
-              checked={mode === "dark"}
-              onChange={(checked) => onToggle(checked ? "dark" : "light")}
-              checkedChildren={<MoonFilled />}
-              unCheckedChildren={<BulbOutlined />}
-            />
-          </div>
+
+        <Drawer
+          title="Навигация"
+          placement="right"
+          size={320}
+          open={drawerOpen}
+          onClose={closeDrawer}
+        >
+          <Menu
+            mode="inline"
+            selectedKeys={[pathname]}
+            defaultOpenKeys={toolsActive ? ["tools"] : []}
+            items={drawerItems}
+            onClick={closeDrawer}
+          />
         </Drawer>
       </div>
     </header>

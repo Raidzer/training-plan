@@ -1,21 +1,79 @@
 "use client";
 
-import type { ComponentProps } from "react";
-import { PageHeader } from "@/components/PageHeader";
-import { TemplateManager } from "@/components/templates/TemplateManager";
+import { TemplatesErrorBanner } from "./components/TemplatesErrorBanner/TemplatesErrorBanner";
+import { TemplatesGrid } from "./components/TemplatesGrid/TemplatesGrid";
+import { TemplatesHeader } from "./components/TemplatesHeader/TemplatesHeader";
+import { TemplatesOverview } from "./components/TemplatesOverview/TemplatesOverview";
+import { TemplatesToolbar } from "./components/TemplatesToolbar/TemplatesToolbar";
 import { TEMPLATES_LABELS } from "./constants/templatesConstants";
+import { useTemplatesList } from "./hooks/useTemplatesList";
+import type { TemplateSummary } from "./types/templatesTypes";
 import styles from "./TemplatesClient.module.scss";
 
 type TemplatesClientProps = {
-  initialTemplates: ComponentProps<typeof TemplateManager>["initialTemplates"];
-  userId: number;
+  initialTemplates: TemplateSummary[];
 };
 
-export function TemplatesClient({ initialTemplates, userId }: TemplatesClientProps) {
+export function TemplatesClient({ initialTemplates }: TemplatesClientProps) {
+  const {
+    templates,
+    filteredTemplates,
+    filter,
+    query,
+    stats,
+    deletingTemplateId,
+    deleteError,
+    statusMessage,
+    isFiltering,
+    setFilter,
+    setQuery,
+    deleteTemplateById,
+    dismissDeleteError,
+    resetFilters,
+  } = useTemplatesList(initialTemplates);
+
   return (
-    <main className={styles.page}>
-      <PageHeader title={TEMPLATES_LABELS.title} subtitle={TEMPLATES_LABELS.subtitle} />
-      <TemplateManager initialTemplates={initialTemplates} userId={userId} />
-    </main>
+    <div className={styles.page}>
+      <TemplatesHeader />
+      <TemplatesOverview stats={stats} />
+
+      <section className={styles.workspace} aria-labelledby="templates-catalog-title">
+        <div className={styles.workspaceHeading}>
+          <div>
+            <span className={styles.workspaceEyebrow}>{TEMPLATES_LABELS.catalogEyebrow}</span>
+            <h2 id="templates-catalog-title" className={styles.workspaceTitle}>
+              {TEMPLATES_LABELS.catalogTitle}
+            </h2>
+          </div>
+          <p className={styles.workspaceDescription}>{TEMPLATES_LABELS.catalogDescription}</p>
+        </div>
+
+        <TemplatesToolbar
+          query={query}
+          filter={filter}
+          visibleCount={filteredTemplates.length}
+          totalCount={templates.length}
+          onQueryChange={setQuery}
+          onFilterChange={setFilter}
+        />
+
+        {deleteError ? (
+          <TemplatesErrorBanner message={deleteError} onDismiss={dismissDeleteError} />
+        ) : null}
+
+        <TemplatesGrid
+          templates={filteredTemplates}
+          hasTemplates={templates.length > 0}
+          isFiltering={isFiltering}
+          deletingTemplateId={deletingTemplateId}
+          onDelete={deleteTemplateById}
+          onResetFilters={resetFilters}
+        />
+
+        <p className={styles.visuallyHidden} aria-live="polite" aria-atomic="true">
+          {statusMessage}
+        </p>
+      </section>
+    </div>
   );
 }

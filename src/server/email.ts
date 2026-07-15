@@ -12,7 +12,8 @@ const smtpConfig = {
 
 const transporter = nodemailer.createTransport(smtpConfig);
 
-const FROM_EMAIL = process.env.SMTP_FROM || '"Training Plan" <noreply@training-plan.com>';
+const FROM_EMAIL =
+  process.env.SMTP_FROM || '"Сервис бегового клуба СПИРОС" <noreply@training-plan.com>';
 
 const escapeHtml = (value: string) =>
   value

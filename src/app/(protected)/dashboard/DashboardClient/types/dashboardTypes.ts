@@ -5,9 +5,11 @@ export type DashboardClientProps = {
 };
 
 export type DashboardCardId =
-  | "admin"
+  | "users"
+  | "invites"
   | "templates"
   | "plan"
+  | "daily-report"
   | "diary"
   | "shoes"
   | "records"
@@ -18,5 +20,15 @@ export type DashboardCardConfig = {
   title: string;
   description: string;
   href: string;
+  adminOnly?: boolean;
+};
+
+export type DashboardSectionId = "club-management" | "training" | "sports-profile";
+
+export type DashboardSectionConfig = {
+  id: DashboardSectionId;
+  label: string;
+  description: string;
+  cards: readonly DashboardCardConfig[];
   adminOnly?: boolean;
 };

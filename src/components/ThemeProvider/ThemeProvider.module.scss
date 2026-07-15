@@ -1,8 +1,28 @@
 .root {
   min-height: 100vh;
-  transition: background 0.3s ease;
+  min-height: 100dvh;
+  background: var(--bg-color);
   display: flex;
   flex-direction: column;
+}
+
+.skipLink {
+  position: fixed;
+  inset-block-start: 12px;
+  inset-inline-start: 12px;
+  z-index: 1100;
+  padding: 10px 14px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--surface-elevated);
+  text-decoration: none;
+  transform: translateY(calc(-100% - 24px));
+  transition: transform var(--motion-duration-fast) ease;
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
 }
 
 .main {
@@ -22,8 +42,7 @@
 
 .mainFull {
   max-width: 100% !important;
-  padding-left: var(--page-gutter);
-  padding-right: var(--page-gutter);
+  padding-inline: var(--page-gutter);
 }
 
 .mainTelegram {
@@ -32,12 +51,17 @@
 }
 
 .footer {
+  display: grid;
+  place-items: center;
   width: 100%;
-  max-width: var(--content-width-default);
-  margin: 0 auto;
-  padding: 0 var(--page-gutter) var(--page-footer-gap);
+  min-height: 65px;
+  margin: 0;
+  padding: var(--page-footer-gap) var(--page-gutter);
+  background: var(--shell-bg);
   color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }

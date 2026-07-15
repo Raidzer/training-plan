@@ -1,36 +1,34 @@
 "use client";
 
-import { Typography } from "antd";
+import { EditOutlined } from "@ant-design/icons";
 import Link from "next/link";
-import { ProfileButton } from "@/components/ProfileButton/ProfileButton";
 import { SignOutButton } from "@/components/SingOutButton/SignOutButton";
 import { DASHBOARD_LABELS } from "../../constants/dashboardConstants";
 import styles from "./DashboardHeader.module.scss";
 
 type DashboardHeaderProps = {
   userName?: string | null | undefined;
-  userEmail?: string | null | undefined;
 };
 
-export function DashboardHeader({ userName, userEmail }: DashboardHeaderProps) {
-  const greetingTarget = userName ?? userEmail ?? DASHBOARD_LABELS.defaultGreetingTarget;
+export function DashboardHeader({ userName }: DashboardHeaderProps) {
+  const normalizedUserName = userName?.trim();
+  const greeting = normalizedUserName
+    ? `${DASHBOARD_LABELS.greetingPrefix}, ${normalizedUserName}. ${DASHBOARD_LABELS.subtitle}`
+    : DASHBOARD_LABELS.subtitle;
 
   return (
-    <div className={styles.cardHeader}>
+    <header className={styles.header}>
       <div className={styles.headerText}>
-        <Typography.Title level={3} className={styles.paragraphTight}>
-          {DASHBOARD_LABELS.greetingPrefix}, {greetingTarget}
-        </Typography.Title>
-        <Typography.Paragraph type="secondary" className={styles.paragraphTight}>
-          {DASHBOARD_LABELS.subtitle}
-        </Typography.Paragraph>
+        <h1 className={styles.title}>{DASHBOARD_LABELS.title}</h1>
+        <p className={styles.greeting}>{greeting}</p>
       </div>
-      <div className={styles.headerAction}>
-        <Link href="/profile">
-          <ProfileButton />
+      <div className={styles.headerActions}>
+        <Link href="/profile" className={styles.profileLink}>
+          <EditOutlined aria-hidden />
+          <span>{DASHBOARD_LABELS.profileAction}</span>
         </Link>
-        <SignOutButton />
+        <SignOutButton className={styles.actionControl} />
       </div>
-    </div>
+    </header>
   );
 }

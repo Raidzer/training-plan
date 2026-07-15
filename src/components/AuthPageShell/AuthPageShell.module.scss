@@ -1,0 +1,282 @@
+.shell {
+  display: grid;
+  grid-template-areas: "context form";
+  grid-template-columns: minmax(280px, 0.82fr) minmax(460px, 1.18fr);
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.formPanel,
+.contextPanel {
+  min-width: 0;
+  border: 1px solid var(--surface-border);
+}
+
+.formPanel {
+  grid-area: form;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px, 4.5vw, 56px);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: var(--surface-card);
+}
+
+.contextPanel {
+  position: relative;
+  grid-area: context;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(36px, 5vw, 56px);
+  overflow: hidden;
+  padding: clamp(28px, 4vw, 48px);
+  border-inline-end: 0;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--shell-bg);
+}
+
+.contextPanel::after {
+  position: absolute;
+  inset: auto -88px -108px auto;
+  width: 240px;
+  height: 240px;
+  border: 1px solid var(--surface-border);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 28px var(--shell-bg),
+    0 0 0 29px var(--surface-border),
+    0 0 0 64px var(--shell-bg),
+    0 0 0 65px var(--surface-border);
+  content: "";
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.contextHeader,
+.workflow,
+.accessNote {
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.contextTitle {
+  max-width: 13ch;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.75rem, 1.45rem + 1vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.contextDescription {
+  max-width: 42ch;
+  margin: 20px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.workflow {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflowItem {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 14px;
+  min-width: 0;
+  padding-bottom: 24px;
+}
+
+.workflowItem:last-child {
+  padding-bottom: 0;
+}
+
+.workflowItem:not(:last-child)::after {
+  position: absolute;
+  inset-block-start: 31px;
+  inset-block-end: 4px;
+  inset-inline-start: 20px;
+  width: 1px;
+  background: var(--surface-border);
+  content: "";
+}
+
+.workflowMarker {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: var(--shell-bg);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.workflowItem h3 {
+  margin: 1px 0 4px;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.workflowItem p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.accessNote {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--surface-border);
+}
+
+.accessIndicator {
+  width: 9px;
+  height: 9px;
+  margin-top: 6px;
+  border: 2px solid var(--text-secondary);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--surface-border);
+}
+
+.accessNote p {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.accessNote strong {
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.accessNote span:last-child {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+@media (min-width: 900px) {
+  .shell[data-mode="login"] .formPanel,
+  .shell[data-mode="login"] .contextPanel {
+    min-height: 560px;
+  }
+}
+
+@media (max-width: 899px) {
+  .shell {
+    grid-template-areas:
+      "form"
+      "context";
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    max-width: 680px;
+    margin-inline: auto;
+  }
+
+  .formPanel,
+  .contextPanel {
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .contextPanel {
+    gap: 32px;
+  }
+
+  .contextTitle {
+    max-width: 20ch;
+  }
+
+  .workflow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .workflowItem {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding-bottom: 0;
+  }
+
+  .workflowItem:not(:last-child)::after {
+    display: none;
+  }
+}
+
+@media (max-width: 599px) {
+  .formPanel,
+  .contextPanel {
+    padding: 24px;
+  }
+
+  .contextPanel {
+    gap: 28px;
+  }
+
+  .workflow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .workflowItem {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 14px;
+    padding-bottom: 20px;
+  }
+
+  .workflowItem:not(:last-child)::after {
+    display: block;
+  }
+}
+
+@media (max-width: 359px) {
+  .formPanel,
+  .contextPanel {
+    padding: 20px;
+  }
+}
+
+@media (forced-colors: active) {
+  .formPanel,
+  .contextPanel,
+  .workflowMarker {
+    border-color: CanvasText;
+  }
+}
