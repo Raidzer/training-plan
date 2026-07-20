@@ -22,7 +22,6 @@ export function DashboardSection({ section, isAdmin }: DashboardSectionProps) {
         <h2 className={styles.title} id={titleId}>
           {section.label}
         </h2>
-        <p className={styles.description}>{section.description}</p>
       </header>
       <ul className={styles.list} role="list">
         {visibleCards.map((card) => (
