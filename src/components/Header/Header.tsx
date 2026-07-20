@@ -7,8 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import appIcon from "@/app/icon.png";
 import { PUBLIC_TOOL_LINKS } from "@/shared/constants/publicTools";
+import headerLogo from "./HeaderLogo.svg";
 import styles from "./Header.module.scss";
 
 const usefulItems: NonNullable<MenuProps["items"]> = PUBLIC_TOOL_LINKS.map((tool) => ({
@@ -71,14 +71,13 @@ export function Header() {
       <div className={styles.headerInner}>
         <Link href="/" className={styles.brand} aria-label="Беговой клуб СПИРОС">
           <Image
-            className={styles.brandIcon}
-            src={appIcon}
-            width={32}
-            height={32}
+            className={styles.brandLogo}
+            src={headerLogo}
+            width={124}
+            height={20}
             alt=""
             aria-hidden="true"
           />
-          <span className={styles.brandWord}>СПИРОС</span>
         </Link>
 
         <nav className={styles.nav} aria-label="Основная навигация">

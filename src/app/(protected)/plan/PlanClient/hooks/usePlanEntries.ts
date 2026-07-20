@@ -6,6 +6,7 @@ import { PLAN_DATE_FORMAT, PLAN_PAGE_SIZE } from "../constants/planConstants";
 import { PLAN_TEXT } from "../constants/planText";
 import type { PlanDayEntry, PlanEntry } from "../types/planTypes";
 import { buildPlanDays } from "../utils/planUtils";
+import { scrollPlanEntryIntoView } from "../utils/planScrollUtils";
 
 type UsePlanEntriesParams = {
   msgApi: MessageInstance;
@@ -148,8 +149,9 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
       return;
     }
 
-    visibleTarget.scrollIntoView({ block: "center", behavior: "smooth" });
-    scrolledToTodayRef.current = true;
+    return scrollPlanEntryIntoView(visibleTarget, () => {
+      scrolledToTodayRef.current = true;
+    });
   }, [todayEntryId, currentPage]);
 
   return {

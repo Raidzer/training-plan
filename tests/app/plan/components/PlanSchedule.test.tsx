@@ -78,7 +78,12 @@ describe("PlanSchedule", () => {
     expect(screen.getAllByText("Run 10km")).toHaveLength(1);
     expect(screen.getByText("1 октября")).toBeTruthy();
     expect(screen.getByText("Воскресенье, 2023")).toBeTruthy();
-    expect(screen.getByText("0/1")).toBeTruthy();
+    expect(screen.getAllByText("Отчёт не заполнен")).toHaveLength(1);
+    expect(screen.queryByText("0/1")).toBeNull();
+
+    for (const weekday of ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]) {
+      expect(screen.queryByText(weekday)).toBeNull();
+    }
   });
 
   it("вызывает действия карточки и формирует ссылку на дневник", () => {
@@ -145,7 +150,30 @@ describe("PlanSchedule", () => {
     expect(shiftButton).toHaveProperty("disabled", true);
     fireEvent.click(shiftButton);
     expect(onShiftPlanFromDate).not.toHaveBeenCalled();
-    expect(screen.getByText("1/2")).toBeTruthy();
+    expect(screen.getAllByText("Отчёт не заполнен")).toHaveLength(1);
+    expect(screen.queryByText("1/2")).toBeNull();
+  });
+
+  it("показывает заполненный статус в шапке дня", () => {
+    const completedDay = createDay({
+      workouts: [
+        {
+          id: 1,
+          sessionOrder: 1,
+          taskText: "Completed run",
+          commentText: null,
+          hasReport: true,
+        },
+      ],
+      hasAnyReport: true,
+      hasAllReports: true,
+      reportedWorkoutCount: 1,
+    });
+
+    render(<PlanSchedule {...defaultProps} entries={[completedDay]} />);
+
+    expect(screen.getAllByText("Отчёт заполнен")).toHaveLength(1);
+    expect(screen.queryByText("1/1")).toBeNull();
   });
 
   it("показывает пустое состояние и позволяет добавить день", () => {

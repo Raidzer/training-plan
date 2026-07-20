@@ -11,7 +11,6 @@ export const DASHBOARD_SECTIONS = [
   {
     id: "club-management",
     label: "Управление клубом",
-    description: "Пользователи, приглашения и шаблоны для работы клуба.",
     adminOnly: true,
     cards: [
       {
@@ -40,12 +39,11 @@ export const DASHBOARD_SECTIONS = [
   {
     id: "training",
     label: "Тренировки",
-    description: "Планируйте тренировки и фиксируйте выполненную работу.",
     cards: [
       {
         id: "plan",
         title: "План",
-        description: "Планируйте цели и запланированные тренировки.",
+        description: "Загружайте тренировочный план.",
         href: "/plan",
       },
       {
@@ -65,7 +63,6 @@ export const DASHBOARD_SECTIONS = [
   {
     id: "sports-profile",
     label: "Спортивный профиль",
-    description: "Экипировка, личные рекорды и календарь соревнований.",
     cards: [
       {
         id: "shoes",

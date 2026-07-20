@@ -162,9 +162,7 @@ export function DiaryClient({ userId }: { userId: number }) {
   const visibleDayData = dayData?.status.date === selectedDateKey ? dayData : null;
   const showBlockingDayLoader = loadingDay && !visibleDayData;
   const status = visibleDayData?.status;
-  const workoutsComplete = status
-    ? status.workoutsTotal === 0 || status.workoutsWithFullReport === status.workoutsTotal
-    : false;
+
   const reportText = useMemo(
     () =>
       buildDailyReportText({
@@ -214,7 +212,6 @@ export function DiaryClient({ userId }: { userId: number }) {
                   <DiaryStatusBlock
                     dateLabel={selectedDateLabel}
                     status={status}
-                    workoutsComplete={workoutsComplete}
                     disabledReport={!visibleDayData}
                     labels={STATUS_LABELS}
                     onOpenReport={() => setIsReportOpen(true)}
