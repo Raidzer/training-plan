@@ -99,4 +99,22 @@ describe("buildPlanDays", () => {
     expect(result[0].hasAllReports).toBe(false);
     expect(result[0].reportedWorkoutCount).toBe(1);
   });
+
+  it("не считает строку-заполнитель тренировкой", () => {
+    const result = buildPlanDays([
+      createPlanEntry({
+        taskText: "-",
+        commentText: "-",
+      }),
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      workouts: [],
+      hasAnyReport: false,
+      hasAllReports: true,
+      reportedWorkoutCount: 0,
+      workoutCount: 0,
+    });
+  });
 });
