@@ -10,34 +10,24 @@
   gap: clamp(20px, 3vw, 48px);
   width: 100%;
   min-height: 80px;
-  padding: 12px var(--page-gutter);
+  padding-block: 12px;
+  padding-inline: clamp(32px, 7vw, 112px);
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
   justify-self: start;
-  gap: 10px;
   min-block-size: 44px;
   color: var(--text-primary);
   text-decoration: none;
 }
 
-.brandIcon {
+.brandLogo {
   display: block;
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  object-fit: cover;
-  mix-blend-mode: screen;
-}
-
-.brandWord {
-  padding-inline-start: 0.2em;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.24em;
+  inline-size: auto;
+  block-size: 20px;
 }
 
 .nav {
@@ -156,6 +146,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: 64px;
     padding-block: 8px;
+    padding-inline: clamp(24px, 6vw, 48px);
     gap: 12px;
   }
 
@@ -167,24 +158,8 @@
     min-width: 0;
   }
 
-  .brandIcon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .brandWord {
-    font-size: 0.875rem;
-    letter-spacing: 0.2em;
-  }
-
   .menuButton {
     display: inline-flex !important;
-  }
-}
-
-@media (max-width: 420px) {
-  .brandWord {
-    letter-spacing: 0.16em;
   }
 }
 
