@@ -21,12 +21,18 @@ export function AuthPageShell({ mode, children }: AuthPageShellProps) {
     >
       <div className={styles.formPanel}>{children}</div>
 
-      <aside className={styles.contextPanel} aria-labelledby={contextTitleId}>
+      <aside
+        className={styles.contextPanel}
+        aria-label={content.title ? undefined : "О личном кабинете"}
+        aria-labelledby={content.title ? contextTitleId : undefined}
+      >
         <header className={styles.contextHeader}>
-          <span className={styles.eyebrow}>{content.eyebrow}</span>
-          <h2 id={contextTitleId} className={styles.contextTitle}>
-            {content.title}
-          </h2>
+          {content.eyebrow && <span className={styles.eyebrow}>{content.eyebrow}</span>}
+          {content.title && (
+            <h2 id={contextTitleId} className={styles.contextTitle}>
+              {content.title}
+            </h2>
+          )}
           <p className={styles.contextDescription}>{content.description}</p>
         </header>
 

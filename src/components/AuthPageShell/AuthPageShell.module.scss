@@ -90,6 +90,10 @@
   line-height: 1.65;
 }
 
+.contextDescription:first-child {
+  margin-top: 0;
+}
+
 .workflow {
   display: grid;
   gap: 0;

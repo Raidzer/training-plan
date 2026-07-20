@@ -24,9 +24,9 @@ describe("LoginClient", () => {
   it("компонует единственный h1 и форму без вложенного main", () => {
     render(<LoginClient />);
 
-    expect(screen.getByText("Беговой клуб СПИРОС")).toBeTruthy();
-    expect(LOGIN_TEXT.title).toBe("Вход в личный кабинет");
-    expect(screen.getByRole("heading", { level: 1, name: LOGIN_TEXT.title })).toBeTruthy();
+    expect(screen.getByText("Беговой клуб «СПИРОС»")).toBeTruthy();
+    const title = screen.getByRole("heading", { level: 1, name: LOGIN_TEXT.title });
+    expect(title.textContent).toBe("Вход\u00a0в личный кабинет");
     expect(screen.getByRole("form", { name: LOGIN_TEXT.title })).toBeTruthy();
     expect(screen.queryByRole("main")).toBeNull();
   });
