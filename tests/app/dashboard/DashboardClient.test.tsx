@@ -128,6 +128,13 @@ describe("DashboardClient", () => {
     }
   });
 
+  it("показывает актуальное описание карточки плана", () => {
+    render(<DashboardClient session={createSession("athlete")} />);
+
+    expect(screen.getByText("Загружайте тренировочный план.")).toBeTruthy();
+    expect(screen.queryByText("Планируйте цели и запланированные тренировки.")).toBeNull();
+  });
+
   it("выходит из аккаунта с возвратом на страницу входа", async () => {
     render(<DashboardClient session={createSession("athlete")} />);
 

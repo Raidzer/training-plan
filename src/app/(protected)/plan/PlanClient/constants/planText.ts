@@ -35,7 +35,6 @@ export const PLAN_TEXT = {
   day: {
     today: "Сегодня",
     workload: "Нагрузка",
-    reports: "Отчёты",
     workoutLabel: (index: number) => `Тренировка ${index}`,
     task: "Задание",
     comment: "Комментарий тренера",

@@ -1,4 +1,3 @@
-import { CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { PLAN_TEXT } from "../../constants/planText";
 import type { PlanDayWorkout } from "../../types/planTypes";
 import styles from "./PlanWorkoutBlock.module.scss";
@@ -12,29 +11,10 @@ type PlanWorkoutBlockProps = {
 export function PlanWorkoutBlock({ workout, index, workoutsCount }: PlanWorkoutBlockProps) {
   const workoutLabel = PLAN_TEXT.day.workoutLabel(index + 1);
   const hasMultipleWorkouts = workoutsCount > 1;
-  const reportClassName = [styles.reportStatus, workout.hasReport ? styles.reportComplete : ""]
-    .filter(Boolean)
-    .join(" ");
 
   return (
     <section className={styles.workout} aria-label={workoutLabel}>
-      <header className={styles.header}>
-        {hasMultipleWorkouts ? (
-          <h3 className={styles.title}>{workoutLabel}</h3>
-        ) : (
-          <span className={styles.visuallyHidden}>{workoutLabel}</span>
-        )}
-        <span className={reportClassName}>
-          {workout.hasReport ? (
-            <CheckCircleOutlined aria-hidden />
-          ) : (
-            <ClockCircleOutlined aria-hidden />
-          )}
-          <span>
-            {workout.hasReport ? PLAN_TEXT.day.reportFilled : PLAN_TEXT.day.reportMissing}
-          </span>
-        </span>
-      </header>
+      {hasMultipleWorkouts ? <h3 className={styles.title}>{workoutLabel}</h3> : null}
 
       <div className={styles.content}>
         <div className={styles.field}>

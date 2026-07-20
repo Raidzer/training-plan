@@ -43,7 +43,7 @@ export const DASHBOARD_SECTIONS = [
       {
         id: "plan",
         title: "План",
-        description: "Планируйте цели и запланированные тренировки.",
+        description: "Загружайте тренировочный план.",
         href: "/plan",
       },
       {

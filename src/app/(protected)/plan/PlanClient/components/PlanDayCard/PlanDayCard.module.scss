@@ -23,18 +23,17 @@
 
 .cardHeader {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
   min-width: 0;
   padding: 20px;
   border-block-end: 1px solid var(--surface-border);
 }
 
-.markerBlock {
-  min-width: 0;
-}
-
 .dateBlock {
+  flex: 1 1 180px;
   min-width: 0;
 }
 
@@ -66,8 +65,10 @@
 .statuses {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 6px;
   min-width: 0;
+  margin-inline-start: auto;
 }
 
 .workouts {
@@ -133,15 +134,8 @@
 
 @container plan-day (min-width: 720px) {
   .cardHeader {
-    display: grid;
-    grid-template-columns: minmax(220px, 280px) minmax(170px, 1fr) auto;
-    align-items: center;
     gap: clamp(20px, 3vw, 36px);
     padding: 22px 24px;
-  }
-
-  .statuses {
-    justify-content: flex-end;
   }
 
   .workouts {
