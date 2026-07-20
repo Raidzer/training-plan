@@ -45,11 +45,9 @@
 }
 
 .editorTopRow > :global(.ant-space-item:last-child) {
+  display: flex;
+  align-items: center;
   min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
 }
 
 .editorTopRow :global(.ant-picker) {
@@ -167,8 +165,7 @@
 }
 
 @media (forced-colors: active) {
-  .editorEntries :global(.ant-card),
-  .editorTopRow > :global(.ant-space-item:last-child) {
+  .editorEntries :global(.ant-card) {
     border-color: CanvasText;
   }
 }

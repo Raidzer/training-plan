@@ -52,6 +52,12 @@ const PUBLIC_LINKS: DashboardLinkContract[] = [
   { title: "Соревнования", href: "/profile/competitions" },
 ];
 
+const REMOVED_SECTION_DESCRIPTIONS = [
+  "Пользователи, приглашения и шаблоны для работы клуба.",
+  "Планируйте тренировки и фиксируйте выполненную работу.",
+  "Экипировка, личные рекорды и календарь соревнований.",
+] as const;
+
 const createSession = (
   role: DashboardRole,
   name: string | null = "Test User",
@@ -112,6 +118,21 @@ describe("DashboardClient", () => {
 
     expect(profileLink.getAttribute("href")).toBe("/profile");
     expect(profileLink.querySelector("button")).toBeNull();
+  });
+
+  it("не показывает описания секций", () => {
+    render(<DashboardClient session={createSession("admin")} />);
+
+    for (const description of REMOVED_SECTION_DESCRIPTIONS) {
+      expect(screen.queryByText(description)).toBeNull();
+    }
+  });
+
+  it("показывает актуальное описание карточки плана", () => {
+    render(<DashboardClient session={createSession("athlete")} />);
+
+    expect(screen.getByText("Загружайте тренировочный план.")).toBeTruthy();
+    expect(screen.queryByText("Планируйте цели и запланированные тренировки.")).toBeNull();
   });
 
   it("выходит из аккаунта с возвратом на страницу входа", async () => {

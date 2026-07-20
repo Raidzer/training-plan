@@ -4,7 +4,6 @@ import Link from "next/link";
 import { PLAN_TEXT } from "../../constants/planText";
 import type { PlanDayEntry } from "../../types/planTypes";
 import { getPlanDateParts } from "../../utils/planUtils";
-import { MicrocycleMarker } from "../MicrocycleMarker/MicrocycleMarker";
 import { PlanStatusBadge } from "../PlanStatusBadge/PlanStatusBadge";
 import { PlanWorkoutBlock } from "../PlanWorkoutBlock/PlanWorkoutBlock";
 import styles from "./PlanDayCard.module.scss";
@@ -25,7 +24,6 @@ export function PlanDayCard({ entry, isToday, onEditDay, onShiftPlanFromDate }: 
   ]
     .filter(Boolean)
     .join(" ");
-  const reportValue = entry.reportedWorkoutCount + "/" + entry.workoutCount;
   const shiftTooltip = entry.hasAnyReport
     ? PLAN_TEXT.table.shiftDisabledTooltip
     : PLAN_TEXT.table.shiftTooltip;
@@ -33,14 +31,6 @@ export function PlanDayCard({ entry, isToday, onEditDay, onShiftPlanFromDate }: 
   return (
     <article className={className} data-plan-entry-key={entry.date}>
       <header className={styles.cardHeader}>
-        <div className={styles.markerBlock}>
-          <MicrocycleMarker
-            activeDayIndex={dateParts.weekdayIndex}
-            isToday={isToday}
-            isWorkload={entry.isWorkload}
-          />
-        </div>
-
         <div className={styles.dateBlock}>
           <h3 className={styles.dateHeading}>
             <time dateTime={entry.date} aria-current={isToday ? "date" : undefined}>
@@ -56,8 +46,7 @@ export function PlanDayCard({ entry, isToday, onEditDay, onShiftPlanFromDate }: 
           {isToday ? <PlanStatusBadge value={PLAN_TEXT.day.today} emphasized /> : null}
           {entry.isWorkload ? <PlanStatusBadge value={PLAN_TEXT.day.workload} /> : null}
           <PlanStatusBadge
-            label={PLAN_TEXT.day.reports}
-            value={reportValue}
+            value={entry.hasAllReports ? PLAN_TEXT.day.reportFilled : PLAN_TEXT.day.reportMissing}
             emphasized={entry.hasAllReports}
           />
         </div>
