@@ -38,18 +38,20 @@
 .recoveryMethods {
   min-width: 0;
   margin: 0;
-  padding: 12px;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
+  padding: 0;
+  border: 0;
 }
 
-.methodsLegend {
-  padding-inline: 4px;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.4;
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .recoveryGrid {
@@ -65,15 +67,7 @@
   min-width: 0;
   min-height: 44px;
   margin-inline-start: 0;
-  padding-inline: 10px;
-  border-radius: var(--radius-sm);
   color: var(--text-primary);
-  background: var(--control-bg);
-  transition: background-color var(--motion-duration-fast) ease-out;
-}
-
-.recoveryGrid :global(.ant-checkbox-wrapper:hover) {
-  background: var(--interactive-hover);
 }
 
 .recoveryGrid :global(.ant-checkbox-wrapper:focus-within) {
