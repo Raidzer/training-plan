@@ -1,5 +1,6 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import dayjs from "dayjs";
 
 import { PLAN_TEXT } from "@/app/(protected)/plan/PlanClient/constants/planText";
 import { usePlanEntries } from "@/app/(protected)/plan/PlanClient/hooks/usePlanEntries";
@@ -33,6 +34,16 @@ function createPlanEntry(overrides: Partial<PlanEntry> = {}): PlanEntry {
     hasReport: false,
     ...overrides,
   };
+}
+
+function PlanEntriesHarness({ msgApi }: { msgApi: MessageInstance }) {
+  const { filteredEntries } = usePlanEntries({ msgApi });
+
+  return filteredEntries.map((entry) => (
+    <div key={entry.date} data-plan-entry-key={entry.date}>
+      {entry.date}
+    </div>
+  ));
 }
 
 describe("usePlanEntries", () => {
@@ -155,5 +166,87 @@ describe("usePlanEntries", () => {
     expect(result.current.loadError).toBe("Нет доступа");
     expect(msgApi.error).toHaveBeenCalledWith("Нет доступа");
     expect(msgApi.error).not.toHaveBeenCalledWith(PLAN_TEXT.messages.loadFailed);
+  });
+
+  it("повторяет плавную прокрутку, если мобильный браузер остановился до текущего дня", async () => {
+    const today = dayjs().format("YYYY-MM-DD");
+    const entries = Array.from({ length: 20 }, (_, index) =>
+      createPlanEntry({
+        id: index + 1,
+        date: dayjs(today)
+          .subtract(19 - index, "day")
+          .format("YYYY-MM-DD"),
+      })
+    );
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(createJsonResponse({ entries })) as unknown as typeof fetch;
+
+    let correctionApplied = false;
+    const scrollIntoViewMock = vi
+      .spyOn(HTMLElement.prototype, "scrollIntoView")
+      .mockImplementation((options?: boolean | ScrollIntoViewOptions) => {
+        if (
+          typeof options === "object" &&
+          options.behavior === "smooth" &&
+          scrollIntoViewMock.mock.calls.length === 2
+        ) {
+          correctionApplied = true;
+        }
+      });
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function () {
+      const top = correctionApplied ? 200 : 900;
+      const bottom = correctionApplied ? 500 : 1200;
+
+      return {
+        x: 0,
+        y: top,
+        width: 320,
+        height: bottom - top,
+        top,
+        right: 320,
+        bottom,
+        left: 0,
+        toJSON: () => ({}),
+      };
+    });
+
+    const hadScrollEndSupport = "onscrollend" in window;
+    if (!hadScrollEndSupport) {
+      Object.defineProperty(window, "onscrollend", {
+        configurable: true,
+        value: null,
+      });
+    }
+
+    try {
+      render(<PlanEntriesHarness msgApi={createMessageApi()} />);
+
+      await screen.findByText(today);
+      await waitFor(() => {
+        expect(scrollIntoViewMock).toHaveBeenCalledOnce();
+      });
+      expect(scrollIntoViewMock).toHaveBeenNthCalledWith(1, {
+        block: "center",
+        behavior: "smooth",
+      });
+
+      document.dispatchEvent(new Event("scrollend"));
+
+      await waitFor(() => {
+        expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
+      });
+      expect(scrollIntoViewMock).toHaveBeenNthCalledWith(2, {
+        block: "center",
+        behavior: "smooth",
+      });
+
+      document.dispatchEvent(new Event("scrollend"));
+      expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (!hadScrollEndSupport) {
+        Reflect.deleteProperty(window, "onscrollend");
+      }
+    }
   });
 });
