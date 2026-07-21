@@ -73,6 +73,28 @@ export const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
   return rows;
 };
 
+const normalizePlanSearchText = (value: string) =>
+  value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase("ru-RU");
+
+export const filterPlanDaysBySearch = (entries: PlanDayEntry[], query: string) => {
+  const normalizedQuery = normalizePlanSearchText(query);
+  if (!normalizedQuery) {
+    return entries;
+  }
+
+  return entries.filter((entry) =>
+    entry.workouts.some((workout) => {
+      const taskText = normalizePlanSearchText(workout.taskText);
+      const commentText = normalizePlanSearchText(workout.commentText ?? "");
+      return taskText.includes(normalizedQuery) || commentText.includes(normalizedQuery);
+    })
+  );
+};
 export const sortPlanEntries = (items: PlanEntry[]) =>
   [...items].sort((a, b) => {
     if (a.date === b.date) {

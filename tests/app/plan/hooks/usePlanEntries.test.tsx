@@ -140,6 +140,51 @@ describe("usePlanEntries", () => {
     expect(result.current.currentPage).toBe(1);
   });
 
+  it("ищет тренировки и сбрасывает пагинацию", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
+        entries: [
+          createPlanEntry({ id: 1, date: "2026-05-10", taskText: "Интервалы в горку" }),
+          createPlanEntry({
+            id: 2,
+            date: "2026-05-11",
+            taskText: "Легкий бег",
+            commentText: "После тренировки ОФП",
+            hasReport: true,
+          }),
+        ],
+      })
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const msgApi = createMessageApi();
+
+    const { result } = renderHook(() => usePlanEntries({ msgApi }));
+
+    await waitFor(() => {
+      expect(result.current.filteredEntries).toHaveLength(2);
+    });
+
+    act(() => {
+      result.current.setCurrentPage(3);
+      result.current.setSearchQuery("ГОРКУ");
+    });
+
+    expect(result.current.currentPage).toBe(1);
+    expect(result.current.filteredEntries.map((entry) => entry.date)).toEqual(["2026-05-10"]);
+
+    act(() => {
+      result.current.setSearchQuery("офп");
+    });
+
+    expect(result.current.filteredEntries.map((entry) => entry.date)).toEqual(["2026-05-11"]);
+
+    act(() => {
+      result.current.setOnlyWithoutReports(true);
+    });
+
+    expect(result.current.filteredEntries).toEqual([]);
+  });
+
   it("показывает ошибку загрузки и очищает состояние загрузки", async () => {
     const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ error: "Нет доступа" }, 403));
     global.fetch = fetchMock as unknown as typeof fetch;
