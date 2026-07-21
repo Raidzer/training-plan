@@ -1,5 +1,5 @@
+import { CloseCircleOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Alert, Button, Empty, Pagination, Skeleton, Spin } from "antd";
-import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useMemo } from "react";
 import { PLAN_PAGE_SIZE } from "../../constants/planConstants";
 import { PLAN_TEXT } from "../../constants/planText";
@@ -12,12 +12,14 @@ type PlanScheduleProps = {
   loading: boolean;
   loadError: string | null;
   isFiltered: boolean;
+  searchQuery: string;
   currentPage: number;
   onPageChange: (page: number) => void;
   onEditDay: (date: string) => void;
   onShiftPlanFromDate: (date: string) => void;
   onAddDay: () => void;
   onRetry: () => Promise<void>;
+  onClearSearch: () => void;
   today: string;
 };
 
@@ -28,12 +30,14 @@ export function PlanSchedule({
   loading,
   loadError,
   isFiltered,
+  searchQuery,
   currentPage,
   onPageChange,
   onEditDay,
   onShiftPlanFromDate,
   onAddDay,
   onRetry,
+  onClearSearch,
   today,
 }: PlanScheduleProps) {
   const pagesCount = Math.max(1, Math.ceil(entries.length / PLAN_PAGE_SIZE));
@@ -43,11 +47,30 @@ export function PlanSchedule({
     return entries.slice(pageStart, pageStart + PLAN_PAGE_SIZE);
   }, [entries, safeCurrentPage]);
 
+  const normalizedSearchQuery = searchQuery.trim();
+  const isSearchActive = normalizedSearchQuery.length > 0;
   const showInitialLoading = loading && entries.length === 0;
   const showEmpty = !loading && !loadError && entries.length === 0;
 
+  let emptyTitle: string = isFiltered
+    ? PLAN_TEXT.schedule.filteredEmptyTitle
+    : PLAN_TEXT.schedule.emptyTitle;
+  let emptyDescription: string = isFiltered
+    ? PLAN_TEXT.schedule.filteredEmptyDescription
+    : PLAN_TEXT.schedule.emptyDescription;
+
+  if (isSearchActive) {
+    emptyTitle = PLAN_TEXT.schedule.searchEmptyTitle;
+    emptyDescription = PLAN_TEXT.schedule.searchEmptyDescription(normalizedSearchQuery);
+  }
+
   return (
-    <section className={styles.section} aria-labelledby="plan-schedule-title" aria-busy={loading}>
+    <section
+      className={styles.section}
+      id="plan-schedule-results"
+      aria-labelledby="plan-schedule-title"
+      aria-busy={loading}
+    >
       <header className={styles.sectionHeader}>
         <div className={styles.sectionCopy}>
           <h2 className={styles.sectionTitle} id="plan-schedule-title">
@@ -62,7 +85,11 @@ export function PlanSchedule({
               <span>{PLAN_TEXT.actions.reload}</span>
             </>
           ) : (
-            <span>{PLAN_TEXT.schedule.count(entries.length)}</span>
+            <span>
+              {isSearchActive
+                ? PLAN_TEXT.schedule.searchCount(entries.length)
+                : PLAN_TEXT.schedule.count(entries.length)}
+            </span>
           )}
         </div>
       </header>
@@ -103,20 +130,16 @@ export function PlanSchedule({
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
               <div className={styles.emptyCopy}>
-                <strong>
-                  {isFiltered
-                    ? PLAN_TEXT.schedule.filteredEmptyTitle
-                    : PLAN_TEXT.schedule.emptyTitle}
-                </strong>
-                <span>
-                  {isFiltered
-                    ? PLAN_TEXT.schedule.filteredEmptyDescription
-                    : PLAN_TEXT.schedule.emptyDescription}
-                </span>
+                <strong>{emptyTitle}</strong>
+                <span>{emptyDescription}</span>
               </div>
             }
           >
-            {isFiltered ? null : (
+            {isSearchActive ? (
+              <Button icon={<CloseCircleOutlined aria-hidden />} onClick={onClearSearch}>
+                {PLAN_TEXT.search.clear}
+              </Button>
+            ) : isFiltered ? null : (
               <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={onAddDay}>
                 {PLAN_TEXT.actions.addDay}
               </Button>

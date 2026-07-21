@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPlanDays,
+  filterPlanDaysBySearch,
   formatDateWithWeekday,
   getPlanDateParts,
 } from "@/app/(protected)/plan/PlanClient/utils/planUtils";
@@ -98,5 +99,36 @@ describe("buildPlanDays", () => {
     expect(result[0].hasAnyReport).toBe(true);
     expect(result[0].hasAllReports).toBe(false);
     expect(result[0].reportedWorkoutCount).toBe(1);
+  });
+});
+
+describe("filterPlanDaysBySearch", () => {
+  const days = buildPlanDays([
+    createPlanEntry({
+      id: 1,
+      date: "2023-10-01",
+      taskText: "<p>Темповая 8 км</p>",
+      commentText: "Пульс&nbsp;до 150",
+    }),
+    createPlanEntry({
+      id: 2,
+      date: "2023-10-02",
+      taskText: "Восстановительный бег",
+      commentText: "Очень легко",
+    }),
+  ]);
+
+  it("ищет по заданию и комментарию без учета регистра и HTML", () => {
+    expect(filterPlanDaysBySearch(days, "  ТЕМПОВАЯ  ").map((day) => day.date)).toEqual([
+      "2023-10-01",
+    ]);
+    expect(filterPlanDaysBySearch(days, "пульс до 150").map((day) => day.date)).toEqual([
+      "2023-10-01",
+    ]);
+  });
+
+  it("возвращает все дни для пустого запроса и пустой список без совпадений", () => {
+    expect(filterPlanDaysBySearch(days, "   ")).toBe(days);
+    expect(filterPlanDaysBySearch(days, "плавание")).toEqual([]);
   });
 });
