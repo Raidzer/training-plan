@@ -1,0 +1,50 @@
+.versionButton {
+  display: inline-block;
+  min-block-size: 44px;
+  margin: -13px -4px;
+  padding: 13px 4px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  font-variant-numeric: inherit;
+  cursor: pointer;
+}
+
+.versionButton:hover,
+.versionButton:focus-visible {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.modalBody {
+  max-height: min(60vh, calc(100dvh - 180px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+
+.section + .section {
+  margin-block-start: 20px;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.items {
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.items li + li {
+  margin-block-start: 8px;
+}
