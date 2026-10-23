@@ -22,6 +22,10 @@
 
 - **API:** Next.js API Routes (Serverless functions)
 - **Auth:** [NextAuth.js](https://next-auth.js.org/)
+- **Email:** Nodemailer 10 подключён через npm-алиас `smtp-mailer`: optional peer
+  NextAuth 4 ограничен Nodemailer 7. Авторизация использует только Credentials;
+  встроенный Email provider и общий импорт `next-auth/providers` требуют отдельного
+  решения по совместимости.
 - **Database:** PostgreSQL
 - **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
 
