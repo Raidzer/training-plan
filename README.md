@@ -50,7 +50,7 @@
 
 ### Предварительные требования
 
-- [Node.js](https://nodejs.org/) (v20+)
+- [Node.js](https://nodejs.org/) 24.22.1 LTS (версия закреплена в `.nvmrc`; поддерживается Node 24 начиная с 24.22.1)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (для запуска БД)
 
 ### Установка и запуск
