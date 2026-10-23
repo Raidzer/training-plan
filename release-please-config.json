@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "3fc64f4feb8dcac89bac2d55fd7aaa0fd4d42700",
+  "release-type": "node",
+  "include-v-in-tag": true,
+  "include-component-in-tag": false,
+  "changelog-sections": [
+    { "type": "feat", "section": "Новое", "hidden": false },
+    { "type": "fix", "section": "Исправления", "hidden": false },
+    { "type": "style", "section": "Внешний вид", "hidden": false }
+  ],
+  "packages": {
+    ".": {
+      "initial-version": "1.3.0",
+      "changelog-path": "src/releases/CHANGELOG.md"
+    }
+  }
+}
