@@ -36,6 +36,21 @@
 - **Linting:** ESLint, Prettier, Husky (pre-commit hooks)
 - **Testing:** Vitest
 
+### Исправления вложенных зависимостей
+
+В `package.json` закреплены адресные npm overrides для существующих зависимостей:
+
+- `exceljs -> uuid 11.1.1` исправляет проверку границ буфера и сохраняет
+  CommonJS-вызов `uuid.v4()`, используемый ExcelJS для расширенного форматирования.
+- `drizzle-kit -> @esbuild-kit/core-utils -> esbuild 0.25.12` устраняет
+  открытый CORS локального esbuild-сервера и сохраняет TypeScript-трансформации.
+
+Overrides нужны, пока родительские пакеты требуют уязвимые версии. При обновлении
+ExcelJS или Drizzle проверьте их диапазоны и фактическое дерево `npm ls`; удаляйте
+соответствующее закрепление после проверки XLSX и команд Drizzle с исправленными
+версиями upstream. Overrides не заменяют код внутри bundle-файлов Drizzle-kit
+и браузерного bundle ExcelJS.
+
 ---
 
 ## ✨ Основные возможности
