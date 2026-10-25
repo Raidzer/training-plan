@@ -12,7 +12,7 @@
 
 ### Frontend
 
-- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **UI Library:** [Ant Design 6](https://ant.design/)
 - **Styling:** CSS Modules / SCSS
