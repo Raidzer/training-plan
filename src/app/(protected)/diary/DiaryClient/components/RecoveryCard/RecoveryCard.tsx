@@ -70,7 +70,7 @@ export function RecoveryCard({
       </div>
       <form className={styles.recoveryForm} onSubmit={handleSubmit}>
         <fieldset className={styles.recoveryMethods}>
-          <legend className={styles.methodsLegend}>{RECOVERY_LABELS.methodsLabel}</legend>
+          <legend className={styles.visuallyHidden}>{RECOVERY_LABELS.methodsLabel}</legend>
           <div className={styles.recoveryGrid}>
             <Checkbox
               name="hasBath"

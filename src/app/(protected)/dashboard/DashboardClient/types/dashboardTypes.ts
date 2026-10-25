@@ -28,7 +28,6 @@ export type DashboardSectionId = "club-management" | "training" | "sports-profil
 export type DashboardSectionConfig = {
   id: DashboardSectionId;
   label: string;
-  description: string;
   cards: readonly DashboardCardConfig[];
   adminOnly?: boolean;
 };

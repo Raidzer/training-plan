@@ -2,10 +2,20 @@ import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider/ThemeProvider";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { AuthProvider } from "../components/AuthProvider";
+import { Inter } from "next/font/google";
+import { getCurrentReleaseNotes } from "@/server/releaseNotes";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+const inter = Inter({
+  subsets: ["cyrillic", "latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const releaseNotes = await getCurrentReleaseNotes();
+
   return (
-    <html lang="ru">
+    <html lang="ru" className={inter.variable}>
       <head>
         <meta name="color-scheme" content="dark" />
         <meta name="theme-color" content="#181818" />
@@ -13,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AntdRegistry>
           <AuthProvider>
-            <ThemeProvider>{children}</ThemeProvider>
+            <ThemeProvider releaseNotes={releaseNotes}>{children}</ThemeProvider>
           </AuthProvider>
         </AntdRegistry>
       </body>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPlanDays,
+  filterPlanDaysBySearch,
   formatDateWithWeekday,
   getPlanDateParts,
 } from "@/app/(protected)/plan/PlanClient/utils/planUtils";
@@ -98,5 +99,87 @@ describe("buildPlanDays", () => {
     expect(result[0].hasAnyReport).toBe(true);
     expect(result[0].hasAllReports).toBe(false);
     expect(result[0].reportedWorkoutCount).toBe(1);
+  });
+
+  it("не считает строку-заполнитель тренировкой", () => {
+    const result = buildPlanDays([
+      createPlanEntry({
+        taskText: "-",
+        commentText: "-",
+      }),
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      workouts: [],
+      hasAnyReport: false,
+      hasAllReports: true,
+      reportedWorkoutCount: 0,
+      workoutCount: 0,
+    });
+  });
+});
+
+describe("filterPlanDaysBySearch", () => {
+  const days = buildPlanDays([
+    createPlanEntry({
+      id: 1,
+      date: "2023-10-01",
+      taskText: "<p>Темповая 8 км</p>",
+      commentText: "Пульс&nbsp;до 150",
+    }),
+    createPlanEntry({
+      id: 2,
+      date: "2023-10-02",
+      taskText: "Восстановительный бег",
+      commentText: "Очень легко",
+    }),
+  ]);
+
+  it("ищет по заданию и комментарию без учета регистра и HTML", () => {
+    expect(filterPlanDaysBySearch(days, "  ТЕМПОВАЯ  ").map((day) => day.date)).toEqual([
+      "2023-10-01",
+    ]);
+    expect(filterPlanDaysBySearch(days, "пульс до 150").map((day) => day.date)).toEqual([
+      "2023-10-01",
+    ]);
+  });
+
+  it.each([
+    ['<span style="font-weight: bold;">Темп</span>овая 8 км', "темповая"],
+    ["Пульс &lt; 150 &amp; темп &gt; 5:00", "пульс < 150 & темп > 5:00"],
+    ["&quot;Легко&quot; &#039;быстро&#039;", "\"легко\" 'быстро'"],
+    ["&#1058;&#1077;&#1084;&#1087;&#xA0;5:00", "темп 5:00"],
+    ["<p>Лёгкий</p><p>бег</p>", "лёгкий бег"],
+    ["<div>Лёгкий<br>бег</div>", "лёгкий бег"],
+  ])("ищет отображаемый текст %s", (taskText, query) => {
+    const entries = buildPlanDays([createPlanEntry({ taskText })]);
+
+    expect(filterPlanDaysBySearch(entries, query).map((day) => day.date)).toEqual(["2023-10-01"]);
+  });
+
+  it("декодирует HTML в комментариях", () => {
+    const entries = buildPlanDays([createPlanEntry({ commentText: "Пульс &lt; 150" })]);
+
+    expect(filterPlanDaysBySearch(entries, "пульс < 150").map((day) => day.date)).toEqual([
+      "2023-10-01",
+    ]);
+  });
+
+  it.each(["<span>бег</span>", "&nbsp;"])("считает запрос %s обычным текстом", (query) => {
+    expect(filterPlanDaysBySearch(days, query)).toEqual([]);
+  });
+
+  it("находит буквальную разметку в отображаемом тексте", () => {
+    const entries = buildPlanDays([createPlanEntry({ taskText: "&lt;span&gt;Бег&lt;/span&gt;" })]);
+
+    expect(filterPlanDaysBySearch(entries, "<span>бег</span>").map((day) => day.date)).toEqual([
+      "2023-10-01",
+    ]);
+  });
+
+  it("возвращает все дни для пустого запроса и пустой список без совпадений", () => {
+    expect(filterPlanDaysBySearch(days, "   ")).toBe(days);
+    expect(filterPlanDaysBySearch(days, "плавание")).toEqual([]);
   });
 });

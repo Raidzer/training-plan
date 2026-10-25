@@ -1,11 +1,12 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { minStringLength } from "@/shared/utils/stringValidation";
 import { auth } from "@/auth";
 import { updateUserPasswordHashById } from "@/server/adminUsers";
 
 const schema = z.object({
-  password: z.string().min(6),
+  password: z.string().check(minStringLength(6)),
 });
 
 type Params = {

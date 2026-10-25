@@ -15,12 +15,8 @@ describe("AuthPageShell", () => {
     });
     expect(shell.getAttribute("data-mode")).toBe("login");
     expect(within(shell).getByRole("heading", { level: 1, name: "Форма входа" })).toBeTruthy();
-    expect(
-      within(shell).getByRole("heading", {
-        level: 2,
-        name: "От плана до старта — один тренировочный цикл.",
-      })
-    ).toBeTruthy();
+    expect(within(shell).queryByText("Личный кабинет клуба")).toBeNull();
+    expect(within(shell).queryByText("От плана до старта — один тренировочный цикл.")).toBeNull();
 
     const workflow = within(shell).getByRole("list", { name: "Тренировочный цикл" });
     expect(within(workflow).getAllByRole("listitem")).toHaveLength(3);

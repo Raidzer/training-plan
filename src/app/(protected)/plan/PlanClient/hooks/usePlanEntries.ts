@@ -5,7 +5,8 @@ import dayjs from "dayjs";
 import { PLAN_DATE_FORMAT, PLAN_PAGE_SIZE } from "../constants/planConstants";
 import { PLAN_TEXT } from "../constants/planText";
 import type { PlanDayEntry, PlanEntry } from "../types/planTypes";
-import { buildPlanDays } from "../utils/planUtils";
+import { buildPlanDays, filterPlanDaysBySearch } from "../utils/planUtils";
+import { scrollPlanEntryIntoView } from "../utils/planScrollUtils";
 
 type UsePlanEntriesParams = {
   msgApi: MessageInstance;
@@ -26,6 +27,8 @@ type UsePlanEntriesResult = {
   setCurrentPage: Dispatch<SetStateAction<number>>;
   onlyWithoutReports: boolean;
   setOnlyWithoutReports: (value: boolean) => void;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
   today: string;
   loadEntries: () => Promise<void>;
 };
@@ -41,22 +44,31 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [onlyWithoutReports, setOnlyWithoutReports] = useState(false);
+  const [searchQuery, setSearchQueryState] = useState("");
+  const hasActiveFiltersRef = useRef(false);
   const scrolledToTodayRef = useRef(false);
   const today = useMemo(() => dayjs().format(PLAN_DATE_FORMAT), []);
 
   const groupedEntries = useMemo(() => buildPlanDays(entries), [entries]);
   const filteredEntries = useMemo(() => {
-    if (onlyWithoutReports) {
-      return groupedEntries.filter((entry) => !entry.hasAllReports);
+    const reportFilteredEntries = onlyWithoutReports
+      ? groupedEntries.filter((entry) => !entry.hasAllReports)
+      : groupedEntries;
+    return filterPlanDaysBySearch(reportFilteredEntries, searchQuery);
+  }, [groupedEntries, onlyWithoutReports, searchQuery]);
+  const hasSearchQuery = searchQuery.trim().length > 0;
+
+  useEffect(() => {
+    hasActiveFiltersRef.current = onlyWithoutReports || hasSearchQuery;
+  }, [hasSearchQuery, onlyWithoutReports]);
+
+  const todayEntryId = useMemo(() => {
+    if (hasSearchQuery) {
+      return null;
     }
 
-    return groupedEntries;
-  }, [groupedEntries, onlyWithoutReports]);
-
-  const todayEntryId = useMemo(
-    () => filteredEntries.find((entry) => entry.date === today)?.date ?? null,
-    [filteredEntries, today]
-  );
+    return filteredEntries.find((entry) => entry.date === today)?.date ?? null;
+  }, [filteredEntries, hasSearchQuery, today]);
 
   const loadEntries = useCallback(async () => {
     scrolledToTodayRef.current = false;
@@ -76,7 +88,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
       const nextGroupedEntries = buildPlanDays(data.entries);
       setEntries(data.entries);
       setLoadError(null);
-      setCurrentPage(onlyWithoutReports ? 1 : getTodayPage(nextGroupedEntries, today));
+      setCurrentPage(hasActiveFiltersRef.current ? 1 : getTodayPage(nextGroupedEntries, today));
     } catch (error) {
       console.error(error);
       setLoadError(PLAN_TEXT.messages.loadError);
@@ -84,7 +96,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
     } finally {
       setLoading(false);
     }
-  }, [msgApi, onlyWithoutReports, today]);
+  }, [msgApi, today]);
 
   useEffect(() => {
     let active = true;
@@ -103,7 +115,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
         const nextGroupedEntries = buildPlanDays(data.entries);
         setEntries(data.entries);
         setLoadError(null);
-        setCurrentPage(getTodayPage(nextGroupedEntries, today));
+        setCurrentPage(hasActiveFiltersRef.current ? 1 : getTodayPage(nextGroupedEntries, today));
       })
       .catch((error) => {
         if (!active) {
@@ -128,11 +140,22 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
     (value: boolean) => {
       scrolledToTodayRef.current = false;
       setOnlyWithoutReports(value);
-      setCurrentPage(value ? 1 : getTodayPage(groupedEntries, today));
+      setCurrentPage(value || hasSearchQuery ? 1 : getTodayPage(groupedEntries, today));
     },
-    [groupedEntries, today]
+    [groupedEntries, hasSearchQuery, today]
   );
 
+  const handleSearchQueryChange = useCallback(
+    (value: string) => {
+      const hasNextSearchQuery = value.trim().length > 0;
+      scrolledToTodayRef.current = false;
+      setSearchQueryState(value);
+      setCurrentPage(
+        hasNextSearchQuery || onlyWithoutReports ? 1 : getTodayPage(groupedEntries, today)
+      );
+    },
+    [groupedEntries, onlyWithoutReports, today]
+  );
   useEffect(() => {
     if (!todayEntryId || scrolledToTodayRef.current) {
       return;
@@ -148,8 +171,9 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
       return;
     }
 
-    visibleTarget.scrollIntoView({ block: "center", behavior: "smooth" });
-    scrolledToTodayRef.current = true;
+    return scrollPlanEntryIntoView(visibleTarget, () => {
+      scrolledToTodayRef.current = true;
+    });
   }, [todayEntryId, currentPage]);
 
   return {
@@ -162,6 +186,8 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
     setCurrentPage,
     onlyWithoutReports,
     setOnlyWithoutReports: handleOnlyWithoutReportsChange,
+    searchQuery,
+    setSearchQuery: handleSearchQueryChange,
     today,
     loadEntries,
   };

@@ -48,7 +48,7 @@ export function WeightCard({
           className={styles.weightForm}
           onSubmit={(event) => handleWeightSubmit("morning", event)}
         >
-          <label className={styles.fieldLabel} htmlFor={morningInputId}>
+          <label className={styles.visuallyHidden} htmlFor={morningInputId}>
             {morningPlaceholder}
           </label>
           <div className={styles.weightRow}>
@@ -70,7 +70,7 @@ export function WeightCard({
           className={styles.weightForm}
           onSubmit={(event) => handleWeightSubmit("evening", event)}
         >
-          <label className={styles.fieldLabel} htmlFor={eveningInputId}>
+          <label className={styles.visuallyHidden} htmlFor={eveningInputId}>
             {eveningPlaceholder}
           </label>
           <div className={styles.weightRow}>

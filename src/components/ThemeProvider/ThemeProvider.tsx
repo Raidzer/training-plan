@@ -9,6 +9,8 @@ import type { ReactNode } from "react";
 import styles from "./ThemeProvider.module.scss";
 import { Header } from "../Header/Header";
 import { APP_THEME } from "./themeConfig";
+import { ReleaseNotes } from "../ReleaseNotes/ReleaseNotes";
+import type { ReleaseNotes as ReleaseNotesData } from "@/shared/utils/releaseNotes";
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
 const GIT_SHA = process.env.NEXT_PUBLIC_GIT_SHA;
@@ -18,7 +20,13 @@ const APP_VERSION_TITLE =
 
 dayjs.locale("ru");
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({
+  children,
+  releaseNotes = null,
+}: {
+  children: ReactNode;
+  releaseNotes?: ReleaseNotesData | null;
+}) {
   const pathname = usePathname();
   const isTelegramRoute = pathname.startsWith("/telegram/");
   const isFullWidthRoute = pathname.startsWith("/tools/templates/");
@@ -51,7 +59,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           </main>
           {isTelegramRoute ? null : (
             <footer className={styles.footer} title={APP_VERSION_TITLE}>
-              Сервис бегового клуба СПИРОС · {APP_VERSION_LABEL}
+              <span>
+                Сервис бегового клуба СПИРОС ·{" "}
+                <ReleaseNotes versionLabel={APP_VERSION_LABEL} releaseNotes={releaseNotes} />
+              </span>
             </footer>
           )}
         </div>

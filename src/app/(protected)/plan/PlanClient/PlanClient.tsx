@@ -24,6 +24,8 @@ function PlanClientContent() {
     setCurrentPage,
     onlyWithoutReports,
     setOnlyWithoutReports,
+    searchQuery,
+    setSearchQuery,
     today,
     loadEntries,
   } = usePlanEntries({ msgApi });
@@ -74,6 +76,10 @@ function PlanClientContent() {
         />
 
         <PlanToolbar
+          searchQuery={searchQuery}
+          searchLabel={PLAN_TEXT.search.label}
+          searchPlaceholder={PLAN_TEXT.search.placeholder}
+          onSearchChange={setSearchQuery}
           filterValue={onlyWithoutReports ? "without-reports" : "all"}
           allDaysLabel={PLAN_TEXT.filter.all}
           withoutReportsLabel={PLAN_TEXT.filter.onlyWithoutReports}
@@ -94,6 +100,10 @@ function PlanClientContent() {
           loading={loading}
           loadError={loadError}
           isFiltered={onlyWithoutReports}
+          searchQuery={searchQuery}
+          onClearSearch={() => {
+            setSearchQuery("");
+          }}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           onEditDay={openEditModal}

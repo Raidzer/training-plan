@@ -1,7 +1,6 @@
 .statusPanel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   min-width: 0;
   padding-block-end: 24px;
   border-block-end: 1px solid var(--surface-border);
@@ -15,6 +14,13 @@
   min-width: 0;
 }
 
+.statusHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
 .dateTitle {
   min-width: 0;
   margin: 0;
@@ -24,98 +30,21 @@
   line-height: 1.25;
 }
 
+.dayStatus {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.dayStatus[data-complete="true"] {
+  color: var(--accent-color);
+}
+
 .reportButton {
   flex: 0 0 auto;
   min-height: 44px;
   border-radius: var(--radius-sm);
-}
-
-.statusGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  overflow: clip;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-md);
-  background: var(--surface-soft);
-  list-style: none;
-}
-
-.statusItem {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  align-items: start;
-  gap: 12px;
-  min-width: 0;
-  min-height: 76px;
-  padding: 16px;
-  border-block-start: 1px solid var(--surface-border);
-}
-
-.statusItem:first-child {
-  border-block-start: 0;
-}
-
-.statusIcon {
-  margin-block-start: 2px;
-  color: var(--text-muted);
-  font-size: 20px;
-}
-
-.statusItem[data-complete="true"] .statusIcon {
-  color: var(--accent-color);
-}
-
-.statusText {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.statusLabel {
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.statusValue {
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-@media (min-width: 640px) {
-  .statusGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .statusItem:nth-child(2) {
-    border-block-start: 0;
-  }
-
-  .statusItem:nth-child(even) {
-    border-inline-start: 1px solid var(--surface-border);
-  }
-}
-
-@media (min-width: 1024px) {
-  .statusGrid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .statusItem {
-    border-block-start: 0;
-  }
-
-  .statusItem + .statusItem {
-    border-inline-start: 1px solid var(--surface-border);
-  }
 }
 
 @media (max-width: 639px) {

@@ -62,12 +62,14 @@ const defaultProps = {
   loading: false,
   loadError: null,
   isFiltered: false,
+  searchQuery: "",
   currentPage: 1,
   onPageChange: vi.fn(),
   onEditDay: vi.fn(),
   onShiftPlanFromDate: vi.fn(),
   onAddDay: vi.fn(),
   onRetry: vi.fn().mockResolvedValue(undefined),
+  onClearSearch: vi.fn(),
   today: "2023-10-05",
 };
 
@@ -78,7 +80,12 @@ describe("PlanSchedule", () => {
     expect(screen.getAllByText("Run 10km")).toHaveLength(1);
     expect(screen.getByText("1 октября")).toBeTruthy();
     expect(screen.getByText("Воскресенье, 2023")).toBeTruthy();
-    expect(screen.getByText("0/1")).toBeTruthy();
+    expect(screen.getAllByText("Отчёт не заполнен")).toHaveLength(1);
+    expect(screen.queryByText("0/1")).toBeNull();
+
+    for (const weekday of ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]) {
+      expect(screen.queryByText(weekday)).toBeNull();
+    }
   });
 
   it("вызывает действия карточки и формирует ссылку на дневник", () => {
@@ -145,7 +152,30 @@ describe("PlanSchedule", () => {
     expect(shiftButton).toHaveProperty("disabled", true);
     fireEvent.click(shiftButton);
     expect(onShiftPlanFromDate).not.toHaveBeenCalled();
-    expect(screen.getByText("1/2")).toBeTruthy();
+    expect(screen.getAllByText("Отчёт не заполнен")).toHaveLength(1);
+    expect(screen.queryByText("1/2")).toBeNull();
+  });
+
+  it("показывает заполненный статус в шапке дня", () => {
+    const completedDay = createDay({
+      workouts: [
+        {
+          id: 1,
+          sessionOrder: 1,
+          taskText: "Completed run",
+          commentText: null,
+          hasReport: true,
+        },
+      ],
+      hasAnyReport: true,
+      hasAllReports: true,
+      reportedWorkoutCount: 1,
+    });
+
+    render(<PlanSchedule {...defaultProps} entries={[completedDay]} />);
+
+    expect(screen.getAllByText("Отчёт заполнен")).toHaveLength(1);
+    expect(screen.queryByText("1/1")).toBeNull();
   });
 
   it("показывает пустое состояние и позволяет добавить день", () => {
@@ -165,6 +195,23 @@ describe("PlanSchedule", () => {
     expect(screen.queryByRole("button", { name: "Добавить день" })).toBeNull();
   });
 
+  it("объясняет пустой результат поиска и позволяет очистить запрос", () => {
+    const onClearSearch = vi.fn();
+
+    render(
+      <PlanSchedule
+        {...defaultProps}
+        entries={[]}
+        searchQuery="темповая"
+        onClearSearch={onClearSearch}
+      />
+    );
+
+    expect(screen.getByText("Тренировки не найдены")).toBeTruthy();
+    expect(screen.getByText("По запросу «темповая» нет подходящих тренировок.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Очистить поиск" }));
+    expect(onClearSearch).toHaveBeenCalledOnce();
+  });
   it("показывает ошибку и повторяет загрузку", () => {
     const onRetry = vi.fn().mockResolvedValue(undefined);
 

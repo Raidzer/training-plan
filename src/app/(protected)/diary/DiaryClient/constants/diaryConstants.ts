@@ -62,16 +62,8 @@ export const DAY_LABELS = {
 
 export const STATUS_LABELS = {
   reportButton: "Сформировать ежедневный отчёт",
-  dayStatusLabel: "Статус дня",
   dayComplete: "День заполнен",
   dayIncomplete: "День не заполнен",
-  weightLabel: "Вес",
-  weightMorningShort: "У",
-  weightEveningShort: "В",
-  sleepLabel: "Сон",
-  sleepFilledShort: "Да",
-  sleepEmptyShort: "-",
-  workoutsLabel: "Тренировки",
 } as const;
 
 export const WEIGHT_LABELS = {

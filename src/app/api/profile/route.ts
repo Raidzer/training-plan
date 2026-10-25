@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { maxStringLength, minStringLength } from "@/shared/utils/stringValidation";
 import { auth } from "@/auth";
 import { canDeleteUserRole, deleteUserAccountById } from "@/server/adminUsers";
 import { isSameOriginRequest } from "@/server/requestSecurity";
@@ -8,7 +9,9 @@ import { getUserDeletionCredentialsById } from "@/server/services/users";
 
 const schema = z
   .object({
-    currentPassword: z.string().min(1, "Текущий пароль обязателен").max(1024),
+    currentPassword: z
+      .string()
+      .check(minStringLength(1, "Текущий пароль обязателен"), maxStringLength(1024)),
   })
   .strict();
 

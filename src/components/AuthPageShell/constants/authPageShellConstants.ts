@@ -1,7 +1,7 @@
 export const AUTH_PAGE_SHELL_CONTENT = {
   login: {
-    eyebrow: "Личный кабинет клуба",
-    title: "От плана до старта — один тренировочный цикл.",
+    eyebrow: null,
+    title: null,
     description:
       "Личный кабинет объединяет расписание, ежедневную работу и спортивные результаты участников клуба.",
     accessTitle: "Доступ участника",

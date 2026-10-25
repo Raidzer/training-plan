@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getVerificationTokenByToken } from "@/server/tokens";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { minStringLength } from "@/shared/utils/stringValidation";
 import { deleteVerificationTokenById, getUserByEmail, updateUserPasswordById } from "@/server/auth";
 
 const schema = z.object({
   token: z.string(),
-  password: z.string().min(6),
+  password: z.string().check(minStringLength(6)),
 });
 
 export async function POST(req: NextRequest) {

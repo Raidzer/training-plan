@@ -7,7 +7,8 @@
   --page-gutter: clamp(16px, 3vw, 48px);
   --page-bottom-gap: clamp(40px, 6vw, 64px);
   --page-footer-gap: 20px;
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-body:
+    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
   --font-data: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --radius-xs: 2px;
   --radius-sm: 4px;
@@ -62,6 +63,7 @@ body {
   background-color: var(--bg-color);
   color: var(--brand-color);
   font-family: var(--font-body);
+  font-size-adjust: from-font;
 }
 
 ::selection {

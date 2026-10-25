@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getUserByEmail } from "@/server/auth";
 
 const schema = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 
 export async function POST(req: NextRequest) {

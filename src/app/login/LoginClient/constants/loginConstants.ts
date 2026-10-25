@@ -1,6 +1,6 @@
 export const LOGIN_TEXT = {
-  eyebrow: "Беговой клуб СПИРОС",
-  title: "Вход в личный кабинет",
+  eyebrow: "Беговой клуб «СПИРОС»",
+  title: "Вход\u00a0в личный кабинет",
   subtitle: "Продолжите тренировочный цикл с того места, где остановились.",
   emailLabel: "Email или логин",
   emailPlaceholder: "Введите email или логин",

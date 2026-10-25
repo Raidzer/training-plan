@@ -30,6 +30,9 @@ describe("DiaryClient components", () => {
       />
     );
 
+    expect(screen.getByLabelText("Утро")).toBeTruthy();
+    expect(screen.getByLabelText("Вечер")).toBeTruthy();
+
     fireEvent.change(screen.getByPlaceholderText("Утро"), { target: { value: "72" } });
     fireEvent.change(screen.getByPlaceholderText("Вечер"), { target: { value: "73" } });
     fireEvent.click(screen.getAllByRole("button", { name: "Сохранить" })[0]);
@@ -96,6 +99,8 @@ describe("DiaryClient components", () => {
       />
     );
 
+    expect(screen.getByRole("group", { name: "Способы восстановления" })).toBeTruthy();
+
     fireEvent.click(screen.getByLabelText("Баня"));
     fireEvent.click(screen.getByLabelText("МФР"));
     fireEvent.change(screen.getByPlaceholderText("Свое восстановление"), {
@@ -113,10 +118,10 @@ describe("DiaryClient components", () => {
     expect(onSave).toHaveBeenCalled();
   });
 
-  it("DiaryStatusBlock должен показывать статусы и открывать отчет", () => {
+  it("DiaryStatusBlock должен показывать только состояние дня и открывать отчет", () => {
     const onOpenReport = vi.fn();
 
-    render(
+    const { rerender } = render(
       <DiaryStatusBlock
         status={{
           date: "2026-06-01",
@@ -128,19 +133,11 @@ describe("DiaryClient components", () => {
           workoutsTotal: 2,
           totalDistanceKm: 12.5,
         }}
-        workoutsComplete={false}
         disabledReport={false}
         labels={{
           reportButton: "Отчет",
           dayComplete: "День заполнен",
           dayIncomplete: "День не заполнен",
-          weightLabel: "Вес",
-          weightMorningShort: "У",
-          weightEveningShort: "В",
-          sleepLabel: "Сон",
-          sleepFilledShort: "Да",
-          sleepEmptyShort: "-",
-          workoutsLabel: "Тренировки",
         }}
         onOpenReport={onOpenReport}
       />
@@ -149,12 +146,35 @@ describe("DiaryClient components", () => {
     fireEvent.click(screen.getByRole("button", { name: "Отчет" }));
 
     expect(screen.getByText("День заполнен")).toBeTruthy();
-    expect(screen.getByText("Вес").closest("li")?.textContent).toBe("ВесУ: Да · В: —");
-    expect(screen.getByText("Сон").closest("li")?.textContent).toBe("СонДа");
-    expect(screen.getByText("Тренировки").closest("li")?.textContent).toBe("Тренировки1/2");
+    expect(screen.queryByText("Вес")).toBeNull();
+    expect(screen.queryByText("Сон")).toBeNull();
+    expect(screen.queryByText("Тренировки")).toBeNull();
     expect(onOpenReport).toHaveBeenCalled();
-  });
 
+    rerender(
+      <DiaryStatusBlock
+        status={{
+          date: "2026-06-01",
+          dayHasReport: false,
+          hasWeightMorning: false,
+          hasWeightEvening: false,
+          hasSleep: false,
+          workoutsWithFullReport: 0,
+          workoutsTotal: 2,
+          totalDistanceKm: 0,
+        }}
+        disabledReport={false}
+        labels={{
+          reportButton: "Отчет",
+          dayComplete: "День заполнен",
+          dayIncomplete: "День не заполнен",
+        }}
+        onOpenReport={onOpenReport}
+      />
+    );
+
+    expect(screen.getByText("День не заполнен")).toBeTruthy();
+  });
   it("WorkoutShoeMileageFields должен показывать выбранную обувь и менять пробег", () => {
     const onMileageChange = vi.fn();
 
