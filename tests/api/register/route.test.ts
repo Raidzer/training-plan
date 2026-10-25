@@ -125,6 +125,20 @@ describe("POST /api/register", () => {
     expect(sendVerificationEmailMock).toHaveBeenCalledWith("runner@example.com", "verify-token");
   });
 
+  it("должен принимать имя и пароль с прежними UTF-16-лимитами", async () => {
+    const request = createJsonRequest({
+      url: "http://localhost/api/register",
+      body: createValidRegisterBody({ name: "😀", password: "a😀b😀" }),
+    });
+
+    const response = await POST(request);
+
+    await expectJsonSuccess(response, 201);
+    expect(registerUserWithInviteMock).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "😀", password: "a😀b😀" })
+    );
+  });
+
   it("должен сохранять успех регистрации даже при ошибке отправки email", async () => {
     sendVerificationEmailMock.mockRejectedValue(new Error("smtp-failed"));
     const request = createJsonRequest({

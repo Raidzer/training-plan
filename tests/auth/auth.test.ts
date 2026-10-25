@@ -149,36 +149,39 @@ describe("auth.ts", () => {
       expect(bcryptCompareMock).toHaveBeenCalledWith("password123", "hash");
     });
 
-    it("должен возвращать нормализованного пользователя при валидных учетных данных", async () => {
-      const provider = authOptions.providers[0] as unknown as {
-        authorize: (creds: unknown) => Promise<any>;
-      };
-      const emailVerified = new Date("2026-02-09T10:00:00.000Z");
-      getUserByIdentifierMock.mockResolvedValue({
-        id: 7,
-        email: "runner@example.com",
-        name: "Runner",
-        role: "coach",
-        passwordHash: "hash",
-        isActive: true,
-        emailVerified,
-      });
-      bcryptCompareMock.mockResolvedValue(true);
+    it.each(["password123", "a😀b😀"])(
+      "должен возвращать нормализованного пользователя при валидном пароле %s",
+      async (password) => {
+        const provider = authOptions.providers[0] as unknown as {
+          authorize: (creds: unknown) => Promise<any>;
+        };
+        const emailVerified = new Date("2026-02-09T10:00:00.000Z");
+        getUserByIdentifierMock.mockResolvedValue({
+          id: 7,
+          email: "runner@example.com",
+          name: "Runner",
+          role: "coach",
+          passwordHash: "hash",
+          isActive: true,
+          emailVerified,
+        });
+        bcryptCompareMock.mockResolvedValue(true);
 
-      const result = await provider.authorize({
-        email: "runner",
-        password: "password123",
-      });
+        const result = await provider.authorize({
+          email: "runner",
+          password,
+        });
 
-      expect(result).toEqual({
-        id: "7",
-        email: "runner@example.com",
-        name: "Runner",
-        role: "coach",
-        emailVerified,
-      });
-      expect(touchUserLastActiveAtByIdMock).toHaveBeenCalledWith(7);
-    });
+        expect(result).toEqual({
+          id: "7",
+          email: "runner@example.com",
+          name: "Runner",
+          role: "coach",
+          emailVerified,
+        });
+        expect(touchUserLastActiveAtByIdMock).toHaveBeenCalledWith(7);
+      }
+    );
   });
 
   describe("callbacks", () => {

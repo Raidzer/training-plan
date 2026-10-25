@@ -3,6 +3,7 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { maxStringLength, minStringLength } from "@/shared/utils/stringValidation";
 import {
   getUserById,
   getUserByIdentifier,
@@ -12,8 +13,8 @@ import {
 } from "@/server/services/users";
 
 const schema = z.object({
-  email: z.string().trim().min(2).max(255),
-  password: z.string().min(6),
+  email: z.string().trim().check(minStringLength(2), maxStringLength(255)),
+  password: z.string().check(minStringLength(6)),
 });
 
 async function trackUserLastActiveAt(user: UserActivitySnapshot): Promise<void> {
