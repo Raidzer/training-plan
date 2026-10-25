@@ -1,3 +1,5 @@
+import { hasReportableWorkoutTask } from "@/shared/utils/diaryUtils";
+
 import type { PlanDayEntry, PlanDraftEntry, PlanEntry } from "../types/planTypes";
 
 export type {
@@ -52,7 +54,9 @@ export const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
 
   const rows: PlanDayEntry[] = [];
   for (const [date, dayEntries] of grouped) {
-    const sorted = [...dayEntries].sort((a, b) => a.sessionOrder - b.sessionOrder);
+    const sorted = dayEntries
+      .filter((entry) => hasReportableWorkoutTask(entry.taskText))
+      .sort((a, b) => a.sessionOrder - b.sessionOrder);
     const reportedWorkoutCount = sorted.filter((entry) => entry.hasReport).length;
     rows.push({
       date,
