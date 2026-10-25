@@ -74,12 +74,21 @@ export const buildPlanDays = (entries: PlanEntry[]): PlanDayEntry[] => {
 };
 
 const normalizePlanSearchText = (value: string) =>
-  value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLocaleLowerCase("ru-RU");
+  value.replace(/\s+/g, " ").trim().toLocaleLowerCase("ru-RU");
+
+const normalizePlanSearchHtml = (value: string) => {
+  const template = document.createElement("template");
+  template.innerHTML = value;
+  template.content
+    .querySelectorAll(
+      "address, article, aside, blockquote, br, dd, div, dl, dt, fieldset, figcaption, figure, footer, form, h1, h2, h3, h4, h5, h6, header, hr, li, main, nav, ol, p, pre, section, table, td, th, tr, ul"
+    )
+    .forEach((element) => {
+      element.insertAdjacentText("beforebegin", " ");
+      element.insertAdjacentText("afterend", " ");
+    });
+  return normalizePlanSearchText(template.content.textContent ?? "");
+};
 
 export const filterPlanDaysBySearch = (entries: PlanDayEntry[], query: string) => {
   const normalizedQuery = normalizePlanSearchText(query);
@@ -89,8 +98,8 @@ export const filterPlanDaysBySearch = (entries: PlanDayEntry[], query: string) =
 
   return entries.filter((entry) =>
     entry.workouts.some((workout) => {
-      const taskText = normalizePlanSearchText(workout.taskText);
-      const commentText = normalizePlanSearchText(workout.commentText ?? "");
+      const taskText = normalizePlanSearchHtml(workout.taskText);
+      const commentText = normalizePlanSearchHtml(workout.commentText ?? "");
       return taskText.includes(normalizedQuery) || commentText.includes(normalizedQuery);
     })
   );

@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import dayjs from "dayjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PLAN_TEXT } from "@/app/(protected)/plan/PlanClient/constants/planText";
@@ -33,6 +34,19 @@ function createPlanEntry(overrides: Partial<PlanEntry> = {}): PlanEntry {
     hasReport: false,
     ...overrides,
   };
+}
+
+function createPaginatedEntries(today: string): PlanEntry[] {
+  return Array.from({ length: 61 }, (_, index) =>
+    createPlanEntry({
+      id: index + 1,
+      date: dayjs(today)
+        .add(40 - index, "day")
+        .format("YYYY-MM-DD"),
+      taskText: index < 21 ? "Бег" : "ОФП",
+      hasReport: index >= 21,
+    })
+  );
 }
 
 describe("usePlanEntries", () => {
@@ -201,4 +215,129 @@ describe("usePlanEntries", () => {
     expect(msgApi.error).toHaveBeenCalledWith("Нет доступа");
     expect(msgApi.error).not.toHaveBeenCalledWith(PLAN_TEXT.messages.loadFailed);
   });
+
+  it.each(["initial", "reload"] as const)(
+    "сохраняет первую страницу поиска, введенного во время загрузки (%s)",
+    async (loadType) => {
+      const pendingResponse = Promise.withResolvers<Response>();
+      const fetchMock = vi.fn();
+      global.fetch = fetchMock as unknown as typeof fetch;
+      const msgApi = createMessageApi();
+      const entries = createPaginatedEntries(dayjs().format("YYYY-MM-DD"));
+
+      if (loadType === "reload") {
+        fetchMock.mockResolvedValueOnce(createJsonResponse({ entries }));
+      }
+
+      fetchMock.mockReturnValueOnce(pendingResponse.promise);
+      const { result } = renderHook(() => usePlanEntries({ msgApi }));
+
+      if (loadType === "reload") {
+        await waitFor(() => {
+          expect(result.current.loading).toBe(false);
+        });
+        expect(result.current.currentPage).toBe(3);
+
+        act(() => {
+          void result.current.loadEntries();
+        });
+      }
+
+      act(() => {
+        result.current.setSearchQuery("бег");
+      });
+
+      await act(async () => {
+        pendingResponse.resolve(createJsonResponse({ entries }));
+      });
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.filteredEntries).toHaveLength(21);
+      expect(result.current.currentPage).toBe(1);
+      expect(fetchMock).toHaveBeenCalledTimes(loadType === "reload" ? 2 : 1);
+    }
+  );
+
+  it.each([false, true])(
+    "учитывает актуальный фильтр дней без отчетов при первой загрузке (%s)",
+    async (onlyWithoutReports) => {
+      const pendingResponse = Promise.withResolvers<Response>();
+      const fetchMock = vi.fn().mockReturnValue(pendingResponse.promise);
+      global.fetch = fetchMock as unknown as typeof fetch;
+      const msgApi = createMessageApi();
+      const { result } = renderHook(() => usePlanEntries({ msgApi }));
+      const entries = createPaginatedEntries(result.current.today);
+
+      act(() => {
+        result.current.setOnlyWithoutReports(true);
+      });
+
+      if (!onlyWithoutReports) {
+        act(() => {
+          result.current.setOnlyWithoutReports(false);
+        });
+      }
+
+      await act(async () => {
+        pendingResponse.resolve(createJsonResponse({ entries }));
+      });
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.filteredEntries).toHaveLength(onlyWithoutReports ? 21 : 61);
+      expect(result.current.currentPage).toBe(onlyWithoutReports ? 1 : 3);
+      expect(fetchMock).toHaveBeenCalledOnce();
+    }
+  );
+
+  it.each(["initial", "reload"] as const)(
+    "возвращается к сегодняшнему дню, если поиск очищен до ответа загрузки (%s)",
+    async (loadType) => {
+      const pendingResponse = Promise.withResolvers<Response>();
+      const fetchMock = vi.fn();
+      global.fetch = fetchMock as unknown as typeof fetch;
+      const msgApi = createMessageApi();
+      const entries = createPaginatedEntries(dayjs().format("YYYY-MM-DD"));
+
+      if (loadType === "reload") {
+        fetchMock.mockResolvedValueOnce(createJsonResponse({ entries }));
+      }
+
+      fetchMock.mockReturnValueOnce(pendingResponse.promise);
+      const { result } = renderHook(() => usePlanEntries({ msgApi }));
+
+      if (loadType === "reload") {
+        await waitFor(() => {
+          expect(result.current.loading).toBe(false);
+        });
+      }
+
+      act(() => {
+        result.current.setSearchQuery("бег");
+      });
+
+      if (loadType === "reload") {
+        act(() => {
+          void result.current.loadEntries();
+        });
+      }
+
+      act(() => {
+        result.current.setSearchQuery("");
+      });
+
+      await act(async () => {
+        pendingResponse.resolve(createJsonResponse({ entries }));
+      });
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.filteredEntries).toHaveLength(61);
+      expect(result.current.currentPage).toBe(3);
+    }
+  );
 });

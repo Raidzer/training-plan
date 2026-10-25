@@ -44,6 +44,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
   const [currentPage, setCurrentPage] = useState(1);
   const [onlyWithoutReports, setOnlyWithoutReports] = useState(false);
   const [searchQuery, setSearchQueryState] = useState("");
+  const hasActiveFiltersRef = useRef(false);
   const scrolledToTodayRef = useRef(false);
   const today = useMemo(() => dayjs().format(PLAN_DATE_FORMAT), []);
 
@@ -55,6 +56,10 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
     return filterPlanDaysBySearch(reportFilteredEntries, searchQuery);
   }, [groupedEntries, onlyWithoutReports, searchQuery]);
   const hasSearchQuery = searchQuery.trim().length > 0;
+
+  useEffect(() => {
+    hasActiveFiltersRef.current = onlyWithoutReports || hasSearchQuery;
+  }, [hasSearchQuery, onlyWithoutReports]);
 
   const todayEntryId = useMemo(() => {
     if (hasSearchQuery) {
@@ -82,9 +87,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
       const nextGroupedEntries = buildPlanDays(data.entries);
       setEntries(data.entries);
       setLoadError(null);
-      setCurrentPage(
-        onlyWithoutReports || hasSearchQuery ? 1 : getTodayPage(nextGroupedEntries, today)
-      );
+      setCurrentPage(hasActiveFiltersRef.current ? 1 : getTodayPage(nextGroupedEntries, today));
     } catch (error) {
       console.error(error);
       setLoadError(PLAN_TEXT.messages.loadError);
@@ -92,7 +95,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
     } finally {
       setLoading(false);
     }
-  }, [hasSearchQuery, msgApi, onlyWithoutReports, today]);
+  }, [msgApi, today]);
 
   useEffect(() => {
     let active = true;
@@ -111,7 +114,7 @@ export const usePlanEntries = ({ msgApi }: UsePlanEntriesParams): UsePlanEntries
         const nextGroupedEntries = buildPlanDays(data.entries);
         setEntries(data.entries);
         setLoadError(null);
-        setCurrentPage(getTodayPage(nextGroupedEntries, today));
+        setCurrentPage(hasActiveFiltersRef.current ? 1 : getTodayPage(nextGroupedEntries, today));
       })
       .catch((error) => {
         if (!active) {
