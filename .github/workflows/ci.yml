@@ -6,6 +6,14 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'release-main' || github.ref }}
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   lint:
     name: Lint & Type Check
@@ -17,7 +25,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
@@ -44,7 +52,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
@@ -129,7 +137,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
@@ -141,3 +149,96 @@ jobs:
           DATABASE_URL: "postgres://mock_user:mock_pass@localhost:5432/mock_db"
           auth_secret: "mock_secret"
           NEXTAUTH_URL: "http://localhost:3000"
+
+  release-context:
+    name: Validate release
+    needs: [lint, test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      release: ${{ steps.context.outputs.release }}
+      version: ${{ steps.context.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/github-script@v8
+        id: context
+        with:
+          script: |
+            const fs = require("node:fs");
+            const { getReleaseContext } = await import(`${process.env.GITHUB_WORKSPACE}/src/scripts/release/releaseContext.mjs`);
+            const { checkRelease } = await import(`${process.env.GITHUB_WORKSPACE}/src/scripts/release/publishRelease.mjs`);
+            const release = await getReleaseContext({
+              github, ...context.repo, sha: context.sha,
+              packageVersion: JSON.parse(fs.readFileSync("package.json", "utf8")).version,
+              manifest: JSON.parse(fs.readFileSync(".release-please-manifest.json", "utf8")),
+              changelog: fs.readFileSync("src/releases/CHANGELOG.md", "utf8"),
+            });
+            if (release) {
+              await checkRelease({ github, ...context.repo, release });
+            }
+            core.setOutput("release", JSON.stringify(release));
+            core.setOutput("version", release?.version ?? "");
+
+  docker:
+    name: Publish checked image
+    needs: [release-context]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: read
+    uses: ./.github/workflows/docker.yml
+    with:
+      sha: ${{ github.sha }}
+      release-version: ${{ needs.release-context.outputs.version }}
+    secrets:
+      ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [release-context, docker]
+    if: needs.release-context.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/github-script@v8
+        env:
+          RELEASE_JSON: ${{ needs.release-context.outputs.release }}
+        with:
+          script: |
+            const { publishRelease } = await import(`${process.env.GITHUB_WORKSPACE}/src/scripts/release/publishRelease.mjs`);
+            await publishRelease({ github, ...context.repo, release: JSON.parse(process.env.RELEASE_JSON) });
+
+  release-pr:
+    name: Prepare release PR
+    needs: [docker, publish-release]
+    if: >-
+      always() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.docker.result == 'success' &&
+      (needs.publish-release.result == 'success' || needs.publish-release.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: googleapis/release-please-action@v5
+        with:
+          target-branch: main
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          skip-github-release: true

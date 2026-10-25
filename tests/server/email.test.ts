@@ -5,7 +5,7 @@ const { sendMailMock } = vi.hoisted(() => {
   return { sendMailMock: vi.fn() };
 });
 
-vi.mock("nodemailer", () => ({
+vi.mock("smtp-mailer", () => ({
   default: {
     createTransport: vi.fn().mockReturnValue({
       sendMail: sendMailMock,

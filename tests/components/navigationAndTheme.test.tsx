@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { AriaAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Header } from "@/components/Header/Header";
@@ -86,7 +86,22 @@ describe("ThemeProvider", () => {
     expect(screen.queryByRole("switch")).toBeNull();
   });
 
-  it("не показывает общий header на Telegram routes", () => {
+  it("показывает в футере кнопку установленного релиза при наличии описания", async () => {
+    render(
+      <ThemeProvider
+        releaseNotes={{ version: "1.3.0", sections: [{ title: null, items: ["Новый дневник"] }] }}
+      >
+        <div>Diary content</div>
+      </ThemeProvider>
+    );
+
+    fireEvent.click(within(screen.getByRole("contentinfo")).getByRole("button"));
+
+    expect(await screen.findByRole("dialog", { name: "Что нового в 1.3.0" })).toBeTruthy();
+    expect(screen.getByText("Новый дневник")).toBeTruthy();
+  });
+
+  it("не показывает общий header и футер на Telegram routes", () => {
     navigationMocks.pathname = "/telegram/tools";
 
     render(
@@ -97,5 +112,6 @@ describe("ThemeProvider", () => {
 
     expect(screen.getByText("Telegram content")).toBeTruthy();
     expect(screen.queryByText("Беговой клуб СПИРОС")).toBeNull();
+    expect(screen.queryByRole("contentinfo")).toBeNull();
   });
 });

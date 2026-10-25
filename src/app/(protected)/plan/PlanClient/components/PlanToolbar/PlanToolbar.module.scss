@@ -11,13 +11,20 @@
   background: var(--surface-soft);
 }
 
+.controls {
+  display: grid;
+  flex: 1 1 720px;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 400px);
+  align-items: end;
+  gap: 16px;
+  min-width: 0;
+}
+
 .filterGroup {
   display: flex;
-  flex: 1 1 360px;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
-  max-width: 400px;
 }
 
 .filterLabel {
@@ -106,15 +113,15 @@
   padding-inline: 16px !important;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1299px) {
   .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .filterGroup {
+  .controls {
     flex-basis: auto;
-    max-width: none;
+    width: 100%;
   }
 
   .actions {
@@ -126,6 +133,12 @@
   .actionLink,
   .reloadButton {
     width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .controls {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

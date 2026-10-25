@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { maxStringLength, minStringLength } from "@/shared/utils/stringValidation";
 import { auth } from "@/auth";
 import { sendVerificationEmail } from "@/server/email";
 import { isSameOriginRequest } from "@/server/requestSecurity";
@@ -19,10 +20,12 @@ const schema = z
     email: z
       .string()
       .trim()
-      .email("Некорректный email")
-      .max(255, "Слишком длинный email")
+      .pipe(z.email("Некорректный email"))
+      .check(maxStringLength(255, "Слишком длинный email"))
       .transform((value) => value.toLowerCase()),
-    currentPassword: z.string().min(1, "Текущий пароль обязателен").max(1024),
+    currentPassword: z
+      .string()
+      .check(minStringLength(1, "Текущий пароль обязателен"), maxStringLength(1024)),
   })
   .strict();
 

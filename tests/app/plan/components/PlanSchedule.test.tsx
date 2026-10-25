@@ -62,12 +62,14 @@ const defaultProps = {
   loading: false,
   loadError: null,
   isFiltered: false,
+  searchQuery: "",
   currentPage: 1,
   onPageChange: vi.fn(),
   onEditDay: vi.fn(),
   onShiftPlanFromDate: vi.fn(),
   onAddDay: vi.fn(),
   onRetry: vi.fn().mockResolvedValue(undefined),
+  onClearSearch: vi.fn(),
   today: "2023-10-05",
 };
 
@@ -193,6 +195,23 @@ describe("PlanSchedule", () => {
     expect(screen.queryByRole("button", { name: "Добавить день" })).toBeNull();
   });
 
+  it("объясняет пустой результат поиска и позволяет очистить запрос", () => {
+    const onClearSearch = vi.fn();
+
+    render(
+      <PlanSchedule
+        {...defaultProps}
+        entries={[]}
+        searchQuery="темповая"
+        onClearSearch={onClearSearch}
+      />
+    );
+
+    expect(screen.getByText("Тренировки не найдены")).toBeTruthy();
+    expect(screen.getByText("По запросу «темповая» нет подходящих тренировок.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Очистить поиск" }));
+    expect(onClearSearch).toHaveBeenCalledOnce();
+  });
   it("показывает ошибку и повторяет загрузку", () => {
     const onRetry = vi.fn().mockResolvedValue(undefined);
 

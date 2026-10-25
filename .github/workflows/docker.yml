@@ -2,20 +2,39 @@ name: Build and publish Docker image
 
 on:
   push:
-    branches: ["main"]
     tags: ["v*"]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      sha:
+        required: true
+        type: string
+      release-version:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      ALLOWED_ORIGINS:
+        required: false
 
 permissions:
   contents: read
   packages: write
+  pull-requests: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: docker-publish
+      cancel-in-progress: false
+      queue: max
     steps:
-      - name: Checkout
+      - name: Checkout checked commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha || github.sha }}
+          persist-credentials: false
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -30,49 +49,93 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve app version
-        id: app-version
-        shell: bash
-        run: |
-          package_version=$(node -p "require('./package.json').version")
-
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            tag_version="${GITHUB_REF_NAME#v}"
-
-            if [[ "${package_version}" != "${tag_version}" ]]; then
-              echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${package_version}"
-              exit 1
-            fi
-
-            version="${tag_version}"
-          else
-            version="${package_version}-${GITHUB_SHA::7}"
-          fi
-
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-          echo "sha=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
-
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Resolve app version and existing release image
+        id: image
+        uses: actions/github-script@v8
+        env:
+          RELEASE_VERSION: ${{ inputs.release-version }}
         with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=sha
+          script: |
+            const fs = require("node:fs");
+            const { getBuildVersion, inspectVersionImage } = await import(`${process.env.GITHUB_WORKSPACE}/src/scripts/release/dockerImage.mjs`);
+            const { getReleaseContext } = await import(`${process.env.GITHUB_WORKSPACE}/src/scripts/release/releaseContext.mjs`);
+            const { checkRelease } = await import(`${process.env.GITHUB_WORKSPACE}/src/scripts/release/publishRelease.mjs`);
+            const sha = (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout.trim();
+            const packageVersion = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
+            let releaseVersion = process.env.RELEASE_VERSION || "";
+            if (context.ref.startsWith("refs/tags/")) {
+              releaseVersion = context.ref.slice("refs/tags/v".length);
+            } else if (context.ref === "refs/heads/main") {
+              const release = await getReleaseContext({
+                github, ...context.repo, sha, packageVersion,
+                manifest: JSON.parse(fs.readFileSync(".release-please-manifest.json", "utf8")),
+                changelog: fs.readFileSync("src/releases/CHANGELOG.md", "utf8"),
+              });
+              if (releaseVersion && release?.version !== releaseVersion) {
+                throw new Error("Переданная версия не соответствует проверенному релизному PR");
+              }
+              if (release) {
+                await checkRelease({ github, ...context.repo, release });
+                releaseVersion = release.version;
+              }
+            }
+            const version = getBuildVersion(packageVersion, releaseVersion, sha);
+            const image = `ghcr.io/${context.repo.owner}/${context.repo.repo}`.toLowerCase();
+            const run = async (command, args) => {
+              const result = await exec.getExecOutput(command, args, { ignoreReturnCode: true, silent: true });
+              if (result.exitCode !== 0) {
+                throw Object.assign(new Error(result.stderr), { stderr: result.stderr });
+              }
+              return result;
+            };
+            const digest = releaseVersion
+              ? await inspectVersionImage(`${image}:v${releaseVersion}`, sha, run)
+              : null;
+            core.setOutput("version", version);
+            core.setOutput("sha", sha);
+            core.setOutput("short-sha", sha.slice(0, 7));
+            core.setOutput("image", image);
+            core.setOutput("digest", digest ?? "");
+            core.setOutput("tags", [
+              `${image}:sha-${sha.slice(0, 7)}`,
+              ...(releaseVersion ? [`${image}:v${releaseVersion}`] : []),
+            ].join("\n"));
 
-      - name: Build and push
+      - name: Build and push both architectures
+        id: build
+        if: steps.image.outputs.digest == ''
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.image.outputs.tags }}
+          labels: |
+            org.opencontainers.image.revision=${{ steps.image.outputs.sha }}
+            org.opencontainers.image.version=${{ steps.image.outputs.version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           build-args: |
             ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
-            NEXT_PUBLIC_APP_VERSION=${{ steps.app-version.outputs.version }}
-            NEXT_PUBLIC_GIT_SHA=${{ steps.app-version.outputs.sha }}
+            NEXT_PUBLIC_APP_VERSION=${{ steps.image.outputs.version }}
+            NEXT_PUBLIC_GIT_SHA=${{ steps.image.outputs.short-sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Update main image only for the current main commit
+        if: github.ref == 'refs/heads/main'
+        uses: actions/github-script@v8
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          IMAGE_SHA: ${{ steps.image.outputs.sha }}
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest || steps.build.outputs.digest }}
+        with:
+          script: |
+            const { data: branch } = await github.rest.repos.getBranch({ ...context.repo, branch: "main" });
+            if (branch.commit.sha !== process.env.IMAGE_SHA) {
+              core.info("В main уже есть новый коммит; плавающий тег сохранён.");
+              return;
+            }
+            await exec.exec("docker", ["buildx", "imagetools", "create",
+              "--tag", `${process.env.IMAGE}:main`,
+              `${process.env.IMAGE}@${process.env.IMAGE_DIGEST}`,
+            ]);

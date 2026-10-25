@@ -9,6 +9,7 @@ const planClientMocks = vi.hoisted(() => ({
   loadEntriesMock: vi.fn(),
   openCreateModalMock: vi.fn(),
   setOnlyWithoutReportsMock: vi.fn(),
+  setSearchQueryMock: vi.fn(),
 }));
 
 vi.mock("next/link", () => {
@@ -84,6 +85,8 @@ describe("PlanClient", () => {
       setCurrentPage: vi.fn(),
       onlyWithoutReports: false,
       setOnlyWithoutReports: planClientMocks.setOnlyWithoutReportsMock,
+      searchQuery: "",
+      setSearchQuery: planClientMocks.setSearchQueryMock,
       today: "2026-06-10",
       loadEntries: planClientMocks.loadEntriesMock,
     });
@@ -137,6 +140,15 @@ describe("PlanClient", () => {
     expect(planClientMocks.setOnlyWithoutReportsMock).toHaveBeenCalledWith(true);
   });
 
+  it("должен искать тренировки по введенному тексту", () => {
+    render(<PlanClient />);
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Поиск тренировок" }), {
+      target: { value: "интервалы" },
+    });
+
+    expect(planClientMocks.setSearchQueryMock).toHaveBeenCalledWith("интервалы");
+  });
   it("должен открывать добавление дня и обновлять план", () => {
     render(<PlanClient />);
 

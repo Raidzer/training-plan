@@ -132,6 +132,22 @@ describe("PATCH /api/setDataUser", () => {
     expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
   });
 
+  it.each([{ lastName: "😀".repeat(128) }, { miscellaneous: "😀".repeat(1001) }])(
+    "должен сохранять максимальную длину UTF-16 для полей профиля %j",
+    async (overrides) => {
+      const request = createJsonRequest({
+        url: "http://localhost/api/setDataUser",
+        method: "PATCH",
+        body: { ...validPayload, ...overrides },
+      });
+
+      const response = await PATCH(request);
+
+      await expectJsonError(response, 400, "invalid_payload");
+      expect(updateUserProfileByIdMock).not.toHaveBeenCalled();
+    }
+  );
+
   it("должен возвращать 400 при невалидном количестве нагрузок", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/setDataUser",
