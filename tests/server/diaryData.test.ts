@@ -501,12 +501,9 @@ describe("server/diary getDiaryExportRows", () => {
     });
     expect(result[0].dateTime).toContain("08:30");
     expect(result[0].dateTime).not.toContain("null");
-    expect(result[0].comment).toContain("18.2°C");
-    expect(result[0].comment).toContain("Солнечно");
-    expect(result[0].comment).toContain("ветер");
-    expect(result[0].comment).toContain("Асфальт");
-    expect(result[0].comment).toContain("Pegasus");
-    expect(result[0].comment).toContain("Streak");
+    expect(result[0].comment).toBe(
+      "1) ровно. 18.2°C. Солнечно. ветер. Асфальт. Pegasus, Streak\n2) -"
+    );
     expect(result[1]).toMatchObject({
       task: "-",
       result: "-",
