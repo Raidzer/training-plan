@@ -8,6 +8,9 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm ci
 
+FROM deps AS production-deps
+RUN npm prune --omit=dev --ignore-scripts --no-audit --no-fund
+
 FROM base AS builder
 ARG ALLOWED_ORIGINS
 ARG NEXT_PUBLIC_APP_VERSION=dev
@@ -28,7 +31,7 @@ ENV NEXT_PUBLIC_GIT_SHA=$NEXT_PUBLIC_GIT_SHA
 WORKDIR /app
 
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/wait-for-db.js ./wait-for-db.js
