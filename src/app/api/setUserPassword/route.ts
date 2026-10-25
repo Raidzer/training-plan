@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { getUserPasswordHashById, updateUserPasswordHashById } from "@/server/services/users";
 import { isSameOriginRequest } from "@/server/requestSecurity";
 import { z } from "zod";
+import { maxStringLength, minStringLength } from "@/shared/utils/stringValidation";
 import bcrypt from "bcryptjs";
 import { auth } from "@/auth";
 
 const schema = z
   .object({
-    currentPassword: z.string().min(1, "Текущий пароль обязателен").max(1024),
-    newPassword: z.string().min(6, "Минимум 6 символов").max(128),
-    confirmPassword: z.string().min(6, "Минимум 6 символов").max(128),
+    currentPassword: z
+      .string()
+      .check(minStringLength(1, "Текущий пароль обязателен"), maxStringLength(1024)),
+    newPassword: z.string().check(minStringLength(6, "Минимум 6 символов"), maxStringLength(128)),
+    confirmPassword: z
+      .string()
+      .check(minStringLength(6, "Минимум 6 символов"), maxStringLength(128)),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Новые пароли не совпадают",

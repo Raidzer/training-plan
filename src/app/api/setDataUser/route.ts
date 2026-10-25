@@ -3,6 +3,7 @@ import { isSameOriginRequest } from "@/server/requestSecurity";
 import { updateUserProfileById } from "@/server/services/users";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { maxStringLength, minStringLength } from "@/shared/utils/stringValidation";
 
 const PROFILE_GENDERS = ["male", "female"] as const;
 const PROFILE_OCCUPATIONS = ["work", "study"] as const;
@@ -50,18 +51,21 @@ const isValidTimeZone = (timezone: string): boolean => {
 
 const schema = z
   .object({
-    name: z.string().trim().min(1, "Имя обязательно для заполнения").max(255),
+    name: z
+      .string()
+      .trim()
+      .check(minStringLength(1, "Имя обязательно для заполнения"), maxStringLength(255)),
     lastName: z
       .string()
       .trim()
-      .max(255)
+      .check(maxStringLength(255))
       .nullable()
       .optional()
       .transform((value) => value || null),
     patronymic: z
       .string()
       .trim()
-      .max(255)
+      .check(maxStringLength(255))
       .nullable()
       .optional()
       .transform((value) => value || null),
@@ -108,15 +112,17 @@ const schema = z
     miscellaneous: z
       .string()
       .trim()
-      .max(2000)
+      .check(maxStringLength(2000))
       .nullable()
       .optional()
       .transform((value) => value || null),
     timezone: z
       .string()
       .trim()
-      .min(1, "Выберите часовой пояс")
-      .max(64, "Слишком длинный часовой пояс")
+      .check(
+        minStringLength(1, "Выберите часовой пояс"),
+        maxStringLength(64, "Слишком длинный часовой пояс")
+      )
       .refine((val) => isValidTimeZone(val), { message: "Неверный часовой пояс" }),
   })
   .strict();

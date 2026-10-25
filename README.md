@@ -12,7 +12,7 @@
 
 ### Frontend
 
-- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **UI Library:** [Ant Design 6](https://ant.design/)
 - **Styling:** CSS Modules / SCSS
@@ -22,6 +22,10 @@
 
 - **API:** Next.js API Routes (Serverless functions)
 - **Auth:** [NextAuth.js](https://next-auth.js.org/)
+- **Email:** Nodemailer 10 подключён через npm-алиас `smtp-mailer`: optional peer
+  NextAuth 4 ограничен Nodemailer 7. Авторизация использует только Credentials;
+  встроенный Email provider и общий импорт `next-auth/providers` требуют отдельного
+  решения по совместимости.
 - **Database:** PostgreSQL
 - **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
 
@@ -31,6 +35,32 @@
 - **Bot:** [GrammY](https://grammy.dev/) (Telegram Bot integration)
 - **Linting:** ESLint, Prettier, Husky (pre-commit hooks)
 - **Testing:** Vitest
+
+### Production-образ
+
+Сборка использует полное дерево зависимостей. Отдельная стадия `production-deps`
+удаляет dev-пакеты через `npm prune --omit=dev`; конечный образ получает только
+сокращённое дерево. Линтер и тестовый runner в production-образ не входят.
+
+`dotenv` и `tsx` входят в production-зависимости: они нужны для ожидания БД,
+миграций, seed и запуска ботов. Optional-зависимости сохраняются для native
+модулей; часть пакетов, объявленных как dev, может оставаться через peer-связи
+production-зависимостей. Сокращение образа не исправляет код внутри bundles Drizzle.
+
+### Исправления вложенных зависимостей
+
+В `package.json` закреплены адресные npm overrides для существующих зависимостей:
+
+- `exceljs -> uuid 11.1.1` исправляет проверку границ буфера и сохраняет
+  CommonJS-вызов `uuid.v4()`, используемый ExcelJS для расширенного форматирования.
+- `drizzle-kit -> @esbuild-kit/core-utils -> esbuild 0.25.12` устраняет
+  открытый CORS локального esbuild-сервера и сохраняет TypeScript-трансформации.
+
+Overrides нужны, пока родительские пакеты требуют уязвимые версии. При обновлении
+ExcelJS или Drizzle проверьте их диапазоны и фактическое дерево `npm ls`; удаляйте
+соответствующее закрепление после проверки XLSX и команд Drizzle с исправленными
+версиями upstream. Overrides не заменяют код внутри bundle-файлов Drizzle-kit
+и браузерного bundle ExcelJS.
 
 ---
 
@@ -50,7 +80,7 @@
 
 ### Предварительные требования
 
-- [Node.js](https://nodejs.org/) (v20+)
+- [Node.js](https://nodejs.org/) 24.22.1 LTS (версия закреплена в `.nvmrc`; поддерживается Node 24 начиная с 24.22.1)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (для запуска БД)
 
 ### Установка и запуск

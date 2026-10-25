@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { maxStringLength, minStringLength } from "@/shared/utils/stringValidation";
 import { RegisterError, registerUserWithInvite } from "@/server/register";
 
 const schema = z.object({
   login: z
     .string()
     .trim()
-    .min(3, "Login must be at least 3 characters")
-    .max(64, "Login must be at most 64 characters"),
-  name: z.string().min(2, "Имя слишком короткое"),
-  lastName: z.string().trim().max(255, "Фамилия слишком длинная").optional(),
+    .check(
+      minStringLength(3, "Login must be at least 3 characters"),
+      maxStringLength(64, "Login must be at most 64 characters")
+    ),
+  name: z.string().check(minStringLength(2, "Имя слишком короткое")),
+  lastName: z.string().trim().check(maxStringLength(255, "Фамилия слишком длинная")).optional(),
   gender: z.enum(["male", "female"], {
     message: "Выберите пол",
   }),
-  email: z.string().email("Некорректный email"),
-  password: z.string().min(6, "Минимум 6 символов"),
-  inviteToken: z.string().trim().min(10, "invite-required"),
-  timezone: z.string().min(1, "Выберите часовой пояс").optional(),
+  email: z.email("Некорректный email"),
+  password: z.string().check(minStringLength(6, "Минимум 6 символов")),
+  inviteToken: z.string().trim().check(minStringLength(10, "invite-required")),
+  timezone: z.string().check(minStringLength(1, "Выберите часовой пояс")).optional(),
 });
 
 export async function POST(req: Request) {
