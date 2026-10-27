@@ -30,22 +30,24 @@ export function createGithubMock() {
   const notFound = (): Promise<{ data: unknown }> =>
     Promise.reject(Object.assign(new Error("Not Found"), { status: 404 }));
   return {
-    paginate: vi.fn().mockResolvedValue([]),
+    paginate: vi.fn<(...args: any[]) => any>().mockResolvedValue([]),
     rest: {
       repos: {
-        listPullRequestsAssociatedWithCommit: vi.fn(),
+        listPullRequestsAssociatedWithCommit: vi.fn<(...args: any[]) => any>(),
         getReleaseByTag: vi.fn(notFound),
-        createRelease: vi.fn().mockResolvedValue({ data: { id: 1 } }),
+        createRelease: vi.fn<(...args: any[]) => any>().mockResolvedValue({ data: { id: 1 } }),
       },
-      pulls: { get: vi.fn().mockResolvedValue({ data: createPullRequest() }) },
+      pulls: {
+        get: vi.fn<(...args: any[]) => any>().mockResolvedValue({ data: createPullRequest() }),
+      },
       git: {
         getRef: vi.fn(notFound),
-        getTag: vi.fn(),
-        createRef: vi.fn().mockResolvedValue({ data: {} }),
+        getTag: vi.fn<(...args: any[]) => any>(),
+        createRef: vi.fn<(...args: any[]) => any>().mockResolvedValue({ data: {} }),
       },
       issues: {
-        addLabels: vi.fn().mockResolvedValue({ data: {} }),
-        removeLabel: vi.fn().mockResolvedValue({ data: {} }),
+        addLabels: vi.fn<(...args: any[]) => any>().mockResolvedValue({ data: {} }),
+        removeLabel: vi.fn<(...args: any[]) => any>().mockResolvedValue({ data: {} }),
       },
     },
   };

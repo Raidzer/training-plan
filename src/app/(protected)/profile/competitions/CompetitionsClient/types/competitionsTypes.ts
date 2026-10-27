@@ -59,8 +59,7 @@ export type CompetitionBlockFormError = FormFieldError<keyof CompetitionBlockFor
 export type CompetitionFormError = FormFieldError<keyof CompetitionFormState>;
 
 export type ValidationResult<T, Field extends PropertyKey> =
-  | { ok: true; value: T }
-  | { ok: false; error: string; field: Field };
+  { ok: true; value: T } | { ok: false; error: string; field: Field };
 
 export type CompetitionBlockEditorController = {
   editingId: number | null;

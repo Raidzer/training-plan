@@ -53,7 +53,7 @@ export const buildDateRange = (from: string, to: string) => {
   const start = new Date(`${from}T00:00:00Z`);
   const end = new Date(`${to}T00:00:00Z`);
   const dates: string[] = [];
-  for (let cursor = new Date(start); cursor <= end; ) {
+  for (let cursor = new Date(start); cursor <= end;) {
     dates.push(cursor.toISOString().slice(0, 10));
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
