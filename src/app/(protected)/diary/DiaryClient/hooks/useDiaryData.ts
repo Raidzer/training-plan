@@ -284,8 +284,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       try {
         const res = await fetch(`/api/diary/day?date=${date}`);
         const data = (await res.json().catch(() => null)) as
-          | (DayPayload & { error?: string })
-          | null;
+          (DayPayload & { error?: string }) | null;
         if (dayRequestIdRef.current !== requestId) {
           return;
         }
@@ -381,8 +380,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     fetch(`/api/diary/day?date=${selectedDateKey}`)
       .then(async (res) => {
         const data = (await res.json().catch(() => null)) as
-          | (DayPayload & { error?: string })
-          | null;
+          (DayPayload & { error?: string }) | null;
         if (!active || dayRequestIdRef.current !== requestId) {
           return;
         }
