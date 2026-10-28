@@ -1,5 +1,6 @@
 export type ShoePayload = {
   name?: unknown;
+  isArchived?: unknown;
   mileageLimitKm?: unknown;
   currentMileageKm?: unknown;
   notifyOnLimitEmail?: unknown;

@@ -34,51 +34,24 @@ import {
 
 function createSelectFactory(selectQueue: unknown[]) {
   return vi.fn(() => {
-    let orderedQuery = false;
-    const builder: any = {};
-
-    builder.from = vi.fn(() => {
-      return builder;
-    });
-    builder.leftJoin = vi.fn(() => {
-      orderedQuery = true;
-      return builder;
-    });
-    builder.where = vi.fn(() => {
-      if (orderedQuery) {
-        return builder;
+    let consumed = false;
+    let value: unknown;
+    const consume = () => {
+      if (!consumed) {
+        value = selectQueue.shift();
+        consumed = true;
       }
-      const next = selectQueue.shift();
-      return Promise.resolve(next);
-    });
-    builder.orderBy = vi.fn(() => {
-      let consumed = false;
-      let value: unknown;
-      const consume = () => {
-        if (!consumed) {
-          value = selectQueue.shift();
-          consumed = true;
-        }
-        return value;
-      };
-
-      const orderResult: any = {
-        limit: vi.fn(() => {
-          const next = consume();
-          return Promise.resolve(next);
-        }),
-        then: (resolve: (value: unknown) => unknown) => {
-          const next = consume();
-          return Promise.resolve(resolve(next));
-        },
-      };
-
-      return orderResult;
-    });
-    builder.limit = vi.fn(() => {
-      const next = selectQueue.shift();
-      return Promise.resolve(next);
-    });
+      return value;
+    };
+    const builder: any = {};
+    for (const method of ["from", "leftJoin", "where", "orderBy", "limit", "for"]) {
+      builder[method] = vi.fn(() => {
+        return builder;
+      });
+    }
+    builder.then = (resolve: (value: unknown) => unknown) => {
+      return Promise.resolve(consume()).then(resolve);
+    };
 
     return builder;
   });

@@ -97,6 +97,14 @@
   list-style: none;
 }
 
+.tabs {
+  margin-block-start: 8px;
+}
+
+.tabs :global(.ant-tabs-tab) {
+  min-height: 44px;
+}
+
 .loadingState {
   display: grid;
   gap: 12px;

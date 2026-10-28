@@ -10,7 +10,9 @@ import type {
   SavingWorkoutsState,
   WorkoutFormEntry,
   WorkoutFormState,
+  WorkoutReport,
 } from "../../types/diaryTypes";
+import { getWorkoutShoeOptions } from "../../utils/diaryUtils";
 import { TemplateConstructorModal } from "@/components/templates/TemplateConstructorModal";
 import { WorkoutReportCard } from "../WorkoutReportCard/WorkoutReportCard";
 import type { WorkoutField } from "../WorkoutReportCard/WorkoutReportCard.types";
@@ -40,11 +42,12 @@ type WorkoutsCardProps = {
   saveReportLabel: string;
   editWorkoutLabel?: string;
   surfaceOptions: readonly { value: string; label: string }[];
-  shoeOptions: readonly { value: number; label: string }[];
+  shoeOptions: readonly { value: number; label: string; isArchived?: boolean }[];
   weatherOptions: readonly { value: string; label: string }[];
   windOptions: readonly { value: string; label: string }[];
   shoeLoading: boolean;
   entries: PlanEntry[];
+  workoutReports?: WorkoutReport[];
   workoutForm: WorkoutFormState;
   savingWorkouts: SavingWorkoutsState;
   onChange: (
@@ -129,6 +132,7 @@ export function WorkoutsCard({
   windOptions,
   shoeLoading,
   entries,
+  workoutReports = [],
   workoutForm,
   savingWorkouts,
   onChange,
@@ -189,7 +193,10 @@ export function WorkoutsCard({
           saveReportLabel={saveReportLabel}
           editWorkoutLabel={editWorkoutLabel}
           surfaceOptions={surfaceOptions}
-          shoeOptions={shoeOptions}
+          shoeOptions={getWorkoutShoeOptions(
+            shoeOptions,
+            workoutReports.find((report) => report.planEntryId === entry.id)?.shoes
+          )}
           weatherOptions={weatherOptions}
           windOptions={windOptions}
           shoeLoading={shoeLoading}

@@ -31,6 +31,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
   }
 
   const body = (await req.json().catch(() => null)) as ShoePayload | null;
+  if (body?.isArchived !== undefined && typeof body.isArchived !== "boolean") {
+    return NextResponse.json({ error: "invalid_archive_state" }, { status: 400 });
+  }
   const name = parseName(body?.name, false);
   if (!name.valid) {
     return NextResponse.json({ error: "invalid_name" }, { status: 400 });
@@ -67,6 +70,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     userId,
     shoeId,
   };
+  if (typeof body?.isArchived === "boolean") {
+    updateParams.isArchived = body.isArchived;
+  }
   if (name.value !== null) {
     updateParams.name = name.value;
   }
@@ -84,6 +90,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
   }
 
   const hasUpdates =
+    updateParams.isArchived !== undefined ||
     updateParams.name !== undefined ||
     updateParams.mileageLimitKm !== undefined ||
     updateParams.currentMileageKm !== undefined ||
@@ -119,9 +126,12 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     return NextResponse.json({ error: "invalid_shoe_id" }, { status: 400 });
   }
 
-  const deleted = await deleteShoe({ userId, shoeId });
-  if (!deleted) {
+  const result = await deleteShoe({ userId, shoeId });
+  if (result === "not_found") {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+  if (result === "in_use") {
+    return NextResponse.json({ error: "shoe_in_use" }, { status: 409 });
   }
 
   return NextResponse.json({ deleted: true });

@@ -67,7 +67,7 @@ export function DiaryClient({ userId }: { userId: number }) {
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   const shoeOptions = useMemo(
-    () => shoes.map((shoe) => ({ value: shoe.id, label: shoe.name })),
+    () => shoes.map((shoe) => ({ value: shoe.id, label: shoe.name, isArchived: shoe.isArchived })),
     [shoes]
   );
 
@@ -277,6 +277,7 @@ export function DiaryClient({ userId }: { userId: number }) {
                     windOptions={WIND_OPTIONS}
                     shoeLoading={loadingShoes}
                     entries={visibleDayData.planEntries}
+                    workoutReports={visibleDayData.workoutReports}
                     workoutForm={workoutForm}
                     savingWorkouts={savingWorkouts}
                     onChange={handleWorkoutChange}

@@ -10,6 +10,8 @@ const shoe: ShoeItem = {
   currentMileageKm: "120",
   notifyOnLimitEmail: true,
   notifyOnLimitTelegram: false,
+  isArchived: false,
+  hasReports: false,
   createdAt: "2026-05-01T00:00:00.000Z",
   updatedAt: "2026-05-02T00:00:00.000Z",
 };
@@ -25,6 +27,22 @@ describe("ShoesOverview", () => {
 
   it("показывает рассчитанную сводку после успешной загрузки", () => {
     render(<ShoesOverview items={[shoe]} loading={false} loadError={false} />);
+
+    expect(screen.getAllByRole("definition").map((metric) => metric.textContent)).toEqual([
+      "1",
+      "1",
+      "1",
+    ]);
+  });
+
+  it("исключает архивные пары из всех показателей ротации", () => {
+    render(
+      <ShoesOverview
+        items={[shoe, { ...shoe, id: 2, isArchived: true }]}
+        loading={false}
+        loadError={false}
+      />
+    );
 
     expect(screen.getAllByRole("definition").map((metric) => metric.textContent)).toEqual([
       "1",

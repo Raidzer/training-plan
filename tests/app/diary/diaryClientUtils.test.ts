@@ -8,6 +8,7 @@ import {
   formatSleepTimeValue,
   formatWeightValue,
   getMonthRange,
+  getWorkoutShoeOptions,
   isValidDateString,
   joinValues,
   normalizeStartTimeInput,
@@ -18,6 +19,29 @@ import {
 import type { WorkoutReport } from "@/app/(protected)/diary/DiaryClient/types/diaryTypes";
 
 describe("DiaryClient diaryUtils", () => {
+  it("показывает активные пары и архивные только из сохранённого отчёта", () => {
+    const options = [
+      { value: 1, label: "Active", isArchived: false },
+      { value: 2, label: "Old", isArchived: true },
+      { value: 3, label: "Other old", isArchived: true },
+    ];
+
+    expect(getWorkoutShoeOptions(options)).toEqual([{ value: 1, label: "Active" }]);
+    expect(getWorkoutShoeOptions(options, [{ id: 2, name: "Old", mileageKm: "5" }])).toEqual([
+      { value: 1, label: "Active" },
+      { value: 2, label: "Old (в архиве)" },
+    ]);
+    expect(getWorkoutShoeOptions(options, [{ id: 1, name: "Active", mileageKm: "5" }])).toEqual([
+      { value: 1, label: "Active" },
+    ]);
+  });
+
+  it("сохраняет название выбранной пары при недоступном списке обуви", () => {
+    expect(getWorkoutShoeOptions([], [{ id: 2, name: "Old", mileageKm: "5" }])).toEqual([
+      { value: 2, label: "Old" },
+    ]);
+  });
+
   it("должен форматировать и парсить даты дневника", () => {
     const date = dayjs("2026-05-10");
 
