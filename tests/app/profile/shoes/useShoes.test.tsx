@@ -46,6 +46,8 @@ function createShoe(overrides: Partial<ShoeItem> = {}): ShoeItem {
     currentMileageKm: "120",
     notifyOnLimitEmail: true,
     notifyOnLimitTelegram: false,
+    isArchived: false,
+    hasReports: false,
     createdAt: "2026-05-01T00:00:00.000Z",
     updatedAt: "2026-05-02T00:00:00.000Z",
     ...overrides,
@@ -349,7 +351,7 @@ describe("useShoes", () => {
       options.onOk?.();
       return undefined;
     });
-    fetchMock.mockResolvedValueOnce(createJsonResponse({ success: true }));
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ deleted: true }));
 
     await act(async () => {
       await hook.result.current.handleDelete(shoe);
@@ -383,7 +385,7 @@ describe("useShoes", () => {
     act(() => {
       hook.result.current.handleStartEdit(shoe);
     });
-    fetchMock.mockResolvedValueOnce(createJsonResponse({ success: true }));
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ deleted: true }));
 
     await act(async () => {
       await hook.result.current.handleDelete(shoe);
@@ -391,6 +393,121 @@ describe("useShoes", () => {
 
     expect(hook.result.current.items).toEqual([]);
     expect(hook.result.current.editingId).toBeNull();
+  });
+
+  it.each([false, true])(
+    "changes archive state from %s only after a successful response",
+    async (isArchived) => {
+      const shoe = createShoe({ isArchived, hasReports: true });
+      const updated = createShoe({ isArchived: !isArchived, hasReports: true });
+      const { hook, fetchMock } = await renderUseShoes([shoe]);
+      fetchMock.mockResolvedValueOnce(createJsonResponse({ shoe: updated }));
+
+      await act(async () => {
+        await hook.result.current.handleToggleArchive(shoe);
+      });
+
+      expect(fetchMock).toHaveBeenLastCalledWith("/api/shoes/1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: !isArchived }),
+      });
+      expect(hook.result.current.items).toEqual([updated]);
+      expect(hook.result.current.archivingId).toBeNull();
+    }
+  );
+
+  it("blocks duplicate archive requests and keeps the pair visible until success", async () => {
+    const shoe = createShoe();
+    const { hook, fetchMock } = await renderUseShoes([shoe]);
+    let resolveArchive: ((response: Response) => void) | undefined;
+    fetchMock.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveArchive = resolve;
+      })
+    );
+    let requests: Promise<void>[] = [];
+
+    act(() => {
+      requests = [
+        hook.result.current.handleToggleArchive(shoe),
+        hook.result.current.handleToggleArchive(shoe),
+      ];
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(hook.result.current.items).toEqual([shoe]);
+    expect(hook.result.current.archivingId).toBe(1);
+
+    await act(async () => {
+      resolveArchive?.(createJsonResponse({ shoe: createShoe({ isArchived: true }) }));
+      await Promise.all(requests);
+    });
+
+    expect(hook.result.current.items[0]?.isArchived).toBe(true);
+    expect(hook.result.current.archivingId).toBeNull();
+  });
+
+  it.each([
+    [500, { error: "failed" }],
+    [200, { shoe: { id: 1, isArchived: true } }],
+    [200, { shoe: createShoe({ id: 2, isArchived: true }) }],
+    [200, { shoe: createShoe() }],
+  ])("keeps the pair on archive failure or invalid response (%s)", async (status, body) => {
+    const shoe = createShoe();
+    const { hook, fetchMock, messageApi } = await renderUseShoes([shoe]);
+    fetchMock.mockResolvedValueOnce(createJsonResponse(body, status));
+
+    await act(async () => {
+      await hook.result.current.handleToggleArchive(shoe);
+    });
+
+    expect(hook.result.current.items).toEqual([shoe]);
+    expect(hook.result.current.archivingId).toBeNull();
+    expect(messageApi.error).toHaveBeenCalled();
+  });
+
+  it("does not confirm or send deletion for a pair with reports", async () => {
+    const shoe = createShoe({ hasReports: true });
+    const { hook, fetchMock, modalApi, messageApi } = await renderUseShoes([shoe]);
+    (modalApi.confirm as ReturnType<typeof vi.fn>).mockImplementation((options) => {
+      options.onCancel?.();
+      return undefined;
+    });
+
+    await act(async () => {
+      await hook.result.current.handleDelete(shoe);
+    });
+
+    expect(modalApi.confirm).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(hook.result.current.items).toEqual([shoe]);
+    expect(messageApi.warning).toHaveBeenCalled();
+  });
+
+  it("keeps the pair and records report usage after a stale deletion receives 409", async () => {
+    const shoe = createShoe();
+    const { hook, fetchMock, modalApi, messageApi } = await renderUseShoes([shoe]);
+    const confirmMock = modalApi.confirm as ReturnType<typeof vi.fn>;
+    confirmMock.mockImplementation((options) => {
+      options.onOk?.();
+      return undefined;
+    });
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ error: "shoe_in_use" }, 409));
+
+    await act(async () => {
+      await hook.result.current.handleDelete(shoe);
+    });
+
+    expect(hook.result.current.items).toEqual([createShoe({ hasReports: true })]);
+    expect(messageApi.error).toHaveBeenCalledWith(expect.stringMatching(/отч[её]т|истори/));
+
+    await act(async () => {
+      await hook.result.current.handleDelete(shoe);
+    });
+
+    expect(confirmMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("exposes failed initial load inline and retries without a toast", async () => {

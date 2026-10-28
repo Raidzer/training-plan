@@ -1,4 +1,10 @@
-import { BellOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  BellOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  InboxOutlined,
+  UndoOutlined,
+} from "@ant-design/icons";
 import { Button } from "antd";
 import { useEffect, useRef } from "react";
 import { ShoeEditForm } from "../ShoeEditForm/ShoeEditForm";
@@ -23,12 +29,14 @@ type ShoeListItemProps = {
   notificationAvailability: ShoeNotificationAvailability;
   updating: boolean;
   deleting: boolean;
+  archiving: boolean;
   actionsDisabled: boolean;
   onStartEdit: (item: ShoeItem) => void;
   onChangeEdit: ShoeFormUpdate;
   onSaveEdit: () => void | Promise<void>;
   onCancelEdit: () => void;
   onDelete: (item: ShoeItem) => void;
+  onToggleArchive: (item: ShoeItem) => void | Promise<void>;
 };
 
 export function ShoeListItem({
@@ -40,12 +48,14 @@ export function ShoeListItem({
   notificationAvailability,
   updating,
   deleting,
+  archiving,
   actionsDisabled,
   onStartEdit,
   onChangeEdit,
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onToggleArchive,
 }: ShoeListItemProps) {
   const editButtonRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
   const shouldRestoreFocusRef = useRef(false);
@@ -54,6 +64,8 @@ export function ShoeListItem({
     item.notifyOnLimitEmail || item.notifyOnLimitTelegram
       ? formatNotifications(item)
       : shoesLabels.noNotificationsLabel;
+  const notificationsPaused =
+    item.isArchived && (item.notifyOnLimitEmail || item.notifyOnLimitTelegram);
 
   useEffect(() => {
     if (!isEditing && shouldRestoreFocusRef.current) {
@@ -75,6 +87,9 @@ export function ShoeListItem({
   if (isEditing) {
     return (
       <li className={`${styles.listItem} ${styles.editingItem}`}>
+        {item.isArchived ? (
+          <p className={styles.archiveHint}>{shoesLabels.archivedNotificationsHint}</p>
+        ) : null}
         <ShoeEditForm
           form={editingForm}
           errors={editingFormErrors}
@@ -100,7 +115,11 @@ export function ShoeListItem({
             </h3>
             <div className={styles.notification}>
               <BellOutlined aria-hidden />
-              <span>{notificationText}</span>
+              <span>
+                {notificationsPaused
+                  ? `${shoesLabels.archivedNotifications}: ${notificationText}`
+                  : notificationText}
+              </span>
             </div>
           </div>
 
@@ -116,18 +135,32 @@ export function ShoeListItem({
               {shoesLabels.editButton}
             </Button>
             <Button
-              danger
-              icon={<DeleteOutlined aria-hidden />}
+              icon={item.isArchived ? <UndoOutlined aria-hidden /> : <InboxOutlined aria-hidden />}
               onClick={() => {
-                onDelete(item);
+                void onToggleArchive(item);
               }}
               disabled={actionsDisabled}
-              loading={deleting}
+              loading={archiving}
             >
-              {shoesLabels.deleteButton}
+              {item.isArchived ? shoesLabels.restoreButton : shoesLabels.archiveButton}
             </Button>
+            {item.hasReports ? null : (
+              <Button
+                danger
+                icon={<DeleteOutlined aria-hidden />}
+                onClick={() => {
+                  onDelete(item);
+                }}
+                disabled={actionsDisabled}
+                loading={deleting}
+              >
+                {shoesLabels.deleteButton}
+              </Button>
+            )}
           </div>
         </header>
+
+        {item.hasReports ? <p className={styles.historyHint}>{shoesLabels.usedShoeHint}</p> : null}
 
         <ShoeMileageProgress item={item} />
       </article>

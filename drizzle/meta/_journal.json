@@ -57,6 +57,13 @@
       "when": 1781684401953,
       "tag": "0007_great_nehzno",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793172059663,
+      "tag": "0008_tired_speedball",
+      "breakpoints": true
     }
   ]
 }

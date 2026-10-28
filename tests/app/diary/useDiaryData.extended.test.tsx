@@ -158,6 +158,41 @@ describe("useDiaryData (extended)", () => {
     queryDate = null;
   });
 
+  it("объясняет конфликт архива и сохраняет несохранённый отчёт", async () => {
+    const dayPayload = createDayPayload({
+      totalDistanceKm: 10,
+      workoutResult: "ok",
+      hasBath: false,
+      sleepHours: "8",
+      weightMorning: "70",
+    });
+    const defaultHandler = createDefaultDiaryFetchHandler(dayPayload);
+    setFetchHandler(async (url, init) => {
+      if (url === "/api/diary/workout-report") {
+        return createJsonResponse({ error: "archived_shoe" }, 409);
+      }
+      return defaultHandler(url, init);
+    });
+    const messageApi = createMessageApiMock();
+    const { result } = renderHook(() => useDiaryData({ messageApi, messages }));
+    await waitFor(() => expect(result.current.workoutForm[1]?.resultText).toBe("ok"));
+    act(() => {
+      result.current.setWorkoutForm((previous) => ({
+        ...previous,
+        1: { ...previous[1], resultText: "Мой черновик", shoeIds: [1] },
+      }));
+    });
+
+    await act(async () => result.current.handleSaveWorkout(1));
+
+    expect(messageApi.error).toHaveBeenCalledWith(
+      "Эта пара уже в архиве. Уберите её из отчёта или верните в активные в профиле обуви."
+    );
+    expect(result.current.workoutForm[1].resultText).toBe("Мой черновик");
+    expect(result.current.savingWorkouts[1]).toBe(false);
+    expect(messageApi.success).not.toHaveBeenCalled();
+  });
+
   it("не должен сбрасывать несохраненные формы других блоков после сохранения веса", async () => {
     const initialDay = createDayPayload({
       totalDistanceKm: 10,

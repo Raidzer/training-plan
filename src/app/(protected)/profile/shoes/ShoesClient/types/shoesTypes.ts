@@ -5,6 +5,8 @@ export type ShoeItem = {
   currentMileageKm: string | null;
   notifyOnLimitEmail: boolean;
   notifyOnLimitTelegram: boolean;
+  isArchived: boolean;
+  hasReports: boolean;
   createdAt: string;
   updatedAt: string;
 };
