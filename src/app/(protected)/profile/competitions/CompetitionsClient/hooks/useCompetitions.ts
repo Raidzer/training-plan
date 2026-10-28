@@ -2,6 +2,7 @@
 
 import { App } from "antd";
 import { useCallback, useEffect, useState } from "react";
+import { useCompetitionPersonalRecord } from "./useCompetitionPersonalRecord";
 import {
   competitionsLabels,
   COMPETITIONS_COLLAPSED_BLOCKS_KEY,
@@ -80,6 +81,7 @@ const logUnexpectedLoadError = (error: unknown) => {
   }
 };
 export const useCompetitions = ({ messageApi, modalApi }: UseCompetitionsParams) => {
+  const offerPersonalRecord = useCompetitionPersonalRecord({ messageApi, modalApi });
   const [blocks, setBlocks] = useState<CompetitionBlockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -501,6 +503,7 @@ export const useCompetitions = ({ messageApi, modalApi }: UseCompetitionsParams)
         [blockId]: createEmptyCompetitionForm(),
       }));
       messageApi.success(competitionsLabels.competitionSaveOk);
+      void offerPersonalRecord(competition);
       return true;
     } catch (error) {
       console.error(error);
@@ -560,9 +563,14 @@ export const useCompetitions = ({ messageApi, modalApi }: UseCompetitionsParams)
         return false;
       }
 
+      const previousCompetition = blocks
+        .flatMap((block) => block.competitions)
+        .find((item) => item.id === competition.id);
+
       setBlocks((previous) => updateCompetitionInBlocks(previous, competition));
       handleCancelCompetitionEdit();
       messageApi.success(competitionsLabels.competitionUpdateOk);
+      void offerPersonalRecord(competition, previousCompetition);
       return true;
     } catch (error) {
       console.error(error);

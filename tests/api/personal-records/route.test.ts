@@ -11,15 +11,21 @@ import {
   MAX_RACE_NAME_LENGTH,
 } from "@/shared/constants/personalRecords.constants";
 
-const { authMock, isValidDateStringMock, getPersonalRecordsMock, upsertPersonalRecordsMock } =
-  vi.hoisted(() => {
-    return {
-      authMock: vi.fn(),
-      isValidDateStringMock: vi.fn(),
-      getPersonalRecordsMock: vi.fn(),
-      upsertPersonalRecordsMock: vi.fn(),
-    };
-  });
+const {
+  authMock,
+  isValidDateStringMock,
+  getPersonalRecordsMock,
+  upsertPersonalRecordsMock,
+  improvePersonalRecordMock,
+} = vi.hoisted(() => {
+  return {
+    authMock: vi.fn(),
+    isValidDateStringMock: vi.fn(),
+    getPersonalRecordsMock: vi.fn(),
+    upsertPersonalRecordsMock: vi.fn(),
+    improvePersonalRecordMock: vi.fn(),
+  };
+});
 
 vi.mock("@/auth", () => {
   return {
@@ -37,6 +43,7 @@ vi.mock("@/server/personalRecords", () => {
   return {
     getPersonalRecords: getPersonalRecordsMock,
     upsertPersonalRecords: upsertPersonalRecordsMock,
+    improvePersonalRecord: improvePersonalRecordMock,
   };
 });
 
@@ -66,6 +73,7 @@ describe("API /api/personal-records route", () => {
       },
     ]);
     upsertPersonalRecordsMock.mockResolvedValue(undefined);
+    improvePersonalRecordMock.mockResolvedValue("updated");
   });
 
   describe("GET", () => {
@@ -367,6 +375,121 @@ describe("API /api/personal-records route", () => {
         ],
       });
       expect(payload.records.map((record) => record.distanceKey)).toEqual(["10k", "5k"]);
+    });
+  });
+
+  describe("POST onlyIfBetter", () => {
+    const record = {
+      distanceKey: "10k",
+      timeText: "39:30,1",
+      recordDate: "2026-10-28",
+      raceName: "Старт",
+    };
+
+    const postImprovement = (body: unknown) =>
+      POST(
+        createJsonRequest({
+          url: "http://localhost/api/personal-records",
+          body,
+        })
+      );
+
+    it("сохраняет только один улучшенный рекорд, нормализуя время", async () => {
+      const response = await postImprovement({ onlyIfBetter: true, records: [record] });
+
+      expect(await response.json()).toEqual({ status: "updated" });
+      expect(response.status).toBe(200);
+      expect(improvePersonalRecordMock).toHaveBeenCalledWith({
+        userId: 9,
+        record: {
+          ...record,
+          timeText: "00:39:30.10",
+          protocolUrl: null,
+          raceCity: null,
+        },
+      });
+      expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
+    });
+
+    it.each(["not_better", "conflict"])(
+      "возвращает результат %s без безусловной записи",
+      async (status) => {
+        improvePersonalRecordMock.mockResolvedValue(status);
+
+        const response = await postImprovement({ onlyIfBetter: true, records: [record] });
+
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual({ status });
+        expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
+      }
+    );
+
+    it("сообщает о нераспознаваемом существующем рекорде", async () => {
+      improvePersonalRecordMock.mockResolvedValue("invalid_current_record");
+
+      const response = await postImprovement({ onlyIfBetter: true, records: [record] });
+
+      await expectJsonError(response, 409, "invalid_current_record");
+      expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
+    });
+
+    it.each(["true", 1, null, {}])("отклоняет неверный тип режима %j", async (onlyIfBetter) => {
+      const response = await postImprovement({ onlyIfBetter, records: [record] });
+
+      await expectJsonError(response, 400, "invalid_mode");
+      expect(improvePersonalRecordMock).not.toHaveBeenCalled();
+      expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
+    });
+
+    it.each(["", "00:00", "99:99", "DNF"])(
+      "отклоняет пустое, нулевое и невалидное время %s",
+      async (timeText) => {
+        const response = await postImprovement({
+          onlyIfBetter: true,
+          records: [{ ...record, timeText }],
+        });
+
+        await expectJsonError(response, 400, "invalid_time");
+        expect(improvePersonalRecordMock).not.toHaveBeenCalled();
+        expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
+      }
+    );
+
+    it("не разрешает отправить несколько рекордов в режиме улучшения", async () => {
+      const response = await postImprovement({
+        onlyIfBetter: true,
+        records: [record, { ...record, distanceKey: "5k" }],
+      });
+
+      await expectJsonError(response, 400, "single_record_required");
+      expect(improvePersonalRecordMock).not.toHaveBeenCalled();
+      expect(upsertPersonalRecordsMock).not.toHaveBeenCalled();
+    });
+
+    it("проверяет авторизацию до условной записи", async () => {
+      authMock.mockResolvedValue(null);
+
+      const response = await postImprovement({ onlyIfBetter: true, records: [record] });
+
+      await expectJsonError(response, 401, "unauthorized");
+      expect(improvePersonalRecordMock).not.toHaveBeenCalled();
+    });
+
+    it("проверяет дату и метаданные до условной записи", async () => {
+      isValidDateStringMock.mockReturnValue(false);
+
+      const response = await postImprovement({ onlyIfBetter: true, records: [record] });
+
+      await expectJsonError(response, 400, "invalid_date");
+      expect(improvePersonalRecordMock).not.toHaveBeenCalled();
+    });
+
+    it("сохраняет прежний режим при явно указанном false", async () => {
+      const response = await postImprovement({ onlyIfBetter: false, records: [record] });
+
+      await expectJsonSuccess(response, 200);
+      expect(upsertPersonalRecordsMock).toHaveBeenCalledOnce();
+      expect(improvePersonalRecordMock).not.toHaveBeenCalled();
     });
   });
 });

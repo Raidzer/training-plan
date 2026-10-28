@@ -11,9 +11,11 @@ import {
 } from "@/shared/constants/personalRecords.constants";
 import {
   getPersonalRecords,
+  improvePersonalRecord,
   upsertPersonalRecords,
   type PersonalRecordInput,
 } from "@/server/personalRecords";
+import { parsePersonalRecordTime } from "@/shared/utils/personalRecordUtils";
 
 type PersonalRecordPayload = {
   distanceKey?: string;
@@ -65,10 +67,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as { records?: PersonalRecordPayload[] } | null;
+  const body = (await req.json().catch(() => null)) as {
+    records?: PersonalRecordPayload[];
+    onlyIfBetter?: unknown;
+  } | null;
+  if (body?.onlyIfBetter !== undefined && typeof body.onlyIfBetter !== "boolean") {
+    return NextResponse.json({ error: "invalid_mode" }, { status: 400 });
+  }
+  const onlyIfBetter = body?.onlyIfBetter === true;
   const incomingRecords = Array.isArray(body?.records) ? body?.records : null;
   if (!incomingRecords || incomingRecords.length === 0) {
     return NextResponse.json({ error: "empty_records" }, { status: 400 });
+  }
+  if (onlyIfBetter && incomingRecords.length !== 1) {
+    return NextResponse.json({ error: "single_record_required" }, { status: 400 });
   }
 
   const seenKeys = new Set<string>();
@@ -84,7 +96,14 @@ export async function POST(req: Request) {
     seenKeys.add(distanceKey);
 
     const rawTime = typeof entry?.timeText === "string" ? entry.timeText.trim() : "";
-    const timeText = rawTime ? normalizeTimeText(rawTime) : "";
+    let timeText = rawTime ? normalizeTimeText(rawTime) : "";
+    if (onlyIfBetter) {
+      const time = parsePersonalRecordTime(timeText);
+      if (!time) {
+        return NextResponse.json({ error: "invalid_time" }, { status: 400 });
+      }
+      timeText = time.timeText;
+    }
     const recordDate = typeof entry?.recordDate === "string" ? entry.recordDate.trim() : "";
     const protocolUrl = typeof entry?.protocolUrl === "string" ? entry.protocolUrl.trim() : "";
     const raceName = typeof entry?.raceName === "string" ? entry.raceName.trim() : "";
@@ -126,6 +145,14 @@ export async function POST(req: Request) {
       raceName: raceName || null,
       raceCity: raceCity || null,
     });
+  }
+
+  if (onlyIfBetter) {
+    const status = await improvePersonalRecord({ userId, record: normalized[0] });
+    if (status === "invalid_current_record") {
+      return NextResponse.json({ error: status }, { status: 409 });
+    }
+    return NextResponse.json({ status });
   }
 
   await upsertPersonalRecords({ userId, records: normalized });
