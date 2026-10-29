@@ -1,10 +1,12 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { shoes } from "@/server/db/schema";
+import { shoes, workoutReportShoes } from "@/server/db/schema";
 
 export type ShoeRecord = {
   id: number;
   name: string;
+  isArchived: boolean;
+  hasReports: boolean;
   mileageLimitKm: string | null;
   currentMileageKm: string | null;
   notifyOnLimitEmail: boolean;
@@ -26,6 +28,7 @@ type ShoeUpdateParams = {
   userId: number;
   shoeId: number;
   name?: string;
+  isArchived?: boolean;
   mileageLimitKm?: number | null;
   currentMileageKm?: number | null;
   notifyOnLimitEmail?: boolean;
@@ -35,6 +38,8 @@ type ShoeUpdateParams = {
 const shoeReturningColumns = {
   id: shoes.id,
   name: shoes.name,
+  isArchived: shoes.isArchived,
+  hasReports: sql<boolean>`exists (select 1 from ${workoutReportShoes} where "workout_report_shoes"."shoe_id" = "shoes"."id")`,
   mileageLimitKm: shoes.mileageLimitKm,
   currentMileageKm: shoes.currentMileageKm,
   notifyOnLimitEmail: shoes.notifyOnLimitEmail,
@@ -89,6 +94,7 @@ export async function updateShoe(params: ShoeUpdateParams): Promise<ShoeRecord |
   const values: {
     updatedAt: Date;
     name?: string;
+    isArchived?: boolean;
     mileageLimitKm?: string | null;
     currentMileageKm?: string | null;
     notifyOnLimitEmail?: boolean;
@@ -97,6 +103,9 @@ export async function updateShoe(params: ShoeUpdateParams): Promise<ShoeRecord |
 
   if (params.name !== undefined) {
     values.name = params.name;
+  }
+  if (params.isArchived !== undefined) {
+    values.isArchived = params.isArchived;
   }
   if (params.mileageLimitKm !== undefined) {
     values.mileageLimitKm = params.mileageLimitKm === null ? null : String(params.mileageLimitKm);
@@ -125,11 +134,27 @@ export async function updateShoe(params: ShoeUpdateParams): Promise<ShoeRecord |
   return updated;
 }
 
-export async function deleteShoe(params: { userId: number; shoeId: number }): Promise<boolean> {
-  const [deleted] = await db
-    .delete(shoes)
-    .where(and(eq(shoes.id, params.shoeId), eq(shoes.userId, params.userId)))
-    .returning({ id: shoes.id });
+export async function deleteShoe(params: {
+  userId: number;
+  shoeId: number;
+}): Promise<"deleted" | "not_found" | "in_use"> {
+  return await db.transaction(async (tx) => {
+    const condition = and(eq(shoes.id, params.shoeId), eq(shoes.userId, params.userId));
+    const [shoe] = await tx.select({ id: shoes.id }).from(shoes).where(condition).for("update");
+    if (!shoe) {
+      return "not_found";
+    }
 
-  return Boolean(deleted);
+    const [usage] = await tx
+      .select({ id: workoutReportShoes.id })
+      .from(workoutReportShoes)
+      .where(eq(workoutReportShoes.shoeId, shoe.id))
+      .limit(1);
+    if (usage) {
+      return "in_use";
+    }
+
+    await tx.delete(shoes).where(condition);
+    return "deleted";
+  });
 }

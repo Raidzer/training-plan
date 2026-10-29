@@ -43,6 +43,7 @@ export const mapCompetitionBlocksToAdminItems = (
       distanceLabel: competition.distanceLabel,
       priority: competition.priority,
       result: competition.result,
+      isSkipped: competition.isSkipped,
     })),
   }));
 

@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { dbSelectMock, dbInsertMock, dbUpdateMock, dbDeleteMock } = vi.hoisted(() => {
-  return {
-    dbSelectMock: vi.fn(),
-    dbInsertMock: vi.fn(),
-    dbUpdateMock: vi.fn(),
-    dbDeleteMock: vi.fn(),
-  };
-});
+const { dbSelectMock, dbInsertMock, dbUpdateMock, dbDeleteMock, dbTransactionMock } = vi.hoisted(
+  () => {
+    return {
+      dbSelectMock: vi.fn(),
+      dbInsertMock: vi.fn(),
+      dbUpdateMock: vi.fn(),
+      dbDeleteMock: vi.fn(),
+      dbTransactionMock: vi.fn(),
+    };
+  }
+);
 
 vi.mock("@/server/db/client", () => {
   return {
@@ -16,6 +19,7 @@ vi.mock("@/server/db/client", () => {
       insert: dbInsertMock,
       update: dbUpdateMock,
       delete: dbDeleteMock,
+      transaction: dbTransactionMock,
     },
   };
 });
@@ -28,7 +32,11 @@ import {
 } from "@/server/workoutReports";
 
 function createSelectWhereBuilder(rows: unknown[]) {
-  const whereMock = vi.fn().mockResolvedValue(rows);
+  const result = Object.assign(Promise.resolve(rows), {
+    for: vi.fn().mockResolvedValue(rows),
+    orderBy: vi.fn(() => ({ for: vi.fn().mockResolvedValue(rows) })),
+  });
+  const whereMock = vi.fn(() => result);
   const fromMock = vi.fn(() => {
     return {
       where: whereMock,
@@ -48,6 +56,14 @@ function createSelectWhereBuilder(rows: unknown[]) {
 describe("server/workoutReports", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbTransactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        select: dbSelectMock,
+        insert: dbInsertMock,
+        update: dbUpdateMock,
+        delete: dbDeleteMock,
+      })
+    );
   });
 
   it("getPlanEntrySummaryForUser должен возвращать элемент или null", async () => {
@@ -116,6 +132,7 @@ describe("server/workoutReports", () => {
   });
 
   it("upsertWorkoutReport должен обновлять существующий отчет", async () => {
+    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]));
     dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]));
     const updateWhereMock = vi.fn().mockResolvedValue(undefined);
     const updateSetMock = vi.fn(() => ({
@@ -146,6 +163,7 @@ describe("server/workoutReports", () => {
   });
 
   it("upsertWorkoutReport должен сохранять null во времени старта", async () => {
+    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]));
     dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]));
     const updateWhereMock = vi.fn().mockResolvedValue(undefined);
     const updateSetMock = vi.fn(() => ({
@@ -173,8 +191,15 @@ describe("server/workoutReports", () => {
 
   it("upsertWorkoutReport должен вставлять отчет, условия и кроссовки", async () => {
     dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
       .mockReturnValueOnce(createSelectWhereBuilder([]))
       .mockReturnValueOnce(createSelectWhereBuilder([]))
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          { id: 1, isArchived: false },
+          { id: 2, isArchived: false },
+        ])
+      )
       .mockReturnValueOnce(createSelectWhereBuilder([]));
 
     const insertReportReturningMock = vi.fn().mockResolvedValue([{ id: 20 }]);
@@ -234,11 +259,19 @@ describe("server/workoutReports", () => {
 
   it("upsertWorkoutReport должен сохранять пробег обуви и обновлять текущий пробег дельтой", async () => {
     dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
       .mockReturnValueOnce(
         createSelectWhereBuilder([
           { shoeId: 1, mileageKm: "3" },
           { shoeId: 2, mileageKm: "5" },
+        ])
+      )
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          { id: 1, isArchived: false },
+          { id: 2, isArchived: false },
+          { id: 3, isArchived: false },
         ])
       )
       .mockReturnValueOnce(
@@ -323,8 +356,10 @@ describe("server/workoutReports", () => {
 
   it("upsertWorkoutReport должен возвращать превышение лимита при повторном сохранении без дельты", async () => {
     dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ shoeId: 1, mileageKm: "4.5" }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 1, isArchived: false }]))
       .mockReturnValueOnce(
         createSelectWhereBuilder([
           {
@@ -374,5 +409,68 @@ describe("server/workoutReports", () => {
         notifyOnLimitTelegram: true,
       },
     ]);
+  });
+
+  it("не должен добавлять архивную пару в другой отчёт", async () => {
+    dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 1, isArchived: true }]));
+    dbUpdateMock.mockReturnValue({
+      set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+    });
+
+    await expect(
+      upsertWorkoutReport({
+        userId: 1,
+        planEntryId: 11,
+        date: "2026-02-09",
+        startTime: null,
+        resultText: "OK",
+        shoeUsages: [{ shoeId: 1, mileageKm: 5 }],
+      })
+    ).rejects.toThrow("archived_shoe");
+
+    expect(dbDeleteMock).not.toHaveBeenCalled();
+    expect(dbInsertMock).not.toHaveBeenCalled();
+  });
+
+  it("должен сохранять прежнюю архивную пару без уведомления о лимите", async () => {
+    dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ shoeId: 1, mileageKm: "5" }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 1, isArchived: true }]))
+      .mockReturnValueOnce(
+        createSelectWhereBuilder([
+          {
+            id: 1,
+            isArchived: true,
+            name: "Old pair",
+            mileageLimitKm: "4",
+            currentMileageKm: "5",
+            notifyOnLimitEmail: true,
+            notifyOnLimitTelegram: true,
+          },
+        ])
+      );
+    dbUpdateMock.mockReturnValue({
+      set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+    });
+    dbDeleteMock.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
+    dbInsertMock.mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) });
+
+    const result = await upsertWorkoutReport({
+      userId: 1,
+      planEntryId: 11,
+      date: "2026-02-09",
+      startTime: null,
+      resultText: "OK",
+      shoeUsages: [{ shoeId: 1, mileageKm: 5 }],
+    });
+
+    expect(result.limitExceededShoes).toEqual([]);
+    expect(dbInsertMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -24,6 +24,8 @@ function createShoe(overrides: Partial<ShoeItem> = {}): ShoeItem {
     currentMileageKm: "125.25",
     notifyOnLimitEmail: true,
     notifyOnLimitTelegram: false,
+    isArchived: false,
+    hasReports: false,
     createdAt: "2026-05-01T00:00:00.000Z",
     updatedAt: "2026-05-02T00:00:00.000Z",
     ...overrides,
@@ -182,5 +184,7 @@ describe("shoesUtils", () => {
     expect(getShoeFromResponse({ shoe })).toEqual(shoe);
     expect(getShoeFromResponse({ shoe: null })).toBeNull();
     expect(getShoeFromResponse(null)).toBeNull();
+    expect(getShoeFromResponse({ shoe: { id: 1, isArchived: true } })).toBeNull();
+    expect(getShoesFromResponse({ shoes: [shoe, { id: 2, isArchived: true }] })).toEqual([shoe]);
   });
 });

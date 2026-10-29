@@ -7,11 +7,7 @@ import {
 } from "@tests/helpers";
 
 type RegisterErrorCode =
-  | "invite_invalid"
-  | "invite_used"
-  | "invite_expired"
-  | "user_exists"
-  | "create_failed";
+  "invite_invalid" | "invite_used" | "invite_expired" | "user_exists" | "create_failed";
 
 const {
   registerUserWithInviteMock,

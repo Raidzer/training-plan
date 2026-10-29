@@ -177,6 +177,28 @@ export const getTelegramLinkedFromResponse = (data: unknown) => {
   return Boolean((data as { linked?: unknown }).linked);
 };
 
+const isShoeItem = (value: unknown): value is ShoeItem => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const shoe = value as Record<string, unknown>;
+  return (
+    typeof shoe.id === "number" &&
+    Number.isInteger(shoe.id) &&
+    shoe.id > 0 &&
+    typeof shoe.name === "string" &&
+    (shoe.mileageLimitKm === null || typeof shoe.mileageLimitKm === "string") &&
+    (shoe.currentMileageKm === null || typeof shoe.currentMileageKm === "string") &&
+    typeof shoe.notifyOnLimitEmail === "boolean" &&
+    typeof shoe.notifyOnLimitTelegram === "boolean" &&
+    typeof shoe.isArchived === "boolean" &&
+    typeof shoe.hasReports === "boolean" &&
+    typeof shoe.createdAt === "string" &&
+    typeof shoe.updatedAt === "string"
+  );
+};
+
 export const getShoesFromResponse = (data: unknown): ShoeItem[] => {
   if (!data || typeof data !== "object") {
     return [];
@@ -185,7 +207,7 @@ export const getShoesFromResponse = (data: unknown): ShoeItem[] => {
   if (!Array.isArray(shoesValue)) {
     return [];
   }
-  return shoesValue as ShoeItem[];
+  return shoesValue.filter(isShoeItem);
 };
 
 export const getShoeFromResponse = (data: unknown): ShoeItem | null => {
@@ -193,8 +215,5 @@ export const getShoeFromResponse = (data: unknown): ShoeItem | null => {
     return null;
   }
   const shoeValue = (data as { shoe?: unknown }).shoe;
-  if (!shoeValue || typeof shoeValue !== "object") {
-    return null;
-  }
-  return shoeValue as ShoeItem;
+  return isShoeItem(shoeValue) ? shoeValue : null;
 };

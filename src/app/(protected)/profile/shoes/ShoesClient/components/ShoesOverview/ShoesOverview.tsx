@@ -9,8 +9,9 @@ type ShoesOverviewProps = {
 };
 
 export function ShoesOverview({ items, loading, loadError }: ShoesOverviewProps) {
-  const limitedPairs = items.filter((item) => item.mileageLimitKm !== null).length;
-  const notifiedPairs = items.filter(
+  const activeItems = items.filter((item) => !item.isArchived);
+  const limitedPairs = activeItems.filter((item) => item.mileageLimitKm !== null).length;
+  const notifiedPairs = activeItems.filter(
     (item) => item.notifyOnLimitEmail || item.notifyOnLimitTelegram
   ).length;
   const renderValue = (count: number) => {
@@ -33,7 +34,7 @@ export function ShoesOverview({ items, loading, loadError }: ShoesOverviewProps)
       <dl className={styles.metrics}>
         <div className={styles.metric}>
           <dt>{shoesLabels.totalPairsLabel}</dt>
-          <dd>{renderValue(items.length)}</dd>
+          <dd>{renderValue(activeItems.length)}</dd>
         </div>
         <div className={styles.metric}>
           <dt>{shoesLabels.limitedPairsLabel}</dt>

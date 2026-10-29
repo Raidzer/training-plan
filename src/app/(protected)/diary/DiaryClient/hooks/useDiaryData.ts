@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import { useSearchParams } from "next/navigation";
+import { WORKOUT_SHOE_ERRORS } from "../constants/diaryConstants";
 import type {
   DayPayload,
   DayStatus,
@@ -62,6 +63,7 @@ type LoadDayOptions = {
 type ShoeItem = {
   id: number;
   name: string;
+  isArchived: boolean;
 };
 
 const MAX_SHOE_MILEAGE_KM = 99999.99;
@@ -284,8 +286,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
       try {
         const res = await fetch(`/api/diary/day?date=${date}`);
         const data = (await res.json().catch(() => null)) as
-          | (DayPayload & { error?: string })
-          | null;
+          (DayPayload & { error?: string }) | null;
         if (dayRequestIdRef.current !== requestId) {
           return;
         }
@@ -381,8 +382,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
     fetch(`/api/diary/day?date=${selectedDateKey}`)
       .then(async (res) => {
         const data = (await res.json().catch(() => null)) as
-          | (DayPayload & { error?: string })
-          | null;
+          (DayPayload & { error?: string }) | null;
         if (!active || dayRequestIdRef.current !== requestId) {
           return;
         }
@@ -645,7 +645,11 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
           const data = (await res.json().catch(() => null)) as {
             error?: string;
           } | null;
-          messageApi.error(data?.error ?? messages.workoutSaveFailed);
+          messageApi.error(
+            (data?.error && WORKOUT_SHOE_ERRORS[data.error]) ??
+              data?.error ??
+              messages.workoutSaveFailed
+          );
           return;
         }
         messageApi.success(messages.workoutSaved);

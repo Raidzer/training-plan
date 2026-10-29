@@ -62,10 +62,10 @@ export function createNextResponseMock() {
 
 export function createDbMethodMocks() {
   return {
-    select: vi.fn(),
-    insert: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    transaction: vi.fn(),
+    select: vi.fn<(...args: any[]) => any>(),
+    insert: vi.fn<(...args: any[]) => any>(),
+    update: vi.fn<(...args: any[]) => any>(),
+    delete: vi.fn<(...args: any[]) => any>(),
+    transaction: vi.fn<(...args: any[]) => any>(),
   };
 }

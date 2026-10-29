@@ -77,6 +77,20 @@ describe("POST /api/diary/workout-report", () => {
     sendShoeLimitNotificationsMock.mockResolvedValue({ targets: 0, sent: 0, failed: 0 });
   });
 
+  it("должен объяснять отказ новой привязки архивной пары", async () => {
+    upsertWorkoutReportMock.mockRejectedValueOnce(new Error("archived_shoe"));
+
+    const response = await POST(
+      createJsonRequest({
+        url: "http://localhost/api/diary/workout-report",
+        body: createValidPayload({ shoeUsages: [{ shoeId: 1, mileageKm: 5 }] }),
+      })
+    );
+
+    await expectJsonError(response, 409, "archived_shoe");
+    expect(sendShoeLimitNotificationsMock).not.toHaveBeenCalled();
+  });
+
   it("должен возвращать 401 без сессии", async () => {
     authMock.mockResolvedValue(null);
     const request = createJsonRequest({

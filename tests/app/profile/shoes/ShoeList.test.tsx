@@ -31,6 +31,8 @@ function createShoe(overrides: Partial<ShoeItem> = {}): ShoeItem {
     currentMileageKm: "120",
     notifyOnLimitEmail: true,
     notifyOnLimitTelegram: false,
+    isArchived: false,
+    hasReports: false,
     createdAt: "2026-05-01T00:00:00.000Z",
     updatedAt: "2026-05-02T00:00:00.000Z",
     ...overrides,
@@ -51,11 +53,13 @@ function renderList(overrides: Partial<ComponentProps<typeof ShoeList>> = {}) {
     notificationAvailability,
     updatingId: null,
     deletingId: null,
+    archivingId: null,
     onStartEdit: vi.fn(),
     onChangeEdit: vi.fn(),
     onSaveEdit: vi.fn(),
     onCancelEdit: vi.fn(),
     onDelete: vi.fn(),
+    onToggleArchive: vi.fn(),
     onRetry: vi.fn(),
     ...overrides,
   };
@@ -87,6 +91,7 @@ function ShoeListFocusHarness({ shoe }: { shoe: ShoeItem }) {
       notificationAvailability={notificationAvailability}
       updatingId={null}
       deletingId={null}
+      archivingId={null}
       onStartEdit={(item) => {
         setEditingId(item.id);
       }}
@@ -98,6 +103,7 @@ function ShoeListFocusHarness({ shoe }: { shoe: ShoeItem }) {
         setEditingId(null);
       }}
       onDelete={vi.fn()}
+      onToggleArchive={vi.fn()}
       onRetry={vi.fn()}
     />
   );
@@ -153,6 +159,84 @@ describe("ShoeList", () => {
 
     expect(screen.queryByRole("progressbar")).toBeNull();
     expect(screen.getByText("Лимит пробега не задан")).toBeTruthy();
+  });
+
+  it("по умолчанию показывает только активные пары и количества обеих вкладок", () => {
+    const archivedShoe = createShoe({ id: 2, name: "Old Trainer", isArchived: true });
+    const onToggleArchive = vi.fn();
+    renderList({
+      items: [createShoe(), archivedShoe],
+      onToggleArchive,
+    });
+
+    expect(screen.getByRole("tab", { name: "Активные (1)" }).getAttribute("aria-selected")).toBe(
+      "true"
+    );
+    expect(screen.getByRole("tab", { name: "Архив (1)" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Daily Trainer" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Old Trainer" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Архив (1)" }));
+
+    expect(screen.getByRole("heading", { name: "Old Trainer" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Daily Trainer" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Вернуть в ротацию" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Редактировать" })).toBeTruthy();
+    expect(screen.getByText(/Уведомления приостановлены/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Вернуть в ротацию" }));
+    expect(onToggleArchive).toHaveBeenCalledWith(archivedShoe);
+  });
+
+  it("объясняет сохранение истории и предлагает архив вместо удаления использованной пары", () => {
+    const shoe = createShoe({ hasReports: true });
+    const onToggleArchive = vi.fn();
+    renderList({ items: [shoe], onToggleArchive });
+
+    expect(screen.queryByRole("button", { name: "Удалить" })).toBeNull();
+    expect(screen.getByText(/История тренировок сохраняется/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "В архив" }));
+    expect(onToggleArchive).toHaveBeenCalledWith(shoe);
+  });
+
+  it("блокирует действия и вкладки на время архивирования", () => {
+    renderList({ items: [createShoe()], archivingId: 1 });
+
+    expect((screen.getByRole("button", { name: /В архив/ }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    expect(
+      (screen.getByRole("button", { name: "Редактировать" }) as HTMLButtonElement).disabled
+    ).toBe(true);
+    expect(screen.getByRole("tab", { name: "Архив (0)" }).getAttribute("aria-disabled")).toBe(
+      "true"
+    );
+  });
+
+  it("объясняет назначение пустого архива", () => {
+    renderList();
+    fireEvent.click(screen.getByRole("tab", { name: "Архив (0)" }));
+
+    expect(screen.getByRole("heading", { name: "Архив пока пуст" })).toBeTruthy();
+    expect(screen.getByText(/Старые пары можно убрать из ротации/)).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Добавить первую пару" })).toBeNull();
+  });
+
+  it("переводит фокус на вкладку после переноса пары, сохраняя фокус при ошибке", () => {
+    const shoe = createShoe();
+    const { rerender, props } = renderList({ items: [shoe] });
+    const archiveButton = screen.getByRole("button", { name: "В архив" });
+    archiveButton.focus();
+
+    rerender(<ShoeList {...props} archivingId={1} />);
+    rerender(<ShoeList {...props} archivingId={null} />);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "В архив" }));
+
+    rerender(<ShoeList {...props} archivingId={1} />);
+    rerender(<ShoeList {...props} items={[{ ...shoe, isArchived: true }]} archivingId={null} />);
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: /Активные \(0\)$/ }));
+    expect(screen.getByRole("tab", { name: "Архив (1)" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: shoe.name })).toBeNull();
   });
 
   it("возвращает фокус на редактирование после отмены", () => {

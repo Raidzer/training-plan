@@ -64,10 +64,44 @@ describe("API /api/shoes/[shoeId] route", () => {
       createdAt: new Date("2026-01-01T10:00:00.000Z"),
       updatedAt: new Date("2026-01-04T10:00:00.000Z"),
     });
-    deleteShoeMock.mockResolvedValue(true);
+    deleteShoeMock.mockResolvedValue("deleted");
   });
 
   describe("PATCH", () => {
+    it.each([true, false])(
+      "должен изменять состояние архива на %s без изменения настроек",
+      async (isArchived) => {
+        const request = createJsonRequest({
+          url: "http://localhost/api/shoes/7",
+          method: "PATCH",
+          body: { isArchived },
+        });
+
+        const response = await PATCH(request, createRouteContext("7"));
+
+        await expectJsonSuccess(response, 200);
+        expect(updateShoeMock).toHaveBeenCalledWith({ userId: 44, shoeId: 7, isArchived });
+        expect(getTelegramAccountIdByUserIdMock).not.toHaveBeenCalled();
+      }
+    );
+
+    it.each([null, "true", 1])(
+      "должен отклонять невалидное состояние архива %s",
+      async (isArchived) => {
+        const response = await PATCH(
+          createJsonRequest({
+            url: "http://localhost/api/shoes/7",
+            method: "PATCH",
+            body: { isArchived, name: "Pegasus" },
+          }),
+          createRouteContext("7")
+        );
+
+        await expectJsonError(response, 400, "invalid_archive_state");
+        expect(updateShoeMock).not.toHaveBeenCalled();
+      }
+    );
+
     it("должен возвращать 401 без сессии", async () => {
       authMock.mockResolvedValue(null);
       const request = createJsonRequest({
@@ -275,7 +309,7 @@ describe("API /api/shoes/[shoeId] route", () => {
     });
 
     it("должен возвращать 404 когда кроссовок отсутствует", async () => {
-      deleteShoeMock.mockResolvedValue(false);
+      deleteShoeMock.mockResolvedValue("not_found");
 
       const response = await DELETE(
         createJsonRequest({
@@ -305,6 +339,17 @@ describe("API /api/shoes/[shoeId] route", () => {
         userId: 44,
         shoeId: 7,
       });
+    });
+
+    it("должен возвращать понятный конфликт для использованной пары", async () => {
+      deleteShoeMock.mockResolvedValue("in_use");
+
+      const response = await DELETE(
+        createJsonRequest({ url: "http://localhost/api/shoes/7", method: "DELETE", body: {} }),
+        createRouteContext("7")
+      );
+
+      await expectJsonError(response, 409, "shoe_in_use");
     });
   });
 });

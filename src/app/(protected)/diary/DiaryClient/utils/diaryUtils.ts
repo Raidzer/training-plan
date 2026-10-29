@@ -1,5 +1,28 @@
 import dayjs, { type Dayjs } from "dayjs";
 import type { RecoveryEntry, WorkoutFormEntry, WorkoutReport } from "../types/diaryTypes";
+import type { ShoeOption } from "../components/WorkoutReportCard/WorkoutReportCard.types";
+import { WORKOUT_LABELS } from "../constants/diaryConstants";
+
+export const getWorkoutShoeOptions = (
+  options: readonly (ShoeOption & { isArchived?: boolean })[],
+  reportShoes: WorkoutReport["shoes"] = []
+): ShoeOption[] => {
+  const savedShoes = reportShoes ?? [];
+  const savedIds = new Set(savedShoes.map((shoe) => shoe.id));
+  const availableOptions = options
+    .filter((shoe) => !shoe.isArchived || savedIds.has(shoe.value))
+    .map((shoe) => ({
+      value: shoe.value,
+      label: shoe.isArchived ? `${shoe.label} ${WORKOUT_LABELS.archivedShoeSuffix}` : shoe.label,
+    }));
+  const availableIds = new Set(availableOptions.map((shoe) => shoe.value));
+  return [
+    ...availableOptions,
+    ...savedShoes
+      .filter((shoe) => !availableIds.has(shoe.id))
+      .map((shoe) => ({ value: shoe.id, label: shoe.name })),
+  ];
+};
 
 export const formatDate = (value: Dayjs) => value.format("YYYY-MM-DD");
 

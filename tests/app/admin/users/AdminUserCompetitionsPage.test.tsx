@@ -51,4 +51,20 @@ describe("AdminUserCompetitionsContent", () => {
 
     expect(screen.getByText(ADMIN_USER_COMPETITIONS_LABELS.emptyBlocks)).toBeTruthy();
   });
+
+  it.each([
+    { result: null, isSkipped: true, expected: "Пропущено" },
+    { result: "", isSkipped: true, expected: "Пропущено" },
+    { result: "39:30", isSkipped: true, expected: "39:30" },
+  ])(
+    "показывает $expected для result=$result и isSkipped=$isSkipped",
+    ({ result, isSkipped, expected }) => {
+      const block = createBlock();
+      block.competitions[0] = { ...block.competitions[0], result, isSkipped };
+
+      render(<AdminUserCompetitionsContent userLabel="Иван Петров" blocks={[block]} />);
+
+      expect(screen.getByRole("cell", { name: expected })).toBeTruthy();
+    }
+  );
 });

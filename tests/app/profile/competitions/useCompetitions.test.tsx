@@ -21,7 +21,11 @@ function createMessageApi() {
 
 function createModalApi() {
   return {
-    confirm: vi.fn(),
+    confirm: vi.fn(() => ({
+      destroy: vi.fn(),
+      update: vi.fn(),
+      then: vi.fn(() => Promise.resolve()),
+    })),
   } as unknown as ModalHookAPI;
 }
 
@@ -70,6 +74,9 @@ async function renderUseCompetitions(initialBlocks: CompetitionBlockItem[] = [])
     const url = String(input);
     if (url === "/api/competition-blocks") {
       return Promise.resolve(createJsonResponse({ blocks: initialBlocks }));
+    }
+    if (url === "/api/personal-records") {
+      return Promise.resolve(createJsonResponse({ records: [] }));
     }
 
     return Promise.resolve(createJsonResponse({}));
@@ -160,7 +167,7 @@ describe("useCompetitions", () => {
   it("должен добавлять соревнование в выбранный блок", async () => {
     const block = createBlock();
     const competition = createCompetition({ blockId: block.id, result: "39:30" });
-    const { hook, fetchMock, messageApi } = await renderUseCompetitions([block]);
+    const { hook, fetchMock, messageApi, modalApi } = await renderUseCompetitions([block]);
     fetchMock.mockResolvedValueOnce(createJsonResponse({ competition }, 201));
 
     act(() => {
@@ -192,6 +199,11 @@ describe("useCompetitions", () => {
     });
     expect(hook.result.current.blocks[0].competitions).toEqual([competition]);
     expect(messageApi.success).toHaveBeenCalledWith(competitionsLabels.competitionSaveOk);
+    await waitFor(() => {
+      expect(modalApi.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Новый личный рекорд", okText: "Сохранить рекорд" })
+      );
+    });
   });
 
   it("должен показывать ошибку загрузки и восстанавливаться после retry", async () => {
@@ -277,7 +289,7 @@ describe("useCompetitions", () => {
     const competition = createCompetition({ result: null });
     const block = createBlock({ competitions: [competition] });
     const updatedCompetition = createCompetition({ result: "39:30" });
-    const { hook, fetchMock, messageApi } = await renderUseCompetitions([block]);
+    const { hook, fetchMock, messageApi, modalApi } = await renderUseCompetitions([block]);
     fetchMock.mockResolvedValueOnce(createJsonResponse({ competition: updatedCompetition }));
 
     act(() => {
@@ -294,6 +306,145 @@ describe("useCompetitions", () => {
     expect(hook.result.current.blocks[0].competitions[0].result).toBe("39:30");
     expect(hook.result.current.editingCompetitionId).toBeNull();
     expect(messageApi.success).toHaveBeenCalledWith(competitionsLabels.competitionUpdateOk);
+    await waitFor(() => {
+      expect(modalApi.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Новый личный рекорд" })
+      );
+    });
+  });
+
+  it.each([null, "39:30"])(
+    "не отправляет неизменённый результат %s при правке метаданных из старой формы",
+    async (result) => {
+      const competition = createCompetition({ result });
+      const saved = createCompetition({ result: "38:00", nameLocation: "Новое название" });
+      const { hook, fetchMock } = await renderUseCompetitions([
+        createBlock({ competitions: [competition] }),
+      ]);
+      fetchMock.mockResolvedValueOnce(createJsonResponse({ competition: saved }));
+
+      act(() => {
+        hook.result.current.handleStartCompetitionEdit(competition);
+        hook.result.current.updateEditingCompetitionForm("nameLocation", saved.nameLocation);
+      });
+
+      await act(async () => {
+        expect(await hook.result.current.handleSaveCompetitionEdit()).toBe(true);
+      });
+
+      const request = fetchMock.mock.calls[1]?.[1] as RequestInit;
+      expect(JSON.parse(String(request.body))).toEqual({
+        date: competition.date,
+        nameLocation: saved.nameLocation,
+        distanceLabel: competition.distanceLabel,
+        priority: competition.priority,
+      });
+      expect(hook.result.current.blocks[0].competitions[0].result).toBe("38:00");
+    }
+  );
+
+  it.each([
+    { previousResult: null, nextResult: "39:30", expected: "39:30" },
+    { previousResult: "39:30", nextResult: "", expected: null },
+  ])(
+    "отправляет явно изменённый результат $expected",
+    async ({ previousResult, nextResult, expected }) => {
+      const competition = createCompetition({ result: previousResult });
+      const saved = createCompetition({ result: expected });
+      const { hook, fetchMock } = await renderUseCompetitions([
+        createBlock({ competitions: [competition] }),
+      ]);
+      fetchMock.mockResolvedValueOnce(createJsonResponse({ competition: saved }));
+
+      act(() => {
+        hook.result.current.handleStartCompetitionEdit(competition);
+        hook.result.current.updateEditingCompetitionForm("result", nextResult);
+      });
+
+      await act(async () => {
+        expect(await hook.result.current.handleSaveCompetitionEdit()).toBe(true);
+      });
+
+      const request = fetchMock.mock.calls[1]?.[1] as RequestInit;
+      expect(JSON.parse(String(request.body))).toMatchObject({ result: expected });
+    }
+  );
+
+  it("сохраняет успешный результат создания при ошибке проверки рекорда", async () => {
+    const competition = createCompetition({ result: "39:30" });
+    const block = createBlock();
+    const { hook, fetchMock, messageApi, modalApi } = await renderUseCompetitions([block]);
+    fetchMock
+      .mockResolvedValueOnce(createJsonResponse({ competition }, 201))
+      .mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500));
+    act(() => {
+      hook.result.current.updateCompetitionForm(block.id, "date", dayjs(competition.date));
+      hook.result.current.updateCompetitionForm(block.id, "nameLocation", competition.nameLocation);
+      hook.result.current.updateCompetitionForm(
+        block.id,
+        "distanceLabel",
+        competition.distanceLabel
+      );
+      hook.result.current.updateCompetitionForm(block.id, "result", competition.result ?? "");
+    });
+    let saved: boolean | undefined;
+
+    await act(async () => {
+      saved = await hook.result.current.handleCreateCompetition(block.id);
+    });
+
+    expect(saved).toBe(true);
+    expect(hook.result.current.blocks[0].competitions).toEqual([competition]);
+    expect(hook.result.current.getCompetitionForm(block.id).result).toBe("");
+    expect(messageApi.success).toHaveBeenCalledWith(competitionsLabels.competitionSaveOk);
+    expect(messageApi.error).not.toHaveBeenCalledWith(competitionsLabels.saveFail);
+    expect(modalApi.confirm).not.toHaveBeenCalled();
+  });
+
+  it("не проверяет рекорд после неуспешного сохранения результата", async () => {
+    const competition = createCompetition({ result: null });
+    const { hook, fetchMock, modalApi } = await renderUseCompetitions([
+      createBlock({ competitions: [competition] }),
+    ]);
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ error: "failed" }, 500));
+    act(() => {
+      hook.result.current.handleStartCompetitionEdit(competition);
+      hook.result.current.updateEditingCompetitionForm("result", "39:30");
+    });
+
+    await act(async () => {
+      expect(await hook.result.current.handleSaveCompetitionEdit()).toBe(false);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(modalApi.confirm).not.toHaveBeenCalled();
+    expect(hook.result.current.editingCompetitionId).toBe(competition.id);
+  });
+
+  it("не предлагает рекорд повторно при правке метаданных и переформатировании результата", async () => {
+    const competition = createCompetition({ result: "39:30.1" });
+    const updated = createCompetition({
+      result: "00:39:30.10",
+      distanceLabel: "10000 м",
+      nameLocation: "Новое название",
+    });
+    const { hook, fetchMock, modalApi } = await renderUseCompetitions([
+      createBlock({ competitions: [competition] }),
+    ]);
+    fetchMock.mockResolvedValueOnce(createJsonResponse({ competition: updated }));
+    act(() => {
+      hook.result.current.handleStartCompetitionEdit(competition);
+      hook.result.current.updateEditingCompetitionForm("nameLocation", updated.nameLocation);
+      hook.result.current.updateEditingCompetitionForm("result", updated.result ?? "");
+      hook.result.current.updateEditingCompetitionForm("distanceLabel", updated.distanceLabel);
+    });
+
+    await act(async () => {
+      expect(await hook.result.current.handleSaveCompetitionEdit()).toBe(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(modalApi.confirm).not.toHaveBeenCalled();
   });
 
   it("не должен удалять соревнование после отмены подтверждения", async () => {
