@@ -53,7 +53,11 @@ const competitionColumns: ColumnsType<AdminCompetitionItem> = [
     title: competitionsLabels.resultColumn,
     dataIndex: "result",
     width: 140,
-    render: (value: string | null) => value || ADMIN_USER_COMPETITIONS_LABELS.emptyResult,
+    render: (value: string | null, competition: AdminCompetitionItem) =>
+      value ||
+      (competition.isSkipped
+        ? competitionsLabels.skippedResult
+        : ADMIN_USER_COMPETITIONS_LABELS.emptyResult),
   },
 ];
 

@@ -155,7 +155,12 @@ export function CompetitionListItem({
           </div>
           <div>
             <dt>{competitionsLabels.resultLabel}</dt>
-            <dd className={styles.result}>{competition.result || competitionsLabels.noResult}</dd>
+            <dd className={styles.result}>
+              {competition.result ||
+                (competition.isSkipped
+                  ? competitionsLabels.skippedResult
+                  : competitionsLabels.noResult)}
+            </dd>
           </div>
         </dl>
       </article>

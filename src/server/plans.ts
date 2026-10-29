@@ -109,6 +109,8 @@ export async function upsertPlanEntriesForDate(params: {
           .select({ id: planEntries.id })
           .from(planEntries)
           .where(and(eq(planEntries.userId, userId), eq(planEntries.date, originalDate)))
+          .orderBy(asc(planEntries.id))
+          .for("update")
       : [];
 
     const existingIds = new Set(existingRows.map((row) => row.id));
@@ -353,7 +355,9 @@ export async function deletePlanEntriesForDate(params: {
     const dayEntries = await tx
       .select({ id: planEntries.id })
       .from(planEntries)
-      .where(and(eq(planEntries.userId, params.userId), eq(planEntries.date, params.date)));
+      .where(and(eq(planEntries.userId, params.userId), eq(planEntries.date, params.date)))
+      .orderBy(asc(planEntries.id))
+      .for("update");
 
     if (dayEntries.length === 0) {
       return { error: "not_found" as const };

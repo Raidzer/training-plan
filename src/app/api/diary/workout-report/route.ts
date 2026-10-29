@@ -321,7 +321,21 @@ export async function POST(req: Request) {
     upsertParams.shoeIds = shoeIds.value;
   }
 
-  const upsertResult = await upsertWorkoutReport(upsertParams);
+  let upsertResult: Awaited<ReturnType<typeof upsertWorkoutReport>>;
+  try {
+    upsertResult = await upsertWorkoutReport(upsertParams);
+  } catch (error) {
+    if (error instanceof Error && error.message === "archived_shoe") {
+      return NextResponse.json({ error: "archived_shoe" }, { status: 409 });
+    }
+    if (error instanceof Error && error.message === "invalid_shoes") {
+      return NextResponse.json({ error: "invalid_shoes" }, { status: 400 });
+    }
+    if (error instanceof Error && error.message === "invalid_plan_entry") {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
+    throw error;
+  }
   if (upsertResult.limitExceededShoes.length > 0) {
     try {
       await sendShoeLimitNotifications({

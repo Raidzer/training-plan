@@ -54,9 +54,11 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
   const [editingValidationAttempt, setEditingValidationAttempt] = useState(0);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [archivingId, setArchivingId] = useState<number | null>(null);
   const createInFlightRef = useRef(false);
   const updateInFlightRef = useRef(false);
   const deleteInFlightIdsRef = useRef(new Set<number>());
+  const archiveInFlightRef = useRef(false);
   const [telegramStatus, setTelegramStatus] = useState({
     available: false,
     ready: false,
@@ -357,6 +359,44 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     }
   };
 
+  const handleToggleArchive = async (item: ShoeItem) => {
+    if (
+      archiveInFlightRef.current ||
+      updateInFlightRef.current ||
+      deleteInFlightIdsRef.current.has(item.id)
+    ) {
+      return;
+    }
+
+    const isArchived = !item.isArchived;
+    const failureMessage = isArchived ? shoesLabels.archiveFail : shoesLabels.restoreFail;
+    archiveInFlightRef.current = true;
+    setArchivingId(item.id);
+    try {
+      const response = await fetch(`/api/shoes/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived }),
+      });
+      const data = await response.json().catch(() => null);
+      const updated = getShoeFromResponse(data);
+
+      if (!response.ok || !updated || updated.id !== item.id || updated.isArchived !== isArchived) {
+        messageApi.error(failureMessage);
+        return;
+      }
+
+      setItems((previous) => previous.map((shoe) => (shoe.id === updated.id ? updated : shoe)));
+      messageApi.success(isArchived ? shoesLabels.archiveOk : shoesLabels.restoreOk);
+    } catch (error) {
+      messageApi.error(failureMessage);
+      console.error(error);
+    } finally {
+      archiveInFlightRef.current = false;
+      setArchivingId(null);
+    }
+  };
+
   const confirmDelete = (name: string) =>
     new Promise<boolean>((resolve) => {
       modalApi.confirm({
@@ -375,7 +415,12 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     });
 
   const handleDelete = async (item: ShoeItem) => {
-    if (deleteInFlightIdsRef.current.has(item.id)) {
+    if (item.hasReports || items.some((shoe) => shoe.id === item.id && shoe.hasReports)) {
+      messageApi.warning(shoesLabels.deleteInUse);
+      return;
+    }
+
+    if (deleteInFlightIdsRef.current.has(item.id) || archiveInFlightRef.current) {
       return;
     }
 
@@ -389,7 +434,15 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     setDeletingId(item.id);
     try {
       const response = await fetch(`/api/shoes/${item.id}`, { method: "DELETE" });
-      await response.json().catch(() => null);
+      const data = await response.json().catch(() => null);
+
+      if (response.status === 409 && data?.error === "shoe_in_use") {
+        setItems((previous) =>
+          previous.map((shoe) => (shoe.id === item.id ? { ...shoe, hasReports: true } : shoe))
+        );
+        messageApi.error(shoesLabels.deleteInUse);
+        return;
+      }
 
       if (!response.ok) {
         messageApi.error(shoesLabels.deleteFail);
@@ -441,6 +494,7 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     notificationAvailability,
     updatingId,
     deletingId,
+    archivingId,
     updateNewForm,
     updateEditingForm,
     handleCreate,
@@ -448,6 +502,7 @@ export const useShoes = ({ messageApi, modalApi }: UseShoesParams) => {
     handleCancelEdit,
     handleSaveEdit,
     handleDelete,
+    handleToggleArchive,
     handleRetry,
   };
 };

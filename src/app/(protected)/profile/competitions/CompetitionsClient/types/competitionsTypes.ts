@@ -10,6 +10,7 @@ export type CompetitionItem = {
   distanceLabel: string;
   priority: CompetitionPriority;
   result: string | null;
+  isSkipped?: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -59,8 +60,7 @@ export type CompetitionBlockFormError = FormFieldError<keyof CompetitionBlockFor
 export type CompetitionFormError = FormFieldError<keyof CompetitionFormState>;
 
 export type ValidationResult<T, Field extends PropertyKey> =
-  | { ok: true; value: T }
-  | { ok: false; error: string; field: Field };
+  { ok: true; value: T } | { ok: false; error: string; field: Field };
 
 export type CompetitionBlockEditorController = {
   editingId: number | null;

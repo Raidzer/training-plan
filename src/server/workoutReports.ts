@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   planEntries,
@@ -204,297 +204,338 @@ export const upsertWorkoutReport = async (params: {
   shoeIds?: number[] | null;
   shoeUsages?: WorkoutReportShoeUsage[] | null;
 }): Promise<WorkoutReportUpsertResult> => {
-  const now = new Date();
-  const updateValues: {
-    date: string;
-    startTime: string | null;
-    resultText: string;
-    commentText: string | null;
-    updatedAt: Date;
-    distanceKm?: string | null;
-    overallScore?: number | null;
-    functionalScore?: number | null;
-    muscleScore?: number | null;
-  } = {
-    date: params.date,
-    startTime: params.startTime,
-    resultText: params.resultText,
-    commentText: params.commentText ?? null,
-    updatedAt: now,
-  };
-  if (params.distanceKm !== undefined) {
-    updateValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
-  }
-  if (params.overallScore !== undefined) {
-    updateValues.overallScore = params.overallScore;
-  }
-  if (params.functionalScore !== undefined) {
-    updateValues.functionalScore = params.functionalScore;
-  }
-  if (params.muscleScore !== undefined) {
-    updateValues.muscleScore = params.muscleScore;
-  }
-  const insertValues: {
-    userId: number;
-    planEntryId: number;
-    date: string;
-    startTime: string | null;
-    resultText: string;
-    commentText: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    distanceKm?: string | null;
-    overallScore?: number | null;
-    functionalScore?: number | null;
-    muscleScore?: number | null;
-  } = {
-    userId: params.userId,
-    planEntryId: params.planEntryId,
-    date: params.date,
-    startTime: params.startTime,
-    resultText: params.resultText,
-    commentText: params.commentText ?? null,
-    createdAt: now,
-    updatedAt: now,
-  };
-  if (params.distanceKm !== undefined) {
-    insertValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
-  }
-  if (params.overallScore !== undefined) {
-    insertValues.overallScore = params.overallScore;
-  }
-  if (params.functionalScore !== undefined) {
-    insertValues.functionalScore = params.functionalScore;
-  }
-  if (params.muscleScore !== undefined) {
-    insertValues.muscleScore = params.muscleScore;
-  }
-
-  const shouldUpsertConditions = [
-    params.weather,
-    params.hasWind,
-    params.temperatureC,
-    params.surface,
-  ].some((value) => value !== undefined);
-  const shouldUpsertShoes = params.shoeIds !== undefined || params.shoeUsages !== undefined;
-
-  const upsertConditions = async (workoutReportId: number) => {
-    if (!shouldUpsertConditions) {
-      return;
+  return await db.transaction(async (tx) => {
+    const [entry] = await tx
+      .select({ id: planEntries.id })
+      .from(planEntries)
+      .where(and(eq(planEntries.id, params.planEntryId), eq(planEntries.userId, params.userId)))
+      .for("update");
+    if (!entry) {
+      throw new Error("invalid_plan_entry");
+    }
+    const now = new Date();
+    const updateValues: {
+      date: string;
+      startTime: string | null;
+      resultText: string;
+      commentText: string | null;
+      updatedAt: Date;
+      distanceKm?: string | null;
+      overallScore?: number | null;
+      functionalScore?: number | null;
+      muscleScore?: number | null;
+    } = {
+      date: params.date,
+      startTime: params.startTime,
+      resultText: params.resultText,
+      commentText: params.commentText ?? null,
+      updatedAt: now,
+    };
+    if (params.distanceKm !== undefined) {
+      updateValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
+    }
+    if (params.overallScore !== undefined) {
+      updateValues.overallScore = params.overallScore;
+    }
+    if (params.functionalScore !== undefined) {
+      updateValues.functionalScore = params.functionalScore;
+    }
+    if (params.muscleScore !== undefined) {
+      updateValues.muscleScore = params.muscleScore;
     }
     const insertValues: {
-      workoutReportId: number;
-      weather: string | null;
-      hasWind: boolean | null;
-      temperatureC: string | null;
-      surface: string | null;
+      userId: number;
+      planEntryId: number;
+      date: string;
+      startTime: string | null;
+      resultText: string;
+      commentText: string | null;
       createdAt: Date;
       updatedAt: Date;
+      distanceKm?: string | null;
+      overallScore?: number | null;
+      functionalScore?: number | null;
+      muscleScore?: number | null;
     } = {
-      workoutReportId,
-      weather: params.weather ?? null,
-      hasWind: params.hasWind ?? null,
-      temperatureC:
-        params.temperatureC === undefined
-          ? null
-          : params.temperatureC === null
-            ? null
-            : String(params.temperatureC),
-      surface: params.surface ?? null,
+      userId: params.userId,
+      planEntryId: params.planEntryId,
+      date: params.date,
+      startTime: params.startTime,
+      resultText: params.resultText,
+      commentText: params.commentText ?? null,
       createdAt: now,
       updatedAt: now,
     };
-    const updateSet: {
-      weather?: string | null;
-      hasWind?: boolean | null;
-      temperatureC?: string | null;
-      surface?: string | null;
-      updatedAt: Date;
-    } = { updatedAt: now };
-    if (params.weather !== undefined) {
-      updateSet.weather = params.weather ?? null;
+    if (params.distanceKm !== undefined) {
+      insertValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
     }
-    if (params.hasWind !== undefined) {
-      updateSet.hasWind = params.hasWind ?? null;
+    if (params.overallScore !== undefined) {
+      insertValues.overallScore = params.overallScore;
     }
-    if (params.temperatureC !== undefined) {
-      updateSet.temperatureC = params.temperatureC === null ? null : String(params.temperatureC);
+    if (params.functionalScore !== undefined) {
+      insertValues.functionalScore = params.functionalScore;
     }
-    if (params.surface !== undefined) {
-      updateSet.surface = params.surface ?? null;
+    if (params.muscleScore !== undefined) {
+      insertValues.muscleScore = params.muscleScore;
     }
 
-    await db.insert(workoutReportConditions).values(insertValues).onConflictDoUpdate({
-      target: workoutReportConditions.workoutReportId,
-      set: updateSet,
-    });
-  };
+    const shouldUpsertConditions = [
+      params.weather,
+      params.hasWind,
+      params.temperatureC,
+      params.surface,
+    ].some((value) => value !== undefined);
+    const shouldUpsertShoes = params.shoeIds !== undefined || params.shoeUsages !== undefined;
 
-  const upsertShoes = async (
-    workoutReportId: number
-  ): Promise<WorkoutReportShoeLimitExceeded[]> => {
-    if (!shouldUpsertShoes) {
-      return [];
-    }
-    const previousRows = await db
-      .select({
-        shoeId: workoutReportShoes.shoeId,
-        mileageKm: workoutReportShoes.mileageKm,
-      })
-      .from(workoutReportShoes)
-      .where(eq(workoutReportShoes.workoutReportId, workoutReportId));
-    await db
-      .delete(workoutReportShoes)
-      .where(eq(workoutReportShoes.workoutReportId, workoutReportId));
-    const shoeUsages =
-      params.shoeUsages ??
-      (params.shoeIds ?? []).map((shoeId) => ({
-        shoeId,
-        mileageKm: null,
-      }));
-    if (shoeUsages.length === 0) {
-      await updateShoeMileageTotals(previousRows, []);
-      return [];
-    }
-    const values = shoeUsages.map((usage) => ({
-      workoutReportId,
-      shoeId: usage.shoeId,
-      mileageKm:
-        usage.mileageKm === null || usage.mileageKm === undefined ? null : String(usage.mileageKm),
-      createdAt: now,
-    }));
-    await db.insert(workoutReportShoes).values(values);
-    await updateShoeMileageTotals(previousRows, shoeUsages);
-    return await loadLimitExceededShoes(shoeUsages.map((usage) => usage.shoeId));
-  };
-
-  const updateShoeMileageTotals = async (
-    previousRows: Array<{ shoeId: number; mileageKm: string | null }>,
-    nextRows: WorkoutReportShoeUsage[]
-  ) => {
-    const previousMileageByShoeId = new Map<number, number>();
-    for (const row of previousRows) {
-      const mileage = row.mileageKm === null ? 0 : Number(row.mileageKm);
-      previousMileageByShoeId.set(
-        row.shoeId,
-        (previousMileageByShoeId.get(row.shoeId) ?? 0) + (Number.isFinite(mileage) ? mileage : 0)
-      );
-    }
-
-    const nextMileageByShoeId = new Map<number, number>();
-    for (const row of nextRows) {
-      const mileage = row.mileageKm === null || row.mileageKm === undefined ? 0 : row.mileageKm;
-      nextMileageByShoeId.set(row.shoeId, (nextMileageByShoeId.get(row.shoeId) ?? 0) + mileage);
-    }
-
-    const shoeIds = new Set([...previousMileageByShoeId.keys(), ...nextMileageByShoeId.keys()]);
-    for (const shoeId of shoeIds) {
-      const delta =
-        Math.round(
-          ((nextMileageByShoeId.get(shoeId) ?? 0) - (previousMileageByShoeId.get(shoeId) ?? 0)) *
-            100
-        ) / 100;
-      if (delta === 0) {
-        continue;
+    const upsertConditions = async (workoutReportId: number) => {
+      if (!shouldUpsertConditions) {
+        return;
       }
-      await db
-        .update(shoes)
-        .set({
-          currentMileageKm: sql`greatest(coalesce(${shoes.currentMileageKm}, 0) + ${delta}, 0)`,
-          updatedAt: now,
+      const insertValues: {
+        workoutReportId: number;
+        weather: string | null;
+        hasWind: boolean | null;
+        temperatureC: string | null;
+        surface: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      } = {
+        workoutReportId,
+        weather: params.weather ?? null,
+        hasWind: params.hasWind ?? null,
+        temperatureC:
+          params.temperatureC === undefined
+            ? null
+            : params.temperatureC === null
+              ? null
+              : String(params.temperatureC),
+        surface: params.surface ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      const updateSet: {
+        weather?: string | null;
+        hasWind?: boolean | null;
+        temperatureC?: string | null;
+        surface?: string | null;
+        updatedAt: Date;
+      } = { updatedAt: now };
+      if (params.weather !== undefined) {
+        updateSet.weather = params.weather ?? null;
+      }
+      if (params.hasWind !== undefined) {
+        updateSet.hasWind = params.hasWind ?? null;
+      }
+      if (params.temperatureC !== undefined) {
+        updateSet.temperatureC = params.temperatureC === null ? null : String(params.temperatureC);
+      }
+      if (params.surface !== undefined) {
+        updateSet.surface = params.surface ?? null;
+      }
+
+      await tx.insert(workoutReportConditions).values(insertValues).onConflictDoUpdate({
+        target: workoutReportConditions.workoutReportId,
+        set: updateSet,
+      });
+    };
+
+    const upsertShoes = async (
+      workoutReportId: number
+    ): Promise<WorkoutReportShoeLimitExceeded[]> => {
+      if (!shouldUpsertShoes) {
+        return [];
+      }
+      const previousRows = await tx
+        .select({
+          shoeId: workoutReportShoes.shoeId,
+          mileageKm: workoutReportShoes.mileageKm,
         })
-        .where(and(eq(shoes.id, shoeId), eq(shoes.userId, params.userId)));
-    }
-  };
+        .from(workoutReportShoes)
+        .where(eq(workoutReportShoes.workoutReportId, workoutReportId));
+      const shoeUsages =
+        params.shoeUsages ??
+        (params.shoeIds ?? []).map((shoeId) => ({
+          shoeId,
+          mileageKm: null,
+        }));
+      const affectedShoeIds = Array.from(
+        new Set([
+          ...previousRows.map((row) => row.shoeId),
+          ...shoeUsages.map((usage) => usage.shoeId),
+        ])
+      );
+      if (affectedShoeIds.length > 0) {
+        const lockedShoes = await tx
+          .select({ id: shoes.id, isArchived: shoes.isArchived })
+          .from(shoes)
+          .where(and(eq(shoes.userId, params.userId), inArray(shoes.id, affectedShoeIds)))
+          .orderBy(asc(shoes.id))
+          .for("update");
+        const previousShoeIds = new Set(previousRows.map((row) => row.shoeId));
+        const shoesById = new Map(lockedShoes.map((shoe) => [shoe.id, shoe]));
+        for (const usage of shoeUsages) {
+          const shoe = shoesById.get(usage.shoeId);
+          if (!shoe) {
+            throw new Error("invalid_shoes");
+          }
+          if (shoe.isArchived && !previousShoeIds.has(shoe.id)) {
+            throw new Error("archived_shoe");
+          }
+        }
+      }
+      await tx
+        .delete(workoutReportShoes)
+        .where(eq(workoutReportShoes.workoutReportId, workoutReportId));
+      if (shoeUsages.length === 0) {
+        await updateShoeMileageTotals(previousRows, []);
+        return [];
+      }
+      const values = shoeUsages.map((usage) => ({
+        workoutReportId,
+        shoeId: usage.shoeId,
+        mileageKm:
+          usage.mileageKm === null || usage.mileageKm === undefined
+            ? null
+            : String(usage.mileageKm),
+        createdAt: now,
+      }));
+      await tx.insert(workoutReportShoes).values(values);
+      await updateShoeMileageTotals(previousRows, shoeUsages);
+      return await loadLimitExceededShoes(shoeUsages.map((usage) => usage.shoeId));
+    };
 
-  const parseMileage = (value: string | null) => {
-    if (value === null) {
-      return null;
-    }
+    const updateShoeMileageTotals = async (
+      previousRows: Array<{ shoeId: number; mileageKm: string | null }>,
+      nextRows: WorkoutReportShoeUsage[]
+    ) => {
+      const previousMileageByShoeId = new Map<number, number>();
+      for (const row of previousRows) {
+        const mileage = row.mileageKm === null ? 0 : Number(row.mileageKm);
+        previousMileageByShoeId.set(
+          row.shoeId,
+          (previousMileageByShoeId.get(row.shoeId) ?? 0) + (Number.isFinite(mileage) ? mileage : 0)
+        );
+      }
 
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) {
-      return null;
-    }
+      const nextMileageByShoeId = new Map<number, number>();
+      for (const row of nextRows) {
+        const mileage = row.mileageKm === null || row.mileageKm === undefined ? 0 : row.mileageKm;
+        nextMileageByShoeId.set(row.shoeId, (nextMileageByShoeId.get(row.shoeId) ?? 0) + mileage);
+      }
 
-    return parsed;
-  };
+      const shoeIds = new Set([...previousMileageByShoeId.keys(), ...nextMileageByShoeId.keys()]);
+      for (const shoeId of shoeIds) {
+        const delta =
+          Math.round(
+            ((nextMileageByShoeId.get(shoeId) ?? 0) - (previousMileageByShoeId.get(shoeId) ?? 0)) *
+              100
+          ) / 100;
+        if (delta === 0) {
+          continue;
+        }
+        await tx
+          .update(shoes)
+          .set({
+            currentMileageKm: sql`greatest(coalesce(${shoes.currentMileageKm}, 0) + ${delta}, 0)`,
+            updatedAt: now,
+          })
+          .where(and(eq(shoes.id, shoeId), eq(shoes.userId, params.userId)));
+      }
+    };
 
-  const loadLimitExceededShoes = async (
-    shoeIds: number[]
-  ): Promise<WorkoutReportShoeLimitExceeded[]> => {
-    const uniqueShoeIds = Array.from(new Set(shoeIds));
-    if (uniqueShoeIds.length === 0) {
-      return [];
-    }
+    const parseMileage = (value: string | null) => {
+      if (value === null) {
+        return null;
+      }
 
-    const rows = await db
-      .select({
-        id: shoes.id,
-        name: shoes.name,
-        mileageLimitKm: shoes.mileageLimitKm,
-        currentMileageKm: shoes.currentMileageKm,
-        notifyOnLimitEmail: shoes.notifyOnLimitEmail,
-        notifyOnLimitTelegram: shoes.notifyOnLimitTelegram,
-      })
-      .from(shoes)
-      .where(and(eq(shoes.userId, params.userId), inArray(shoes.id, uniqueShoeIds)));
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return null;
+      }
 
-    return rows.flatMap((row) => {
-      const mileageLimitValue = row.mileageLimitKm;
-      const currentMileageValue = row.currentMileageKm;
-      if (mileageLimitValue === null || currentMileageValue === null) {
+      return parsed;
+    };
+
+    const loadLimitExceededShoes = async (
+      shoeIds: number[]
+    ): Promise<WorkoutReportShoeLimitExceeded[]> => {
+      const uniqueShoeIds = Array.from(new Set(shoeIds));
+      if (uniqueShoeIds.length === 0) {
         return [];
       }
 
-      const mileageLimitKm = parseMileage(mileageLimitValue);
-      const currentMileageKm = parseMileage(currentMileageValue);
-      if (mileageLimitKm === null || currentMileageKm === null) {
-        return [];
-      }
-      if (currentMileageKm <= mileageLimitKm) {
-        return [];
-      }
+      const rows = await tx
+        .select({
+          id: shoes.id,
+          isArchived: shoes.isArchived,
+          name: shoes.name,
+          mileageLimitKm: shoes.mileageLimitKm,
+          currentMileageKm: shoes.currentMileageKm,
+          notifyOnLimitEmail: shoes.notifyOnLimitEmail,
+          notifyOnLimitTelegram: shoes.notifyOnLimitTelegram,
+        })
+        .from(shoes)
+        .where(and(eq(shoes.userId, params.userId), inArray(shoes.id, uniqueShoeIds)));
 
-      return [
-        {
-          id: row.id,
-          name: row.name,
-          mileageLimitKm: mileageLimitValue,
-          currentMileageKm: currentMileageValue,
-          notifyOnLimitEmail: row.notifyOnLimitEmail,
-          notifyOnLimitTelegram: row.notifyOnLimitTelegram,
-        },
-      ];
-    });
-  };
+      return rows.flatMap((row) => {
+        if (row.isArchived) {
+          return [];
+        }
+        const mileageLimitValue = row.mileageLimitKm;
+        const currentMileageValue = row.currentMileageKm;
+        if (mileageLimitValue === null || currentMileageValue === null) {
+          return [];
+        }
 
-  const [existing] = await db
-    .select({ id: workoutReports.id })
-    .from(workoutReports)
-    .where(
-      and(
-        eq(workoutReports.userId, params.userId),
-        eq(workoutReports.planEntryId, params.planEntryId)
-      )
-    );
+        const mileageLimitKm = parseMileage(mileageLimitValue);
+        const currentMileageKm = parseMileage(currentMileageValue);
+        if (mileageLimitKm === null || currentMileageKm === null) {
+          return [];
+        }
+        if (currentMileageKm <= mileageLimitKm) {
+          return [];
+        }
 
-  if (existing) {
-    await db.update(workoutReports).set(updateValues).where(eq(workoutReports.id, existing.id));
-    await upsertConditions(existing.id);
-    const limitExceededShoes = await upsertShoes(existing.id);
-    return { limitExceededShoes };
-  }
+        return [
+          {
+            id: row.id,
+            name: row.name,
+            mileageLimitKm: mileageLimitValue,
+            currentMileageKm: currentMileageValue,
+            notifyOnLimitEmail: row.notifyOnLimitEmail,
+            notifyOnLimitTelegram: row.notifyOnLimitTelegram,
+          },
+        ];
+      });
+    };
 
-  const [inserted] = await db
-    .insert(workoutReports)
-    .values(insertValues)
-    .returning({ id: workoutReports.id });
-  if (inserted) {
-    await upsertConditions(inserted.id);
-    const limitExceededShoes = await upsertShoes(inserted.id);
-    return { limitExceededShoes };
-  }
+    const [existing] = await tx
+      .select({ id: workoutReports.id })
+      .from(workoutReports)
+      .where(
+        and(
+          eq(workoutReports.userId, params.userId),
+          eq(workoutReports.planEntryId, params.planEntryId)
+        )
+      );
 
-  return { limitExceededShoes: [] };
+    if (existing) {
+      await tx.update(workoutReports).set(updateValues).where(eq(workoutReports.id, existing.id));
+      await upsertConditions(existing.id);
+      const limitExceededShoes = await upsertShoes(existing.id);
+      return { limitExceededShoes };
+    }
+
+    const [inserted] = await tx
+      .insert(workoutReports)
+      .values(insertValues)
+      .returning({ id: workoutReports.id });
+    if (inserted) {
+      await upsertConditions(inserted.id);
+      const limitExceededShoes = await upsertShoes(inserted.id);
+      return { limitExceededShoes };
+    }
+
+    return { limitExceededShoes: [] };
+  });
 };

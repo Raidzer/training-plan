@@ -5,11 +5,7 @@ import { registrationInvites, users } from "@/server/db/schema";
 import { hashInviteToken } from "@/server/registrationInvites";
 
 export type RegisterErrorCode =
-  | "invite_invalid"
-  | "invite_used"
-  | "invite_expired"
-  | "user_exists"
-  | "create_failed";
+  "invite_invalid" | "invite_used" | "invite_expired" | "user_exists" | "create_failed";
 
 export class RegisterError extends Error {
   code: RegisterErrorCode;

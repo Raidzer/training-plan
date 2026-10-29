@@ -5,6 +5,8 @@ export type ShoeItem = {
   currentMileageKm: string | null;
   notifyOnLimitEmail: boolean;
   notifyOnLimitTelegram: boolean;
+  isArchived: boolean;
+  hasReports: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -33,8 +35,7 @@ export type ShoeFormUpdate = <Key extends keyof ShoeFormState>(
 export type NameValidation = { ok: true; value: string } | { ok: false; error: string };
 
 export type MileageValidation =
-  | { ok: true; value: number | null | undefined }
-  | { ok: false; error: string };
+  { ok: true; value: number | null | undefined } | { ok: false; error: string };
 
 export type ShoeMutationPayload = {
   name: string;

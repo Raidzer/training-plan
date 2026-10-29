@@ -25,6 +25,7 @@ export function ShoesClient() {
     notificationAvailability,
     updatingId,
     deletingId,
+    archivingId,
     updateNewForm,
     updateEditingForm,
     handleCreate,
@@ -32,10 +33,16 @@ export function ShoesClient() {
     handleCancelEdit,
     handleSaveEdit,
     handleDelete,
+    handleToggleArchive,
     handleRetry,
   } = useShoes({ messageApi, modalApi });
   const addDisabled =
-    loading || loadError || editingId !== null || updatingId !== null || deletingId !== null;
+    loading ||
+    loadError ||
+    editingId !== null ||
+    updatingId !== null ||
+    deletingId !== null ||
+    archivingId !== null;
 
   return (
     <div className={styles.page}>
@@ -56,11 +63,13 @@ export function ShoesClient() {
           notificationAvailability={notificationAvailability}
           updatingId={updatingId}
           deletingId={deletingId}
+          archivingId={archivingId}
           onStartEdit={handleStartEdit}
           onChangeEdit={updateEditingForm}
           onSaveEdit={handleSaveEdit}
           onCancelEdit={handleCancelEdit}
           onDelete={handleDelete}
+          onToggleArchive={handleToggleArchive}
           onRetry={handleRetry}
         />
         <ShoeCreateForm

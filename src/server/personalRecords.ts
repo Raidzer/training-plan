@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { personalRecords, users } from "@/server/db/schema";
 import type { PersonalRecordDistanceKey } from "@/shared/constants/personalRecords.constants";
+import { parsePersonalRecordTime } from "@/shared/utils/personalRecordUtils";
 
 export type PersonalRecord = {
   distanceKey: PersonalRecordDistanceKey;
@@ -150,4 +151,70 @@ export const upsertPersonalRecords = async (params: {
         });
     }
   });
+};
+
+export const improvePersonalRecord = async (
+  params: { userId: number; record: PersonalRecordInput },
+  database: Pick<typeof db, "select" | "insert" | "update"> = db
+): Promise<"updated" | "not_better" | "conflict" | "invalid_current_record"> => {
+  const { userId, record } = params;
+  const time = parsePersonalRecordTime(record.timeText ?? "");
+  if (!time) {
+    throw new Error("invalid_time");
+  }
+  if (!record.recordDate) {
+    throw new Error("record_date_required");
+  }
+
+  const scope = and(
+    eq(personalRecords.userId, userId),
+    eq(personalRecords.distanceKey, record.distanceKey)
+  );
+  const [currentRecord] = await database
+    .select({ id: personalRecords.id, timeText: personalRecords.timeText })
+    .from(personalRecords)
+    .where(scope);
+
+  if (currentRecord) {
+    const currentTime = parsePersonalRecordTime(currentRecord.timeText);
+    if (!currentTime) {
+      return "invalid_current_record";
+    }
+    if (time.hundredths >= currentTime.hundredths) {
+      return "not_better";
+    }
+  }
+
+  const values = {
+    timeText: time.timeText,
+    recordDate: record.recordDate,
+    raceName: record.raceName ?? null,
+    raceCity: record.raceCity ?? null,
+    protocolUrl: record.protocolUrl ?? null,
+    updatedAt: new Date(),
+  };
+  const savedRecords = currentRecord
+    ? await database
+        .update(personalRecords)
+        .set(values)
+        .where(
+          and(
+            scope,
+            eq(personalRecords.id, currentRecord.id),
+            eq(personalRecords.timeText, currentRecord.timeText)
+          )
+        )
+        .returning({ id: personalRecords.id })
+    : await database
+        .insert(personalRecords)
+        .values({
+          ...values,
+          userId,
+          distanceKey: record.distanceKey,
+          createdAt: values.updatedAt,
+        })
+        .onConflictDoNothing({ target: [personalRecords.userId, personalRecords.distanceKey] })
+        .returning({ id: personalRecords.id });
+
+  return savedRecords.length > 0 ? "updated" : "conflict";
 };

@@ -19,6 +19,7 @@
 
 .itemHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
@@ -57,13 +58,27 @@
 
 .itemActions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   gap: 8px;
 }
 
 .itemActions :global(.ant-btn) {
   min-height: 44px;
+}
+
+.historyHint,
+.archiveHint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.archiveHint {
+  margin-block-end: 16px;
 }
 
 @media (max-width: 639px) {
@@ -78,13 +93,11 @@
   }
 
   .itemActions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
   }
 
   .itemActions :global(.ant-btn) {
-    width: 100%;
+    flex: 1 1 auto;
     min-height: 44px;
   }
 }

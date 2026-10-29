@@ -40,6 +40,12 @@ export const DIARY_MESSAGES = {
   shoesLoadFailed: "Не удалось загрузить список обуви.",
 } as const;
 
+export const WORKOUT_SHOE_ERRORS: Readonly<Record<string, string>> = {
+  archived_shoe:
+    "Эта пара уже в архиве. Уберите её из отчёта или верните в активные в профиле обуви.",
+  invalid_shoes: "Обувь больше недоступна. Обновите страницу и выберите другую пару.",
+};
+
 export const HEADER_LABELS = {
   title: "Ежедневный отчёт",
   subtitle: "Фиксируйте тренировку, восстановление и показатели выбранного дня.",
@@ -112,6 +118,7 @@ export const WORKOUT_LABELS = {
   surfacePlaceholder: "Покрытие",
   shoePlaceholder: "Обувь",
   shoeMileagePlaceholder: "Пробег в этой паре, км",
+  archivedShoeSuffix: "(в архиве)",
   weatherPlaceholder: "Погода",
   windPlaceholder: "Ветер",
   temperaturePlaceholder: "Температура, °C",
