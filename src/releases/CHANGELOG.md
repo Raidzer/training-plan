@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/Raidzer/training-plan/compare/v1.3.0...v1.4.0) (2026-10-29)
+
+
+### Новое
+
+* **competitions:** добавлено предложение сохранить первый или улучше… ([a51cabb](https://github.com/Raidzer/training-plan/commit/a51cabbcf1553844ba7cc255c7163b93020472eb))
+* **competitions:** добавлено предложение сохранить первый или улучшенный личный рекорд после забега ([31a9771](https://github.com/Raidzer/training-plan/commit/31a9771acc02ead5533eb90a742fee410eede86c))
+* **home:** добавлена главная страница с логотипом клуба и калькуляторами ([a60c9f2](https://github.com/Raidzer/training-plan/commit/a60c9f24a325fa9dc3697662b8ed2b36cc00cb3f))
+* **home:** добавлена главная страница с логотипом клуба и калькуляторами ([62cd480](https://github.com/Raidzer/training-plan/commit/62cd480d1f2f217c8620488ded300463cb2399cb))
+* **shoes:** добавлен архив обуви с сохранением истории тренировок ([c54fd11](https://github.com/Raidzer/training-plan/commit/c54fd11063e5139e73b61d36df8b321d6ca55213))
+* **shoes:** добавлен архив обуви с сохранением истории тренировок ([c53ac14](https://github.com/Raidzer/training-plan/commit/c53ac14d5c248ccef4be48622c2ff26dbe99cba9))
+* **telegram:** добавлен запрос результатов после соревнований с сохранением рекорда ([a921bee](https://github.com/Raidzer/training-plan/commit/a921bee51bf48642d4c58b1ac01061c902375d6f))
+* **telegram:** добавлен запрос результатов после соревнований с сохранением рекордов ([96d08e4](https://github.com/Raidzer/training-plan/commit/96d08e494367ba17d63f3c1c21104d8191232f5f))
+
 ## 1.3.0 (2026-10-25)
 
 
