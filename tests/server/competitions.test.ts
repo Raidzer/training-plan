@@ -176,6 +176,30 @@ describe("server/competitions", () => {
     expect(dbUpdateMock).not.toHaveBeenCalled();
   });
 
+  it("веб-ввод непустого результата снимает отметку пропуска", async () => {
+    dbSelectMock.mockReturnValueOnce(createSelectLimitBuilder([{ id: 20, blockId: 10 }]));
+    const setMock = vi.fn((_values: unknown) => ({
+      where: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+    }));
+    dbUpdateMock.mockReturnValue({ set: setMock });
+
+    await updateCompetition({ userId: 7, competitionId: 20, result: "39:30" });
+
+    expect(setMock).toHaveBeenCalledWith(expect.objectContaining({ isSkipped: false }));
+  });
+
+  it("очистка результата не снимает отметку пропуска", async () => {
+    dbSelectMock.mockReturnValueOnce(createSelectLimitBuilder([{ id: 20, blockId: 10 }]));
+    const setMock = vi.fn((_values: unknown) => ({
+      where: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+    }));
+    dbUpdateMock.mockReturnValue({ set: setMock });
+
+    await updateCompetition({ userId: 7, competitionId: 20, result: null });
+
+    expect(setMock.mock.calls[0][0]).not.toHaveProperty("isSkipped");
+  });
+
   it("deleteCompetition должен удалять соревнование после проверки владельца", async () => {
     dbSelectMock.mockReturnValueOnce(createSelectLimitBuilder([{ id: 20, blockId: 10 }]));
     createDeleteBuilder([{ id: 20 }]);

@@ -28,6 +28,7 @@ function createServerBlock(
         distanceLabel: "10 км",
         priority: COMPETITION_PRIORITIES.REGULAR,
         result: "39:30",
+        isSkipped: true,
         sortOrder: 0,
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
         updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -64,6 +65,7 @@ describe("adminUserCompetitionsUtils", () => {
           distanceLabel: "10 км",
           priority: COMPETITION_PRIORITIES.REGULAR,
           result: "39:30",
+          isSkipped: true,
         },
       ],
     });

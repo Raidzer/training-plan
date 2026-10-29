@@ -12,6 +12,7 @@ export type CompetitionRecord = {
   distanceLabel: string;
   priority: CompetitionPriority;
   result: string | null;
+  isSkipped: boolean;
   sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
@@ -87,6 +88,7 @@ const competitionReturningColumns = {
   distanceLabel: competitions.distanceLabel,
   priority: competitions.priority,
   result: competitions.result,
+  isSkipped: competitions.isSkipped,
   sortOrder: competitions.sortOrder,
   createdAt: competitions.createdAt,
   updatedAt: competitions.updatedAt,
@@ -101,6 +103,7 @@ type CompetitionSelectRow = {
   distanceLabel: string;
   priority: string;
   result: string | null;
+  isSkipped: boolean;
   sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
@@ -339,6 +342,7 @@ export async function updateCompetition(
     distanceLabel?: string;
     priority?: CompetitionPriority;
     result?: string | null;
+    isSkipped?: boolean;
   } = {
     updatedAt: new Date(),
   };
@@ -360,6 +364,9 @@ export async function updateCompetition(
   }
   if (params.result !== undefined) {
     values.result = params.result;
+    if (params.result?.trim()) {
+      values.isSkipped = false;
+    }
   }
 
   const [updated] = await db

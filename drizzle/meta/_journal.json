@@ -64,6 +64,13 @@
       "when": 1793172059663,
       "tag": "0008_tired_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793257942358,
+      "tag": "0009_competition_result_requests",
+      "breakpoints": true
     }
   ]
 }

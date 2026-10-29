@@ -2,6 +2,7 @@
 import { Bot, GrammyError, HttpError } from "grammy";
 import { registerCommands } from "@/bot/commands/registerCommands";
 import { startDispatchScheduler } from "@/bot/scheduler/dispatchPlan";
+import { startCompetitionResultScheduler } from "@/bot/scheduler/dispatchCompetitionResults";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) {
@@ -29,3 +30,4 @@ bot.start();
 console.log("Telegram-бот запущен");
 
 startDispatchScheduler(bot);
+startCompetitionResultScheduler(bot);

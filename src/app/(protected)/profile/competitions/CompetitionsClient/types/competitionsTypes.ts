@@ -10,6 +10,7 @@ export type CompetitionItem = {
   distanceLabel: string;
   priority: CompetitionPriority;
   result: string | null;
+  isSkipped?: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

@@ -204,6 +204,7 @@ export const competitions = pgTable(
     distanceLabel: varchar("distance_label", { length: 64 }).notNull(),
     priority: varchar("priority", { length: 16 }).notNull().default("regular"),
     result: varchar("result", { length: 32 }),
+    isSkipped: boolean("is_skipped").notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -274,6 +275,42 @@ export const telegramSubscriptions = pgTable("telegram_subscriptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const competitionResultRequests = pgTable(
+  "competition_result_requests",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    telegramAccountId: integer("telegram_account_id").notNull(),
+    chatId: bigint("chat_id", { mode: "number" }).notNull(),
+    competitionId: integer("competition_id")
+      .notNull()
+      .references(() => competitions.id, { onDelete: "cascade" }),
+    competitionDate: date("competition_date").notNull(),
+    leaseToken: varchar("lease_token", { length: 36 }),
+    leaseExpiresAt: timestamp("lease_expires_at"),
+    sentAt: timestamp("sent_at"),
+    promptMessageId: integer("prompt_message_id"),
+    resultSnapshot: jsonb("result_snapshot").$type<{
+      date: string;
+      nameLocation: string;
+      distanceMeters: number | null;
+      distanceLabel: string;
+      result: string | null;
+      updatedAt: string;
+    }>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("competition_result_requests_competition_date_idx").on(
+      table.competitionId,
+      table.competitionDate
+    ),
+    index("competition_result_requests_chat_prompt_idx").on(table.chatId, table.promptMessageId),
+  ]
+);
 
 export const weightEntries = pgTable(
   "weight_entries",

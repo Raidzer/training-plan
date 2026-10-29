@@ -153,10 +153,10 @@ export const upsertPersonalRecords = async (params: {
   });
 };
 
-export const improvePersonalRecord = async (params: {
-  userId: number;
-  record: PersonalRecordInput;
-}): Promise<"updated" | "not_better" | "conflict" | "invalid_current_record"> => {
+export const improvePersonalRecord = async (
+  params: { userId: number; record: PersonalRecordInput },
+  database: Pick<typeof db, "select" | "insert" | "update"> = db
+): Promise<"updated" | "not_better" | "conflict" | "invalid_current_record"> => {
   const { userId, record } = params;
   const time = parsePersonalRecordTime(record.timeText ?? "");
   if (!time) {
@@ -170,7 +170,7 @@ export const improvePersonalRecord = async (params: {
     eq(personalRecords.userId, userId),
     eq(personalRecords.distanceKey, record.distanceKey)
   );
-  const [currentRecord] = await db
+  const [currentRecord] = await database
     .select({ id: personalRecords.id, timeText: personalRecords.timeText })
     .from(personalRecords)
     .where(scope);
@@ -194,7 +194,7 @@ export const improvePersonalRecord = async (params: {
     updatedAt: new Date(),
   };
   const savedRecords = currentRecord
-    ? await db
+    ? await database
         .update(personalRecords)
         .set(values)
         .where(
@@ -205,7 +205,7 @@ export const improvePersonalRecord = async (params: {
           )
         )
         .returning({ id: personalRecords.id })
-    : await db
+    : await database
         .insert(personalRecords)
         .values({
           ...values,
