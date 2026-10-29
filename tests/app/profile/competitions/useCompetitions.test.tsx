@@ -313,6 +313,63 @@ describe("useCompetitions", () => {
     });
   });
 
+  it.each([null, "39:30"])(
+    "не отправляет неизменённый результат %s при правке метаданных из старой формы",
+    async (result) => {
+      const competition = createCompetition({ result });
+      const saved = createCompetition({ result: "38:00", nameLocation: "Новое название" });
+      const { hook, fetchMock } = await renderUseCompetitions([
+        createBlock({ competitions: [competition] }),
+      ]);
+      fetchMock.mockResolvedValueOnce(createJsonResponse({ competition: saved }));
+
+      act(() => {
+        hook.result.current.handleStartCompetitionEdit(competition);
+        hook.result.current.updateEditingCompetitionForm("nameLocation", saved.nameLocation);
+      });
+
+      await act(async () => {
+        expect(await hook.result.current.handleSaveCompetitionEdit()).toBe(true);
+      });
+
+      const request = fetchMock.mock.calls[1]?.[1] as RequestInit;
+      expect(JSON.parse(String(request.body))).toEqual({
+        date: competition.date,
+        nameLocation: saved.nameLocation,
+        distanceLabel: competition.distanceLabel,
+        priority: competition.priority,
+      });
+      expect(hook.result.current.blocks[0].competitions[0].result).toBe("38:00");
+    }
+  );
+
+  it.each([
+    { previousResult: null, nextResult: "39:30", expected: "39:30" },
+    { previousResult: "39:30", nextResult: "", expected: null },
+  ])(
+    "отправляет явно изменённый результат $expected",
+    async ({ previousResult, nextResult, expected }) => {
+      const competition = createCompetition({ result: previousResult });
+      const saved = createCompetition({ result: expected });
+      const { hook, fetchMock } = await renderUseCompetitions([
+        createBlock({ competitions: [competition] }),
+      ]);
+      fetchMock.mockResolvedValueOnce(createJsonResponse({ competition: saved }));
+
+      act(() => {
+        hook.result.current.handleStartCompetitionEdit(competition);
+        hook.result.current.updateEditingCompetitionForm("result", nextResult);
+      });
+
+      await act(async () => {
+        expect(await hook.result.current.handleSaveCompetitionEdit()).toBe(true);
+      });
+
+      const request = fetchMock.mock.calls[1]?.[1] as RequestInit;
+      expect(JSON.parse(String(request.body))).toMatchObject({ result: expected });
+    }
+  );
+
   it("сохраняет успешный результат создания при ошибке проверки рекорда", async () => {
     const competition = createCompetition({ result: "39:30" });
     const block = createBlock();

@@ -542,13 +542,22 @@ export const useCompetitions = ({ messageApi, modalApi }: UseCompetitionsParams)
       return false;
     }
 
+    const previousCompetition = blocks
+      .flatMap((block) => block.competitions)
+      .find((item) => item.id === editingCompetitionId);
+    const { result, ...metadata } = validation.value;
+    const payload =
+      previousCompetition && result === (previousCompetition.result?.trim() || null)
+        ? metadata
+        : validation.value;
+
     setEditingCompetitionFormError(null);
     setUpdatingCompetitionId(editingCompetitionId);
     try {
       const response = await fetch(`/api/competitions/${editingCompetitionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validation.value),
+        body: JSON.stringify(payload),
       });
       const data = await response.json().catch(() => null);
 
@@ -562,10 +571,6 @@ export const useCompetitions = ({ messageApi, modalApi }: UseCompetitionsParams)
         messageApi.error(competitionsLabels.updateFail);
         return false;
       }
-
-      const previousCompetition = blocks
-        .flatMap((block) => block.competitions)
-        .find((item) => item.id === competition.id);
 
       setBlocks((previous) => updateCompetitionInBlocks(previous, competition));
       handleCancelCompetitionEdit();

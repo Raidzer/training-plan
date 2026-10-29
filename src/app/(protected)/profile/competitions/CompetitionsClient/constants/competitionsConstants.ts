@@ -73,6 +73,7 @@ export const competitionsLabels = {
   resultPlaceholder: "01:26:52",
   competitionDatePlaceholder: "Дата",
   noResult: "Не указан",
+  skippedResult: "Пропущено",
   blockTitleRequired: "Введите название блока.",
   blockTitleTooLong: "Название блока длиннее 255 символов.",
   blockDateRequired: "Укажите даты блока.",

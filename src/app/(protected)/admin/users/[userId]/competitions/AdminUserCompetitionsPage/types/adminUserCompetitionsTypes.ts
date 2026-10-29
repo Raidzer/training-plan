@@ -7,6 +7,7 @@ export type AdminCompetitionItem = {
   distanceLabel: string;
   priority: CompetitionPriority;
   result: string | null;
+  isSkipped?: boolean;
 };
 
 export type AdminCompetitionBlockItem = {
