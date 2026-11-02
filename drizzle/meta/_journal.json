@@ -71,6 +71,13 @@
       "when": 1793257942358,
       "tag": "0009_competition_result_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793629527959,
+      "tag": "0010_workout-report-long-bottom",
+      "breakpoints": true
     }
   ]
 }

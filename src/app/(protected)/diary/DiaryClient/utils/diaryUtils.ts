@@ -40,6 +40,7 @@ export const toDefaultWorkoutForm = (report?: WorkoutReport | null): WorkoutForm
   startTime: report?.startTime ?? "",
   resultText: report?.resultText ?? "",
   commentText: report?.commentText ?? "",
+  hasLongBottom: report?.hasLongBottom ?? false,
   distanceKm: report?.distanceKm ?? "",
   overallScore: report?.overallScore ?? null,
   functionalScore: report?.functionalScore ?? null,

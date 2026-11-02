@@ -629,6 +629,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
             startTime: startTime.length > 0 ? startTime : null,
             resultText: form.resultText,
             commentText: form.commentText,
+            hasLongBottom: form.hasLongBottom,
             distanceKm,
             overallScore: form.overallScore,
             functionalScore: form.functionalScore,

@@ -47,6 +47,7 @@ export type DiaryWorkoutReport = {
   startTime: string | null;
   resultText: string;
   commentText: string | null;
+  hasLongBottom: boolean;
   distanceKm: string | null;
   overallScore: number | null;
   functionalScore: number | null;
@@ -237,6 +238,7 @@ export const getDiaryDayData = async (params: { userId: number; date: string }) 
           startTime: workoutReports.startTime,
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
+          hasLongBottom: workoutReports.hasLongBottom,
           distanceKm: workoutReports.distanceKm,
           overallScore: workoutReports.overallScore,
           functionalScore: workoutReports.functionalScore,
@@ -582,6 +584,7 @@ export const getDiaryExportRows = async (params: {
           startTime: workoutReports.startTime,
           resultText: workoutReports.resultText,
           commentText: workoutReports.commentText,
+          hasLongBottom: workoutReports.hasLongBottom,
           distanceKm: workoutReports.distanceKm,
           overallScore: workoutReports.overallScore,
           functionalScore: workoutReports.functionalScore,
@@ -687,6 +690,7 @@ export const getDiaryExportRows = async (params: {
       startTime: string | null;
       resultText: string;
       commentText: string | null;
+      hasLongBottom: boolean;
       distanceKm: string | null;
       overallScore: number | null;
       functionalScore: number | null;
@@ -808,7 +812,10 @@ export const getDiaryExportRows = async (params: {
       if (shoeText) {
         commentParts.push(shoeText);
       }
-      const commentText = commentParts.length ? commentParts.join(". ") : "-";
+      const commentText =
+        [commentParts.join(". "), report?.hasLongBottom ? "Длинный низ" : null]
+          .filter(Boolean)
+          .join("\n") || "-";
       tasks.push(taskText);
       results.push(resultText);
       comments.push(commentText);

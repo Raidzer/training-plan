@@ -69,6 +69,7 @@ const createDayPayload = (): DayPayload => ({
       startTime: "13:00",
       resultText: "server-value",
       commentText: "server-comment",
+      hasLongBottom: true,
       distanceKm: "10",
       overallScore: 7,
       functionalScore: 7,
@@ -181,5 +182,46 @@ describe("useDiaryData (repeat save)", () => {
     expect(postedBodies).toHaveLength(2);
     expect(postedBodies[0]?.resultText).toBe(constructorResult);
     expect(postedBodies[1]?.resultText).toBe(constructorResult);
+  });
+
+  it("сохраняет и снимает отметку длинного низа, восстанавливает её при загрузке", async () => {
+    const dayPayload = createDayPayload();
+    const postedBodies: Record<string, unknown>[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith("/api/shoes")) {
+        return createJsonResponse({ shoes: [] });
+      }
+      if (url.startsWith("/api/diary/marks")) {
+        return createJsonResponse({ days: [dayPayload.status] });
+      }
+      if (url.startsWith("/api/diary/day")) {
+        return createJsonResponse(dayPayload);
+      }
+      if (url === "/api/diary/workout-report" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        postedBodies.push(body);
+        dayPayload.workoutReports[0].hasLongBottom = body.hasLongBottom as boolean;
+        return createJsonResponse({ ok: true });
+      }
+      throw new Error(`Unexpected fetch call: ${url}`);
+    }) as typeof fetch;
+
+    const messageApi = createMessageApiMock();
+    const { result, unmount } = renderHook(() => useDiaryData({ messageApi, messages }));
+    await waitFor(() => expect(result.current.workoutForm[1]?.hasLongBottom).toBe(true));
+    await act(async () => result.current.handleSaveWorkout(1));
+    act(() => {
+      result.current.setWorkoutForm((previous) => ({
+        ...previous,
+        1: { ...previous[1], hasLongBottom: false },
+      }));
+    });
+    await act(async () => result.current.handleSaveWorkout(1));
+    expect(postedBodies.map((body) => body.hasLongBottom)).toEqual([true, false]);
+    unmount();
+
+    const reopened = renderHook(() => useDiaryData({ messageApi, messages }));
+    await waitFor(() => expect(reopened.result.current.workoutForm[1]?.hasLongBottom).toBe(false));
   });
 });

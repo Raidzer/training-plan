@@ -101,6 +101,7 @@ describe("server/workoutReports", () => {
             startTime: "08:00",
             resultText: "OK",
             commentText: "Good",
+            hasLongBottom: true,
             distanceKm: "10",
             overallScore: 8,
             functionalScore: 7,
@@ -127,9 +128,52 @@ describe("server/workoutReports", () => {
     expect(result).toMatchObject({
       id: 50,
       planEntryId: 11,
+      hasLongBottom: true,
       shoes: [{ id: 1, name: "Pegasus" }],
     });
   });
+
+  it.each([
+    { existing: true, hasLongBottom: true },
+    { existing: true, hasLongBottom: false },
+    { existing: true, hasLongBottom: undefined },
+    { existing: false, hasLongBottom: true },
+    { existing: false, hasLongBottom: false },
+    { existing: false, hasLongBottom: undefined },
+  ])(
+    "upsertWorkoutReport обрабатывает hasLongBottom=$hasLongBottom, existing=$existing",
+    async ({ existing, hasLongBottom }) => {
+      dbSelectMock
+        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+        .mockReturnValueOnce(createSelectWhereBuilder(existing ? [{ id: 99 }] : []));
+      const updateSetMock = vi
+        .fn()
+        .mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
+      const insertValuesMock = vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 99 }]),
+      });
+      dbUpdateMock.mockReturnValue({ set: updateSetMock });
+      dbInsertMock.mockReturnValue({ values: insertValuesMock });
+
+      await upsertWorkoutReport({
+        userId: 1,
+        planEntryId: 11,
+        date: "2026-02-09",
+        startTime: null,
+        resultText: "OK",
+        ...(hasLongBottom === undefined ? {} : { hasLongBottom }),
+      });
+
+      const valuesMock = existing ? updateSetMock : insertValuesMock;
+      expect(valuesMock).toHaveBeenCalledOnce();
+      const [values] = valuesMock.mock.calls[0];
+      if (hasLongBottom === undefined) {
+        expect(values).not.toHaveProperty("hasLongBottom");
+      } else {
+        expect(values).toHaveProperty("hasLongBottom", hasLongBottom);
+      }
+    }
+  );
 
   it("upsertWorkoutReport должен обновлять существующий отчет", async () => {
     dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]));

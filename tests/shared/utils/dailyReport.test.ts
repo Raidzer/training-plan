@@ -25,6 +25,7 @@ describe("shared/utils/dailyReport", () => {
           startTime: "07:15",
           resultText: "10 км за 48:00",
           commentText: "Пульс ровный",
+          hasLongBottom: true,
           overallScore: 8,
           functionalScore: 7,
           muscleScore: 6,
@@ -65,6 +66,7 @@ describe("shared/utils/dailyReport", () => {
         "10 км за 48:00",
         "",
         "Пульс ровный. -2.3°C. Солнечно. Ветер. Асфальт. Pegasus",
+        "Длинный низ",
         "",
         "8-7-6",
         "",
@@ -125,6 +127,7 @@ describe("shared/utils/dailyReport", () => {
           startTime: null,
           resultText: "10 км",
           commentText: null,
+          hasLongBottom: false,
           overallScore: null,
           functionalScore: null,
           muscleScore: null,
@@ -156,5 +159,56 @@ describe("shared/utils/dailyReport", () => {
     expect(report).not.toContain("null");
     expect(report).toContain("Кросс 10 км");
     expect(report).toContain("10 км");
+    expect(report).not.toContain("Длинный низ");
+  });
+
+  it.each([
+    { commentText: null, hasLongBottom: true },
+    { commentText: "  ", hasLongBottom: true },
+    { commentText: "Легко", hasLongBottom: true },
+    { commentText: null, hasLongBottom: false },
+    { commentText: "Легко", hasLongBottom: false },
+  ])("выводит отметку только у выбранной тренировки: %j", ({ commentText, hasLongBottom }) => {
+    const workoutReport = {
+      planEntryId: 1,
+      startTime: null,
+      resultText: "10 км",
+      commentText,
+      hasLongBottom,
+      overallScore: null,
+      functionalScore: null,
+      muscleScore: null,
+      weather: null,
+      hasWind: null,
+      temperatureC: null,
+      surface: null,
+      shoes: [],
+    };
+    const report = buildDailyReportText({
+      date: "2026-11-02",
+      day: {
+        planEntries: [
+          { id: 1, taskText: "Утренняя тренировка" },
+          { id: 2, taskText: "Вечерняя тренировка" },
+        ],
+        workoutReports: [workoutReport, { ...workoutReport, planEntryId: 2, hasLongBottom: false }],
+        weightEntries: [],
+        recoveryEntry: {
+          hasBath: false,
+          hasMfr: false,
+          hasMassage: false,
+          sleepHours: null,
+        },
+        status: { totalDistanceKm: 20 },
+        previousEveningWeightKg: null,
+      },
+    });
+
+    expect(report.match(/Длинный низ/g) ?? []).toHaveLength(hasLongBottom ? 1 : 0);
+    if (hasLongBottom) {
+      const expectedComment = commentText?.trim() ? `${commentText}\nДлинный низ` : "Длинный низ";
+      expect(report).toContain(`10 км\n\n${expectedComment}\n\n-`);
+      expect(report.split("Вечерняя тренировка")[1]).not.toContain("Длинный низ");
+    }
   });
 });

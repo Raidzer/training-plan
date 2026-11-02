@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { WorkoutsCard } from "@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard";
+import { toDefaultWorkoutForm } from "@/app/(protected)/diary/DiaryClient/utils/diaryUtils";
 
 const WORKOUTS_CARD_TEST_TIMEOUT_MS = 10000;
 
@@ -112,6 +113,7 @@ describe("WorkoutsCard", () => {
               startTime: "09:30",
               resultText: "old-result",
               commentText: "old-comment",
+              hasLongBottom: false,
               distanceKm: "",
               overallScore: null,
               functionalScore: null,
@@ -152,6 +154,7 @@ describe("WorkoutsCard", () => {
     "должен переключать тренировки табами и сохранять их отдельные действия",
     () => {
       const onEditWorkout = vi.fn();
+      const onChange = vi.fn();
 
       render(
         <WorkoutsCard
@@ -203,9 +206,9 @@ describe("WorkoutsCard", () => {
               isWorkload: true,
             },
           ]}
-          workoutForm={{}}
+          workoutForm={{ 1: { ...toDefaultWorkoutForm(), hasLongBottom: true } }}
           savingWorkouts={{}}
-          onChange={vi.fn()}
+          onChange={onChange}
           onSave={vi.fn()}
           onEditWorkout={onEditWorkout}
         />
@@ -221,12 +224,21 @@ describe("WorkoutsCard", () => {
       expect(firstTab.getAttribute("aria-selected")).toBe("true");
       expect(secondTab.getAttribute("aria-selected")).toBe("false");
 
+      const firstCheckbox = screen.getByRole("checkbox", { name: "Длинный низ" });
+      expect((firstCheckbox as HTMLInputElement).checked).toBe(true);
+      fireEvent.click(firstCheckbox);
+      expect(onChange).toHaveBeenNthCalledWith(1, 1, "hasLongBottom", false);
+
       fireEvent.click(
         screen.getByRole("button", {
           name: "Редактировать тренировку 1",
         })
       );
       fireEvent.click(secondTab);
+      const secondCheckbox = screen.getByRole("checkbox", { name: "Длинный низ" });
+      expect((secondCheckbox as HTMLInputElement).checked).toBe(false);
+      fireEvent.click(secondCheckbox);
+      expect(onChange).toHaveBeenNthCalledWith(2, 2, "hasLongBottom", true);
       fireEvent.click(
         screen.getByRole("button", {
           name: "Редактировать тренировку 2",

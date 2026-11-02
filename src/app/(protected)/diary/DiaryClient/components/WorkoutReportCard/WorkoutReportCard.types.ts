@@ -3,6 +3,7 @@ export type WorkoutField =
   | "resultText"
   | "distanceKm"
   | "commentText"
+  | "hasLongBottom"
   | "overallScore"
   | "functionalScore"
   | "muscleScore"
