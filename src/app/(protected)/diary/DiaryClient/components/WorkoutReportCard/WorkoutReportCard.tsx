@@ -1,7 +1,17 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { AutoComplete, Button, Collapse, Input, InputNumber, Select, Tag, Tooltip } from "antd";
+import {
+  AutoComplete,
+  Button,
+  Checkbox,
+  Collapse,
+  Input,
+  InputNumber,
+  Select,
+  Tag,
+  Tooltip,
+} from "antd";
 import {
   BuildOutlined,
   CheckCircleOutlined,
@@ -45,7 +55,7 @@ type WorkoutReportCardProps = {
   onChange: (
     entryId: number,
     field: WorkoutField,
-    value: string | number | number[] | Record<number, string> | null
+    value: string | number | boolean | number[] | Record<number, string> | null
   ) => void;
   onSave: (entryId: number) => void;
   onOpenConstructor: (entryId: number, taskText: string) => void;
@@ -374,6 +384,14 @@ export function WorkoutReportCard({
               onChange={(event) => onChange(entry.id, "commentText", event.target.value)}
             />
           </div>
+          <Checkbox
+            name={`${fieldPrefix}-hasLongBottom`}
+            className={styles.longBottomCheckbox}
+            checked={form?.hasLongBottom ?? false}
+            onChange={(event) => onChange(entry.id, "hasLongBottom", event.target.checked)}
+          >
+            {WORKOUT_LABELS.longBottomLabel}
+          </Checkbox>
         </div>
 
         <Collapse

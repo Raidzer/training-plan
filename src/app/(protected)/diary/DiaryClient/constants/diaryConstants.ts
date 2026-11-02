@@ -123,6 +123,7 @@ export const WORKOUT_LABELS = {
   windPlaceholder: "Ветер",
   temperaturePlaceholder: "Температура, °C",
   commentPlaceholder: "Комментарий",
+  longBottomLabel: "Длинный низ",
   saveReportLabel: "Сохранить отчет",
   editWorkoutLabel: "Редактировать тренировку",
 } as const;

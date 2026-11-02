@@ -64,6 +64,7 @@ describe("DiaryClient diaryUtils", () => {
       startTime: "09:00",
       resultText: "10 км",
       commentText: null,
+      hasLongBottom: true,
       distanceKm: "10.5",
       overallScore: 8,
       functionalScore: null,
@@ -82,6 +83,7 @@ describe("DiaryClient diaryUtils", () => {
       startTime: "09:00",
       resultText: "10 км",
       commentText: "",
+      hasLongBottom: true,
       distanceKm: "10.5",
       overallScore: 8,
       functionalScore: null,
@@ -97,10 +99,12 @@ describe("DiaryClient diaryUtils", () => {
       },
     });
     expect(toDefaultWorkoutForm({ ...report, hasWind: true }).hasWind).toBe("true");
+    expect(toDefaultWorkoutForm({ ...report, hasLongBottom: false }).hasLongBottom).toBe(false);
     expect(toDefaultWorkoutForm({ ...report, startTime: null }).startTime).toBe("");
     expect(toDefaultWorkoutForm(null)).toMatchObject({
       startTime: "",
       resultText: "",
+      hasLongBottom: false,
       hasWind: "",
       shoeIds: [],
       shoeMileageKm: {},

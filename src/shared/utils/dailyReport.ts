@@ -15,6 +15,7 @@ type DailyReportWorkoutReport = {
   startTime: string | null;
   resultText: string;
   commentText: string | null;
+  hasLongBottom: boolean;
   overallScore: number | null;
   functionalScore: number | null;
   muscleScore: number | null;
@@ -164,7 +165,10 @@ export const buildDailyReportText = (params: { date: string; day: DailyReportDay
     if (shoeText) {
       commentParts.push(shoeText);
     }
-    const commentText = commentParts.length ? commentParts.join(". ") : "-";
+    const commentText =
+      [commentParts.join(". "), report?.hasLongBottom ? "Длинный низ" : null]
+        .filter(Boolean)
+        .join("\n") || "-";
     const scoreText = formatWorkoutScore(report);
 
     pushWithSpacer(taskText);

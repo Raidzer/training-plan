@@ -53,7 +53,7 @@ type WorkoutsCardProps = {
   onChange: (
     entryId: number,
     field: WorkoutField,
-    value: string | number | number[] | Record<number, string> | null
+    value: string | number | boolean | number[] | Record<number, string> | null
   ) => void;
   onSave: (entryId: number) => void;
   onEditWorkout?: (entryId: number) => void;
