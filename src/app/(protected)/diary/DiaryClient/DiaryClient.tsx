@@ -27,7 +27,7 @@ import {
   SURFACE_OPTIONS,
   WEATHER_OPTIONS,
   WEIGHT_LABELS,
-  WIND_OPTIONS,
+  YES_NO_OPTIONS,
   WORKOUT_EDIT_LABELS,
   WORKOUT_LABELS,
 } from "./constants/diaryConstants";
@@ -123,7 +123,7 @@ export function DiaryClient({ userId }: { userId: number }) {
             surfaceValue === "Беговая дорожка";
           if (isIndoorSurface) {
             next.weather = "";
-            next.hasWind = "";
+            next.hasWind = "false";
             next.temperatureC = "";
           }
         }
@@ -248,7 +248,7 @@ export function DiaryClient({ userId }: { userId: number }) {
                     surfaceOptions={SURFACE_OPTIONS}
                     shoeOptions={shoeOptions}
                     weatherOptions={WEATHER_OPTIONS}
-                    windOptions={WIND_OPTIONS}
+                    windOptions={YES_NO_OPTIONS}
                     shoeLoading={loadingShoes}
                     entries={visibleDayData.planEntries}
                     workoutReports={visibleDayData.workoutReports}

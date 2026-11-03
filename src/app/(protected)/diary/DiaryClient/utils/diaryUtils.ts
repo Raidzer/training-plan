@@ -46,12 +46,7 @@ export const toDefaultWorkoutForm = (report?: WorkoutReport | null): WorkoutForm
   functionalScore: report?.functionalScore ?? null,
   muscleScore: report?.muscleScore ?? null,
   weather: report?.weather ?? "",
-  hasWind:
-    report?.hasWind === null || report?.hasWind === undefined
-      ? ""
-      : report.hasWind
-        ? "true"
-        : "false",
+  hasWind: report?.hasWind ? "true" : "false",
   temperatureC: report?.temperatureC ?? "",
   surface: report?.surface ?? "",
   shoeIds: report?.shoes ? report.shoes.map((shoe) => shoe.id) : [],

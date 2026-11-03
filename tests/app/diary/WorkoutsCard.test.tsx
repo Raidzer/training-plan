@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { WorkoutsCard } from "@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard";
 import { toDefaultWorkoutForm } from "@/app/(protected)/diary/DiaryClient/utils/diaryUtils";
+import { YES_NO_OPTIONS } from "@/app/(protected)/diary/DiaryClient/constants/diaryConstants";
 
 const WORKOUTS_CARD_TEST_TIMEOUT_MS = 10000;
 
@@ -152,7 +153,7 @@ describe("WorkoutsCard", () => {
 
   it(
     "должен переключать тренировки табами и сохранять их отдельные действия",
-    () => {
+    async () => {
       const onEditWorkout = vi.fn();
       const onChange = vi.fn();
 
@@ -186,7 +187,7 @@ describe("WorkoutsCard", () => {
           ]}
           shoeOptions={[]}
           weatherOptions={[{ value: "sunny", label: "Солнечно" }]}
-          windOptions={[{ value: "true", label: "Есть" }]}
+          windOptions={YES_NO_OPTIONS}
           shoeLoading={false}
           entries={[
             {
@@ -224,9 +225,15 @@ describe("WorkoutsCard", () => {
       expect(firstTab.getAttribute("aria-selected")).toBe("true");
       expect(secondTab.getAttribute("aria-selected")).toBe("false");
 
-      const firstCheckbox = screen.getByRole("checkbox", { name: "Длинный низ" });
-      expect((firstCheckbox as HTMLInputElement).checked).toBe(true);
-      fireEvent.click(firstCheckbox);
+      expect(screen.queryByRole("checkbox", { name: "Длинный низ" })).toBeNull();
+      expect(screen.queryByRole("combobox", { name: "Длинный низ" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Условия и экипировка" }));
+      const firstLongBottom = screen.getByRole("combobox", { name: "Длинный низ" });
+      expect(firstLongBottom.closest(".ant-select")?.textContent).toContain("Да");
+      fireEvent.mouseDown(firstLongBottom);
+      fireEvent.click(
+        await screen.findByText("Нет", { selector: ".ant-select-item-option-content" })
+      );
       expect(onChange).toHaveBeenNthCalledWith(1, 1, "hasLongBottom", false);
 
       fireEvent.click(
@@ -235,9 +242,14 @@ describe("WorkoutsCard", () => {
         })
       );
       fireEvent.click(secondTab);
-      const secondCheckbox = screen.getByRole("checkbox", { name: "Длинный низ" });
-      expect((secondCheckbox as HTMLInputElement).checked).toBe(false);
-      fireEvent.click(secondCheckbox);
+      fireEvent.click(screen.getByRole("button", { name: "Условия и экипировка" }));
+      const secondLongBottom = screen.getByRole("combobox", { name: "Длинный низ" });
+      const wind = screen.getByRole("combobox", { name: "Wind" });
+      expect(secondLongBottom.closest(".ant-select")?.textContent).toContain("Нет");
+      expect(wind.closest(".ant-select")?.textContent).toContain("Нет");
+      fireEvent.mouseDown(secondLongBottom);
+      fireEvent.keyDown(secondLongBottom, { key: "ArrowDown", keyCode: 40 });
+      fireEvent.keyDown(secondLongBottom, { key: "Enter", keyCode: 13 });
       expect(onChange).toHaveBeenNthCalledWith(2, 2, "hasLongBottom", true);
       fireEvent.click(
         screen.getByRole("button", {

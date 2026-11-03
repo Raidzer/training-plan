@@ -369,6 +369,7 @@ describe("DiaryClient", () => {
       })
     );
     expect(diaryData.getWorkoutState()[101].weather).toBe("");
+    expect(diaryData.getWorkoutState()[101].hasWind).toBe("false");
     expect(diaryData.getWorkoutState()[101].shoeMileageKm).toEqual({});
     expect(diaryClientMocks.handleSaveWeightMock).toHaveBeenCalledWith("morning");
     expect(diaryClientMocks.handleSaveRecoveryMock).toHaveBeenCalled();

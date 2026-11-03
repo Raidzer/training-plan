@@ -132,7 +132,7 @@ describe("shared/utils/dailyReport", () => {
           functionalScore: null,
           muscleScore: null,
           weather: null,
-          hasWind: null,
+          hasWind: false,
           temperatureC: null,
           surface: null,
           shoes: [],
@@ -160,6 +160,7 @@ describe("shared/utils/dailyReport", () => {
     expect(report).toContain("Кросс 10 км");
     expect(report).toContain("10 км");
     expect(report).not.toContain("Длинный низ");
+    expect(report).not.toContain("Ветер");
   });
 
   it.each([

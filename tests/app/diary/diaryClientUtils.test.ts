@@ -99,13 +99,14 @@ describe("DiaryClient diaryUtils", () => {
       },
     });
     expect(toDefaultWorkoutForm({ ...report, hasWind: true }).hasWind).toBe("true");
+    expect(toDefaultWorkoutForm({ ...report, hasWind: null }).hasWind).toBe("false");
     expect(toDefaultWorkoutForm({ ...report, hasLongBottom: false }).hasLongBottom).toBe(false);
     expect(toDefaultWorkoutForm({ ...report, startTime: null }).startTime).toBe("");
     expect(toDefaultWorkoutForm(null)).toMatchObject({
       startTime: "",
       resultText: "",
       hasLongBottom: false,
-      hasWind: "",
+      hasWind: "false",
       shoeIds: [],
       shoeMileageKm: {},
     });

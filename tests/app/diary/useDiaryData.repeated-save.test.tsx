@@ -219,6 +219,7 @@ describe("useDiaryData (repeat save)", () => {
     });
     await act(async () => result.current.handleSaveWorkout(1));
     expect(postedBodies.map((body) => body.hasLongBottom)).toEqual([true, false]);
+    expect(postedBodies.map((body) => body.hasWind)).toEqual([false, false]);
     unmount();
 
     const reopened = renderHook(() => useDiaryData({ messageApi, messages }));
