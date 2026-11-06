@@ -226,8 +226,13 @@ describe("WorkoutsCard", () => {
       expect(secondTab.getAttribute("aria-selected")).toBe("false");
 
       expect(screen.queryByRole("checkbox", { name: "Длинный низ" })).toBeNull();
-      expect(screen.queryByRole("combobox", { name: "Длинный низ" })).toBeNull();
-      fireEvent.click(screen.getByRole("button", { name: "Условия и экипировка" }));
+      expect(
+        screen.getByRole("button", { name: "Оценка тренировки", expanded: true })
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Условия и экипировка", expanded: true })
+      ).toBeTruthy();
+      expect(screen.getByRole("spinbutton", { name: "Overall" })).toBeTruthy();
       const firstLongBottom = screen.getByRole("combobox", { name: "Длинный низ" });
       expect(firstLongBottom.closest(".ant-select")?.textContent).toContain("Да");
       fireEvent.mouseDown(firstLongBottom);
@@ -242,7 +247,13 @@ describe("WorkoutsCard", () => {
         })
       );
       fireEvent.click(secondTab);
-      fireEvent.click(screen.getByRole("button", { name: "Условия и экипировка" }));
+      expect(
+        screen.getByRole("button", { name: "Оценка тренировки", expanded: true })
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Условия и экипировка", expanded: true })
+      ).toBeTruthy();
+      expect(screen.getByRole("spinbutton", { name: "Overall" })).toBeTruthy();
       const secondLongBottom = screen.getByRole("combobox", { name: "Длинный низ" });
       const wind = screen.getByRole("combobox", { name: "Wind" });
       expect(secondLongBottom.closest(".ant-select")?.textContent).toContain("Нет");
@@ -260,6 +271,12 @@ describe("WorkoutsCard", () => {
       expect(secondTab.getAttribute("aria-selected")).toBe("true");
       expect(onEditWorkout).toHaveBeenNthCalledWith(1, 1);
       expect(onEditWorkout).toHaveBeenNthCalledWith(2, 2);
+
+      for (const name of ["Оценка тренировки", "Условия и экипировка"]) {
+        fireEvent.click(screen.getByRole("button", { name, expanded: true }));
+        fireEvent.click(screen.getByRole("button", { name, expanded: false }));
+        expect(screen.getByRole("button", { name, expanded: true })).toBeTruthy();
+      }
     },
     WORKOUTS_CARD_TEST_TIMEOUT_MS
   );

@@ -393,6 +393,7 @@ export function WorkoutReportCard({
 
         <Collapse
           className={styles.collapse}
+          defaultActiveKey={["assessment", "conditions"]}
           ghost
           items={[
             {
