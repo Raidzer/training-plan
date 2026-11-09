@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createSession,
   expectJsonError,
@@ -29,6 +30,7 @@ vi.mock("@/server/planImports", () => {
 });
 
 import { POST } from "@/app/api/plans/import/route";
+import { MAX_SPREADSHEET_FILE_BYTES } from "@/server/spreadsheetLimits";
 
 async function createWorkbookBuffer(params: {
   headers?: string[];
@@ -67,37 +69,68 @@ function createImportRequest(
   fileBuffer?: ArrayBuffer | Uint8Array,
   filename: string | null = "plan-import.xlsx"
 ): Request {
-  let file: (Blob & { name?: string; arrayBuffer?: () => Promise<ArrayBuffer> }) | null = null;
-  if (fileBuffer) {
-    file = new Blob([fileBuffer as unknown as BlobPart], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }) as Blob & { name?: string; arrayBuffer?: () => Promise<ArrayBuffer> };
-    if (filename !== null) {
-      file.name = filename;
-    }
-    file.arrayBuffer = async () =>
-      fileBuffer instanceof ArrayBuffer
-        ? fileBuffer
-        : (fileBuffer.buffer.slice(
-            fileBuffer.byteOffset,
-            fileBuffer.byteOffset + fileBuffer.byteLength
-          ) as ArrayBuffer);
-  }
-
-  const requestStub = {
-    formData: async () => ({
-      get: (key: string) => (key === "file" ? file : null),
-    }),
-  };
-  return requestStub as unknown as Request;
+  const body = new Blob(
+    fileBuffer
+      ? [
+          `--test-boundary\r\nContent-Disposition: form-data; name="file"; filename="${filename ?? "plan.xlsx"}"\r\nContent-Type: application/octet-stream\r\n\r\n`,
+          fileBuffer as BlobPart,
+          "\r\n--test-boundary--\r\n",
+        ]
+      : ["--test-boundary--\r\n"]
+  );
+  return new Request("http://localhost/api/plans/import", {
+    method: "POST",
+    headers: { "content-type": "multipart/form-data; boundary=test-boundary" },
+    body,
+  });
 }
 
 describe("POST /api/plans/import", () => {
   beforeEach(() => {
+    vi.stubGlobal("Blob", NodeBlob);
+    vi.stubGlobal("File", NodeFile);
     vi.clearAllMocks();
     authMock.mockResolvedValue(createSession({ id: "21" }));
     getExistingPlanEntryDatesMock.mockResolvedValue(new Set<string>());
     createPlanImportMock.mockResolvedValue({ id: 88, insertedCount: 2 });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("возвращает 413 без записи при превышении размера файла", async () => {
+    const response = await POST(
+      createImportRequest(new ArrayBuffer(MAX_SPREADSHEET_FILE_BYTES + 1))
+    );
+    await expectJsonError(response, 413, "Файл слишком большой. Максимальный размер — 10 МиБ");
+    expect(createPlanImportMock).not.toHaveBeenCalled();
+  });
+
+  it("ограничивает число строк листа до разбора всех записей", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Plan");
+    sheet.addRow(["Дата", "Задание"]);
+    sheet.getRow(10_002).values = ["01.01.2026", "Run"];
+    const response = await POST(createImportRequest(await writeWorkbookBuffer(workbook)));
+    await expectJsonError(
+      response,
+      400,
+      "Файл содержит больше 10 000 строк. Разделите его на части"
+    );
+    expect(createPlanImportMock).not.toHaveBeenCalled();
+  });
+
+  it("ограничивает число тренировок после разделения строки", async () => {
+    const tasks = Array.from({ length: 10_001 }, (_, index) => `${index + 1}) Run`).join("\n");
+    const buffer = await createWorkbookBuffer({ rows: [{ date: "01.01.2026", task: tasks }] });
+    const response = await POST(createImportRequest(buffer));
+    await expectJsonError(
+      response,
+      400,
+      "Файл содержит больше 10 000 строк. Разделите его на части"
+    );
+    expect(createPlanImportMock).not.toHaveBeenCalled();
   });
 
   it("должен возвращать 401 без сессии", async () => {
@@ -284,7 +317,7 @@ describe("POST /api/plans/import", () => {
     expect(payload.warnings).toBeUndefined();
   });
 
-  it("должен импортировать только новые даты при повторной загрузке полного файла", async () => {
+  it("передаёт все даты сервису для проверки внутри транзакции", async () => {
     getExistingPlanEntryDatesMock.mockResolvedValue(new Set(["2026-01-05", "2026-01-09"]));
     createPlanImportMock.mockResolvedValue({ id: 93, insertedCount: 1 });
     const buffer = await createWorkbookBuffer({
@@ -311,14 +344,14 @@ describe("POST /api/plans/import", () => {
     });
 
     const importArg = createPlanImportMock.mock.calls[0][0] as {
-      newEntries: Array<{ date: string; taskText: string }>;
+      entries: Array<{ date: string; taskText: string }>;
     };
-    expect(importArg.newEntries).toEqual([
-      expect.objectContaining({
-        date: "2026-01-15",
-        taskText: "Новая дата",
-      }),
+    expect(importArg.entries.map((entry) => entry.date)).toEqual([
+      "2026-01-05",
+      "2026-01-09",
+      "2026-01-15",
     ]);
+    expect(getExistingPlanEntryDatesMock).not.toHaveBeenCalled();
   });
 
   it("должен парсить числовую дату, формулу и файл без колонки комментария", async () => {
@@ -512,7 +545,7 @@ describe("POST /api/plans/import", () => {
     expect(createPlanImportMock).toHaveBeenCalledWith(
       expect.objectContaining({
         filename: "plan.xlsx",
-        newEntries: [],
+        entries: [expect.objectContaining({ date: "2026-01-04" })],
       })
     );
   });
@@ -544,7 +577,7 @@ describe("POST /api/plans/import", () => {
     });
     expect(payload).not.toHaveProperty("warnings");
 
-    expect(getExistingPlanEntryDatesMock).toHaveBeenCalledWith(21, ["2026-01-01", "2026-01-02"]);
+    expect(getExistingPlanEntryDatesMock).not.toHaveBeenCalled();
     expect(createPlanImportMock).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 21,
@@ -556,7 +589,6 @@ describe("POST /api/plans/import", () => {
 
     const importArg = createPlanImportMock.mock.calls[0][0] as {
       entries: Array<{ date: string; sessionOrder: number; isWorkload: boolean }>;
-      newEntries: Array<{ date: string; sessionOrder: number }>;
     };
     expect(importArg.entries).toHaveLength(2);
     expect(importArg.entries[0]).toMatchObject({
@@ -569,11 +601,5 @@ describe("POST /api/plans/import", () => {
       sessionOrder: 1,
       isWorkload: false,
     });
-    expect(importArg.newEntries).toEqual([
-      expect.objectContaining({
-        date: "2026-01-02",
-        sessionOrder: 1,
-      }),
-    ]);
   });
 });

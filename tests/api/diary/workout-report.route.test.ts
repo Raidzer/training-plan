@@ -64,6 +64,17 @@ function createValidPayload(overrides: Record<string, unknown> = {}) {
 }
 
 describe("POST /api/diary/workout-report", () => {
+  it("возвращает date_mismatch, если дата изменилась во время ожидания блокировки", async () => {
+    upsertWorkoutReportMock.mockRejectedValueOnce(new Error("date_mismatch"));
+    const response = await POST(
+      createJsonRequest({
+        url: "http://localhost/api/diary/workout-report",
+        body: createValidPayload(),
+      })
+    );
+    await expectJsonError(response, 400, "date_mismatch");
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     authMock.mockResolvedValue(createSession({ id: "15" }));

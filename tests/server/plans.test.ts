@@ -69,6 +69,7 @@ function createTx(selectQueue: unknown[]) {
   const deleteWhereMock = vi.fn().mockResolvedValue(undefined);
 
   const tx = {
+    execute: vi.fn().mockResolvedValue({}),
     select,
     insert: vi.fn(() => {
       return {
@@ -99,6 +100,13 @@ function createTx(selectQueue: unknown[]) {
 describe("server/plans", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbTransactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        execute: vi.fn().mockResolvedValue({}),
+        select: dbSelectMock,
+        update: dbUpdateMock,
+      })
+    );
   });
 
   it("getPlanEntriesWithReportFlags должен возвращать данные из db", async () => {

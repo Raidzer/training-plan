@@ -137,6 +137,7 @@ describe("server/adminUsers", () => {
 
   it("deleteUserAccountById должен запрещать удаление администратора до delete-запросов", async () => {
     const tx = {
+      execute: vi.fn().mockResolvedValue({}),
       select: vi.fn().mockReturnValueOnce(
         createSelectLimitBuilder([
           {
@@ -161,6 +162,7 @@ describe("server/adminUsers", () => {
 
   it("deleteUserAccountById должен удалять обычного пользователя транзакционно", async () => {
     const tx = {
+      execute: vi.fn().mockResolvedValue({}),
       select: vi
         .fn()
         .mockReturnValueOnce(
@@ -202,6 +204,7 @@ describe("server/adminUsers", () => {
 
   it("clearUserTrainingDataById должен возвращать not_found без delete-запросов", async () => {
     const tx = {
+      execute: vi.fn().mockResolvedValue({}),
       select: vi.fn().mockReturnValueOnce(createSelectLimitBuilder([])),
       delete: vi.fn(),
     };
@@ -218,6 +221,7 @@ describe("server/adminUsers", () => {
 
   it("clearUserTrainingDataById должен очищать план и дневник транзакционно", async () => {
     const tx = {
+      execute: vi.fn().mockResolvedValue({}),
       select: vi
         .fn()
         .mockReturnValueOnce(createSelectLimitBuilder([{ id: 2 }]))

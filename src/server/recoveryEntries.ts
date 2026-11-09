@@ -1,13 +1,14 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { lockTrainingData } from "@/server/trainingDataLock";
 import { recoveryEntries } from "@/server/db/schema";
 
 export const upsertRecoveryEntry = async (params: {
   userId: number;
   date: string;
-  hasBath: boolean;
-  hasMfr: boolean;
-  hasMassage: boolean;
+  hasBath?: boolean;
+  hasMfr?: boolean;
+  hasMassage?: boolean;
   recoveryOther?: string | null;
   overallScore?: number | null;
   functionalScore?: number | null;
@@ -17,9 +18,9 @@ export const upsertRecoveryEntry = async (params: {
 }) => {
   const now = new Date();
   const updates: {
-    hasBath: boolean;
-    hasMfr: boolean;
-    hasMassage: boolean;
+    hasBath?: boolean;
+    hasMfr?: boolean;
+    hasMassage?: boolean;
     recoveryOther?: string | null;
     updatedAt: Date;
     overallScore?: number | null;
@@ -28,11 +29,17 @@ export const upsertRecoveryEntry = async (params: {
     sleepHours?: string | null;
     additionalSleepHours?: string | null;
   } = {
-    hasBath: params.hasBath,
-    hasMfr: params.hasMfr,
-    hasMassage: params.hasMassage,
     updatedAt: now,
   };
+  if (params.hasBath !== undefined) {
+    updates.hasBath = params.hasBath;
+  }
+  if (params.hasMfr !== undefined) {
+    updates.hasMfr = params.hasMfr;
+  }
+  if (params.hasMassage !== undefined) {
+    updates.hasMassage = params.hasMassage;
+  }
   if (params.overallScore !== undefined) {
     updates.overallScore = params.overallScore;
   }
@@ -70,9 +77,9 @@ export const upsertRecoveryEntry = async (params: {
   } = {
     userId: params.userId,
     date: params.date,
-    hasBath: params.hasBath,
-    hasMfr: params.hasMfr,
-    hasMassage: params.hasMassage,
+    hasBath: params.hasBath ?? false,
+    hasMfr: params.hasMfr ?? false,
+    hasMassage: params.hasMassage ?? false,
     createdAt: now,
     updatedAt: now,
   };
@@ -95,17 +102,20 @@ export const upsertRecoveryEntry = async (params: {
   if (params.recoveryOther !== undefined) {
     insertValues.recoveryOther = params.recoveryOther;
   }
-  const [existing] = await db
-    .select({ id: recoveryEntries.id })
-    .from(recoveryEntries)
-    .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));
+  await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
+    const [existing] = await tx
+      .select({ id: recoveryEntries.id })
+      .from(recoveryEntries)
+      .where(and(eq(recoveryEntries.userId, params.userId), eq(recoveryEntries.date, params.date)));
 
-  if (existing) {
-    await db.update(recoveryEntries).set(updates).where(eq(recoveryEntries.id, existing.id));
-    return;
-  }
+    if (existing) {
+      await tx.update(recoveryEntries).set(updates).where(eq(recoveryEntries.id, existing.id));
+      return;
+    }
 
-  await db.insert(recoveryEntries).values(insertValues);
+    await tx.insert(recoveryEntries).values(insertValues);
+  });
 };
 
 export const getRecoveryEntryByDate = async (params: { userId: number; date: string }) => {
