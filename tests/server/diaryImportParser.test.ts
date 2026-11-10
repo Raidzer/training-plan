@@ -26,6 +26,17 @@ function addDiaryHeader(sheet: ExcelJS.Worksheet) {
 }
 
 describe("parseDiaryWorkbook", () => {
+  it("отклоняет лист с более чем 10 000 строк до разбора записей", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Дневник");
+    addDiaryHeader(sheet);
+    sheet.getRow(10_002).values = ["01.01.2026", "Run"];
+    await expect(parseDiaryWorkbook(await writeWorkbookBuffer(workbook))).rejects.toMatchObject({
+      status: 400,
+      message: "Файл содержит больше 10 000 строк. Разделите его на части",
+    });
+  });
+
   it("должен выбирать лист, который начинается с Дневник, и парсить дневниковые поля", async () => {
     const workbook = new ExcelJS.Workbook();
     const exampleSheet = workbook.addWorksheet("Пример дневника и отчёта");

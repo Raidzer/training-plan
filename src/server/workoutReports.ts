@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { lockTrainingData } from "@/server/trainingDataLock";
 import {
   planEntries,
   shoes,
@@ -209,13 +210,17 @@ export const upsertWorkoutReport = async (params: {
   shoeUsages?: WorkoutReportShoeUsage[] | null;
 }): Promise<WorkoutReportUpsertResult> => {
   return await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
     const [entry] = await tx
-      .select({ id: planEntries.id })
+      .select({ id: planEntries.id, date: planEntries.date })
       .from(planEntries)
       .where(and(eq(planEntries.id, params.planEntryId), eq(planEntries.userId, params.userId)))
       .for("update");
     if (!entry) {
       throw new Error("invalid_plan_entry");
+    }
+    if (entry.date !== params.date) {
+      throw new Error("date_mismatch");
     }
     const now = new Date();
     const updateValues: {

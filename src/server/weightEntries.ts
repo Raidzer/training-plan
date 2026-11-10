@@ -1,11 +1,15 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { lockTrainingData } from "@/server/trainingDataLock";
 import { weightEntries } from "@/server/db/schema";
 
 export type WeightEntryPeriod = "morning" | "evening";
 
-export const getLatestWeightEntry = async (params: { userId: number }) => {
-  const [entry] = await db
+export const getLatestWeightEntry = async (
+  params: { userId: number },
+  executor: Pick<typeof db, "select"> = db
+) => {
+  const [entry] = await executor
     .select({
       weightKg: weightEntries.weightKg,
     })
@@ -26,31 +30,34 @@ export const upsertWeightEntry = async (params: {
   const now = new Date();
   const weightValue = Math.round(params.weightKg * 10) / 10;
   const weightText = weightValue.toFixed(1);
-  const [existing] = await db
-    .select({ id: weightEntries.id })
-    .from(weightEntries)
-    .where(
-      and(
-        eq(weightEntries.userId, params.userId),
-        eq(weightEntries.date, params.date),
-        eq(weightEntries.period, params.period)
-      )
-    );
+  await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
+    const [existing] = await tx
+      .select({ id: weightEntries.id })
+      .from(weightEntries)
+      .where(
+        and(
+          eq(weightEntries.userId, params.userId),
+          eq(weightEntries.date, params.date),
+          eq(weightEntries.period, params.period)
+        )
+      );
 
-  if (existing) {
-    await db
-      .update(weightEntries)
-      .set({ weightKg: weightText, updatedAt: now })
-      .where(eq(weightEntries.id, existing.id));
-    return;
-  }
+    if (existing) {
+      await tx
+        .update(weightEntries)
+        .set({ weightKg: weightText, updatedAt: now })
+        .where(eq(weightEntries.id, existing.id));
+      return;
+    }
 
-  await db.insert(weightEntries).values({
-    userId: params.userId,
-    date: params.date,
-    period: params.period,
-    weightKg: weightText,
-    createdAt: now,
-    updatedAt: now,
+    await tx.insert(weightEntries).values({
+      userId: params.userId,
+      date: params.date,
+      period: params.period,
+      weightKg: weightText,
+      createdAt: now,
+      updatedAt: now,
+    });
   });
 };

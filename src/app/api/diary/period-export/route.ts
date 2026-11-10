@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { isTrainingDataBusyError } from "@/server/trainingDataLock";
 import ExcelJS from "exceljs";
 import { auth } from "@/auth";
+import { db } from "@/server/db/client";
+import { assertExportRangeLimit, SpreadsheetLimitError } from "@/server/spreadsheetLimits";
+import { runSpreadsheetOperation, SpreadsheetOperationError } from "@/server/spreadsheetOperations";
 import { DEFAULT_TIMEZONE } from "@/shared/constants/timezones";
 import { buildDateRange } from "@/shared/utils/diaryUtils";
 import {
@@ -607,50 +611,100 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  try {
+    return await runSpreadsheetOperation(req.signal, () => exportDiary(req, userId));
+  } catch (error) {
+    if (error instanceof SpreadsheetOperationError || error instanceof SpreadsheetLimitError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    if (isTrainingDataBusyError(error)) {
+      return NextResponse.json({ error: "Сервер занят. Повторите экспорт позже" }, { status: 503 });
+    }
+    throw error;
+  }
+}
+
+async function exportDiary(req: Request, userId: number) {
   const { searchParams } = new URL(req.url);
   const scope = searchParams.get("scope") ?? "period";
   const requestedFrom = searchParams.get("from") ?? "";
   const requestedTo = searchParams.get("to") ?? "";
-  let from = requestedFrom;
-  let to = requestedTo;
-  let filenamePrefix = "diary";
-
-  if (scope === "all") {
-    const fullRange = await getFullDiaryDateRange({ userId });
-    if (!fullRange) {
-      return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
-    }
-
-    const currentDate = formatCurrentDate();
-    from = fullRange.from;
-    to = fullRange.to > currentDate ? currentDate : fullRange.to;
-    if (from > to) {
-      return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
-    }
-    filenamePrefix = "diary_all";
-  }
+  const filenamePrefix = scope === "all" ? "diary_all" : "diary";
 
   if (scope !== "all" && scope !== "period") {
     return NextResponse.json({ error: "invalid_scope" }, { status: 400 });
   }
 
-  if (!isValidDateString(from) || !isValidDateString(to) || from > to) {
-    return NextResponse.json({ error: "invalid_range" }, { status: 400 });
-  }
+  const snapshot = await db.transaction(
+    async (tx) => {
+      let from = requestedFrom;
+      let to = requestedTo;
+      if (scope === "all") {
+        const fullRange = await getFullDiaryDateRange({ userId }, tx);
+        if (!fullRange) {
+          return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
+        }
 
-  const [rows, weeklyVolumeBySunday, profile, personalRecords, competitionBlocks, latestWeightKg] =
-    await Promise.all([
-      getDiaryExportRows({ userId, from, to }),
-      getDiaryWeeklyVolumesBySunday({ userId, from, to }),
-      getUserProfileById(userId),
-      getPersonalRecords({ userId }),
-      listCompetitionBlocksByUser(userId),
-      getLatestWeightEntry({ userId }),
-    ]);
+        const currentDate = formatCurrentDate();
+        from = fullRange.from;
+        to = fullRange.to > currentDate ? currentDate : fullRange.to;
+        if (from > to) {
+          return NextResponse.json({ error: "Нет данных для выгрузки" }, { status: 404 });
+        }
+      }
 
-  if (!profile) {
-    return NextResponse.json({ error: "not_found" }, { status: 404 });
+      if (!isValidDateString(from) || !isValidDateString(to) || from > to) {
+        return NextResponse.json({ error: "invalid_range" }, { status: 400 });
+      }
+      assertExportRangeLimit(from, to);
+
+      const [
+        rows,
+        weeklyVolumeBySunday,
+        profile,
+        personalRecords,
+        competitionBlocks,
+        latestWeightKg,
+      ] = await Promise.all([
+        getDiaryExportRows({ userId, from, to }, tx),
+        getDiaryWeeklyVolumesBySunday({ userId, from, to }, tx),
+        getUserProfileById(userId, tx),
+        getPersonalRecords({ userId }, tx),
+        listCompetitionBlocksByUser(userId, tx),
+        getLatestWeightEntry({ userId }, tx),
+      ]);
+
+      if (!profile) {
+        return NextResponse.json({ error: "not_found" }, { status: 404 });
+      }
+
+      return {
+        from,
+        to,
+        rows,
+        weeklyVolumeBySunday,
+        profile,
+        personalRecords,
+        competitionBlocks,
+        latestWeightKg,
+      };
+    },
+    { isolationLevel: "repeatable read", accessMode: "read only" }
+  );
+
+  if (snapshot instanceof NextResponse) {
+    return snapshot;
   }
+  const {
+    from,
+    to,
+    rows,
+    weeklyVolumeBySunday,
+    profile,
+    personalRecords,
+    competitionBlocks,
+    latestWeightKg,
+  } = snapshot;
 
   const exportDates = buildDateRange(from, to);
 

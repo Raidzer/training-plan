@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createSession,
   expectJsonError,
@@ -26,30 +27,30 @@ vi.mock("@/server/diaryImports", () => {
 });
 
 import { POST } from "@/app/api/diary/import/route";
+import { runSpreadsheetOperation } from "@/server/spreadsheetOperations";
+import { MAX_SPREADSHEET_FILE_BYTES } from "@/server/spreadsheetLimits";
 
 function createImportRequest(fileBuffer?: ArrayBuffer): Request {
-  let file: Blob | null = null;
-  if (fileBuffer) {
-    file = new Blob([fileBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-  }
-
-  const requestStub = {
-    formData: async () => ({
-      get: (key: string) => {
-        if (key === "file") {
-          return file;
-        }
-        return null;
-      },
-    }),
-  };
-  return requestStub as unknown as Request;
+  const body = new Blob(
+    fileBuffer
+      ? [
+          '--test-boundary\r\nContent-Disposition: form-data; name="file"; filename="diary.xlsx"\r\nContent-Type: application/octet-stream\r\n\r\n',
+          fileBuffer,
+          "\r\n--test-boundary--\r\n",
+        ]
+      : ["--test-boundary--\r\n"]
+  );
+  return new Request("http://localhost/api/diary/import", {
+    method: "POST",
+    headers: { "content-type": "multipart/form-data; boundary=test-boundary" },
+    body,
+  });
 }
 
 describe("POST /api/diary/import", () => {
   beforeEach(() => {
+    vi.stubGlobal("Blob", NodeBlob);
+    vi.stubGlobal("File", NodeFile);
     vi.clearAllMocks();
     authMock.mockResolvedValue(createSession({ id: "42" }));
     importDiaryFromWorkbookMock.mockResolvedValue({
@@ -64,6 +65,10 @@ describe("POST /api/diary/import", () => {
       errors: [],
       warnings: [],
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("должен возвращать 401 без сессии", async () => {
@@ -117,5 +122,45 @@ describe("POST /api/diary/import", () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe("Не найден лист дневника");
+  });
+
+  it("возвращает понятную ошибку при таймауте блокировки", async () => {
+    importDiaryFromWorkbookMock.mockRejectedValueOnce(
+      new Error("Failed query", {
+        cause: { code: "55P03" },
+      })
+    );
+    const response = await POST(createImportRequest(new ArrayBuffer(8)));
+    await expectJsonError(response, 503, "Сервер занят. Повторите импорт позже");
+  });
+
+  it("возвращает 413 без разбора Excel при превышении размера файла", async () => {
+    const response = await POST(
+      createImportRequest(new ArrayBuffer(MAX_SPREADSHEET_FILE_BYTES + 1))
+    );
+
+    await expectJsonError(response, 413, "Файл слишком большой. Максимальный размер — 10 МиБ");
+    expect(importDiaryFromWorkbookMock).not.toHaveBeenCalled();
+  });
+
+  it("при заполненной общей очереди не читает тело запроса", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const operations = Array.from({ length: 22 }, () =>
+      runSpreadsheetOperation(new AbortController().signal, () => gate)
+    );
+    const request = createImportRequest(new ArrayBuffer(8));
+    const readBody = vi.spyOn(request.body!, "getReader");
+    try {
+      const response = await POST(request);
+      await expectJsonError(response, 503, "Очередь импорта и экспорта заполнена. Повторите позже");
+      expect(readBody).not.toHaveBeenCalled();
+      expect(importDiaryFromWorkbookMock).not.toHaveBeenCalled();
+    } finally {
+      release();
+      await Promise.all(operations);
+    }
   });
 });

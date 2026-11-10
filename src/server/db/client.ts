@@ -25,5 +25,5 @@ const getPoolConfig = () => {
   return { host, port, user, password, database } as const;
 };
 
-const pool = new Pool(getPoolConfig());
+const pool = new Pool({ ...getPoolConfig(), connectionTimeoutMillis: 5000 });
 export const db = drizzle(pool, { schema });

@@ -43,8 +43,11 @@ const normalizeRecordDate = (value: string | Date) => {
   return value;
 };
 
-export const getPersonalRecords = async (params: { userId: number }): Promise<PersonalRecord[]> => {
-  const rows = await db
+export const getPersonalRecords = async (
+  params: { userId: number },
+  executor: Pick<typeof db, "select"> = db
+): Promise<PersonalRecord[]> => {
+  const rows = await executor
     .select({
       distanceKey: personalRecords.distanceKey,
       timeText: personalRecords.timeText,
