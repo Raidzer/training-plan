@@ -12,6 +12,7 @@ import {
   jsonb,
   index,
   uniqueIndex,
+  customType,
 } from "drizzle-orm/pg-core";
 
 import { ROLES } from "@/shared/constants";
@@ -36,6 +37,20 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastActiveAt: timestamp("last_active_at"),
   emailVerified: timestamp("email_verified"),
+});
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
+export const userAvatars = pgTable("user_avatars", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  data: bytea("data").notNull(),
+  version: varchar("version", { length: 36 }).notNull(),
 });
 
 export const verificationTokens = pgTable(

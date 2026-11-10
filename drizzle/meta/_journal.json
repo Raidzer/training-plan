@@ -78,6 +78,13 @@
       "when": 1793629527959,
       "tag": "0010_workout-report-long-bottom",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794295369078,
+      "tag": "0011_profile_avatar",
+      "breakpoints": true
     }
   ]
 }
