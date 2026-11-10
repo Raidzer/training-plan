@@ -390,11 +390,9 @@ describe("POST /api/alice/webhook", () => {
     expect(upsertRecoveryEntryMock).toHaveBeenCalledWith({
       userId: 9,
       date: "2026-02-09",
-      hasBath: false,
-      hasMfr: false,
-      hasMassage: false,
       sleepHours: 8.53,
     });
+    expect(getRecoveryEntryByDateMock).not.toHaveBeenCalled();
     expect(upsertWeightEntryMock).not.toHaveBeenCalled();
   });
 
@@ -432,16 +430,10 @@ describe("POST /api/alice/webhook", () => {
     expect(parseSleepCommandMock).toHaveBeenCalledWith("7 часов 38 минут", {
       allowNumericOnly: true,
     });
-    expect(getRecoveryEntryByDateMock).toHaveBeenCalledWith({
-      userId: 9,
-      date: "2026-02-09",
-    });
+    expect(getRecoveryEntryByDateMock).not.toHaveBeenCalled();
     expect(upsertRecoveryEntryMock).toHaveBeenCalledWith({
       userId: 9,
       date: "2026-02-09",
-      hasBath: true,
-      hasMfr: false,
-      hasMassage: true,
       sleepHours: 7.63,
     });
     expect(upsertWeightEntryMock).not.toHaveBeenCalled();

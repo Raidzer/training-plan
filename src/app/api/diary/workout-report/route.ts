@@ -332,6 +332,9 @@ export async function POST(req: Request) {
   try {
     upsertResult = await upsertWorkoutReport(upsertParams);
   } catch (error) {
+    if (error instanceof Error && error.message === "date_mismatch") {
+      return NextResponse.json({ error: "date_mismatch" }, { status: 400 });
+    }
     if (error instanceof Error && error.message === "archived_shoe") {
       return NextResponse.json({ error: "archived_shoe" }, { status: 409 });
     }

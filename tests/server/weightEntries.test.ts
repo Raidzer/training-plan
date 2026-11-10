@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { dbSelectMock, dbUpdateMock, dbInsertMock } = vi.hoisted(() => {
-  return {
-    dbSelectMock: vi.fn(),
-    dbUpdateMock: vi.fn(),
-    dbInsertMock: vi.fn(),
-  };
-});
+const { dbSelectMock, dbUpdateMock, dbInsertMock, dbExecuteMock, dbTransactionMock } = vi.hoisted(
+  () => {
+    return {
+      dbSelectMock: vi.fn(),
+      dbUpdateMock: vi.fn(),
+      dbInsertMock: vi.fn(),
+      dbExecuteMock: vi.fn(),
+      dbTransactionMock: vi.fn(),
+    };
+  }
+);
 
 vi.mock("@/server/db/client", () => {
   return {
@@ -14,6 +18,7 @@ vi.mock("@/server/db/client", () => {
       select: dbSelectMock,
       update: dbUpdateMock,
       insert: dbInsertMock,
+      transaction: dbTransactionMock,
     },
   };
 });
@@ -35,6 +40,15 @@ function mockSelectResult(rows: unknown[]) {
 describe("server/weightEntries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbExecuteMock.mockResolvedValue({});
+    dbTransactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        execute: dbExecuteMock,
+        select: dbSelectMock,
+        insert: dbInsertMock,
+        update: dbUpdateMock,
+      })
+    );
   });
 
   it("должен обновлять существующую запись веса", async () => {

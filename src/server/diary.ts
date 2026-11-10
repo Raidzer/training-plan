@@ -149,10 +149,11 @@ const formatShoeLabel = (shoe: { name: string }) => shoe.name;
 
 export { type DiaryDayStatus, isValidDateString };
 
-export const getFullDiaryDateRange = async (params: {
-  userId: number;
-}): Promise<DiaryDateRange | null> => {
-  const [planRange] = await db
+export const getFullDiaryDateRange = async (
+  params: { userId: number },
+  executor: Pick<typeof db, "select"> = db
+): Promise<DiaryDateRange | null> => {
+  const [planRange] = await executor
     .select({
       minDate: sql<string | null>`min(${planEntries.date})`,
       maxDate: sql<string | null>`max(${planEntries.date})`,
@@ -551,12 +552,11 @@ export const getDiaryDaysInRange = async (params: {
     .sort((a, b) => a.date.localeCompare(b.date));
 };
 
-export const getDiaryExportRows = async (params: {
-  userId: number;
-  from: string;
-  to: string;
-}): Promise<DiaryExportRow[]> => {
-  const planRows = await db
+export const getDiaryExportRows = async (
+  params: { userId: number; from: string; to: string },
+  executor: Pick<typeof db, "select"> = db
+): Promise<DiaryExportRow[]> => {
+  const planRows = await executor
     .select({
       id: planEntries.id,
       date: planEntries.date,
@@ -577,7 +577,7 @@ export const getDiaryExportRows = async (params: {
 
   const planEntryIds = reportablePlanRows.map((entry) => entry.id);
   const reportRows = planEntryIds.length
-    ? await db
+    ? await executor
         .select({
           id: workoutReports.id,
           planEntryId: workoutReports.planEntryId,
@@ -610,7 +610,7 @@ export const getDiaryExportRows = async (params: {
   const reportIds = reportRows.map((report) => report.id);
   const reportShoesRows =
     reportIds.length > 0
-      ? await db
+      ? await executor
           .select({
             reportId: workoutReportShoes.workoutReportId,
             shoeId: workoutReportShoes.shoeId,
@@ -635,7 +635,7 @@ export const getDiaryExportRows = async (params: {
     }
   }
 
-  const weightRows = await db
+  const weightRows = await executor
     .select({
       date: weightEntries.date,
       period: weightEntries.period,
@@ -650,7 +650,7 @@ export const getDiaryExportRows = async (params: {
       )
     );
 
-  const recoveryRows = await db
+  const recoveryRows = await executor
     .select({
       date: recoveryEntries.date,
       hasBath: recoveryEntries.hasBath,
@@ -848,18 +848,17 @@ export const getDiaryExportRows = async (params: {
   return rows;
 };
 
-export const getDiaryWeeklyVolumesBySunday = async (params: {
-  userId: number;
-  from: string;
-  to: string;
-}): Promise<Map<string, number>> => {
+export const getDiaryWeeklyVolumesBySunday = async (
+  params: { userId: number; from: string; to: string },
+  executor: Pick<typeof db, "select"> = db
+): Promise<Map<string, number>> => {
   const weekFrom = getWeekStartMonday(params.from);
   const weekTo = getWeekEndSunday(params.to);
   if (!weekFrom || !weekTo) {
     return new Map<string, number>();
   }
 
-  const planRows = await db
+  const planRows = await executor
     .select({
       id: planEntries.id,
       date: planEntries.date,
@@ -887,7 +886,7 @@ export const getDiaryWeeklyVolumesBySunday = async (params: {
     planEntryIds.push(planRow.id);
   }
 
-  const reportRows = await db
+  const reportRows = await executor
     .select({
       planEntryId: workoutReports.planEntryId,
       distanceKm: workoutReports.distanceKm,

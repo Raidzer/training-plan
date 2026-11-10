@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { dbSelectMock, dbInsertMock, dbUpdateMock, dbDeleteMock, dbTransactionMock } = vi.hoisted(
-  () => {
+const { dbSelectMock, dbInsertMock, dbUpdateMock, dbDeleteMock, dbTransactionMock, dbExecuteMock } =
+  vi.hoisted(() => {
     return {
       dbSelectMock: vi.fn(),
       dbInsertMock: vi.fn(),
       dbUpdateMock: vi.fn(),
       dbDeleteMock: vi.fn(),
       dbTransactionMock: vi.fn(),
+      dbExecuteMock: vi.fn(),
     };
-  }
-);
+  });
 
 vi.mock("@/server/db/client", () => {
   return {
@@ -55,9 +55,11 @@ function createSelectWhereBuilder(rows: unknown[]) {
 
 describe("server/workoutReports", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    dbExecuteMock.mockResolvedValue({});
     dbTransactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback({
+        execute: dbExecuteMock,
         select: dbSelectMock,
         insert: dbInsertMock,
         update: dbUpdateMock,
@@ -144,7 +146,7 @@ describe("server/workoutReports", () => {
     "upsertWorkoutReport обрабатывает hasLongBottom=$hasLongBottom, existing=$existing",
     async ({ existing, hasLongBottom }) => {
       dbSelectMock
-        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+        .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]))
         .mockReturnValueOnce(createSelectWhereBuilder(existing ? [{ id: 99 }] : []));
       const updateSetMock = vi
         .fn()
@@ -176,7 +178,7 @@ describe("server/workoutReports", () => {
   );
 
   it("upsertWorkoutReport должен обновлять существующий отчет", async () => {
-    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]));
+    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]));
     dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]));
     const updateWhereMock = vi.fn().mockResolvedValue(undefined);
     const updateSetMock = vi.fn(() => ({
@@ -206,8 +208,29 @@ describe("server/workoutReports", () => {
     expect(dbInsertMock).not.toHaveBeenCalled();
   });
 
+  it("отклоняет отчёт на прежнюю дату после сдвига тренировки", async () => {
+    dbSelectMock
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-10" }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([]));
+    dbInsertMock.mockReturnValue({
+      values: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([{ id: 99 }]) })),
+    });
+
+    await expect(
+      upsertWorkoutReport({
+        userId: 1,
+        planEntryId: 11,
+        date: "2026-02-09",
+        startTime: null,
+        resultText: "OK",
+      })
+    ).rejects.toThrow("date_mismatch");
+    expect(dbInsertMock).not.toHaveBeenCalled();
+    expect(dbUpdateMock).not.toHaveBeenCalled();
+  });
+
   it("upsertWorkoutReport должен сохранять null во времени старта", async () => {
-    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]));
+    dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]));
     dbSelectMock.mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]));
     const updateWhereMock = vi.fn().mockResolvedValue(undefined);
     const updateSetMock = vi.fn(() => ({
@@ -235,7 +258,7 @@ describe("server/workoutReports", () => {
 
   it("upsertWorkoutReport должен вставлять отчет, условия и кроссовки", async () => {
     dbSelectMock
-      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]))
       .mockReturnValueOnce(createSelectWhereBuilder([]))
       .mockReturnValueOnce(createSelectWhereBuilder([]))
       .mockReturnValueOnce(
@@ -303,7 +326,7 @@ describe("server/workoutReports", () => {
 
   it("upsertWorkoutReport должен сохранять пробег обуви и обновлять текущий пробег дельтой", async () => {
     dbSelectMock
-      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
       .mockReturnValueOnce(
         createSelectWhereBuilder([
@@ -400,7 +423,7 @@ describe("server/workoutReports", () => {
 
   it("upsertWorkoutReport должен возвращать превышение лимита при повторном сохранении без дельты", async () => {
     dbSelectMock
-      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ shoeId: 1, mileageKm: "4.5" }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 1, isArchived: false }]))
@@ -457,7 +480,7 @@ describe("server/workoutReports", () => {
 
   it("не должен добавлять архивную пару в другой отчёт", async () => {
     dbSelectMock
-      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
       .mockReturnValueOnce(createSelectWhereBuilder([]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 1, isArchived: true }]));
@@ -482,7 +505,7 @@ describe("server/workoutReports", () => {
 
   it("должен сохранять прежнюю архивную пару без уведомления о лимите", async () => {
     dbSelectMock
-      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11 }]))
+      .mockReturnValueOnce(createSelectWhereBuilder([{ id: 11, date: "2026-02-09" }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 99 }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ shoeId: 1, mileageKm: "5" }]))
       .mockReturnValueOnce(createSelectWhereBuilder([{ id: 1, isArchived: true }]))

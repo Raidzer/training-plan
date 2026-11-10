@@ -25,6 +25,9 @@ const {
   getUserProfileByIdMock,
   isValidDateStringMock,
   listCompetitionBlocksByUserMock,
+  dbTransactionMock,
+  transactionExecutor,
+  runSpreadsheetOperationMock,
 } = vi.hoisted(() => {
   return {
     authMock: vi.fn(),
@@ -36,8 +39,18 @@ const {
     getUserProfileByIdMock: vi.fn(),
     isValidDateStringMock: vi.fn(),
     listCompetitionBlocksByUserMock: vi.fn(),
+    dbTransactionMock: vi.fn(),
+    transactionExecutor: { select: vi.fn() },
+    runSpreadsheetOperationMock: vi.fn(),
   };
 });
+
+vi.mock("@/server/db/client", () => ({ db: { transaction: dbTransactionMock } }));
+
+vi.mock("@/server/spreadsheetOperations", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/spreadsheetOperations")>()),
+  runSpreadsheetOperation: runSpreadsheetOperationMock,
+}));
 
 vi.mock("@/auth", () => {
   return {
@@ -79,6 +92,7 @@ vi.mock("@/server/weightEntries", () => {
 });
 
 import { GET } from "@/app/api/diary/period-export/route";
+import { SpreadsheetOperationError } from "@/server/spreadsheetOperations";
 
 type WorkbookLoadBuffer = Parameters<ExcelJS.Workbook["xlsx"]["load"]>[0];
 
@@ -131,6 +145,8 @@ const getRequiredWorksheet = (workbook: ExcelJS.Workbook, sheetName: string) => 
 describe("GET /api/diary/period-export", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbTransactionMock.mockImplementation(async (operation) => operation(transactionExecutor));
+    runSpreadsheetOperationMock.mockImplementation(async (_signal, operation) => operation());
     vi.spyOn(Date, "now").mockReturnValue(new Date("2026-06-14T12:00:00.000Z").getTime());
     authMock.mockResolvedValue(createSession({ id: "9" }));
     isValidDateStringMock.mockReturnValue(true);
@@ -242,6 +258,8 @@ describe("GET /api/diary/period-export", () => {
     const response = await GET(request);
 
     await expectJsonError(response, 401, "unauthorized");
+    expect(runSpreadsheetOperationMock).not.toHaveBeenCalled();
+    expect(dbTransactionMock).not.toHaveBeenCalled();
   });
 
   it("должен возвращать 401 при невалидном user id", async () => {
@@ -306,17 +324,23 @@ describe("GET /api/diary/period-export", () => {
     expect(response.headers.get("content-disposition")).toBe(
       'attachment; filename="diary_all_2025-10-13_2026-06-14.xlsx"'
     );
-    expect(getFullDiaryDateRangeMock).toHaveBeenCalledWith({ userId: 9 });
-    expect(getDiaryExportRowsMock).toHaveBeenCalledWith({
-      userId: 9,
-      from: "2025-10-13",
-      to: "2026-06-14",
-    });
-    expect(getDiaryWeeklyVolumesBySundayMock).toHaveBeenCalledWith({
-      userId: 9,
-      from: "2025-10-13",
-      to: "2026-06-14",
-    });
+    expect(getFullDiaryDateRangeMock).toHaveBeenCalledWith({ userId: 9 }, transactionExecutor);
+    expect(getDiaryExportRowsMock).toHaveBeenCalledWith(
+      {
+        userId: 9,
+        from: "2025-10-13",
+        to: "2026-06-14",
+      },
+      transactionExecutor
+    );
+    expect(getDiaryWeeklyVolumesBySundayMock).toHaveBeenCalledWith(
+      {
+        userId: 9,
+        from: "2025-10-13",
+        to: "2026-06-14",
+      },
+      transactionExecutor
+    );
   });
 
   it("должен возвращать 404 при выгрузке всего дневника, если план начинается в будущем", async () => {
@@ -363,6 +387,129 @@ describe("GET /api/diary/period-export", () => {
     );
   });
 
+  it("возвращает понятную ошибку при таймауте соединения с БД", async () => {
+    dbTransactionMock.mockRejectedValueOnce(new Error("timeout exceeded when trying to connect"));
+    const response = await GET(
+      createRequestWithQuery({
+        path: "/api/diary/period-export",
+        query: { from: "2026-01-23", to: "2026-01-25" },
+      })
+    );
+    await expectJsonError(response, 503, "Сервер занят. Повторите экспорт позже");
+  });
+
+  it("читает диапазон и все листы из одного read-only снимка до построения XLSX", async () => {
+    let transactionActive = false;
+    dbTransactionMock.mockImplementation(async (operation) => {
+      transactionActive = true;
+      try {
+        return await operation(transactionExecutor);
+      } finally {
+        transactionActive = false;
+      }
+    });
+    const addWorksheet = ExcelJS.Workbook.prototype.addWorksheet;
+    vi.spyOn(ExcelJS.Workbook.prototype, "addWorksheet").mockImplementation(function (
+      this: ExcelJS.Workbook,
+      ...args
+    ) {
+      expect(transactionActive).toBe(false);
+      return addWorksheet.apply(this, args);
+    });
+    for (const getter of [
+      getFullDiaryDateRangeMock,
+      getDiaryExportRowsMock,
+      getDiaryWeeklyVolumesBySundayMock,
+      getUserProfileByIdMock,
+      getPersonalRecordsMock,
+      listCompetitionBlocksByUserMock,
+      getLatestWeightEntryMock,
+    ]) {
+      const implementation = getter.getMockImplementation()!;
+      getter.mockImplementation(async (...args) => {
+        expect(transactionActive).toBe(true);
+        expect(args[1]).toBe(transactionExecutor);
+        return implementation(...args);
+      });
+    }
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { scope: "all" },
+    });
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    expect(runSpreadsheetOperationMock).toHaveBeenCalledWith(request.signal, expect.any(Function));
+    expect(dbTransactionMock).toHaveBeenCalledTimes(1);
+    expect(dbTransactionMock).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: "repeatable read",
+      accessMode: "read only",
+    });
+  });
+
+  it.each([{ scope: "period", from: "2006-01-01", to: "2026-01-01" }, { scope: "all" }])(
+    "отклоняет период свыше 20 лет без усечения: $scope",
+    async (query) => {
+      getFullDiaryDateRangeMock.mockResolvedValue({ from: "2000-01-01", to: "2026-06-14" });
+      const request = createRequestWithQuery({ path: "/api/diary/period-export", query });
+
+      const response = await GET(request);
+
+      await expectJsonError(
+        response,
+        400,
+        "Период экспорта превышает 20 лет. Выберите меньший период"
+      );
+      expect(getDiaryExportRowsMock).not.toHaveBeenCalled();
+      expect(getDiaryWeeklyVolumesBySundayMock).not.toHaveBeenCalled();
+    }
+  );
+
+  it("возвращает ошибку очереди до чтения БД", async () => {
+    runSpreadsheetOperationMock.mockRejectedValueOnce(
+      new SpreadsheetOperationError("Очередь импорта и экспорта заполнена. Повторите позже", 503)
+    );
+    const request = createRequestWithQuery({
+      path: "/api/diary/period-export",
+      query: { from: "2026-01-23", to: "2026-01-25" },
+    });
+
+    const response = await GET(request);
+
+    await expectJsonError(response, 503, "Очередь импорта и экспорта заполнена. Повторите позже");
+    expect(dbTransactionMock).not.toHaveBeenCalled();
+  });
+
+  it("возвращает 503 без чтения БД при двух активных и двадцати ожидающих операциях", async () => {
+    const { runSpreadsheetOperation } = await vi.importActual<
+      typeof import("@/server/spreadsheetOperations")
+    >("@/server/spreadsheetOperations");
+    runSpreadsheetOperationMock.mockImplementation(runSpreadsheetOperation);
+    let releaseOperations!: () => void;
+    const blocker = new Promise<void>((resolve) => {
+      releaseOperations = resolve;
+    });
+    const operations = Array.from({ length: 22 }, () =>
+      runSpreadsheetOperation(new AbortController().signal, () => blocker)
+    );
+    try {
+      const request = createRequestWithQuery({
+        path: "/api/diary/period-export",
+        query: { from: "2026-01-23", to: "2026-01-25" },
+      });
+
+      const response = await GET(request);
+
+      await expectJsonError(response, 503, "Очередь импорта и экспорта заполнена. Повторите позже");
+      expect(dbTransactionMock).not.toHaveBeenCalled();
+      expect(getDiaryExportRowsMock).not.toHaveBeenCalled();
+    } finally {
+      releaseOperations();
+      await Promise.all(operations);
+    }
+  });
+
   it("должен формировать лист Человек первым с профилем, рекордами и соревнованиями", async () => {
     const request = createRequestWithQuery({
       path: "/api/diary/period-export",
@@ -373,10 +520,10 @@ describe("GET /api/diary/period-export", () => {
     const personSheet = getRequiredWorksheet(workbook, "Человек");
 
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(["Человек", "Дневник"]);
-    expect(getUserProfileByIdMock).toHaveBeenCalledWith(9);
-    expect(getLatestWeightEntryMock).toHaveBeenCalledWith({ userId: 9 });
-    expect(getPersonalRecordsMock).toHaveBeenCalledWith({ userId: 9 });
-    expect(listCompetitionBlocksByUserMock).toHaveBeenCalledWith(9);
+    expect(getUserProfileByIdMock).toHaveBeenCalledWith(9, transactionExecutor);
+    expect(getLatestWeightEntryMock).toHaveBeenCalledWith({ userId: 9 }, transactionExecutor);
+    expect(getPersonalRecordsMock).toHaveBeenCalledWith({ userId: 9 }, transactionExecutor);
+    expect(listCompetitionBlocksByUserMock).toHaveBeenCalledWith(9, transactionExecutor);
 
     const profileHeaders = [1, 2, 3, 4, 5, 6, 7].map((columnNumber) =>
       getStringCellValue(personSheet, 1, columnNumber)
@@ -440,16 +587,22 @@ describe("GET /api/diary/period-export", () => {
     expect(response.headers.get("content-type")).toBe(
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
-    expect(getDiaryExportRowsMock).toHaveBeenCalledWith({
-      userId: 9,
-      from: "2026-01-23",
-      to: "2026-01-25",
-    });
-    expect(getDiaryWeeklyVolumesBySundayMock).toHaveBeenCalledWith({
-      userId: 9,
-      from: "2026-01-23",
-      to: "2026-01-25",
-    });
+    expect(getDiaryExportRowsMock).toHaveBeenCalledWith(
+      {
+        userId: 9,
+        from: "2026-01-23",
+        to: "2026-01-25",
+      },
+      transactionExecutor
+    );
+    expect(getDiaryWeeklyVolumesBySundayMock).toHaveBeenCalledWith(
+      {
+        userId: 9,
+        from: "2026-01-23",
+        to: "2026-01-25",
+      },
+      transactionExecutor
+    );
 
     const workbook = await loadWorkbookFromResponse(response);
     const sheet = getRequiredWorksheet(workbook, "Дневник");
