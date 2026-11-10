@@ -1,0 +1,62 @@
+.content {
+  display: grid;
+  gap: 16px;
+  padding-block-start: 8px;
+}
+
+.instructions {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.cropArea {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: clamp(180px, 44dvh, 360px);
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  background: var(--shell-bg);
+}
+
+.cropper:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -3px;
+}
+
+.zoomLabel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.slider {
+  margin-block: 18px;
+  margin-inline: 22px;
+
+  :global(.ant-slider-handle)::before {
+    width: 44px;
+    height: 44px;
+    inset-inline-start: -17px;
+    inset-block-start: -17px;
+  }
+}
+
+.close {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modalRoot {
+    :global(.ant-modal),
+    :global(.ant-modal-mask) {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

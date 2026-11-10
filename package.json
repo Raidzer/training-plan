@@ -52,6 +52,8 @@
     "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-easy-crop": "^6.2.5",
+    "sharp": "^0.35.5",
     "smtp-mailer": "npm:nodemailer@^10.2.1",
     "tsx": "^4.23.15",
     "uuid": "^14.0.3",
