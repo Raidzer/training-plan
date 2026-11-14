@@ -12,6 +12,7 @@ import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { getPlanEntriesByDate } from "@/server/planEntries";
 import { getDailyReportTextByDate } from "@/server/diary";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
+import { sendLongPlanText, sendPlanFromContext } from "@/bot/messages/planWidget";
 import {
   buildDailyReportMenuReplyKeyboard,
   buildDateMenuReplyKeyboard,
@@ -54,13 +55,20 @@ export const registerPlanCommands = (bot: Bot) => {
       : formatDateLocal(new Date());
 
     const entries = await getPlanEntriesByDate({ userId, date: today });
-    const message = formatPlanMessage({ date: today, entries });
+    const timezoneWarning = "Таймзона не задана, использую время сервера.";
+    const result = await sendPlanFromContext({
+      ctx,
+      chatId: ctx.chat.id,
+      date: today,
+      entries,
+      sendText: (text) => ctx.reply(timeZone ? text : `${text}\n\n${timezoneWarning}`),
+    });
 
-    if (!timeZone) {
-      return ctx.reply(`${message}\n\nТаймзона не задана, использую время сервера.`);
+    if (!timeZone && result.type === "widget") {
+      return ctx.reply(timezoneWarning);
     }
 
-    return ctx.reply(message);
+    return;
   });
 
   bot.command("date", async (ctx: any) => {
@@ -96,9 +104,12 @@ export const registerPlanCommands = (bot: Bot) => {
     }
 
     const entries = await getPlanEntriesByDate({ userId, date });
-    const message = formatPlanMessage({ date, entries });
-
-    return ctx.reply(message);
+    await sendPlanFromContext({
+      ctx,
+      chatId: ctx.chat.id,
+      date,
+      entries,
+    });
   });
 
   bot.command("report", async (ctx: any) => {
@@ -138,5 +149,32 @@ export const registerPlanCommands = (bot: Bot) => {
     }
 
     return ctx.reply(reportText);
+  });
+
+  bot.callbackQuery(/^plan:text:(\d{4}-\d{2}-\d{2})$/, async (ctx: any) => {
+    await ctx.answerCallbackQuery();
+    if (!ctx.chat || ctx.chat.type !== "private") {
+      return;
+    }
+
+    const date = ctx.match?.[1] as string | undefined;
+    if (
+      !date ||
+      parseDisplayDate(`${date.slice(8, 10)}-${date.slice(5, 7)}-${date.slice(0, 4)}`) !== date
+    ) {
+      return;
+    }
+
+    const userId = await ensureLinked(ctx.chat.id);
+    if (!userId) {
+      await ctx.reply("Сначала свяжите аккаунт кнопкой ниже.", {
+        reply_markup: buildLinkReplyKeyboard(),
+      });
+      return;
+    }
+
+    const entries = await getPlanEntriesByDate({ userId, date });
+    const message = formatPlanMessage({ date, entries });
+    await sendLongPlanText((text) => ctx.reply(text), message);
   });
 };
