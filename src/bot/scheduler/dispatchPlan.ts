@@ -1,6 +1,6 @@
 import type { Bot } from "grammy";
 import { getPlanEntriesByDate } from "@/server/planEntries";
-import { formatPlanMessage } from "@/bot/messages/planMessage";
+import { sendPlanPresentation } from "@/bot/messages/planWidget";
 import { normalizeDateValue, getZonedDateTime } from "@/bot/utils/dateTime";
 import {
   getEnabledSubscriptions,
@@ -50,14 +50,31 @@ const dispatchDueSubscriptions = async (bot: Bot) => {
         userId: subscription.userId,
         date: zoned.date,
       });
-      const message = formatPlanMessage({
-        date: zoned.date,
-        entries,
-        sendTime: subscription.sendTime,
-      });
-
       try {
-        await bot.api.sendMessage(subscription.chatId, message);
+        const rawApi = bot.api.raw as unknown as
+          | {
+              sendWidget: (payload: {
+                chat_id: number;
+                html: string;
+                caption: string;
+                reply_markup: {
+                  inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
+                };
+              }) => Promise<unknown>;
+            }
+          | undefined;
+        const sendWidget = rawApi?.sendWidget
+          ? (payload: Parameters<NonNullable<typeof rawApi>["sendWidget"]>[0]) =>
+              rawApi.sendWidget(payload)
+          : undefined;
+        await sendPlanPresentation({
+          chatId: subscription.chatId,
+          date: zoned.date,
+          entries,
+          sendTime: subscription.sendTime,
+          sendText: (text) => bot.api.sendMessage(subscription.chatId, text),
+          sendWidget,
+        });
         await markSubscriptionSent({ id: subscription.id, sentOn: zoned.date });
       } catch (error) {
         console.error("Ошибка отправки", subscription.chatId, error);

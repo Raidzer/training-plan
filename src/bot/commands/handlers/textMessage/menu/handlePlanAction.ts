@@ -6,7 +6,7 @@ import {
   getWeekdayShortRu,
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
-import { formatPlanMessage } from "@/bot/messages/planMessage";
+import { sendPlanFromContext } from "@/bot/messages/planWidget";
 import {
   buildDailyReportMenuReplyKeyboard,
   buildDateMenuReplyKeyboard,
@@ -35,22 +35,32 @@ export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: Plan
       : formatDateLocal(new Date());
 
     const entries = await getPlanEntriesByDate({ userId, date: today });
-    const message = formatPlanMessage({ date: today, entries });
-
-    if (!timeZone) {
-      await ctx.reply(`${message}\n\nТаймзона не задана, использую время сервера.`, {
-        reply_markup: buildMainMenuReplyKeyboard({
-          subscribed: subscription?.enabled ?? false,
+    const mainMenu = buildMainMenuReplyKeyboard({
+      subscribed: subscription?.enabled ?? false,
+    });
+    const timezoneWarning = "Таймзона не задана, использую время сервера.";
+    const result = await sendPlanFromContext({
+      ctx,
+      chatId,
+      date: today,
+      entries,
+      sendText: (text) =>
+        ctx.reply(timeZone ? text : `${text}\n\n${timezoneWarning}`, {
+          reply_markup: mainMenu,
         }),
+    });
+
+    if (!timeZone && result.type === "widget") {
+      await ctx.reply(timezoneWarning, {
+        reply_markup: mainMenu,
       });
       return;
     }
 
-    await ctx.reply(message, {
-      reply_markup: buildMainMenuReplyKeyboard({
-        subscribed: subscription?.enabled ?? false,
-      }),
-    });
+    if (result.type === "widget") {
+      await ctx.reply("Меню управления ниже.", { reply_markup: mainMenu });
+      return;
+    }
     return;
   }
 

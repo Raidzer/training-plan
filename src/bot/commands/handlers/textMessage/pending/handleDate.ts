@@ -7,7 +7,7 @@ import {
   parseDisplayDate,
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
-import { formatPlanMessage } from "@/bot/messages/planMessage";
+import { sendPlanFromContext } from "@/bot/messages/planWidget";
 import {
   buildBackReplyKeyboard,
   buildDateMenuReplyKeyboard,
@@ -74,15 +74,21 @@ export const handleDatePending = async ({
     }
 
     const entries = await getPlanEntriesByDate({ userId, date: parsedDate });
-    const message = formatPlanMessage({ date: parsedDate, entries });
-
     clearPendingInput(chatId);
     const subscription = await getSubscription(userId);
-    await ctx.reply(message, {
-      reply_markup: buildMainMenuReplyKeyboard({
-        subscribed: subscription?.enabled ?? false,
-      }),
+    const mainMenu = buildMainMenuReplyKeyboard({
+      subscribed: subscription?.enabled ?? false,
     });
+    const result = await sendPlanFromContext({
+      ctx,
+      chatId,
+      date: parsedDate,
+      entries,
+      sendText: (message) => ctx.reply(message, { reply_markup: mainMenu }),
+    });
+    if (result.type === "widget") {
+      await ctx.reply("Меню управления ниже.", { reply_markup: mainMenu });
+    }
     return;
   }
 
@@ -110,13 +116,19 @@ export const handleDatePending = async ({
   }
 
   const entries = await getPlanEntriesByDate({ userId, date: parsedDate });
-  const message = formatPlanMessage({ date: parsedDate, entries });
-
   clearPendingInput(chatId);
   const subscription = await getSubscription(userId);
-  await ctx.reply(message, {
-    reply_markup: buildMainMenuReplyKeyboard({
-      subscribed: subscription?.enabled ?? false,
-    }),
+  const mainMenu = buildMainMenuReplyKeyboard({
+    subscribed: subscription?.enabled ?? false,
   });
+  const result = await sendPlanFromContext({
+    ctx,
+    chatId,
+    date: parsedDate,
+    entries,
+    sendText: (message) => ctx.reply(message, { reply_markup: mainMenu }),
+  });
+  if (result.type === "widget") {
+    await ctx.reply("Меню управления ниже.", { reply_markup: mainMenu });
+  }
 };
