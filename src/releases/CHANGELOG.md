@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.5.0](https://github.com/Raidzer/training-plan/compare/v1.4.0...v1.5.0) (2026-11-15)
+
+
+### Новое
+
+* **diary:** add long bottom checkbox to workout reports ([85acfdd](https://github.com/Raidzer/training-plan/commit/85acfddab4a28c7cf01f9a41ec424438987d231a))
+* **diary:** add long bottom checkbox to workout reports ([a36117c](https://github.com/Raidzer/training-plan/commit/a36117cefae6edb7984b36f1e17ba6bf8249e3ca))
+* **diary:** оценки и условия тренировок раскрыты по умолчанию ([6389c7e](https://github.com/Raidzer/training-plan/commit/6389c7e709ddaccd99ffb2fbee33c5426e4389dc))
+* **diary:** оценки и условия тренировок раскрыты по умолчанию ([43139fa](https://github.com/Raidzer/training-plan/commit/43139fa660c9f071e31d69a58bba2285e603f5b4))
+* **diary:** показывать пробег обуви при выборе в тренировке ([728a871](https://github.com/Raidzer/training-plan/commit/728a87135762e9da6fcf1d8c3c2e953f6283c4b4))
+* **profile:** добавлена загрузка фото профиля с кадрированием ([444cc27](https://github.com/Raidzer/training-plan/commit/444cc2798596fb4964651c4c48ec4372d354b045))
+* **profile:** добавлена загрузка фото профиля с кадрированием ([cf57b49](https://github.com/Raidzer/training-plan/commit/cf57b49554e6f55b418a0c7d15fa7bdc0e3d89d1))
+* **telegram:** добавлен календарь выбора дат тренировочного плана ([ffcdf0d](https://github.com/Raidzer/training-plan/commit/ffcdf0da5b446f9173b7747cd88b39a769223a3e))
+* **telegram:** добавлен календарь выбора дат тренировочного плана ([e34bb53](https://github.com/Raidzer/training-plan/commit/e34bb538326fa31deab05c6bebc46b92ccf3503f))
+* **telegram:** добавлена отправка тренировочного плана в виде HTML-карточки ([6a463ec](https://github.com/Raidzer/training-plan/commit/6a463eca60316fa4369b425f4a5df534346ac982))
+* **telegram:** добавлена отправка тренировочного плана в виде HTML-карточки ([1648aa0](https://github.com/Raidzer/training-plan/commit/1648aa0d3dcdf3692ef4f238d10c58ee4d7a5c34))
+* **telegram:** добавлена рассылка сообщения при обновлении клавиатуры ([5e23655](https://github.com/Raidzer/training-plan/commit/5e23655cdc872c378db15b87cb089c360d9a095d))
+* **telegram:** добавлена рассылка сообщения при обновлении клавиатуры ([31c8657](https://github.com/Raidzer/training-plan/commit/31c86576640b2963603b4ab19d8c10471ed649d9))
+
+
+### Исправления
+
+* **diary:** перенесён выбор длинного низа в условия и экипировку ([4d0bc6a](https://github.com/Raidzer/training-plan/commit/4d0bc6a2be005fbf51dbd3dc8c85658e7d44f189))
+
 ## [1.4.0](https://github.com/Raidzer/training-plan/compare/v1.3.0...v1.4.0) (2026-10-29)
 
 ### Новое
