@@ -5,6 +5,7 @@ const menuHandlerMocks = vi.hoisted(() => ({
   getSubscriptionMock: vi.fn(),
   upsertSubscriptionMock: vi.fn(),
   getPlanEntriesByDateMock: vi.fn(),
+  getPlanDatesByMonthMock: vi.fn(),
 }));
 
 vi.mock("@/bot/services/telegramAccounts", () => ({
@@ -18,6 +19,7 @@ vi.mock("@/bot/services/telegramSubscriptions", () => ({
 
 vi.mock("@/server/planEntries", () => ({
   getPlanEntriesByDate: menuHandlerMocks.getPlanEntriesByDateMock,
+  getPlanDatesByMonth: menuHandlerMocks.getPlanDatesByMonthMock,
 }));
 
 import { handleCancelIfRequested } from "@/bot/commands/handlers/textMessage/pending/handleCancel";
@@ -55,6 +57,7 @@ describe("bot menu handlers", () => {
       sendTime: "07:30",
     });
     menuHandlerMocks.getPlanEntriesByDateMock.mockResolvedValue([]);
+    menuHandlerMocks.getPlanDatesByMonthMock.mockResolvedValue([]);
   });
 
   it("handleCancelIfRequested игнорирует обычный текст", async () => {
@@ -177,6 +180,30 @@ describe("bot menu handlers", () => {
       DATE_MENU_PROMPT_TEXT,
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
+  });
+
+  it("handlePlanMenuAction открывает календарь без состояния ручного ввода", async () => {
+    const sendWidget = vi.fn().mockResolvedValue(undefined);
+    const ctx = {
+      ...createContext(),
+      api: { raw: { sendWidget } },
+    };
+
+    await handlePlanMenuAction({
+      ctx,
+      chatId: 10,
+      userId: 20,
+      action: "date",
+    });
+
+    expect(sendWidget).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chat_id: 10,
+        allow_queries: true,
+      })
+    );
+    expect(ctx.reply).not.toHaveBeenCalled();
+    expect(getPendingInput(10)).toBeNull();
   });
 
   it("handleScheduleMenuAction запрашивает время и таймзону", async () => {

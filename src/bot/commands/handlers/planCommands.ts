@@ -12,6 +12,7 @@ import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { getPlanEntriesByDate } from "@/server/planEntries";
 import { getDailyReportTextByDate } from "@/server/diary";
 import { formatPlanMessage } from "@/bot/messages/planMessage";
+import { sendPlanCalendarWidget } from "@/bot/messages/planCalendarHandler";
 import { sendLongPlanText, sendPlanFromContext } from "@/bot/messages/planWidget";
 import {
   buildDailyReportMenuReplyKeyboard,
@@ -92,10 +93,21 @@ export const registerPlanCommands = (bot: Bot) => {
     const date = rawDate ? parseDisplayDate(rawDate) : null;
 
     if (!date) {
-      setPendingInput(ctx.chat.id, "dateMenu");
       const today = timeZone
         ? formatDateInTimeZone(new Date(), timeZone)
         : formatDateLocal(new Date());
+
+      const calendarResult = await sendPlanCalendarWidget({
+        ctx,
+        chatId: ctx.chat.id,
+        userId,
+        month: today.slice(0, 7),
+      });
+      if (calendarResult.type === "widget") {
+        return;
+      }
+
+      setPendingInput(ctx.chat.id, "dateMenu");
       return ctx.reply(DATE_MENU_PROMPT_TEXT, {
         reply_markup: buildDateMenuReplyKeyboard({
           dateButtons: buildPlanDateButtons(today),
