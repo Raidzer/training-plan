@@ -7,6 +7,7 @@ import {
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import { sendPlanFromContext } from "@/bot/messages/planWidget";
+import { sendPlanCalendarWidget } from "@/bot/messages/planCalendarHandler";
 import {
   buildDailyReportMenuReplyKeyboard,
   buildDateMenuReplyKeyboard,
@@ -72,8 +73,19 @@ export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: Plan
     return;
   }
 
-  setPendingInput(chatId, "dateMenu");
   const today = timeZone ? formatDateInTimeZone(new Date(), timeZone) : formatDateLocal(new Date());
+
+  const calendarResult = await sendPlanCalendarWidget({
+    ctx,
+    chatId,
+    userId,
+    month: today.slice(0, 7),
+  });
+  if (calendarResult.type === "widget") {
+    return;
+  }
+
+  setPendingInput(chatId, "dateMenu");
   const dateButtons = getNextIsoDates(today, 7).map((date) => {
     const weekday = getWeekdayShortRu(date);
     const label = formatDateForDisplay(date);
