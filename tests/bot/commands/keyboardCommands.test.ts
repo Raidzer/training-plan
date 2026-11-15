@@ -2,19 +2,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const keyboardCommandMocks = vi.hoisted(() => ({
   getLinkedAccountDetailsMock: vi.fn(),
-  refreshTelegramKeyboardsMock: vi.fn(),
+  setPendingInputMock: vi.fn(),
 }));
 
 vi.mock("@/bot/services/telegramAccounts", () => ({
   getLinkedAccountDetails: keyboardCommandMocks.getLinkedAccountDetailsMock,
 }));
 
-vi.mock("@/bot/services/telegramKeyboardRefresh", () => ({
-  refreshTelegramKeyboards: keyboardCommandMocks.refreshTelegramKeyboardsMock,
+vi.mock("@/bot/menu/menuState", () => ({
+  setPendingInput: keyboardCommandMocks.setPendingInputMock,
 }));
 
 import { registerKeyboardCommands } from "@/bot/commands/handlers/keyboardCommands";
-import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import { buildCancelReplyKeyboard } from "@/bot/menu/menuKeyboard";
 
 type CommandHandler = (ctx: any) => Promise<unknown>;
 
@@ -56,11 +56,6 @@ describe("registerKeyboardCommands", () => {
       role: "admin",
       subscribed: true,
     });
-    keyboardCommandMocks.refreshTelegramKeyboardsMock.mockResolvedValue({
-      total: 3,
-      sent: 2,
-      failed: 1,
-    });
   });
 
   it("должен регистрировать команду обновления клавиатур", () => {
@@ -76,7 +71,7 @@ describe("registerKeyboardCommands", () => {
     await (handlers.get("refresh_keyboards") as CommandHandler)(ctx);
 
     expect(keyboardCommandMocks.getLinkedAccountDetailsMock).not.toHaveBeenCalled();
-    expect(keyboardCommandMocks.refreshTelegramKeyboardsMock).not.toHaveBeenCalled();
+    expect(keyboardCommandMocks.setPendingInputMock).not.toHaveBeenCalled();
     expect(ctx.reply).not.toHaveBeenCalled();
   });
 
@@ -87,7 +82,7 @@ describe("registerKeyboardCommands", () => {
     await (handlers.get("refresh_keyboards") as CommandHandler)(ctx);
 
     expect(ctx.reply).toHaveBeenCalledWith("Команда доступна только в личных сообщениях.");
-    expect(keyboardCommandMocks.refreshTelegramKeyboardsMock).not.toHaveBeenCalled();
+    expect(keyboardCommandMocks.setPendingInputMock).not.toHaveBeenCalled();
   });
 
   it("должен запрещать запуск неадминистратору", async () => {
@@ -103,23 +98,21 @@ describe("registerKeyboardCommands", () => {
     await (handlers.get("refresh_keyboards") as CommandHandler)(ctx);
 
     expect(ctx.reply).toHaveBeenCalledWith("Команда доступна только администратору.");
-    expect(keyboardCommandMocks.refreshTelegramKeyboardsMock).not.toHaveBeenCalled();
+    expect(keyboardCommandMocks.setPendingInputMock).not.toHaveBeenCalled();
   });
 
-  it("должен запускать обновление клавиатур администратором", async () => {
-    const { bot, handlers } = createBotHarness();
+  it("должен запрашивать сообщение у администратора", async () => {
+    const { handlers } = createBotHarness();
     const ctx = createContext();
 
     await (handlers.get("refresh_keyboards") as CommandHandler)(ctx);
 
-    expect(keyboardCommandMocks.refreshTelegramKeyboardsMock).toHaveBeenCalledWith(bot);
-    expect(ctx.reply).toHaveBeenCalledWith(
-      "Обновление клавиатур завершено. Отправлено: 2/3. Ошибок: 1.",
-      {
-        reply_markup: buildMainMenuReplyKeyboard({
-          subscribed: true,
-        }),
-      }
+    expect(keyboardCommandMocks.setPendingInputMock).toHaveBeenCalledWith(
+      10,
+      "keyboardRefreshMessage"
     );
+    expect(ctx.reply).toHaveBeenCalledWith("Введите сообщение пользователям для обновления.", {
+      reply_markup: buildCancelReplyKeyboard(),
+    });
   });
 });

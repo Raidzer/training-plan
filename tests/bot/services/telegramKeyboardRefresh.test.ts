@@ -49,6 +49,19 @@ describe("refreshTelegramKeyboards", () => {
     });
   });
 
+  it("должен отправлять переданное сообщение вместе с клавиатурой", async () => {
+    const bot = createBot();
+    keyboardRefreshMocks.getKeyboardRefreshTargetsMock.mockResolvedValue([
+      { userId: 20, chatId: 100, subscribed: true },
+    ]);
+
+    await refreshTelegramKeyboards(bot as any, "Вышло обновление");
+
+    expect(bot.api.sendMessage).toHaveBeenCalledWith(100, "Вышло обновление", {
+      reply_markup: buildMainMenuReplyKeyboard({ subscribed: true }),
+    });
+  });
+
   it("должен продолжать рассылку после ошибки отправки", async () => {
     const bot = createBot();
     const consoleErrorMock = vi.spyOn(console, "error").mockImplementation(() => {});

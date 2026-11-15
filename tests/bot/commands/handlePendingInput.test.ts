@@ -12,6 +12,7 @@ const pendingMocks = vi.hoisted(() => ({
   handleRecoveryPendingMock: vi.fn(),
   handleSchedulePendingMock: vi.fn(),
   handleWeightPendingMock: vi.fn(),
+  handleKeyboardRefreshPendingMock: vi.fn(),
 }));
 
 vi.mock("@/bot/menu/menuState", async () => {
@@ -56,6 +57,10 @@ vi.mock("@/bot/commands/handlers/textMessage/pending/handleWeight", () => ({
   handleWeightPending: pendingMocks.handleWeightPendingMock,
 }));
 
+vi.mock("@/bot/commands/handlers/textMessage/pending/handleKeyboardRefresh", () => ({
+  handleKeyboardRefreshPending: pendingMocks.handleKeyboardRefreshPendingMock,
+}));
+
 import { handlePendingInput } from "@/bot/commands/handlers/textMessage/handlePendingInput";
 
 function createContext() {
@@ -68,6 +73,7 @@ async function runPending(pending: PendingInput, text = "input") {
   const ctx = createContext();
 
   await handlePendingInput({
+    bot: { api: {} } as any,
     ctx,
     chatId: 10,
     text,
@@ -139,5 +145,25 @@ describe("handlePendingInput", () => {
       pending,
       userId: 20,
     });
+  });
+
+  it("routes keyboard refresh message to the matching handler", async () => {
+    const bot = { api: {} } as any;
+
+    await handlePendingInput({
+      bot,
+      ctx: createContext(),
+      chatId: 10,
+      text: "Обновление",
+      pending: "keyboardRefreshMessage",
+    });
+
+    expect(pendingMocks.handleKeyboardRefreshPendingMock).toHaveBeenCalledWith({
+      bot,
+      ctx: expect.any(Object),
+      chatId: 10,
+      text: "Обновление",
+    });
+    expect(pendingMocks.ensureLinkedMock).not.toHaveBeenCalled();
   });
 });

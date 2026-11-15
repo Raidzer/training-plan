@@ -2,6 +2,7 @@ import { buildTimezoneOptions } from "@/shared/constants/timezones";
 
 export const LINK_BUTTON_TEXT = "🔗 Привязать аккаунт";
 export const CANCEL_LINK_BUTTON_TEXT = "✖️ Отменить привязку";
+export const CANCEL_BUTTON_TEXT = "✖️ Отмена";
 export const TODAY_BUTTON_TEXT = "📅 Сегодня";
 export const DATE_BUTTON_TEXT = "🗓️ Другая дата";
 export const DAILY_REPORT_BUTTON_TEXT = "📋 Ежедневный отчет";
@@ -82,6 +83,14 @@ export const buildLinkReplyKeyboard = () => {
 export const buildCancelLinkReplyKeyboard = () => {
   return {
     keyboard: [[{ text: CANCEL_LINK_BUTTON_TEXT }]],
+    resize_keyboard: true,
+    is_persistent: false,
+  };
+};
+
+export const buildCancelReplyKeyboard = () => {
+  return {
+    keyboard: [[{ text: CANCEL_BUTTON_TEXT }]],
     resize_keyboard: true,
     is_persistent: false,
   };
