@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { lockTrainingData } from "@/server/trainingDataLock";
 import {
   planEntries,
   shoes,
@@ -39,6 +40,7 @@ export type WorkoutReportSummary = {
   startTime: string | null;
   resultText: string;
   commentText: string | null;
+  hasLongBottom: boolean;
   distanceKm: string | null;
   overallScore: number | null;
   functionalScore: number | null;
@@ -89,6 +91,7 @@ export const getWorkoutReportByPlanEntry = async (params: {
       startTime: workoutReports.startTime,
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
+      hasLongBottom: workoutReports.hasLongBottom,
       distanceKm: workoutReports.distanceKm,
       overallScore: workoutReports.overallScore,
       functionalScore: workoutReports.functionalScore,
@@ -131,6 +134,7 @@ export const getWorkoutReportsByDate = async (params: {
       startTime: workoutReports.startTime,
       resultText: workoutReports.resultText,
       commentText: workoutReports.commentText,
+      hasLongBottom: workoutReports.hasLongBottom,
       distanceKm: workoutReports.distanceKm,
       overallScore: workoutReports.overallScore,
       functionalScore: workoutReports.functionalScore,
@@ -193,6 +197,7 @@ export const upsertWorkoutReport = async (params: {
   startTime: string | null;
   resultText: string;
   commentText?: string | null;
+  hasLongBottom?: boolean;
   distanceKm?: number | null;
   overallScore?: number | null;
   functionalScore?: number | null;
@@ -205,13 +210,17 @@ export const upsertWorkoutReport = async (params: {
   shoeUsages?: WorkoutReportShoeUsage[] | null;
 }): Promise<WorkoutReportUpsertResult> => {
   return await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
     const [entry] = await tx
-      .select({ id: planEntries.id })
+      .select({ id: planEntries.id, date: planEntries.date })
       .from(planEntries)
       .where(and(eq(planEntries.id, params.planEntryId), eq(planEntries.userId, params.userId)))
       .for("update");
     if (!entry) {
       throw new Error("invalid_plan_entry");
+    }
+    if (entry.date !== params.date) {
+      throw new Error("date_mismatch");
     }
     const now = new Date();
     const updateValues: {
@@ -220,6 +229,7 @@ export const upsertWorkoutReport = async (params: {
       resultText: string;
       commentText: string | null;
       updatedAt: Date;
+      hasLongBottom?: boolean;
       distanceKm?: string | null;
       overallScore?: number | null;
       functionalScore?: number | null;
@@ -231,6 +241,9 @@ export const upsertWorkoutReport = async (params: {
       commentText: params.commentText ?? null,
       updatedAt: now,
     };
+    if (params.hasLongBottom !== undefined) {
+      updateValues.hasLongBottom = params.hasLongBottom;
+    }
     if (params.distanceKm !== undefined) {
       updateValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
     }
@@ -252,6 +265,7 @@ export const upsertWorkoutReport = async (params: {
       commentText: string | null;
       createdAt: Date;
       updatedAt: Date;
+      hasLongBottom?: boolean;
       distanceKm?: string | null;
       overallScore?: number | null;
       functionalScore?: number | null;
@@ -266,6 +280,9 @@ export const upsertWorkoutReport = async (params: {
       createdAt: now,
       updatedAt: now,
     };
+    if (params.hasLongBottom !== undefined) {
+      insertValues.hasLongBottom = params.hasLongBottom;
+    }
     if (params.distanceKm !== undefined) {
       insertValues.distanceKm = params.distanceKm === null ? null : String(params.distanceKm);
     }

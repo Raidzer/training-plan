@@ -5,6 +5,7 @@ const menuHandlerMocks = vi.hoisted(() => ({
   getSubscriptionMock: vi.fn(),
   upsertSubscriptionMock: vi.fn(),
   getPlanEntriesByDateMock: vi.fn(),
+  getPlanDatesByMonthMock: vi.fn(),
 }));
 
 vi.mock("@/bot/services/telegramAccounts", () => ({
@@ -18,6 +19,7 @@ vi.mock("@/bot/services/telegramSubscriptions", () => ({
 
 vi.mock("@/server/planEntries", () => ({
   getPlanEntriesByDate: menuHandlerMocks.getPlanEntriesByDateMock,
+  getPlanDatesByMonth: menuHandlerMocks.getPlanDatesByMonthMock,
 }));
 
 import { handleCancelIfRequested } from "@/bot/commands/handlers/textMessage/pending/handleCancel";
@@ -25,6 +27,7 @@ import { handlePlanMenuAction } from "@/bot/commands/handlers/textMessage/menu/h
 import { handleScheduleMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleScheduleAction";
 import { handleSubscriptionMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleSubscriptionAction";
 import {
+  CANCEL_BUTTON_TEXT,
   CANCEL_LINK_BUTTON_TEXT,
   CUSTOM_DATE_BUTTON_TEXT,
   LINK_BUTTON_TEXT,
@@ -55,6 +58,7 @@ describe("bot menu handlers", () => {
       sendTime: "07:30",
     });
     menuHandlerMocks.getPlanEntriesByDateMock.mockResolvedValue([]);
+    menuHandlerMocks.getPlanDatesByMonthMock.mockResolvedValue([]);
   });
 
   it("handleCancelIfRequested игнорирует обычный текст", async () => {
@@ -103,6 +107,22 @@ describe("bot menu handlers", () => {
 
     expect(result).toBe(true);
     expect(menuHandlerMocks.getSubscriptionMock).toHaveBeenCalledWith(20);
+    expect(ctx.reply).toHaveBeenCalledWith("Ввод отменен.", {
+      reply_markup: buildMainMenuReplyKeyboard({ subscribed: true }),
+    });
+  });
+
+  it("handleCancelIfRequested обрабатывает кнопку общей отмены", async () => {
+    const ctx = createContext();
+
+    const result = await handleCancelIfRequested({
+      ctx,
+      chatId: 10,
+      text: CANCEL_BUTTON_TEXT,
+      pending: "keyboardRefreshMessage",
+    });
+
+    expect(result).toBe(true);
     expect(ctx.reply).toHaveBeenCalledWith("Ввод отменен.", {
       reply_markup: buildMainMenuReplyKeyboard({ subscribed: true }),
     });
@@ -177,6 +197,30 @@ describe("bot menu handlers", () => {
       DATE_MENU_PROMPT_TEXT,
       expect.objectContaining({ reply_markup: expect.any(Object) })
     );
+  });
+
+  it("handlePlanMenuAction открывает календарь без состояния ручного ввода", async () => {
+    const sendWidget = vi.fn().mockResolvedValue(undefined);
+    const ctx = {
+      ...createContext(),
+      api: { raw: { sendWidget } },
+    };
+
+    await handlePlanMenuAction({
+      ctx,
+      chatId: 10,
+      userId: 20,
+      action: "date",
+    });
+
+    expect(sendWidget).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chat_id: 10,
+        allow_queries: true,
+      })
+    );
+    expect(ctx.reply).not.toHaveBeenCalled();
+    expect(getPendingInput(10)).toBeNull();
   });
 
   it("handleScheduleMenuAction запрашивает время и таймзону", async () => {

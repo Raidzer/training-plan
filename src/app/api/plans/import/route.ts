@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/auth";
+import { createPlanImport, type PlanImportEntry } from "@/server/planImports";
 import {
-  createPlanImport,
-  getExistingPlanEntryDates,
-  type PlanImportEntry,
-} from "@/server/planImports";
+  assertImportRowLimit,
+  readSpreadsheetFile,
+  SpreadsheetLimitError,
+} from "@/server/spreadsheetLimits";
+import { runSpreadsheetOperation, SpreadsheetOperationError } from "@/server/spreadsheetOperations";
+import { isTrainingDataBusyError } from "@/server/trainingDataLock";
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
 
@@ -336,7 +339,9 @@ const splitNumberedText = (value: string) => {
 async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
   const workbook = new ExcelJS.Workbook();
   try {
-    await workbook.xlsx.load(buffer);
+    await workbook.xlsx.load(
+      Buffer.from(buffer) as unknown as Parameters<ExcelJS.Workbook["xlsx"]["load"]>[0]
+    );
   } catch (error) {
     const technicalMessage = error instanceof Error ? error.message : "неизвестная ошибка чтения";
     throw new PlanImportError("Не удалось прочитать Excel-файл.", {
@@ -352,6 +357,8 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
       details: ["Откройте файл в Excel и убедитесь, что в книге есть хотя бы один лист."],
     });
   }
+
+  assertImportRowLimit(Math.max(0, sheet.rowCount - 1));
 
   const headerRow = sheet.getRow(1);
   const foundHeaders = getHeaderLabels(headerRow);
@@ -427,6 +434,7 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
     const taskChunks =
       taskLineCount > 1 ? splitNumberedText(taskText).filter((chunk) => chunk.length > 0) : [];
     const tasks = taskChunks.length ? taskChunks : [taskText];
+    assertImportRowLimit(rows.length + tasks.length);
     const hasMultipleTasks = tasks.length > 1;
     const hasNumberedComments =
       hasMultipleTasks && commentTextRaw ? countNumberedLines(commentTextRaw) > 0 : false;
@@ -491,13 +499,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file");
-  if (!(file instanceof Blob)) {
-    return NextResponse.json({ error: "Не найден файл в поле file" }, { status: 400 });
+  try {
+    return await runSpreadsheetOperation(req.signal, () => importPlan(req, userId));
+  } catch (error) {
+    if (error instanceof SpreadsheetLimitError || error instanceof SpreadsheetOperationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    if (isTrainingDataBusyError(error)) {
+      return NextResponse.json({ error: "Сервер занят. Повторите импорт позже" }, { status: 503 });
+    }
+    throw error;
   }
+}
 
-  const filename = (file as any).name ?? "plan.xlsx";
+async function importPlan(req: Request, userId: number) {
+  const file = await readSpreadsheetFile(req);
+  const filename = file instanceof File ? file.name : "plan.xlsx";
   const normalizedFilename = filename.toLowerCase();
   if (normalizedFilename.endsWith(".xls") && !normalizedFilename.endsWith(".xlsx")) {
     return NextResponse.json(
@@ -587,15 +604,11 @@ export async function POST(req: Request) {
     };
   });
 
-  const dates = Array.from(sessionCounter.keys());
-  const existingDates = await getExistingPlanEntryDates(userId, dates);
-  const newEntries = entries.filter((entry) => !existingDates.has(entry.date));
   const createdImport = await createPlanImport({
     userId,
     filename,
     rowCount: parsed.rows.length,
     entries: stripRowNumbers(entries),
-    newEntries: stripRowNumbers(newEntries),
     errorsCount: parsed.errors.length,
   });
 

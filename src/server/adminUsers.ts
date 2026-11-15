@@ -1,5 +1,6 @@
 import { eq, inArray, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { lockTrainingData } from "@/server/trainingDataLock";
 import {
   aliceAccounts,
   aliceLinkCodes,
@@ -79,6 +80,7 @@ export async function clearUserTrainingDataById(
   userId: number
 ): Promise<ClearUserTrainingDataResult> {
   return await db.transaction(async (tx) => {
+    await lockTrainingData(tx, userId);
     const [targetUser] = await tx
       .select({ id: users.id })
       .from(users)
@@ -136,6 +138,7 @@ export async function clearUserTrainingDataById(
 
 export async function deleteUserAccountById(userId: number): Promise<DeleteUserAccountResult> {
   return await db.transaction(async (tx) => {
+    await lockTrainingData(tx, userId);
     const [targetUser] = await tx
       .select({
         id: users.id,

@@ -1,14 +1,46 @@
 import { getPlanEntriesByDate } from "@/server/planEntries";
 import { formatDateForDisplay } from "@/bot/utils/dateTime";
 
-const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
+const decodeCodePoint = (value: string, radix: number) => {
+  const codePoint = parseInt(value, radix);
+  if (!Number.isInteger(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
+    return "";
+  }
+  return String.fromCodePoint(codePoint);
+};
+
+const decodeHtmlEntities = (value: string) => {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&amp;/gi, "&")
+    .replace(/&#(\d+);/g, (_, code: string) => decodeCodePoint(code, 10))
+    .replace(/&#x([\da-f]+);/gi, (_, code: string) => decodeCodePoint(code, 16));
+};
+
+export const stripHtml = (html: string) => {
+  return decodeHtmlEntities(
+    html
+      .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6])\s*\/?>/gi, "\n")
+      .replace(/<\s*li\b[^>]*>/gi, "• ")
+      .replace(/<[^>]*>/g, "")
+      .replace(/\u0000/g, "")
+  )
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
 
 export type PlanEntries = Awaited<ReturnType<typeof getPlanEntriesByDate>>;
 
 export const formatPlanMessage = (params: {
   date: string;
   entries: PlanEntries;
-  sendTime?: string | null;
+  sendTime?: string | null | undefined;
 }) => {
   const displayDate = formatDateForDisplay(params.date);
   const sendTimeText = params.sendTime ? `Время рассылки: ${params.sendTime}.` : "";

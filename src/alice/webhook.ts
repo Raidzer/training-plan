@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdByAliceId, linkAliceAccount } from "@/alice/accounts";
 import { hasSleepMarker, parseSleepCommand, parseWeightCommand } from "@/alice/parser";
-import { getRecoveryEntryByDate, upsertRecoveryEntry } from "@/server/recoveryEntries";
+import { upsertRecoveryEntry } from "@/server/recoveryEntries";
 import { upsertWeightEntry } from "@/server/weightEntries";
 import { formatDateInTimeZone, formatDateLocal, isValidTimeZone } from "@/bot/utils/dateTime";
 import type { AliceRequest, AliceResponse, AliceSessionData } from "./types";
@@ -17,22 +17,6 @@ const getDiaryDate = (timezone: string) => {
   }
 
   return formatDateLocal(new Date());
-};
-
-const saveSleepEntry = async (params: { userId: number; date: string; sleepHours: number }) => {
-  const recoveryEntry = await getRecoveryEntryByDate({
-    userId: params.userId,
-    date: params.date,
-  });
-
-  await upsertRecoveryEntry({
-    userId: params.userId,
-    date: params.date,
-    hasBath: Boolean(recoveryEntry?.hasBath),
-    hasMfr: Boolean(recoveryEntry?.hasMfr),
-    hasMassage: Boolean(recoveryEntry?.hasMassage),
-    sleepHours: params.sleepHours,
-  });
 };
 
 const formatSleepHours = (sleepHours: number) => {
@@ -147,7 +131,7 @@ export async function handleAliceWebhook(req: NextRequest) {
       }
 
       const today = getDiaryDate(timezone);
-      await saveSleepEntry({
+      await upsertRecoveryEntry({
         userId,
         date: today,
         sleepHours: sleepData.sleepHours,
@@ -162,7 +146,7 @@ export async function handleAliceWebhook(req: NextRequest) {
     const sleepData = parseSleepCommand(command);
     if (sleepData) {
       const today = getDiaryDate(timezone);
-      await saveSleepEntry({
+      await upsertRecoveryEntry({
         userId,
         date: today,
         sleepHours: sleepData.sleepHours,

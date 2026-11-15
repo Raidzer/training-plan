@@ -64,6 +64,8 @@ type ShoeItem = {
   id: number;
   name: string;
   isArchived: boolean;
+  currentMileageKm?: string | null;
+  mileageLimitKm?: string | null;
 };
 
 const MAX_SHOE_MILEAGE_KM = 99999.99;
@@ -629,6 +631,7 @@ export function useDiaryData({ messageApi, messages }: DiaryDataParams) {
             startTime: startTime.length > 0 ? startTime : null,
             resultText: form.resultText,
             commentText: form.commentText,
+            hasLongBottom: form.hasLongBottom,
             distanceKm,
             overallScore: form.overallScore,
             functionalScore: form.functionalScore,

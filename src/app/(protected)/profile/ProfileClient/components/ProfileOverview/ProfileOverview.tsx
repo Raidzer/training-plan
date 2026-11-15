@@ -1,6 +1,7 @@
 "use client";
 
 import { Typography } from "antd";
+import { ProfileAvatar } from "../ProfileAvatar/ProfileAvatar";
 import { PROFILE_LABELS, PROFILE_NAV_ITEMS } from "../../constants/profileConstants";
 import type { ProfileUserData } from "../../types/profileTypes";
 import {
@@ -13,9 +14,14 @@ import styles from "./ProfileOverview.module.scss";
 type ProfileOverviewProps = {
   userData: ProfileUserData;
   canDeleteProfile: boolean;
+  avatarVersion?: string | null;
 };
 
-export function ProfileOverview({ userData, canDeleteProfile }: ProfileOverviewProps) {
+export function ProfileOverview({
+  userData,
+  canDeleteProfile,
+  avatarVersion = null,
+}: ProfileOverviewProps) {
   const displayName = getProfileDisplayName(userData);
   const initials = getProfileInitials(userData);
   const roleLabel = getProfileRoleLabel(userData.role);
@@ -30,9 +36,11 @@ export function ProfileOverview({ userData, canDeleteProfile }: ProfileOverviewP
   return (
     <aside className={styles.panel} aria-labelledby="profile-overview-title">
       <div className={styles.identity}>
-        <div className={styles.avatar} aria-hidden>
-          {initials}
-        </div>
+        <ProfileAvatar
+          initialVersion={avatarVersion}
+          initials={initials}
+          displayName={displayName}
+        />
         <div className={styles.identityText}>
           <span className={styles.role}>{roleLabel}</span>
           <Typography.Title id="profile-overview-title" level={2} className={styles.name}>

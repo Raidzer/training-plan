@@ -9,7 +9,7 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import type { PlanEntry, WorkoutFormEntry } from "../../types/diaryTypes";
-import { WORKOUT_LABELS } from "../../constants/diaryConstants";
+import { WORKOUT_LABELS, YES_NO_OPTIONS } from "../../constants/diaryConstants";
 import { normalizeStartTimeInput } from "../../utils/diaryUtils";
 import { WorkoutShoesFieldset } from "../WorkoutShoesFieldset/WorkoutShoesFieldset";
 import type { ShoeOption, TextOption, WorkoutField } from "./WorkoutReportCard.types";
@@ -45,7 +45,7 @@ type WorkoutReportCardProps = {
   onChange: (
     entryId: number,
     field: WorkoutField,
-    value: string | number | number[] | Record<number, string> | null
+    value: string | number | boolean | number[] | Record<number, string> | null
   ) => void;
   onSave: (entryId: number) => void;
   onOpenConstructor: (entryId: number, taskText: string) => void;
@@ -111,7 +111,7 @@ export function WorkoutReportCard({
   const shoeMileageKm = form?.shoeMileageKm ?? {};
   const surfaceValue = form?.surface ?? null;
   const weatherValue = form?.weather ?? null;
-  const windValue = form?.hasWind ?? null;
+  const windValue = form?.hasWind || "false";
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -211,13 +211,12 @@ export function WorkoutReportCard({
               <label htmlFor={`${fieldPrefix}-wind`} className={styles.label}>
                 {windLabel}
               </label>
-              <Select<string | null>
+              <Select<string>
                 id={`${fieldPrefix}-wind`}
                 value={windValue}
                 placeholder={windLabel}
                 options={windOptions.map((option) => ({ ...option }))}
-                allowClear
-                onChange={(value) => onChange(entry.id, "hasWind", value ?? "")}
+                onChange={(value) => onChange(entry.id, "hasWind", value)}
               />
               <input type="hidden" name={`${fieldPrefix}-wind`} value={windValue ?? ""} />
             </div>
@@ -236,6 +235,22 @@ export function WorkoutReportCard({
             </div>
           </>
         )}
+        <div className={styles.field}>
+          <label htmlFor={`${fieldPrefix}-hasLongBottom`} className={styles.label}>
+            {WORKOUT_LABELS.longBottomLabel}
+          </label>
+          <Select<string>
+            id={`${fieldPrefix}-hasLongBottom`}
+            value={form?.hasLongBottom ? "true" : "false"}
+            options={[...YES_NO_OPTIONS]}
+            onChange={(value) => onChange(entry.id, "hasLongBottom", value === "true")}
+          />
+          <input
+            type="hidden"
+            name={`${fieldPrefix}-hasLongBottom`}
+            value={form?.hasLongBottom ? "true" : "false"}
+          />
+        </div>
       </div>
 
       <WorkoutShoesFieldset
@@ -378,6 +393,7 @@ export function WorkoutReportCard({
 
         <Collapse
           className={styles.collapse}
+          defaultActiveKey={["assessment", "conditions"]}
           ghost
           items={[
             {

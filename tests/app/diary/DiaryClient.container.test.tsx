@@ -121,6 +121,9 @@ vi.mock("@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCar
       <button type="button" onClick={() => onChange(101, "weather", "rain")}>
         workout-weather
       </button>
+      <button type="button" onClick={() => onChange(101, "hasLongBottom", true)}>
+        workout-long-bottom
+      </button>
       <button type="button" onClick={() => onChange(101, "surface", "manezh")}>
         workout-indoor
       </button>
@@ -333,6 +336,7 @@ describe("DiaryClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "save-recovery" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-result" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-weather" }));
+    fireEvent.click(screen.getByRole("button", { name: "workout-long-bottom" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-indoor" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-shoes" }));
     fireEvent.click(screen.getByRole("button", { name: "workout-mileage" }));
@@ -359,11 +363,13 @@ describe("DiaryClient", () => {
     expect(diaryData.getWorkoutState()[101]).toEqual(
       expect.objectContaining({
         resultText: "готово",
+        hasLongBottom: true,
         surface: "asphalt",
         shoeIds: [1, 2],
       })
     );
     expect(diaryData.getWorkoutState()[101].weather).toBe("");
+    expect(diaryData.getWorkoutState()[101].hasWind).toBe("false");
     expect(diaryData.getWorkoutState()[101].shoeMileageKm).toEqual({});
     expect(diaryClientMocks.handleSaveWeightMock).toHaveBeenCalledWith("morning");
     expect(diaryClientMocks.handleSaveRecoveryMock).toHaveBeenCalled();

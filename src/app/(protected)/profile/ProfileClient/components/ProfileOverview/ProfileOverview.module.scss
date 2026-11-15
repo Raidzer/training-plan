@@ -13,22 +13,6 @@
   min-width: 0;
 }
 
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  margin-block-end: 20px;
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.04em;
-}
-
 .identityText {
   min-width: 0;
 }
@@ -129,13 +113,6 @@
     gap: 16px;
   }
 
-  .avatar {
-    flex: 0 0 auto;
-    width: 64px;
-    height: 64px;
-    margin: 0;
-  }
-
   .navigation {
     margin: 0;
     padding-block-start: 0;
@@ -154,12 +131,6 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
     padding: 20px;
-  }
-
-  .avatar {
-    width: 56px;
-    height: 56px;
-    font-size: 1.25rem;
   }
 
   .navigation {

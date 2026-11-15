@@ -4,6 +4,7 @@ import { getSubscription } from "@/bot/services/telegramSubscriptions";
 import {
   buildLinkReplyKeyboard,
   buildMainMenuReplyKeyboard,
+  CANCEL_BUTTON_TEXT,
   CANCEL_LINK_BUTTON_TEXT,
   isButtonText,
 } from "@/bot/menu/menuKeyboard";
@@ -27,6 +28,7 @@ export const handleCancelIfRequested = async ({
     lower === "отмена" ||
     lower === "cancel" ||
     lower === "/cancel" ||
+    isButtonText(text, CANCEL_BUTTON_TEXT) ||
     isButtonText(text, CANCEL_LINK_BUTTON_TEXT)
   ) {
     clearPendingInput(chatId);

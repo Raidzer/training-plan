@@ -5,7 +5,7 @@ import { Empty, Skeleton, message } from "antd";
 import { useRouter } from "next/navigation";
 import styles from "./DiaryClient.module.scss";
 import { buildDailyReportText } from "@/shared/utils/dailyReport";
-import { formatDate } from "./utils/diaryUtils";
+import { formatDate, toDefaultWorkoutForm } from "./utils/diaryUtils";
 import { useDiaryData } from "./hooks/useDiaryData";
 import { DiaryHeader } from "./components/DiaryHeader/DiaryHeader";
 import { DiaryCalendar } from "./components/DiaryCalendar/DiaryCalendar";
@@ -13,6 +13,7 @@ import { DiaryStatusBlock } from "./components/DiaryStatusBlock/DiaryStatusBlock
 import { WeightCard } from "./components/WeightCard/WeightCard";
 import { RecoveryCard } from "./components/RecoveryCard/RecoveryCard";
 import { WorkoutsCard } from "./components/WorkoutsCard/WorkoutsCard";
+import type { WorkoutField } from "./components/WorkoutReportCard/WorkoutReportCard.types";
 import { WorkoutEditModal } from "./components/WorkoutEditModal/WorkoutEditModal";
 import { DailyReportModal } from "./components/DailyReportModal/DailyReportModal";
 import {
@@ -26,7 +27,7 @@ import {
   SURFACE_OPTIONS,
   WEATHER_OPTIONS,
   WEIGHT_LABELS,
-  WIND_OPTIONS,
+  YES_NO_OPTIONS,
   WORKOUT_EDIT_LABELS,
   WORKOUT_LABELS,
 } from "./constants/diaryConstants";
@@ -67,7 +68,14 @@ export function DiaryClient({ userId }: { userId: number }) {
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   const shoeOptions = useMemo(
-    () => shoes.map((shoe) => ({ value: shoe.id, label: shoe.name, isArchived: shoe.isArchived })),
+    () =>
+      shoes.map((shoe) => ({
+        value: shoe.id,
+        label: shoe.name,
+        isArchived: shoe.isArchived,
+        currentMileageKm: shoe.currentMileageKm,
+        mileageLimitKm: shoe.mileageLimitKm,
+      })),
     [shoes]
   );
 
@@ -93,38 +101,11 @@ export function DiaryClient({ userId }: { userId: number }) {
 
   const handleWorkoutChange = (
     entryId: number,
-    field:
-      | "startTime"
-      | "resultText"
-      | "distanceKm"
-      | "commentText"
-      | "overallScore"
-      | "functionalScore"
-      | "muscleScore"
-      | "weather"
-      | "hasWind"
-      | "temperatureC"
-      | "surface"
-      | "shoeIds"
-      | "shoeMileageKm",
-    value: string | number | number[] | Record<number, string> | null
+    field: WorkoutField,
+    value: string | number | boolean | number[] | Record<number, string> | null
   ) => {
     setWorkoutForm((prev) => {
-      const current = prev[entryId] ?? {
-        startTime: "",
-        resultText: "",
-        commentText: "",
-        distanceKm: "",
-        overallScore: null,
-        functionalScore: null,
-        muscleScore: null,
-        weather: "",
-        hasWind: "",
-        temperatureC: "",
-        surface: "",
-        shoeIds: [],
-        shoeMileageKm: {},
-      };
+      const current = prev[entryId] ?? toDefaultWorkoutForm();
       let next = current;
       if (field === "shoeIds") {
         const nextIds = Array.isArray(value) ? value : [];
@@ -139,7 +120,7 @@ export function DiaryClient({ userId }: { userId: number }) {
             : {};
         next = { ...current, shoeMileageKm: nextMileage };
       } else {
-        next = { ...current, [field]: value as string | number | null };
+        next = { ...current, [field]: value as string | number | boolean | null };
         if (field === "surface") {
           const surfaceValue = typeof value === "string" ? value : "";
           const isIndoorSurface =
@@ -149,7 +130,7 @@ export function DiaryClient({ userId }: { userId: number }) {
             surfaceValue === "Беговая дорожка";
           if (isIndoorSurface) {
             next.weather = "";
-            next.hasWind = "";
+            next.hasWind = "false";
             next.temperatureC = "";
           }
         }
@@ -274,7 +255,7 @@ export function DiaryClient({ userId }: { userId: number }) {
                     surfaceOptions={SURFACE_OPTIONS}
                     shoeOptions={shoeOptions}
                     weatherOptions={WEATHER_OPTIONS}
-                    windOptions={WIND_OPTIONS}
+                    windOptions={YES_NO_OPTIONS}
                     shoeLoading={loadingShoes}
                     entries={visibleDayData.planEntries}
                     workoutReports={visibleDayData.workoutReports}

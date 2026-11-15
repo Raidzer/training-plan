@@ -34,18 +34,23 @@ import { clearPendingInput, getPendingInput } from "@/bot/menu/menuState";
 const DATE_MENU_PROMPT_TEXT = `Выбери дату из списка или нажми "${CUSTOM_DATE_BUTTON_TEXT}".`;
 
 type CommandHandler = (ctx: any) => Promise<unknown>;
+type CallbackHandler = (ctx: any) => Promise<unknown>;
 
 function createBotHarness() {
   const handlers = new Map<string, CommandHandler>();
+  let callbackHandler: CallbackHandler | null = null;
   const bot = {
     command: vi.fn((name: string, handler: CommandHandler) => {
       handlers.set(name, handler);
+    }),
+    callbackQuery: vi.fn((_pattern: RegExp, handler: CallbackHandler) => {
+      callbackHandler = handler;
     }),
   };
 
   registerPlanCommands(bot as any);
 
-  return handlers;
+  return { handlers, getCallbackHandler: () => callbackHandler };
 }
 
 function createContext(overrides: Record<string, unknown> = {}) {
@@ -58,6 +63,7 @@ function createContext(overrides: Record<string, unknown> = {}) {
       text: "",
     },
     reply: vi.fn(),
+    answerCallbackQuery: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -81,13 +87,13 @@ describe("registerPlanCommands", () => {
   });
 
   it("должен регистрировать команды плана", () => {
-    const handlers = createBotHarness();
+    const { handlers } = createBotHarness();
 
     expect(Array.from(handlers.keys()).sort()).toEqual(["date", "report", "today"]);
   });
 
   it("должен игнорировать команды плана без чата", async () => {
-    const handlers = createBotHarness();
+    const { handlers } = createBotHarness();
     const ctx = createContext({ chat: undefined });
 
     await (handlers.get("today") as CommandHandler)(ctx);
@@ -99,7 +105,7 @@ describe("registerPlanCommands", () => {
   });
 
   it("должен требовать связанный аккаунт", async () => {
-    const handlers = createBotHarness();
+    const { handlers } = createBotHarness();
     const todayCtx = createContext();
     const dateCtx = createContext({ message: { text: "/date 21-12-2025" } });
     const reportCtx = createContext({ message: { text: "/report 21-12-2025" } });
@@ -125,7 +131,7 @@ describe("registerPlanCommands", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-11T09:30:00.000Z"));
 
-    const handlers = createBotHarness();
+    const { handlers } = createBotHarness();
     const timezoneCtx = createContext();
     const serverTimeCtx = createContext();
 
@@ -151,7 +157,7 @@ describe("registerPlanCommands", () => {
   });
 
   it("должен валидировать дату и показывать план по дате", async () => {
-    const handlers = createBotHarness();
+    const { handlers } = createBotHarness();
     const missingCtx = createContext({ message: { text: "/date" } });
     const invalidCtx = createContext({ message: { text: "/date 32-12-2025" } });
     const validCtx = createContext({ message: { text: "/date 21-12-2025" } });
@@ -197,7 +203,7 @@ describe("registerPlanCommands", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-11T09:30:00.000Z"));
 
-    const handlers = createBotHarness();
+    const { handlers } = createBotHarness();
     const invalidCtx = createContext({ message: { text: "/report 32-12-2025" } });
     const dateCtx = createContext({ message: { text: "/report 21-12-2025" } });
     const timezoneCtx = createContext({ message: { text: "/report" } });
@@ -237,5 +243,29 @@ describe("registerPlanCommands", () => {
     expect(serverTimeCtx.reply).toHaveBeenCalledWith(
       "Готовый отчет\n\nТаймзона не задана, использую время сервера."
     );
+  });
+
+  it("должен отправлять актуальный план по кнопке полного текста", async () => {
+    const harness = createBotHarness();
+    const callbackHandler = harness.getCallbackHandler();
+    const ctx = createContext({
+      match: ["plan:text:2025-12-21", "2025-12-21"],
+      answerCallbackQuery: vi.fn().mockResolvedValue(undefined),
+    });
+    planMocks.getPlanEntriesByDateMock.mockResolvedValueOnce([
+      {
+        id: 1,
+        date: "2025-12-21",
+        sessionOrder: 1,
+        taskText: "Кросс 8 км",
+        commentText: null,
+        isWorkload: false,
+      },
+    ]);
+
+    await callbackHandler?.(ctx);
+
+    expect(ctx.answerCallbackQuery).toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith(["План на 21-12-2025:", "1.", "Кросс 8 км"].join("\n"));
   });
 });

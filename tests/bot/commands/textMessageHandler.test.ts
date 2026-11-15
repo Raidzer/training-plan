@@ -115,7 +115,7 @@ describe("registerTextMessageHandler", () => {
   });
 
   it("должен отправлять текст в pending handler", async () => {
-    const { handler } = createBotHarness();
+    const { bot, handler } = createBotHarness();
     const ctx = createContext({ message: { text: " 21-12-2025 " } });
 
     textHandlerMocks.getPendingInputMock.mockReturnValue("date");
@@ -123,6 +123,7 @@ describe("registerTextMessageHandler", () => {
     await handler(ctx);
 
     expect(textHandlerMocks.handlePendingInputMock).toHaveBeenCalledWith({
+      bot,
       ctx,
       chatId: 10,
       text: "21-12-2025",

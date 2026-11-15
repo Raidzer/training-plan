@@ -187,6 +187,7 @@ export async function POST(req: Request) {
     startTime?: string | null;
     resultText?: string;
     commentText?: string | null;
+    hasLongBottom?: boolean;
     distanceKm?: number | string | null;
     overallScore?: number | string | null;
     functionalScore?: number | string | null;
@@ -245,6 +246,9 @@ export async function POST(req: Request) {
   if (!trimmedResultText) {
     return NextResponse.json({ error: "invalid_result" }, { status: 400 });
   }
+  if (body?.hasLongBottom !== undefined && typeof body.hasLongBottom !== "boolean") {
+    return NextResponse.json({ error: "invalid_long_bottom" }, { status: 400 });
+  }
   if (weather && weather.length > 255) {
     return NextResponse.json({ error: "invalid_weather" }, { status: 400 });
   }
@@ -291,6 +295,9 @@ export async function POST(req: Request) {
     resultText,
     commentText: commentText && commentText.length > 0 ? commentText : null,
   };
+  if (body?.hasLongBottom !== undefined) {
+    upsertParams.hasLongBottom = body.hasLongBottom;
+  }
   if (distanceKm.value !== undefined) {
     upsertParams.distanceKm = distanceKm.value;
   }
@@ -325,6 +332,9 @@ export async function POST(req: Request) {
   try {
     upsertResult = await upsertWorkoutReport(upsertParams);
   } catch (error) {
+    if (error instanceof Error && error.message === "date_mismatch") {
+      return NextResponse.json({ error: "date_mismatch" }, { status: 400 });
+    }
     if (error instanceof Error && error.message === "archived_shoe") {
       return NextResponse.json({ error: "archived_shoe" }, { status: 409 });
     }

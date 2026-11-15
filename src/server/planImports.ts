@@ -1,6 +1,8 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { planEntries, planImports } from "@/server/db/schema";
+import { lockTrainingData } from "@/server/trainingDataLock";
+import { IMPORT_BATCH_SIZE } from "@/server/spreadsheetLimits";
 
 export type PlanImportEntry = {
   userId: number;
@@ -14,13 +16,14 @@ export type PlanImportEntry = {
 
 export async function getExistingPlanEntryDates(
   userId: number,
-  dates: string[]
+  dates: string[],
+  database: Pick<typeof db, "select"> = db
 ): Promise<Set<string>> {
   if (dates.length === 0) {
     return new Set();
   }
 
-  const existingRows = await db
+  const existingRows = await database
     .select({ date: planEntries.date })
     .from(planEntries)
     .where(and(eq(planEntries.userId, userId), inArray(planEntries.date, dates)));
@@ -48,12 +51,15 @@ export async function createPlanImport(params: {
   filename: string;
   rowCount: number;
   entries: PlanImportEntry[];
-  newEntries: PlanImportEntry[];
   errorsCount: number;
 }) {
   const now = new Date();
 
   return await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
+    const dates = Array.from(new Set(params.entries.map((entry) => entry.date)));
+    const existingDates = await getExistingPlanEntryDates(params.userId, dates, tx);
+    const newEntries = params.entries.filter((entry) => !existingDates.has(entry.date));
     const [importRow] = await tx
       .insert(planImports)
       .values({
@@ -65,26 +71,30 @@ export async function createPlanImport(params: {
       })
       .returning({ id: planImports.id });
 
-    if (params.newEntries.length > 0) {
-      await tx.insert(planEntries).values(
-        params.newEntries.map((entry) => ({
-          ...entry,
-          importId: importRow.id,
-        }))
-      );
+    let insertedCount = 0;
+    for (let offset = 0; offset < newEntries.length; offset += IMPORT_BATCH_SIZE) {
+      const insertedRows = await tx
+        .insert(planEntries)
+        .values(
+          newEntries.slice(offset, offset + IMPORT_BATCH_SIZE).map((entry) => ({
+            ...entry,
+            importId: importRow.id,
+          }))
+        )
+        .returning({ id: planEntries.id });
+      insertedCount += insertedRows.length;
     }
 
-    const skippedCount =
-      params.errorsCount + Math.max(0, params.entries.length - params.newEntries.length);
+    const skippedCount = params.errorsCount + Math.max(0, params.entries.length - insertedCount);
     await tx
       .update(planImports)
       .set({
-        insertedCount: params.newEntries.length,
+        insertedCount,
         skippedCount,
         completedAt: now,
       })
       .where(eq(planImports.id, importRow.id));
 
-    return { id: importRow.id, insertedCount: params.newEntries.length };
+    return { id: importRow.id, insertedCount };
   });
 }

@@ -64,6 +64,17 @@ function createValidPayload(overrides: Record<string, unknown> = {}) {
 }
 
 describe("POST /api/diary/workout-report", () => {
+  it("возвращает date_mismatch, если дата изменилась во время ожидания блокировки", async () => {
+    upsertWorkoutReportMock.mockRejectedValueOnce(new Error("date_mismatch"));
+    const response = await POST(
+      createJsonRequest({
+        url: "http://localhost/api/diary/workout-report",
+        body: createValidPayload(),
+      })
+    );
+    await expectJsonError(response, 400, "date_mismatch");
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     authMock.mockResolvedValue(createSession({ id: "15" }));
@@ -149,6 +160,47 @@ describe("POST /api/diary/workout-report", () => {
       })
     );
   });
+
+  it.each([true, false])("должен сохранять hasLongBottom=%s", async (hasLongBottom) => {
+    const response = await POST(
+      createJsonRequest({
+        url: "http://localhost/api/diary/workout-report",
+        body: createValidPayload({ hasLongBottom }),
+      })
+    );
+
+    await expectJsonSuccess(response, 200);
+    expect(upsertWorkoutReportMock).toHaveBeenCalledWith(
+      expect.objectContaining({ hasLongBottom })
+    );
+  });
+
+  it("не должен передавать отсутствующий hasLongBottom при сохранении старого клиента", async () => {
+    const response = await POST(
+      createJsonRequest({
+        url: "http://localhost/api/diary/workout-report",
+        body: createValidPayload(),
+      })
+    );
+
+    await expectJsonSuccess(response, 200);
+    expect(upsertWorkoutReportMock.mock.calls[0][0]).not.toHaveProperty("hasLongBottom");
+  });
+
+  it.each(["true", "false", null, 0, {}, []])(
+    "должен отклонять не boolean hasLongBottom=%j",
+    async (hasLongBottom) => {
+      const response = await POST(
+        createJsonRequest({
+          url: "http://localhost/api/diary/workout-report",
+          body: createValidPayload({ hasLongBottom }),
+        })
+      );
+
+      await expectJsonError(response, 400, "invalid_long_bottom");
+      expect(upsertWorkoutReportMock).not.toHaveBeenCalled();
+    }
+  );
 
   it("должен возвращать 400 при пустом resultText", async () => {
     const request = createJsonRequest({

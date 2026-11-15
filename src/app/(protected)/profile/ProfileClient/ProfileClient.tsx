@@ -17,7 +17,10 @@ import { useProfileClient } from "./hooks/useProfileClient";
 import type { ProfileClientProps } from "./types/profileTypes";
 import styles from "./ProfileClient.module.scss";
 
-export const ProfileClient = ({ userData: initialUserData }: ProfileClientProps) => {
+export const ProfileClient = ({
+  userData: initialUserData,
+  avatarVersion = null,
+}: ProfileClientProps) => {
   const { message } = App.useApp();
   const {
     profileForm,
@@ -59,7 +62,11 @@ export const ProfileClient = ({ userData: initialUserData }: ProfileClientProps)
       <EmailVerificationBanner />
 
       <div className={styles.layout}>
-        <ProfileOverview userData={userData} canDeleteProfile={canDeleteProfile} />
+        <ProfileOverview
+          userData={userData}
+          avatarVersion={avatarVersion}
+          canDeleteProfile={canDeleteProfile}
+        />
 
         <div className={styles.settingsPanel}>
           <ProfileDetailsForm

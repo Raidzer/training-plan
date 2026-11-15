@@ -12,7 +12,8 @@ export type PendingInput =
   | "weightPeriod"
   | "weightValue"
   | "recoverySelect"
-  | "recoverySleep";
+  | "recoverySleep"
+  | "keyboardRefreshMessage";
 
 const pendingInputs = new Map<number, PendingInput>();
 const weightDrafts = new Map<

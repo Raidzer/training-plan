@@ -1,6 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { WorkoutsCard } from "@/app/(protected)/diary/DiaryClient/components/WorkoutsCard/WorkoutsCard";
+import { toDefaultWorkoutForm } from "@/app/(protected)/diary/DiaryClient/utils/diaryUtils";
+import { YES_NO_OPTIONS } from "@/app/(protected)/diary/DiaryClient/constants/diaryConstants";
 
 const WORKOUTS_CARD_TEST_TIMEOUT_MS = 10000;
 
@@ -112,6 +114,7 @@ describe("WorkoutsCard", () => {
               startTime: "09:30",
               resultText: "old-result",
               commentText: "old-comment",
+              hasLongBottom: false,
               distanceKm: "",
               overallScore: null,
               functionalScore: null,
@@ -150,8 +153,9 @@ describe("WorkoutsCard", () => {
 
   it(
     "должен переключать тренировки табами и сохранять их отдельные действия",
-    () => {
+    async () => {
       const onEditWorkout = vi.fn();
+      const onChange = vi.fn();
 
       render(
         <WorkoutsCard
@@ -183,7 +187,7 @@ describe("WorkoutsCard", () => {
           ]}
           shoeOptions={[]}
           weatherOptions={[{ value: "sunny", label: "Солнечно" }]}
-          windOptions={[{ value: "true", label: "Есть" }]}
+          windOptions={YES_NO_OPTIONS}
           shoeLoading={false}
           entries={[
             {
@@ -203,9 +207,9 @@ describe("WorkoutsCard", () => {
               isWorkload: true,
             },
           ]}
-          workoutForm={{}}
+          workoutForm={{ 1: { ...toDefaultWorkoutForm(), hasLongBottom: true } }}
           savingWorkouts={{}}
-          onChange={vi.fn()}
+          onChange={onChange}
           onSave={vi.fn()}
           onEditWorkout={onEditWorkout}
         />
@@ -221,12 +225,43 @@ describe("WorkoutsCard", () => {
       expect(firstTab.getAttribute("aria-selected")).toBe("true");
       expect(secondTab.getAttribute("aria-selected")).toBe("false");
 
+      expect(screen.queryByRole("checkbox", { name: "Длинный низ" })).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Оценка тренировки", expanded: true })
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Условия и экипировка", expanded: true })
+      ).toBeTruthy();
+      expect(screen.getByRole("spinbutton", { name: "Overall" })).toBeTruthy();
+      const firstLongBottom = screen.getByRole("combobox", { name: "Длинный низ" });
+      expect(firstLongBottom.closest(".ant-select")?.textContent).toContain("Да");
+      fireEvent.mouseDown(firstLongBottom);
+      fireEvent.click(
+        await screen.findByText("Нет", { selector: ".ant-select-item-option-content" })
+      );
+      expect(onChange).toHaveBeenNthCalledWith(1, 1, "hasLongBottom", false);
+
       fireEvent.click(
         screen.getByRole("button", {
           name: "Редактировать тренировку 1",
         })
       );
       fireEvent.click(secondTab);
+      expect(
+        screen.getByRole("button", { name: "Оценка тренировки", expanded: true })
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Условия и экипировка", expanded: true })
+      ).toBeTruthy();
+      expect(screen.getByRole("spinbutton", { name: "Overall" })).toBeTruthy();
+      const secondLongBottom = screen.getByRole("combobox", { name: "Длинный низ" });
+      const wind = screen.getByRole("combobox", { name: "Wind" });
+      expect(secondLongBottom.closest(".ant-select")?.textContent).toContain("Нет");
+      expect(wind.closest(".ant-select")?.textContent).toContain("Нет");
+      fireEvent.mouseDown(secondLongBottom);
+      fireEvent.keyDown(secondLongBottom, { key: "ArrowDown", keyCode: 40 });
+      fireEvent.keyDown(secondLongBottom, { key: "Enter", keyCode: 13 });
+      expect(onChange).toHaveBeenNthCalledWith(2, 2, "hasLongBottom", true);
       fireEvent.click(
         screen.getByRole("button", {
           name: "Редактировать тренировку 2",
@@ -236,6 +271,12 @@ describe("WorkoutsCard", () => {
       expect(secondTab.getAttribute("aria-selected")).toBe("true");
       expect(onEditWorkout).toHaveBeenNthCalledWith(1, 1);
       expect(onEditWorkout).toHaveBeenNthCalledWith(2, 2);
+
+      for (const name of ["Оценка тренировки", "Условия и экипировка"]) {
+        fireEvent.click(screen.getByRole("button", { name, expanded: true }));
+        fireEvent.click(screen.getByRole("button", { name, expanded: false }));
+        expect(screen.getByRole("button", { name, expanded: true })).toBeTruthy();
+      }
     },
     WORKOUTS_CARD_TEST_TIMEOUT_MS
   );
