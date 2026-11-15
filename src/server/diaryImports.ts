@@ -6,6 +6,8 @@ import {
   type DiaryImportIssue,
   type ParsedDiaryImportRow,
 } from "@/server/diaryImportParser";
+import { lockTrainingData } from "@/server/trainingDataLock";
+import { IMPORT_BATCH_SIZE } from "@/server/spreadsheetLimits";
 
 export type DiaryImportResult = {
   sheetName: string;
@@ -37,7 +39,7 @@ type ImportAccumulator = {
   warnings: DiaryImportIssue[];
 };
 
-type DiaryImportTransaction = Pick<typeof db, "insert">;
+type DiaryImportTransaction = Pick<typeof db, "insert" | "select" | "execute">;
 
 const formatDecimal = (value: number, digits: number) => {
   return (Math.round(value * 10 ** digits) / 10 ** digits).toFixed(digits);
@@ -54,10 +56,6 @@ const hasWorkoutReportPayload = (row: ParsedDiaryImportRow) => {
 
 const hasRecoveryPayload = (row: ParsedDiaryImportRow) => {
   return row.sleepHours !== null || row.hasBath || row.hasMfr || row.hasMassage;
-};
-
-const hasWeightPayload = (row: ParsedDiaryImportRow) => {
-  return row.morningWeightKg !== null || row.eveningWeightKg !== null;
 };
 
 const buildPlanEntryMap = (entries: PlanEntryMatch[]) => {
@@ -85,117 +83,6 @@ const getMatchedPlanEntry = (params: {
   return dayEntries.find((entry) => entry.sessionOrder === params.row.sessionOrder) ?? null;
 };
 
-const insertWorkoutReportFromDiary = async (params: {
-  tx: DiaryImportTransaction;
-  userId: number;
-  planEntryId: number;
-  row: ParsedDiaryImportRow;
-}) => {
-  const now = new Date();
-  const distanceKm =
-    params.row.distanceKm === null ? null : formatDecimal(params.row.distanceKm, 2);
-  const commentText = params.row.commentText?.trim() ? params.row.commentText.trim() : null;
-
-  await params.tx
-    .insert(workoutReports)
-    .values({
-      userId: params.userId,
-      planEntryId: params.planEntryId,
-      date: params.row.date,
-      startTime: params.row.startTime,
-      resultText: params.row.resultText.trim() || "-",
-      commentText,
-      distanceKm,
-      overallScore: params.row.overallScore,
-      functionalScore: params.row.functionalScore,
-      muscleScore: params.row.muscleScore,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoNothing({
-      target: [workoutReports.userId, workoutReports.planEntryId],
-    });
-};
-
-const upsertWeightFromDiary = async (params: {
-  tx: DiaryImportTransaction;
-  userId: number;
-  row: ParsedDiaryImportRow;
-}) => {
-  const now = new Date();
-  const weights: Array<{ period: "morning" | "evening"; weightKg: number }> = [];
-  if (params.row.morningWeightKg !== null) {
-    weights.push({ period: "morning", weightKg: params.row.morningWeightKg });
-  }
-  if (params.row.eveningWeightKg !== null) {
-    weights.push({ period: "evening", weightKg: params.row.eveningWeightKg });
-  }
-
-  for (const weight of weights) {
-    const weightText = formatDecimal(weight.weightKg, 1);
-    await params.tx
-      .insert(weightEntries)
-      .values({
-        userId: params.userId,
-        date: params.row.date,
-        period: weight.period,
-        weightKg: weightText,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [weightEntries.userId, weightEntries.date, weightEntries.period],
-        set: {
-          weightKg: weightText,
-          updatedAt: now,
-        },
-      });
-  }
-
-  return weights.length;
-};
-
-const upsertRecoveryFromDiary = async (params: {
-  tx: DiaryImportTransaction;
-  userId: number;
-  row: ParsedDiaryImportRow;
-}) => {
-  const now = new Date();
-  const sleepHours = params.row.sleepHours === null ? null : String(params.row.sleepHours);
-  const recoverySet: {
-    hasBath: boolean;
-    hasMfr: boolean;
-    hasMassage: boolean;
-    updatedAt: Date;
-    sleepHours?: string | null;
-  } = {
-    hasBath: params.row.hasBath,
-    hasMfr: params.row.hasMfr,
-    hasMassage: params.row.hasMassage,
-    updatedAt: now,
-  };
-  if (params.row.sleepHours !== null) {
-    recoverySet.sleepHours = sleepHours;
-  }
-
-  await params.tx
-    .insert(recoveryEntries)
-    .values({
-      userId: params.userId,
-      date: params.row.date,
-      hasBath: params.row.hasBath,
-      hasMfr: params.row.hasMfr,
-      hasMassage: params.row.hasMassage,
-      sleepHours,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [recoveryEntries.userId, recoveryEntries.date],
-      set: recoverySet,
-    });
-};
-
 const importMatchedRows = async (params: {
   tx: DiaryImportTransaction;
   userId: number;
@@ -213,6 +100,10 @@ const importMatchedRows = async (params: {
     skippedRows: 0,
     warnings: [...params.initialWarnings],
   };
+  const now = new Date();
+  const reports: (typeof workoutReports.$inferInsert)[] = [];
+  const weightsByKey = new Map<string, typeof weightEntries.$inferInsert>();
+  const recoveryByDate = new Map<string, typeof recoveryEntries.$inferInsert>();
 
   for (const row of params.rows) {
     const matchedPlanEntry = getMatchedPlanEntry({ row, planEntryMap: params.planEntryMap });
@@ -239,40 +130,94 @@ const importMatchedRows = async (params: {
 
     accumulator.matchedRows += 1;
     if (hasWorkoutReportPayload(row)) {
-      await insertWorkoutReportFromDiary({
-        tx: params.tx,
+      reports.push({
         userId: params.userId,
         planEntryId: matchedPlanEntry.id,
-        row,
+        date: row.date,
+        startTime: row.startTime,
+        resultText: row.resultText.trim() || "-",
+        commentText: row.commentText?.trim() || null,
+        distanceKm: row.distanceKm === null ? null : formatDecimal(row.distanceKm, 2),
+        overallScore: row.overallScore,
+        functionalScore: row.functionalScore,
+        muscleScore: row.muscleScore,
+        createdAt: now,
+        updatedAt: now,
       });
-      accumulator.reportsUpserted += 1;
     }
-    if (hasWeightPayload(row)) {
-      accumulator.weightEntriesUpserted += await upsertWeightFromDiary({
-        tx: params.tx,
+    for (const weight of [
+      { period: "morning", weightKg: row.morningWeightKg },
+      { period: "evening", weightKg: row.eveningWeightKg },
+    ]) {
+      if (weight.weightKg === null) {
+        continue;
+      }
+      weightsByKey.set(`${row.date}:${weight.period}`, {
         userId: params.userId,
-        row,
+        date: row.date,
+        period: weight.period,
+        weightKg: formatDecimal(weight.weightKg, 1),
+        createdAt: now,
+        updatedAt: now,
       });
+      accumulator.weightEntriesUpserted += 1;
     }
     if (hasRecoveryPayload(row)) {
-      await upsertRecoveryFromDiary({
-        tx: params.tx,
+      recoveryByDate.set(row.date, {
         userId: params.userId,
-        row,
+        date: row.date,
+        hasBath: row.hasBath,
+        hasMfr: row.hasMfr,
+        hasMassage: row.hasMassage,
+        sleepHours:
+          row.sleepHours === null
+            ? (recoveryByDate.get(row.date)?.sleepHours ?? null)
+            : String(row.sleepHours),
+        createdAt: now,
+        updatedAt: now,
       });
       accumulator.recoveryEntriesUpserted += 1;
     }
   }
 
+  for (let offset = 0; offset < reports.length; offset += IMPORT_BATCH_SIZE) {
+    const insertedRows = await params.tx
+      .insert(workoutReports)
+      .values(reports.slice(offset, offset + IMPORT_BATCH_SIZE))
+      .onConflictDoNothing({ target: [workoutReports.userId, workoutReports.planEntryId] })
+      .returning({ id: workoutReports.id });
+    accumulator.reportsUpserted += insertedRows.length;
+  }
+  const weights = Array.from(weightsByKey.values());
+  for (let offset = 0; offset < weights.length; offset += IMPORT_BATCH_SIZE) {
+    await params.tx
+      .insert(weightEntries)
+      .values(weights.slice(offset, offset + IMPORT_BATCH_SIZE))
+      .onConflictDoNothing({
+        target: [weightEntries.userId, weightEntries.date, weightEntries.period],
+      });
+  }
+  const recovery = Array.from(recoveryByDate.values());
+  for (let offset = 0; offset < recovery.length; offset += IMPORT_BATCH_SIZE) {
+    await params.tx
+      .insert(recoveryEntries)
+      .values(recovery.slice(offset, offset + IMPORT_BATCH_SIZE))
+      .onConflictDoNothing({ target: [recoveryEntries.userId, recoveryEntries.date] });
+  }
+
   return accumulator;
 };
 
-const getExistingFilledDates = async (params: { userId: number; dates: string[] }) => {
+const getExistingFilledDates = async (params: {
+  database: Pick<typeof db, "select">;
+  userId: number;
+  dates: string[];
+}) => {
   if (params.dates.length === 0) {
     return new Set<string>();
   }
 
-  const existingReportRows = await db
+  const existingReportRows = await params.database
     .select({
       date: workoutReports.date,
     })
@@ -280,13 +225,13 @@ const getExistingFilledDates = async (params: { userId: number; dates: string[] 
     .where(
       and(eq(workoutReports.userId, params.userId), inArray(workoutReports.date, params.dates))
     );
-  const existingWeightRows = await db
+  const existingWeightRows = await params.database
     .select({
       date: weightEntries.date,
     })
     .from(weightEntries)
     .where(and(eq(weightEntries.userId, params.userId), inArray(weightEntries.date, params.dates)));
-  const existingRecoveryRows = await db
+  const existingRecoveryRows = await params.database
     .select({
       date: recoveryEntries.date,
     })
@@ -323,23 +268,24 @@ export async function importDiaryFromWorkbook(params: {
   }
 
   const dates = Array.from(new Set(parsed.rows.map((row) => row.date)));
-  const planRows = await db
-    .select({
-      id: planEntries.id,
-      date: planEntries.date,
-      sessionOrder: planEntries.sessionOrder,
-      taskText: planEntries.taskText,
-    })
-    .from(planEntries)
-    .where(and(eq(planEntries.userId, params.userId), inArray(planEntries.date, dates)))
-    .orderBy(asc(planEntries.date), asc(planEntries.sessionOrder));
-  const planEntryMap = buildPlanEntryMap(planRows);
-  const existingFilledDates = await getExistingFilledDates({
-    userId: params.userId,
-    dates,
-  });
-
   const importResult = await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
+    const planRows = await tx
+      .select({
+        id: planEntries.id,
+        date: planEntries.date,
+        sessionOrder: planEntries.sessionOrder,
+        taskText: planEntries.taskText,
+      })
+      .from(planEntries)
+      .where(and(eq(planEntries.userId, params.userId), inArray(planEntries.date, dates)))
+      .orderBy(asc(planEntries.date), asc(planEntries.sessionOrder));
+    const planEntryMap = buildPlanEntryMap(planRows);
+    const existingFilledDates = await getExistingFilledDates({
+      database: tx,
+      userId: params.userId,
+      dates,
+    });
     return await importMatchedRows({
       tx,
       userId: params.userId,

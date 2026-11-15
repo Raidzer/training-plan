@@ -1,0 +1,1 @@
+ALTER TABLE "workout_reports" ADD COLUMN "has_long_bottom" boolean DEFAULT false NOT NULL;

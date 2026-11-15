@@ -10,7 +10,10 @@ export type KeyboardRefreshResult = {
   failed: number;
 };
 
-export const refreshTelegramKeyboards = async (bot: Bot): Promise<KeyboardRefreshResult> => {
+export const refreshTelegramKeyboards = async (
+  bot: Bot,
+  message = KEYBOARD_REFRESH_MESSAGE
+): Promise<KeyboardRefreshResult> => {
   const targets = await getKeyboardRefreshTargets();
   const result: KeyboardRefreshResult = {
     total: targets.length,
@@ -20,7 +23,7 @@ export const refreshTelegramKeyboards = async (bot: Bot): Promise<KeyboardRefres
 
   for (const target of targets) {
     try {
-      await bot.api.sendMessage(target.chatId, KEYBOARD_REFRESH_MESSAGE, {
+      await bot.api.sendMessage(target.chatId, message, {
         reply_markup: buildMainMenuReplyKeyboard({
           subscribed: target.subscribed,
         }),

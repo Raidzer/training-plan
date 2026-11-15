@@ -1,7 +1,7 @@
 import type { Bot } from "grammy";
-import { buildMainMenuReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import { buildCancelReplyKeyboard } from "@/bot/menu/menuKeyboard";
+import { setPendingInput } from "@/bot/menu/menuState";
 import { getLinkedAccountDetails } from "@/bot/services/telegramAccounts";
-import { refreshTelegramKeyboards } from "@/bot/services/telegramKeyboardRefresh";
 import { ROLES } from "@/shared/constants";
 
 export const registerKeyboardCommands = (bot: Bot) => {
@@ -21,14 +21,9 @@ export const registerKeyboardCommands = (bot: Bot) => {
       return;
     }
 
-    const result = await refreshTelegramKeyboards(bot);
-    await ctx.reply(
-      `Обновление клавиатур завершено. Отправлено: ${result.sent}/${result.total}. Ошибок: ${result.failed}.`,
-      {
-        reply_markup: buildMainMenuReplyKeyboard({
-          subscribed: account.subscribed,
-        }),
-      }
-    );
+    setPendingInput(ctx.chat.id, "keyboardRefreshMessage");
+    await ctx.reply("Введите сообщение пользователям для обновления.", {
+      reply_markup: buildCancelReplyKeyboard(),
+    });
   });
 };

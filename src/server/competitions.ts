@@ -154,9 +154,10 @@ const getCompetitionForUser = async (params: { userId: number; competitionId: nu
 };
 
 export async function listCompetitionBlocksByUser(
-  userId: number
+  userId: number,
+  executor: Pick<typeof db, "select"> = db
 ): Promise<CompetitionBlockWithCompetitions[]> {
-  const blockRows = await db
+  const blockRows = await executor
     .select(blockReturningColumns)
     .from(competitionBlocks)
     .where(eq(competitionBlocks.userId, userId))
@@ -171,7 +172,7 @@ export async function listCompetitionBlocksByUser(
   }
 
   const blockIds = blockRows.map((block) => block.id);
-  const competitionRows = await db
+  const competitionRows = await executor
     .select(competitionReturningColumns)
     .from(competitions)
     .where(inArray(competitions.blockId, blockIds))

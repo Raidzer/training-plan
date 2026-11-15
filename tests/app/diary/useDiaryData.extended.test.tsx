@@ -93,6 +93,7 @@ const createDayPayload = (params: {
       startTime: "13:00",
       resultText: params.workoutResult,
       commentText: "server-comment",
+      hasLongBottom: false,
       distanceKm: "10",
       overallScore: 7,
       functionalScore: 7,

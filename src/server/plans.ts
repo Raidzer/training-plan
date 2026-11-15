@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { lockTrainingData } from "@/server/trainingDataLock";
 import {
   planEntries,
   workoutReportConditions,
@@ -76,6 +77,7 @@ export async function upsertPlanEntriesForDate(params: {
   const { userId, date, originalDate, isWorkload, entries, isEdit } = params;
 
   const updated = await db.transaction(async (tx) => {
+    await lockTrainingData(tx, userId);
     const datesToCheck = date === originalDate ? [date] : [date, originalDate];
     const dateRows = await tx
       .select({ id: planEntries.id, date: planEntries.date })
@@ -245,24 +247,27 @@ export async function updatePlanEntryText(params: {
   taskText: string;
   commentText: string | null;
 }): Promise<PlanEntryTextUpdateResult> {
-  const existingRows = await db
-    .select({ id: planEntries.id })
-    .from(planEntries)
-    .where(and(eq(planEntries.userId, params.userId), eq(planEntries.id, params.entryId)));
+  return await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
+    const existingRows = await tx
+      .select({ id: planEntries.id })
+      .from(planEntries)
+      .where(and(eq(planEntries.userId, params.userId), eq(planEntries.id, params.entryId)));
 
-  if (existingRows.length === 0) {
-    return { error: "not_found" };
-  }
+    if (existingRows.length === 0) {
+      return { error: "not_found" as const };
+    }
 
-  await db
-    .update(planEntries)
-    .set({
-      taskText: params.taskText,
-      commentText: params.commentText,
-    })
-    .where(and(eq(planEntries.userId, params.userId), eq(planEntries.id, params.entryId)));
+    await tx
+      .update(planEntries)
+      .set({
+        taskText: params.taskText,
+        commentText: params.commentText,
+      })
+      .where(and(eq(planEntries.userId, params.userId), eq(planEntries.id, params.entryId)));
 
-  return { updated: true };
+    return { updated: true as const };
+  });
 }
 
 export async function shiftPlanEntriesFromDate(params: {
@@ -284,6 +289,7 @@ export async function shiftPlanEntriesFromDate(params: {
   }
 
   const shifted = await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
     const shiftedEntries = await tx
       .select({ id: planEntries.id, date: planEntries.date })
       .from(planEntries)
@@ -352,6 +358,7 @@ export async function deletePlanEntriesForDate(params: {
   date: string;
 }): Promise<{ deleted: true } | { error: "not_found" }> {
   const deleted = await db.transaction(async (tx) => {
+    await lockTrainingData(tx, params.userId);
     const dayEntries = await tx
       .select({ id: planEntries.id })
       .from(planEntries)

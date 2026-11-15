@@ -248,6 +248,7 @@ describe("server/diary getDiaryDayData", () => {
             startTime: "09:00",
             resultText: "10 км",
             commentText: "Ровно",
+            hasLongBottom: true,
             distanceKm: "10.50",
             overallScore: 8,
             functionalScore: 7,
@@ -288,6 +289,7 @@ describe("server/diary getDiaryDayData", () => {
     expect(result.workoutReports[0]).toMatchObject({
       id: 200,
       planEntryId: 100,
+      hasLongBottom: true,
       distanceKm: "10.50",
       shoes: [{ id: 7, name: "Pegasus", mileageKm: "120.50" }],
     });
@@ -420,6 +422,7 @@ describe("server/diary getDiaryExportRows", () => {
             startTime: "08:30",
             resultText: "10 км",
             commentText: "ровно",
+            hasLongBottom: true,
             distanceKm: "10",
             overallScore: 8,
             functionalScore: 7,
@@ -435,6 +438,7 @@ describe("server/diary getDiaryExportRows", () => {
             startTime: null,
             resultText: "",
             commentText: null,
+            hasLongBottom: true,
             distanceKm: null,
             overallScore: null,
             functionalScore: null,
@@ -502,7 +506,7 @@ describe("server/diary getDiaryExportRows", () => {
     expect(result[0].dateTime).toContain("08:30");
     expect(result[0].dateTime).not.toContain("null");
     expect(result[0].comment).toBe(
-      "1) ровно. 18.2°C. Солнечно. ветер. Асфальт. Pegasus, Streak\n2) -"
+      "1) ровно. 18.2°C. Солнечно. ветер. Асфальт. Pegasus, Streak\nДлинный низ\n2) Длинный низ"
     );
     expect(result[1]).toMatchObject({
       task: "-",
@@ -513,4 +517,34 @@ describe("server/diary getDiaryExportRows", () => {
       hasWorkload: false,
     });
   });
+
+  it.each([false, undefined])(
+    "не должен выводить пометку при hasLongBottom=%s",
+    async (hasLongBottom) => {
+      dbSelectMock
+        .mockReturnValueOnce(
+          createSelectWhereOrderByBuilder([
+            { id: 1, date: "2026-02-01", sessionOrder: 1, taskText: "Кросс" },
+            { id: 2, date: "2026-02-01", sessionOrder: 2, taskText: "Заминка" },
+          ])
+        )
+        .mockReturnValueOnce(
+          createSelectLeftJoinWhereBuilder([
+            { id: 10, planEntryId: 1, commentText: "ровно", hasLongBottom },
+            { id: 11, planEntryId: 2, commentText: null, hasLongBottom },
+          ])
+        )
+        .mockReturnValueOnce(createSelectInnerJoinWhereBuilder([]))
+        .mockReturnValueOnce(createSelectWhereBuilder([]))
+        .mockReturnValueOnce(createSelectWhereBuilder([]));
+
+      const result = await getDiaryExportRows({
+        userId: 7,
+        from: "2026-02-01",
+        to: "2026-02-01",
+      });
+
+      expect(result[0].comment).toBe("1) ровно\n2) -");
+    }
+  );
 });

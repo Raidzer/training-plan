@@ -6,7 +6,8 @@ import {
   getWeekdayShortRu,
 } from "@/bot/utils/dateTime";
 import { getSubscription } from "@/bot/services/telegramSubscriptions";
-import { formatPlanMessage } from "@/bot/messages/planMessage";
+import { sendPlanFromContext } from "@/bot/messages/planWidget";
+import { sendPlanCalendarWidget } from "@/bot/messages/planCalendarHandler";
 import {
   buildDailyReportMenuReplyKeyboard,
   buildDateMenuReplyKeyboard,
@@ -35,22 +36,32 @@ export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: Plan
       : formatDateLocal(new Date());
 
     const entries = await getPlanEntriesByDate({ userId, date: today });
-    const message = formatPlanMessage({ date: today, entries });
-
-    if (!timeZone) {
-      await ctx.reply(`${message}\n\nТаймзона не задана, использую время сервера.`, {
-        reply_markup: buildMainMenuReplyKeyboard({
-          subscribed: subscription?.enabled ?? false,
+    const mainMenu = buildMainMenuReplyKeyboard({
+      subscribed: subscription?.enabled ?? false,
+    });
+    const timezoneWarning = "Таймзона не задана, использую время сервера.";
+    const result = await sendPlanFromContext({
+      ctx,
+      chatId,
+      date: today,
+      entries,
+      sendText: (text) =>
+        ctx.reply(timeZone ? text : `${text}\n\n${timezoneWarning}`, {
+          reply_markup: mainMenu,
         }),
+    });
+
+    if (!timeZone && result.type === "widget") {
+      await ctx.reply(timezoneWarning, {
+        reply_markup: mainMenu,
       });
       return;
     }
 
-    await ctx.reply(message, {
-      reply_markup: buildMainMenuReplyKeyboard({
-        subscribed: subscription?.enabled ?? false,
-      }),
-    });
+    if (result.type === "widget") {
+      await ctx.reply("Меню управления ниже.", { reply_markup: mainMenu });
+      return;
+    }
     return;
   }
 
@@ -62,8 +73,19 @@ export const handlePlanMenuAction = async ({ ctx, chatId, userId, action }: Plan
     return;
   }
 
-  setPendingInput(chatId, "dateMenu");
   const today = timeZone ? formatDateInTimeZone(new Date(), timeZone) : formatDateLocal(new Date());
+
+  const calendarResult = await sendPlanCalendarWidget({
+    ctx,
+    chatId,
+    userId,
+    month: today.slice(0, 7),
+  });
+  if (calendarResult.type === "widget") {
+    return;
+  }
+
+  setPendingInput(chatId, "dateMenu");
   const dateButtons = getNextIsoDates(today, 7).map((date) => {
     const weekday = getWeekdayShortRu(date);
     const label = formatDateForDisplay(date);

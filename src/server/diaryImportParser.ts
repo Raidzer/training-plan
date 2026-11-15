@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { assertImportRowLimit } from "@/server/spreadsheetLimits";
 
 export type DiaryImportIssue = {
   row: number;
@@ -369,6 +370,7 @@ export async function parseDiaryWorkbook(
   await workbook.xlsx.load(workbookBuffer);
 
   const sheet = findDiaryWorksheet(workbook);
+  assertImportRowLimit(Math.max(0, sheet.rowCount - 1));
   const headerMap = buildHeaderMap(sheet);
   const rows: ParsedDiaryImportRow[] = [];
   const errors: DiaryImportIssue[] = [];

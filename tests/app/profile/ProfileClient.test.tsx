@@ -108,6 +108,7 @@ describe("ProfileClient", { timeout: 15_000 }, () => {
 
     expect(screen.getByRole("complementary", { name: "Иван Петров" })).toBeTruthy();
     expect(screen.getByText("@runner")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Выбрать фото" })).toBeTruthy();
     expect(
       screen.getByRole("navigation", { name: PROFILE_LABELS.sectionNavigationLabel })
     ).toBeTruthy();

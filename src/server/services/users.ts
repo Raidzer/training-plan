@@ -82,8 +82,8 @@ export async function touchUserLastActiveAtIfNeeded(
   await touchUserLastActiveAtById(user.id, now);
 }
 
-export async function getUserProfileById(id: number) {
-  const [user] = await db
+export async function getUserProfileById(id: number, executor: Pick<typeof db, "select"> = db) {
+  const [user] = await executor
     .select({
       id: users.id,
       email: users.email,

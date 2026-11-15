@@ -110,6 +110,7 @@ export type DeleteProfileApiResponse = {
 
 export type ProfileClientProps = {
   userData: ProfileUserData;
+  avatarVersion?: string | null;
 };
 
 export type ProfileFormInstance = FormInstance<ProfileFormValues>;

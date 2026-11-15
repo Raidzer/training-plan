@@ -7,6 +7,6 @@ coverage/*
 .codex
 .codex/*
 AGENTS.md
-/docs/spec
+/docs
 /output
 CONTEXT.md

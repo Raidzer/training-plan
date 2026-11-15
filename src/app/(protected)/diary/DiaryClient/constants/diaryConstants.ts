@@ -13,8 +13,8 @@ export const SURFACE_OPTIONS = [
   { value: "stadium", label: "Стадион" },
 ] as const;
 
-export const WIND_OPTIONS = [
-  { value: "true", label: "Есть" },
+export const YES_NO_OPTIONS = [
+  { value: "true", label: "Да" },
   { value: "false", label: "Нет" },
 ] as const;
 
@@ -123,6 +123,7 @@ export const WORKOUT_LABELS = {
   windPlaceholder: "Ветер",
   temperaturePlaceholder: "Температура, °C",
   commentPlaceholder: "Комментарий",
+  longBottomLabel: "Длинный низ",
   saveReportLabel: "Сохранить отчет",
   editWorkoutLabel: "Редактировать тренировку",
 } as const;

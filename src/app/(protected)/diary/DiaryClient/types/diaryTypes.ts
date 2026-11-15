@@ -14,6 +14,7 @@ export type WorkoutReport = {
   startTime: string | null;
   resultText: string;
   commentText: string | null;
+  hasLongBottom: boolean;
   distanceKm: string | null;
   overallScore: number | null;
   functionalScore: number | null;
@@ -81,6 +82,7 @@ export type WorkoutFormEntry = {
   startTime: string;
   resultText: string;
   commentText: string;
+  hasLongBottom: boolean;
   distanceKm: string;
   overallScore: number | null;
   functionalScore: number | null;

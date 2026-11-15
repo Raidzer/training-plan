@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAuth } from "@/server/authGuards";
 import { getUserProfileById } from "@/server/services/users";
+import { getUserAvatarVersionById } from "@/server/services/userAvatars";
 import { ProfileClient } from "./ProfileClient/ProfileClient";
 
 export const metadata: Metadata = {
@@ -16,13 +17,17 @@ export default async function Profile() {
     redirect("/login");
   }
 
-  const user = await getUserProfileById(userId);
+  const [user, avatarVersion] = await Promise.all([
+    getUserProfileById(userId),
+    getUserAvatarVersionById(userId),
+  ]);
   if (!user) {
     redirect("/login");
   }
 
   return (
     <ProfileClient
+      avatarVersion={avatarVersion}
       userData={{
         ...user,
         id: String(user.id),
