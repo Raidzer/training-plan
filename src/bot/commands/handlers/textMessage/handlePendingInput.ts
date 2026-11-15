@@ -1,3 +1,4 @@
+import type { Bot } from "grammy";
 import type { PendingInput } from "@/bot/menu/menuState";
 import { ensureLinked } from "@/bot/services/telegramAccounts";
 import { buildLinkReplyKeyboard } from "@/bot/menu/menuKeyboard";
@@ -9,8 +10,10 @@ import { handleLinkPending } from "@/bot/commands/handlers/textMessage/pending/h
 import { handleRecoveryPending } from "@/bot/commands/handlers/textMessage/pending/handleRecovery";
 import { handleSchedulePending } from "@/bot/commands/handlers/textMessage/pending/handleSchedule";
 import { handleWeightPending } from "@/bot/commands/handlers/textMessage/pending/handleWeight";
+import { handleKeyboardRefreshPending } from "@/bot/commands/handlers/textMessage/pending/handleKeyboardRefresh";
 
 type PendingInputHandlerArgs = {
+  bot: Bot;
   ctx: any;
   chatId: number;
   text: string;
@@ -18,6 +21,7 @@ type PendingInputHandlerArgs = {
 };
 
 export const handlePendingInput = async ({
+  bot,
   ctx,
   chatId,
   text,
@@ -35,6 +39,11 @@ export const handlePendingInput = async ({
 
   if (pending === "link") {
     await handleLinkPending({ ctx, chatId, text });
+    return;
+  }
+
+  if (pending === "keyboardRefreshMessage") {
+    await handleKeyboardRefreshPending({ bot, ctx, chatId, text });
     return;
   }
 

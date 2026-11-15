@@ -28,6 +28,6 @@ export const registerTextMessageHandler = (bot: Bot) => {
       return;
     }
 
-    await handlePendingInput({ ctx, chatId, text, pending });
+    await handlePendingInput({ bot, ctx, chatId, text, pending });
   });
 };

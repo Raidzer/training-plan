@@ -27,6 +27,7 @@ import { handlePlanMenuAction } from "@/bot/commands/handlers/textMessage/menu/h
 import { handleScheduleMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleScheduleAction";
 import { handleSubscriptionMenuAction } from "@/bot/commands/handlers/textMessage/menu/handleSubscriptionAction";
 import {
+  CANCEL_BUTTON_TEXT,
   CANCEL_LINK_BUTTON_TEXT,
   CUSTOM_DATE_BUTTON_TEXT,
   LINK_BUTTON_TEXT,
@@ -106,6 +107,22 @@ describe("bot menu handlers", () => {
 
     expect(result).toBe(true);
     expect(menuHandlerMocks.getSubscriptionMock).toHaveBeenCalledWith(20);
+    expect(ctx.reply).toHaveBeenCalledWith("Ввод отменен.", {
+      reply_markup: buildMainMenuReplyKeyboard({ subscribed: true }),
+    });
+  });
+
+  it("handleCancelIfRequested обрабатывает кнопку общей отмены", async () => {
+    const ctx = createContext();
+
+    const result = await handleCancelIfRequested({
+      ctx,
+      chatId: 10,
+      text: CANCEL_BUTTON_TEXT,
+      pending: "keyboardRefreshMessage",
+    });
+
+    expect(result).toBe(true);
     expect(ctx.reply).toHaveBeenCalledWith("Ввод отменен.", {
       reply_markup: buildMainMenuReplyKeyboard({ subscribed: true }),
     });
