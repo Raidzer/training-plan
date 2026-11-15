@@ -42,6 +42,53 @@ describe("DiaryClient diaryUtils", () => {
     ]);
   });
 
+  it("показывает пробег и лимит только при наличии обоих значений", () => {
+    const options = [
+      {
+        value: 1,
+        label: "Li-ning RED HARE 9 PRO",
+        isArchived: false,
+        currentMileageKm: "21.10",
+        mileageLimitKm: "800.00",
+      },
+      {
+        value: 2,
+        label: "No current mileage",
+        isArchived: false,
+        currentMileageKm: "",
+        mileageLimitKm: "800",
+      },
+      {
+        value: 3,
+        label: "No mileage limit",
+        isArchived: false,
+        currentMileageKm: "10",
+        mileageLimitKm: null,
+      },
+      {
+        value: 4,
+        label: "Archived pair",
+        isArchived: true,
+        currentMileageKm: "12",
+        mileageLimitKm: "500",
+      },
+    ];
+
+    expect(getWorkoutShoeOptions(options)).toEqual([
+      { value: 1, label: "Li-ning RED HARE 9 PRO (21.1/800 км)" },
+      { value: 2, label: "No current mileage" },
+      { value: 3, label: "No mileage limit" },
+    ]);
+    expect(
+      getWorkoutShoeOptions(options, [{ id: 4, name: "Archived pair", mileageKm: null }])
+    ).toEqual([
+      { value: 1, label: "Li-ning RED HARE 9 PRO (21.1/800 км)" },
+      { value: 2, label: "No current mileage" },
+      { value: 3, label: "No mileage limit" },
+      { value: 4, label: "Archived pair (12/500 км) (в архиве)" },
+    ]);
+  });
+
   it("должен форматировать и парсить даты дневника", () => {
     const date = dayjs("2026-05-10");
 

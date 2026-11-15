@@ -64,6 +64,8 @@ type ShoeItem = {
   id: number;
   name: string;
   isArchived: boolean;
+  currentMileageKm?: string | null;
+  mileageLimitKm?: string | null;
 };
 
 const MAX_SHOE_MILEAGE_KM = 99999.99;

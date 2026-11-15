@@ -22,4 +22,6 @@ export type TextOption = {
 export type ShoeOption = {
   value: number;
   label: string;
+  currentMileageKm?: string | null;
+  mileageLimitKm?: string | null;
 };

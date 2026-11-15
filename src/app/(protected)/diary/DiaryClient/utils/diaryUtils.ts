@@ -3,6 +3,26 @@ import type { RecoveryEntry, WorkoutFormEntry, WorkoutReport } from "../types/di
 import type { ShoeOption } from "../components/WorkoutReportCard/WorkoutReportCard.types";
 import { WORKOUT_LABELS } from "../constants/diaryConstants";
 
+const formatShoeMileage = (shoe: ShoeOption) => {
+  const parseMileage = (value: string | null | undefined) => {
+    if (value === null || value === undefined || value.trim().length === 0) {
+      return null;
+    }
+
+    const parsed = Number(value.replace(",", "."));
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  };
+
+  const currentMileage = parseMileage(shoe.currentMileageKm);
+  const mileageLimit = parseMileage(shoe.mileageLimitKm);
+
+  if (currentMileage === null || mileageLimit === null) {
+    return shoe.label;
+  }
+
+  return `${shoe.label} (${currentMileage}/${mileageLimit} км)`;
+};
+
 export const getWorkoutShoeOptions = (
   options: readonly (ShoeOption & { isArchived?: boolean })[],
   reportShoes: WorkoutReport["shoes"] = []
@@ -13,7 +33,9 @@ export const getWorkoutShoeOptions = (
     .filter((shoe) => !shoe.isArchived || savedIds.has(shoe.value))
     .map((shoe) => ({
       value: shoe.value,
-      label: shoe.isArchived ? `${shoe.label} ${WORKOUT_LABELS.archivedShoeSuffix}` : shoe.label,
+      label: shoe.isArchived
+        ? `${formatShoeMileage(shoe)} ${WORKOUT_LABELS.archivedShoeSuffix}`
+        : formatShoeMileage(shoe),
     }));
   const availableIds = new Set(availableOptions.map((shoe) => shoe.value));
   return [
