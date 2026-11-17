@@ -237,9 +237,30 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
       - uses: googleapis/release-please-action@v5
+        id: release-pr
         with:
           target-branch: main
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
           skip-github-release: true
+
+      - name: Generate release notes from merged PR titles
+        uses: actions/github-script@v8
+        env:
+          RELEASE_PR: ${{ steps.release-pr.outputs.pr }}
+        with:
+          script: |
+            const fs = require("node:fs");
+            const { updateReleasePullRequest } = await import(`${process.env.GITHUB_WORKSPACE}/src/scripts/release/updateReleasePullRequest.mjs`);
+            await updateReleasePullRequest({
+              github, ...context.repo, sha: context.sha,
+              pullRequestNumber: process.env.RELEASE_PR ? JSON.parse(process.env.RELEASE_PR).number : undefined,
+              config: JSON.parse(fs.readFileSync("release-please-config.json", "utf8")),
+              manifest: JSON.parse(fs.readFileSync(".release-please-manifest.json", "utf8")),
+            });
