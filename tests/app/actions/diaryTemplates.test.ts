@@ -63,12 +63,14 @@ describe("diary template actions", () => {
     vi.clearAllMocks();
     actionMocks.authMock.mockResolvedValue({
       user: {
+        id: "7",
         role: "admin",
       },
     });
   });
 
-  it("delegates read actions to the server data layer", async () => {
+  it.each(["athlete", "admin"])("scopes reads to the %s session user", async (role) => {
+    actionMocks.authMock.mockResolvedValue({ user: { id: "7", role } });
     const templates = [{ id: 1, name: "Tempo" }];
     const template = { id: 2, name: "Long run" };
     const matches = [{ id: 3, name: "Match" }];
@@ -79,15 +81,42 @@ describe("diary template actions", () => {
     actionMocks.findMatchingTemplatesMock.mockResolvedValue(matches);
     actionMocks.findMatchingTemplatesWithDetailsMock.mockResolvedValue(detailedMatches);
 
-    await expect(getTemplates(7)).resolves.toBe(templates);
+    await expect(getTemplates()).resolves.toBe(templates);
     await expect(getTemplateById(2)).resolves.toBe(template);
-    await expect(findMatchingTemplate(7, "темп 10 км")).resolves.toBe(matches);
-    await expect(findMatchingTemplateWithDetails(7, "темп 10 км")).resolves.toBe(detailedMatches);
+    await expect(findMatchingTemplate("темп 10 км")).resolves.toBe(matches);
+    await expect(findMatchingTemplateWithDetails("темп 10 км")).resolves.toBe(detailedMatches);
 
     expect(actionMocks.getTemplatesForUserMock).toHaveBeenCalledWith(7);
-    expect(actionMocks.getTemplateByIdFromDbMock).toHaveBeenCalledWith(2);
+    expect(actionMocks.getTemplateByIdFromDbMock).toHaveBeenCalledWith(2, 7);
     expect(actionMocks.findMatchingTemplatesMock).toHaveBeenCalledWith(7, "темп 10 км");
     expect(actionMocks.findMatchingTemplatesWithDetailsMock).toHaveBeenCalledWith(7, "темп 10 км");
+    expect(actionMocks.authMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("blocks every read without a session", async () => {
+    actionMocks.authMock.mockResolvedValue(null);
+
+    await expect(getTemplates()).rejects.toThrow("Unauthorized");
+    await expect(getTemplateById(2)).rejects.toThrow("Unauthorized");
+    await expect(findMatchingTemplate("темп 10 км")).rejects.toThrow("Unauthorized");
+    await expect(findMatchingTemplateWithDetails("темп 10 км")).rejects.toThrow("Unauthorized");
+
+    expect(actionMocks.getTemplatesForUserMock).not.toHaveBeenCalled();
+    expect(actionMocks.getTemplateByIdFromDbMock).not.toHaveBeenCalled();
+    expect(actionMocks.findMatchingTemplatesMock).not.toHaveBeenCalled();
+    expect(actionMocks.findMatchingTemplatesWithDetailsMock).not.toHaveBeenCalled();
+  });
+
+  it("blocks reads with an invalid session user id", async () => {
+    actionMocks.authMock.mockResolvedValue({
+      user: {
+        id: "not-a-user-id",
+        role: "admin",
+      },
+    });
+
+    await expect(getTemplates()).rejects.toThrow("Unauthorized");
+    expect(actionMocks.getTemplatesForUserMock).not.toHaveBeenCalled();
   });
 
   it("creates template only for admin users and revalidates template list", async () => {

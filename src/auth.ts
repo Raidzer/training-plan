@@ -69,6 +69,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           emailVerified: user.emailVerified,
+          passwordChangedAt: user.passwordChangedAt?.getTime() ?? null,
         };
       },
     }),
@@ -81,11 +82,13 @@ export const authOptions: NextAuthOptions = {
         session.user.emailVerified = token.emailVerified;
         session.user.name = token.name ?? null;
         session.user.email = token.email ?? null;
+        session.user.passwordChangedAt = token.passwordChangedAt ?? null;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
+        token.passwordChangedAt = user.passwordChangedAt ?? null;
         token.role = user.role;
         token.emailVerified = user.emailVerified;
         token.name = user.name ?? null;
@@ -94,6 +97,13 @@ export const authOptions: NextAuthOptions = {
 
       if (token.sub) {
         const freshUser = await getUserById(Number(token.sub));
+        if (
+          !user &&
+          (!freshUser?.isActive ||
+            (token.passwordChangedAt ?? null) !== (freshUser.passwordChangedAt?.getTime() ?? null))
+        ) {
+          throw new Error("Session revoked");
+        }
         if (freshUser) {
           token.emailVerified = freshUser.emailVerified;
           token.role = freshUser.role;
@@ -104,6 +114,8 @@ export const authOptions: NextAuthOptions = {
             token.email = freshUser.email;
           }
         }
+      } else {
+        throw new Error("Invalid session subject");
       }
       return token;
     },
@@ -124,6 +136,12 @@ export const auth = async () => {
   const user = await getUserById(userId);
 
   if (!user || !user.isActive) {
+    return null;
+  }
+
+  const sessionPasswordChangedAt = session.user.passwordChangedAt ?? null;
+  const currentPasswordChangedAt = user.passwordChangedAt?.getTime() ?? null;
+  if (sessionPasswordChangedAt !== currentPasswordChangedAt) {
     return null;
   }
 

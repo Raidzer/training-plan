@@ -1,4 +1,4 @@
-import { desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { diaryResultTemplates } from "@/server/db/schema";
 import {
@@ -18,11 +18,19 @@ export async function getTemplatesForUser(userId: number): Promise<DiaryResultTe
     .orderBy(desc(diaryResultTemplates.sortOrder), desc(diaryResultTemplates.createdAt));
 }
 
-export async function getTemplateByIdFromDb(id: number): Promise<DiaryResultTemplate | null> {
+export async function getTemplateByIdFromDb(
+  templateId: number,
+  userId: number
+): Promise<DiaryResultTemplate | null> {
   const result = await db
     .select()
     .from(diaryResultTemplates)
-    .where(eq(diaryResultTemplates.id, id))
+    .where(
+      and(
+        eq(diaryResultTemplates.id, templateId),
+        or(isNull(diaryResultTemplates.userId), eq(diaryResultTemplates.userId, userId))
+      )
+    )
     .limit(1);
 
   if (result.length === 0) {

@@ -1,4 +1,4 @@
-import { eq, or } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 
@@ -51,6 +51,7 @@ export async function getUserById(id: number) {
       isActive: users.isActive,
       lastActiveAt: users.lastActiveAt,
       emailVerified: users.emailVerified,
+      passwordChangedAt: users.passwordChangedAt,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -195,10 +196,17 @@ export async function getUserDeletionCredentialsById(id: number) {
   return user || null;
 }
 
+export function passwordHashUpdate(passwordHash: string) {
+  return {
+    passwordHash,
+    passwordChangedAt: sql`greatest(date_trunc('milliseconds', timezone('UTC', clock_timestamp())), ${users.passwordChangedAt} + interval '1 millisecond')`,
+  };
+}
+
 export async function updateUserPasswordHashById(id: number, passwordHash: string) {
   const [user] = await db
     .update(users)
-    .set({ passwordHash })
+    .set(passwordHashUpdate(passwordHash))
     .where(eq(users.id, id))
     .returning({ id: users.id });
 

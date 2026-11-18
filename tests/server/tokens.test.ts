@@ -1,112 +1,119 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
-  generateVerificationToken,
-  generatePasswordResetToken,
-  getVerificationTokenByToken,
   deleteVerificationTokensByIdentifierAndType,
+  generatePasswordResetToken,
+  generateVerificationToken,
+  getVerificationTokenByToken,
 } from "@/server/tokens";
 import { db } from "@/server/db/client";
 
+const { dbTransactionMock } = vi.hoisted(() => ({
+  dbTransactionMock: vi.fn(),
+}));
+
 vi.mock("@/server/db/client", () => ({
   db: {
-    insert: vi.fn(() => ({
-      values: vi.fn(),
-    })),
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(),
-      })),
-    })),
-    delete: vi.fn(() => ({
-      where: vi.fn(),
-    })),
+    transaction: dbTransactionMock,
+    insert: vi.fn(() => ({ values: vi.fn() })),
+    select: vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn() })) })),
+    delete: vi.fn(() => ({ where: vi.fn() })),
   },
 }));
 
-describe("tokens (Токены)", () => {
+function createSelectBuilder(rows: unknown[]) {
+  const builder = {
+    from: vi.fn(() => builder),
+    where: vi.fn(() => builder),
+    for: vi.fn().mockResolvedValue(rows),
+  };
+
+  return builder;
+}
+
+function createWriteBuilder() {
+  const where = vi.fn().mockResolvedValue(undefined);
+  const set = vi.fn(() => ({ where }));
+  return { set, where };
+}
+
+describe("server/tokens", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("generateVerificationToken", () => {
-    it("должен сгенерировать токен и записать его в базу данных", async () => {
-      const email = "test@example.com";
-      const valuesMock = vi.fn();
-      (db.insert as any).mockReturnValue({ values: valuesMock });
+  it("должен сгенерировать verification token", async () => {
+    const valuesMock = vi.fn();
+    (db.insert as any).mockReturnValue({ values: valuesMock });
 
-      const token = await generateVerificationToken(email);
+    const token = await generateVerificationToken("user@example.com");
 
-      expect(typeof token).toBe("string");
-      expect(db.insert).toHaveBeenCalled();
-      expect(valuesMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          identifier: email,
-          token: token,
-          type: "verify-email",
-        })
-      );
-    });
+    expect(typeof token).toBe("string");
+    expect(valuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({ identifier: "user@example.com", token, type: "verify-email" })
+    );
   });
 
-  describe("generatePasswordResetToken", () => {
-    it("должен сгенерировать токен сброса пароля и записать его в базу данных", async () => {
-      const email = "test@example.com";
-      const valuesMock = vi.fn();
-      (db.insert as any).mockReturnValue({ values: valuesMock });
+  it("должен сериализовать выдачу reset-токена, удалять старые и записывать cooldown", async () => {
+    const userQuery = createSelectBuilder([{ id: 1, passwordResetRequestedAt: null }]);
+    const deleteWhereMock = vi.fn().mockResolvedValue(undefined);
+    const updateBuilder = createWriteBuilder();
+    const insertValuesMock = vi.fn().mockResolvedValue(undefined);
+    const tx = {
+      select: vi.fn().mockReturnValue(userQuery),
+      delete: vi.fn(() => ({ where: deleteWhereMock })),
+      update: vi.fn().mockReturnValue(updateBuilder),
+      insert: vi.fn().mockReturnValue({ values: insertValuesMock }),
+    };
+    dbTransactionMock.mockImplementation(async (callback) => callback(tx));
 
-      const token = await generatePasswordResetToken(email);
+    const token = await generatePasswordResetToken("user@example.com");
 
-      expect(typeof token).toBe("string");
-      expect(db.insert).toHaveBeenCalled();
-      expect(valuesMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          identifier: email,
-          token: token,
-          type: "reset-password",
-        })
-      );
+    expect(typeof token).toBe("string");
+    expect(userQuery.for).toHaveBeenCalledWith("update");
+    expect(tx.delete).toHaveBeenCalledTimes(1);
+    expect(updateBuilder.set).toHaveBeenCalledWith({
+      passwordResetRequestedAt: expect.any(Date),
     });
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({ identifier: "user@example.com", token, type: "reset-password" })
+    );
   });
 
-  describe("getVerificationTokenByToken", () => {
-    it("должен вернуть токен по его значению", async () => {
-      const tokenValue = "some-token";
-      const mockResult = { id: 1, token: tokenValue, identifier: "test@example.com" };
+  it("должен сохранять cooldown после удаления токена", async () => {
+    const userQuery = createSelectBuilder([
+      { id: 1, passwordResetRequestedAt: new Date(Date.now() - 1_000) },
+    ]);
+    const tx = {
+      select: vi.fn().mockReturnValue(userQuery),
+      delete: vi.fn(),
+      update: vi.fn(),
+      insert: vi.fn(),
+    };
+    dbTransactionMock.mockImplementation(async (callback) => callback(tx));
 
-      const whereMock = vi.fn().mockResolvedValue([mockResult]);
-      const fromMock = vi.fn(() => ({ where: whereMock }));
-      const selectMock = vi.fn(() => ({ from: fromMock }));
-      (db.select as any).mockImplementation(selectMock);
+    await expect(generatePasswordResetToken("user@example.com")).resolves.toBeNull();
 
-      const result = await getVerificationTokenByToken(tokenValue);
-
-      expect(result).toEqual(mockResult);
-      expect(db.select).toHaveBeenCalled();
-    });
-
-    it("должен вернуть undefined, если токен не найден", async () => {
-      const tokenValue = "non-existent-token";
-
-      const whereMock = vi.fn().mockResolvedValue([]);
-      const fromMock = vi.fn(() => ({ where: whereMock }));
-      const selectMock = vi.fn(() => ({ from: fromMock }));
-      (db.select as any).mockImplementation(selectMock);
-
-      const result = await getVerificationTokenByToken(tokenValue);
-
-      expect(result).toBeUndefined();
-    });
+    expect(tx.delete).not.toHaveBeenCalled();
+    expect(tx.insert).not.toHaveBeenCalled();
   });
 
-  describe("deleteVerificationTokensByIdentifierAndType", () => {
-    it("должен удалять токены по identifier и типу", async () => {
-      const whereMock = vi.fn();
-      (db.delete as any).mockReturnValue({ where: whereMock });
+  it.each([{ id: 1, token: "some-token", identifier: "test@example.com" }, undefined])(
+    "должен вернуть результат поиска токена: %j",
+    async (mockResult) => {
+      const whereMock = vi.fn().mockResolvedValue(mockResult ? [mockResult] : []);
+      (db.select as any).mockReturnValue({ from: vi.fn(() => ({ where: whereMock })) });
 
-      await deleteVerificationTokensByIdentifierAndType("test@example.com", "verify-email");
+      await expect(getVerificationTokenByToken("some-token")).resolves.toEqual(mockResult);
+    }
+  );
 
-      expect(db.delete).toHaveBeenCalled();
-      expect(whereMock).toHaveBeenCalled();
-    });
+  it("должен удалить токены по identifier и type", async () => {
+    const whereMock = vi.fn();
+    (db.delete as any).mockReturnValue({ where: whereMock });
+
+    await deleteVerificationTokensByIdentifierAndType("test@example.com", "verify-email");
+
+    expect(whereMock).toHaveBeenCalled();
   });
 });

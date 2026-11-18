@@ -178,6 +178,7 @@ describe("auth.ts", () => {
           name: "Runner",
           role: "coach",
           emailVerified,
+          passwordChangedAt: null,
         });
         expect(touchUserLastActiveAtByIdMock).toHaveBeenCalledWith(7);
       }
@@ -229,16 +230,69 @@ describe("auth.ts", () => {
       expect(getUserByIdMock).toHaveBeenCalledWith(5);
     });
 
-    it("jwt колбэк должен сохранять поля токена, когда свежий пользователь не найден", async () => {
+    it("jwt колбэк должен отклонять сессию, когда пользователь не найден", async () => {
       getUserByIdMock.mockResolvedValue(null);
       const jwtCallback = authOptions.callbacks?.jwt;
 
+      await expect(
+        jwtCallback?.({ token: { sub: "7", role: "athlete", emailVerified: null } } as any)
+      ).rejects.toThrow("Session revoked");
+    });
+
+    it("jwt колбэк должен отзывать токен после смены пароля", async () => {
+      getUserByIdMock.mockResolvedValue({
+        id: 5,
+        role: "coach",
+        emailVerified: null,
+        isActive: true,
+        passwordChangedAt: new Date("2026-02-10T00:00:00.000Z"),
+      });
+      const jwtCallback = authOptions.callbacks?.jwt;
+
+      await expect(jwtCallback?.({ token: { sub: "5" } } as any)).rejects.toThrow(
+        "Session revoked"
+      );
+    });
+
+    it("jwt колбэк должен сохранять версию пароля из authorize при первом входе", async () => {
+      getUserByIdMock.mockResolvedValue({
+        id: 5,
+        role: "coach",
+        emailVerified: null,
+        isActive: true,
+        passwordChangedAt: new Date("2026-02-11T00:00:00.000Z"),
+      });
+      const jwtCallback = authOptions.callbacks?.jwt;
+      const authorizedPasswordChangedAt = new Date("2026-02-10T00:00:00.000Z").getTime();
+
       const token = await jwtCallback?.({
-        token: { sub: "7", role: "athlete", emailVerified: null } as any,
+        token: { sub: "5" } as any,
+        user: { passwordChangedAt: authorizedPasswordChangedAt } as any,
       } as any);
 
-      expect(token?.role).toBe("athlete");
-      expect(token?.emailVerified).toBeNull();
+      expect(token?.passwordChangedAt).toBe(authorizedPasswordChangedAt);
+      await expect(jwtCallback?.({ token } as any)).rejects.toThrow("Session revoked");
+    });
+
+    it("jwt колбэк должен отклонять JWT без subject", async () => {
+      await expect(authOptions.callbacks?.jwt?.({ token: {} } as any)).rejects.toThrow(
+        "Invalid session subject"
+      );
+      expect(getUserByIdMock).not.toHaveBeenCalled();
+    });
+
+    it("jwt колбэк должен принимать прежний JWT, если пароль не менялся", async () => {
+      getUserByIdMock.mockResolvedValue({
+        id: 5,
+        role: "athlete",
+        emailVerified: null,
+        isActive: true,
+        passwordChangedAt: null,
+      });
+
+      await expect(
+        authOptions.callbacks?.jwt?.({ token: { sub: "5" } } as any)
+      ).resolves.toMatchObject({ sub: "5", role: "athlete" });
     });
   });
 
@@ -307,6 +361,22 @@ describe("auth.ts", () => {
         expires: "never",
       });
       expect(touchUserLastActiveAtIfNeededMock).toHaveBeenCalledWith(activeUser);
+    });
+
+    it("должен отзывать сессию с устаревшей версией пароля", async () => {
+      getServerSessionMock.mockResolvedValue({
+        user: {
+          id: "5",
+          passwordChangedAt: new Date("2026-02-09T00:00:00.000Z").getTime(),
+        },
+      });
+      getUserByIdMock.mockResolvedValue({
+        id: 5,
+        isActive: true,
+        passwordChangedAt: new Date("2026-02-10T00:00:00.000Z"),
+      });
+
+      await expect(auth()).resolves.toBeNull();
     });
   });
 });

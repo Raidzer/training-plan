@@ -1,3 +1,4 @@
+import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const diaryTemplateMocks = vi.hoisted(() => ({
@@ -34,14 +35,12 @@ import {
 } from "@/server/diaryTemplates";
 
 function mockSelectRows(rows: unknown[]) {
-  const builder: any = {};
-
-  builder.from = vi.fn(() => builder);
-  builder.where = vi.fn(() => builder);
-  builder.orderBy = vi.fn().mockResolvedValue(rows);
-  builder.limit = vi.fn().mockResolvedValue(rows);
-
-  diaryTemplateMocks.dbSelectMock.mockReturnValue(builder);
+  const where = vi.fn((_condition: Parameters<PgDialect["sqlToQuery"]>[0]) => ({
+    orderBy: vi.fn().mockResolvedValue(rows),
+    limit: vi.fn().mockResolvedValue(rows),
+  }));
+  diaryTemplateMocks.dbSelectMock.mockReturnValue({ from: vi.fn(() => ({ where })) });
+  return where;
 }
 
 describe("server/diaryTemplates", () => {
@@ -49,16 +48,36 @@ describe("server/diaryTemplates", () => {
     vi.clearAllMocks();
   });
 
-  it("должен получать список и один шаблон", async () => {
+  it("должен получать список глобальных и собственных шаблонов", async () => {
     const template = { id: 1, name: "Кросс", keywords: ["кросс"] };
-    mockSelectRows([template]);
+    const where = mockSelectRows([template]);
 
     await expect(getTemplatesForUser(20)).resolves.toEqual([template]);
-    await expect(getTemplateByIdFromDb(1)).resolves.toEqual(template);
 
+    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0])).toMatchObject({
+      sql: '("diary_result_templates"."user_id" is null or "diary_result_templates"."user_id" = $1)',
+      params: [20],
+    });
+  });
+
+  it("должен ограничивать чтение по ID глобальными и собственными шаблонами", async () => {
+    const template = { id: 1, name: "Кросс", userId: 20 };
+    const where = mockSelectRows([template]);
+
+    await expect(getTemplateByIdFromDb(1, 20)).resolves.toEqual(template);
+
+    expect(new PgDialect().sqlToQuery(where.mock.calls[0][0])).toMatchObject({
+      sql:
+        '("diary_result_templates"."id" = $1 and ' +
+        '("diary_result_templates"."user_id" is null or "diary_result_templates"."user_id" = $2))',
+      params: [1, 20],
+    });
+  });
+
+  it("должен возвращать null, если запрос не находит доступный шаблон", async () => {
     mockSelectRows([]);
 
-    await expect(getTemplateByIdFromDb(2)).resolves.toBeNull();
+    await expect(getTemplateByIdFromDb(2, 20)).resolves.toBeNull();
   });
 
   it("должен создавать, обновлять и удалять шаблоны", async () => {

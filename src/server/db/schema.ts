@@ -22,6 +22,8 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   login: varchar("login", { length: 64 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  passwordChangedAt: timestamp("password_changed_at"),
+  passwordResetRequestedAt: timestamp("password_reset_requested_at"),
   role: varchar("role", { length: 32 }).notNull().default(ROLES.ATHLETE),
   timezone: varchar("timezone", { length: 64 }).notNull().default("Europe/Moscow"),
   isActive: boolean("is_active").notNull().default(true),

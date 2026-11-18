@@ -1,8 +1,11 @@
 import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import ExcelJS from "exceljs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   assertExportRangeLimit,
   assertImportRowLimit,
+  assertSpreadsheetArchiveLimits,
+  MAX_SPREADSHEET_PART_BYTES,
   readSpreadsheetFile,
 } from "@/server/spreadsheetLimits";
 
@@ -127,6 +130,50 @@ describe("readSpreadsheetFile", () => {
 
     await expect(readSpreadsheetFile(request)).rejects.toMatchObject({ status: 400 });
   });
+});
+
+describe("assertSpreadsheetArchiveLimits", () => {
+  async function createWorkbookArchive() {
+    const workbook = new ExcelJS.Workbook();
+    workbook.addWorksheet("План").addRow(["Бег".repeat(200)]);
+    return Buffer.from(await workbook.xlsx.writeBuffer());
+  }
+
+  it("принимает обычную книгу, но отклоняет её при обрыве ZIP", async () => {
+    const bytes = await createWorkbookArchive();
+    expect(() => assertSpreadsheetArchiveLimits(bytes)).not.toThrow();
+    expect(() => assertSpreadsheetArchiveLimits(bytes.subarray(0, -1))).toThrowError(
+      expect.objectContaining({ status: 400 })
+    );
+  });
+
+  it.each([
+    { parts: 1, size: MAX_SPREADSHEET_PART_BYTES + 1 },
+    { parts: 4, size: MAX_SPREADSHEET_PART_BYTES },
+  ])(
+    "возвращает 413 при превышении лимита по размерам записей ZIP: $parts × $size",
+    async ({ parts, size }) => {
+      const bytes = await createWorkbookArchive();
+      const footer = bytes.length - 22;
+      let offset = bytes.readUInt32LE(footer + 16);
+      let updated = 0;
+      while (offset < footer && updated < parts) {
+        if (bytes.readUInt16LE(offset + 10) === 8) {
+          bytes.writeUInt32LE(size, offset + 24);
+          updated += 1;
+        }
+        offset +=
+          46 +
+          bytes.readUInt16LE(offset + 28) +
+          bytes.readUInt16LE(offset + 30) +
+          bytes.readUInt16LE(offset + 32);
+      }
+      expect(updated).toBe(parts);
+      expect(() => assertSpreadsheetArchiveLimits(bytes)).toThrowError(
+        expect.objectContaining({ status: 413 })
+      );
+    }
+  );
 });
 
 describe("assertImportRowLimit", () => {

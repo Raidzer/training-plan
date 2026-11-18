@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { createPlanImport, type PlanImportEntry } from "@/server/planImports";
 import {
   assertImportRowLimit,
+  assertSpreadsheetArchiveLimits,
   readSpreadsheetFile,
   SpreadsheetLimitError,
 } from "@/server/spreadsheetLimits";
@@ -85,6 +86,9 @@ const normalizeHeader = (value: unknown) =>
     .toLowerCase();
 
 const argbToCss = (argb: string) => {
+  if (!/^(?:[\da-f]{6}|[\da-f]{8})$/i.test(argb)) {
+    return null;
+  }
   if (argb.length === 8) {
     const alpha = parseInt(argb.slice(0, 2), 16) / 255;
     const r = parseInt(argb.slice(2, 4), 16);
@@ -110,7 +114,9 @@ const richTextToHtml = (value: ExcelJS.CellRichTextValue): string => {
     }
     if (part.font?.color?.argb) {
       const cssColor = argbToCss(part.font.color.argb);
-      style += `color: ${cssColor};`;
+      if (cssColor) {
+        style += `color: ${cssColor};`;
+      }
     }
 
     textParts.forEach((textFragment, index) => {
@@ -166,7 +172,7 @@ const removeNumberedPrefix = (html: string): string => {
   return openTags.join("") + suffix;
 };
 
-const cellToString = (value: unknown): string => {
+const cellToString = (value: unknown, asHtml = false): string => {
   if (value === null || value === undefined) {
     return "";
   }
@@ -177,21 +183,24 @@ const cellToString = (value: unknown): string => {
     return String(value);
   }
   if (typeof value === "string") {
-    return value;
+    return asHtml ? escapeHtml(value) : value;
   }
   if (typeof value === "object") {
     const v = value as any;
     if (typeof v.text === "string" && !v.richText) {
-      return v.text;
+      return cellToString(v.text, asHtml);
     }
     if (Array.isArray(v.richText)) {
-      return richTextToHtml(v);
+      return asHtml
+        ? richTextToHtml(v)
+        : v.richText.map((part: ExcelJS.RichText) => part.text).join("");
     }
     if (v.result !== undefined) {
-      return cellToString(v.result);
+      return cellToString(v.result, asHtml);
     }
   }
-  return String(value ?? "");
+  const text = String(value);
+  return asHtml ? escapeHtml(text) : text;
 };
 
 const getHeaderLabels = (row: ExcelJS.Row) => {
@@ -336,12 +345,12 @@ const splitNumberedText = (value: string) => {
   return parts;
 };
 
-async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
+async function parseExcel(buffer: Buffer): Promise<ParseResult> {
   const workbook = new ExcelJS.Workbook();
   try {
-    await workbook.xlsx.load(
-      Buffer.from(buffer) as unknown as Parameters<ExcelJS.Workbook["xlsx"]["load"]>[0]
-    );
+    await workbook.xlsx.load(buffer as unknown as Parameters<ExcelJS.Workbook["xlsx"]["load"]>[0], {
+      ignoreNodes: ["dataValidations"],
+    });
   } catch (error) {
     const technicalMessage = error instanceof Error ? error.message : "неизвестная ошибка чтения";
     throw new PlanImportError("Не удалось прочитать Excel-файл.", {
@@ -410,8 +419,8 @@ async function parseExcel(buffer: ArrayBuffer): Promise<ParseResult> {
     const commentCell = commentCol > 0 ? row.getCell(commentCol).value : "";
 
     const date = toDateString(dateCell);
-    const taskText = cellToString(taskCell).trim();
-    const commentTextRaw = cellToString(commentCell).trim();
+    const taskText = cellToString(taskCell, true).trim();
+    const commentTextRaw = cellToString(commentCell, true).trim();
 
     if (!date && !taskText && !commentTextRaw) {
       continue;
@@ -528,7 +537,8 @@ async function importPlan(req: Request, userId: number) {
     );
   }
 
-  const buffer = await file.arrayBuffer();
+  const buffer = Buffer.from(await file.arrayBuffer());
+  assertSpreadsheetArchiveLimits(buffer);
 
   let parsed: ParseResult;
   try {

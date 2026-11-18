@@ -1,20 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createJsonRequest, expectJsonError, expectJsonSuccess } from "@tests/helpers";
 
-const { getUserByEmailMock, generatePasswordResetTokenMock, sendPasswordResetEmailMock } =
-  vi.hoisted(() => {
-    return {
-      getUserByEmailMock: vi.fn(),
-      generatePasswordResetTokenMock: vi.fn(),
-      sendPasswordResetEmailMock: vi.fn(),
-    };
-  });
-
-vi.mock("@/server/auth", () => {
-  return {
-    getUserByEmail: getUserByEmailMock,
-  };
-});
+const { generatePasswordResetTokenMock, sendPasswordResetEmailMock } = vi.hoisted(() => ({
+  generatePasswordResetTokenMock: vi.fn(),
+  sendPasswordResetEmailMock: vi.fn(),
+}));
 
 vi.mock("@/server/tokens", () => {
   return {
@@ -33,10 +23,6 @@ import { POST } from "@/app/api/auth/forgot-password/route";
 describe("POST /api/auth/forgot-password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getUserByEmailMock.mockResolvedValue({
-      id: 1,
-      email: "user@example.com",
-    });
     generatePasswordResetTokenMock.mockResolvedValue("reset-token");
     sendPasswordResetEmailMock.mockResolvedValue(undefined);
   });
@@ -53,9 +39,8 @@ describe("POST /api/auth/forgot-password", () => {
     await expectJsonError(response, 500, "Something went wrong");
   });
 
-  it("должен возвращать успех=true и не отправлять письмо, если пользователь не найден", async () => {
-    getUserByEmailMock.mockResolvedValue(null);
-
+  it("должен возвращать успех=true и не отправлять письмо, если токен не выдан", async () => {
+    generatePasswordResetTokenMock.mockResolvedValue(null);
     const request = createJsonRequest({
       url: "http://localhost/api/auth/forgot-password",
       body: {
@@ -67,7 +52,6 @@ describe("POST /api/auth/forgot-password", () => {
     const payload = await expectJsonSuccess<{ success: boolean }>(response, 200);
 
     expect(payload.success).toBe(true);
-    expect(generatePasswordResetTokenMock).not.toHaveBeenCalled();
     expect(sendPasswordResetEmailMock).not.toHaveBeenCalled();
   });
 
@@ -83,9 +67,24 @@ describe("POST /api/auth/forgot-password", () => {
     const payload = await expectJsonSuccess<{ success: boolean }>(response, 200);
 
     expect(payload.success).toBe(true);
-    expect(getUserByEmailMock).toHaveBeenCalledWith("user@example.com");
     expect(generatePasswordResetTokenMock).toHaveBeenCalledWith("user@example.com");
     expect(sendPasswordResetEmailMock).toHaveBeenCalledWith("user@example.com", "reset-token");
+  });
+
+  it("должен возвращать одинаковый успех без повторной отправки в cooldown", async () => {
+    generatePasswordResetTokenMock.mockResolvedValue(null);
+    const request = createJsonRequest({
+      url: "http://localhost/api/auth/forgot-password",
+      body: {
+        email: "user@example.com",
+      },
+    });
+
+    const response = await POST(request as any);
+    const payload = await expectJsonSuccess<{ success: boolean }>(response, 200);
+
+    expect(payload.success).toBe(true);
+    expect(sendPasswordResetEmailMock).not.toHaveBeenCalled();
   });
 
   it("должен возвращать 500 при ошибке генерации токена", async () => {
@@ -101,7 +100,7 @@ describe("POST /api/auth/forgot-password", () => {
     await expectJsonError(response, 500, "Something went wrong");
   });
 
-  it("должен возвращать 500 при ошибке отправки письма", async () => {
+  it("должен возвращать тот же ответ при ошибке отправки письма", async () => {
     sendPasswordResetEmailMock.mockRejectedValue(new Error("mail-error"));
     const request = createJsonRequest({
       url: "http://localhost/api/auth/forgot-password",
@@ -111,6 +110,8 @@ describe("POST /api/auth/forgot-password", () => {
     });
 
     const response = await POST(request as any);
-    await expectJsonError(response, 500, "Something went wrong");
+    const payload = await expectJsonSuccess<{ success: boolean }>(response, 200);
+
+    expect(payload).toEqual({ success: true });
   });
 });

@@ -287,7 +287,7 @@ export const TemplateConstructorModal: React.FC<TemplateConstructorModalProps> =
     let active = true;
     form.resetFields();
 
-    Promise.all([getTemplates(userId), findMatchingTemplateWithDetails(userId, taskText)])
+    Promise.all([getTemplates(), findMatchingTemplateWithDetails(taskText)])
       .then(([allTemplates, matchesWithDetails]) => {
         if (!active) {
           return;

@@ -3,7 +3,7 @@ import { getVerificationTokenByToken } from "@/server/tokens";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { minStringLength } from "@/shared/utils/stringValidation";
-import { deleteVerificationTokenById, getUserByEmail, updateUserPasswordById } from "@/server/auth";
+import { getUserByEmail, resetUserPassword } from "@/server/auth";
 
 const schema = z.object({
   token: z.string(),
@@ -35,8 +35,15 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await updateUserPasswordById(existingUser.id, hashedPassword);
-    await deleteVerificationTokenById(existingToken.id);
+    const reset = await resetUserPassword(
+      existingUser.id,
+      existingToken.identifier,
+      existingToken.id,
+      hashedPassword
+    );
+    if (!reset) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+    }
 
     return NextResponse.json({ success: true });
   } catch {
