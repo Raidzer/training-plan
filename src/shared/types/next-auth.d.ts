@@ -6,6 +6,7 @@ declare module "next-auth" {
       id: string;
       role: string;
       emailVerified: Date | null;
+      passwordChangedAt?: number | null;
       lastName?: string | null;
     } & DefaultSession["user"];
   }
@@ -13,6 +14,7 @@ declare module "next-auth" {
   interface User extends DefaultUser {
     role: string;
     emailVerified: Date | null;
+    passwordChangedAt?: number | null;
     lastName?: string | null;
   }
 }
@@ -22,5 +24,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     emailVerified: Date | null;
+    passwordChangedAt?: number | null;
   }
 }

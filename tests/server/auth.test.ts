@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { dbSelectMock, dbUpdateMock, dbDeleteMock } = vi.hoisted(() => {
+const { dbSelectMock, dbUpdateMock, dbDeleteMock, dbTransactionMock } = vi.hoisted(() => {
   return {
     dbSelectMock: vi.fn(),
     dbUpdateMock: vi.fn(),
     dbDeleteMock: vi.fn(),
+    dbTransactionMock: vi.fn(),
   };
 });
 
@@ -14,6 +15,7 @@ vi.mock("@/server/db/client", () => {
       select: dbSelectMock,
       update: dbUpdateMock,
       delete: dbDeleteMock,
+      transaction: dbTransactionMock,
     },
   };
 });
@@ -22,7 +24,7 @@ import {
   deleteVerificationTokenById,
   getUserByEmail,
   markEmailVerifiedById,
-  updateUserPasswordById,
+  resetUserPassword,
 } from "@/server/auth";
 
 describe("server/auth", () => {
@@ -67,7 +69,7 @@ describe("server/auth", () => {
     expect(result).toBeNull();
   });
 
-  it("updateUserPasswordById должен обновлять пароль хешировать", async () => {
+  it.each([true, false])("обновляет пароль только после удаления токена: %s", async (available) => {
     const whereMock = vi.fn().mockResolvedValue(undefined);
     const setMock = vi.fn(() => {
       return {
@@ -77,11 +79,28 @@ describe("server/auth", () => {
     dbUpdateMock.mockReturnValue({
       set: setMock,
     });
+    const forUpdate = vi.fn().mockResolvedValue([{ id: 10 }]);
+    const returning = vi.fn().mockResolvedValue(available ? [{ id: 7 }] : []);
+    dbTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        select: () => ({ from: () => ({ where: () => ({ for: forUpdate }) }) }),
+        delete: () => ({ where: () => ({ returning }) }),
+        update: dbUpdateMock,
+      })
+    );
 
-    await updateUserPasswordById(10, "hash-123");
+    await expect(resetUserPassword(10, "user@example.com", 7, "hash-123")).resolves.toBe(available);
+    expect(forUpdate).toHaveBeenCalledWith("update");
+    if (!available) {
+      expect(dbUpdateMock).not.toHaveBeenCalled();
+      return;
+    }
 
     expect(dbUpdateMock).toHaveBeenCalledTimes(1);
-    expect(setMock).toHaveBeenCalledWith({ passwordHash: "hash-123" });
+    expect(setMock).toHaveBeenCalledWith({
+      passwordHash: "hash-123",
+      passwordChangedAt: expect.anything(),
+    });
     expect(whereMock).toHaveBeenCalledTimes(1);
   });
 

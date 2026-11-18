@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { assertImportRowLimit } from "@/server/spreadsheetLimits";
+import { assertImportRowLimit, assertSpreadsheetArchiveLimits } from "@/server/spreadsheetLimits";
 
 export type DiaryImportIssue = {
   row: number;
@@ -362,12 +362,14 @@ const hasUnexpectedContentWithoutDate = (params: {
 export async function parseDiaryWorkbook(
   buffer: ArrayBuffer | Uint8Array
 ): Promise<ParsedDiaryImport> {
-  const workbook = new ExcelJS.Workbook();
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
-  const workbookBuffer = Buffer.from(bytes) as unknown as Parameters<
-    ExcelJS.Workbook["xlsx"]["load"]
-  >[0];
-  await workbook.xlsx.load(workbookBuffer);
+  const workbookBuffer = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  assertSpreadsheetArchiveLimits(workbookBuffer);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(
+    workbookBuffer as unknown as Parameters<ExcelJS.Workbook["xlsx"]["load"]>[0],
+    { ignoreNodes: ["dataValidations"] }
+  );
 
   const sheet = findDiaryWorksheet(workbook);
   assertImportRowLimit(Math.max(0, sheet.rowCount - 1));

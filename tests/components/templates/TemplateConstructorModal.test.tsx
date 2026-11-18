@@ -115,10 +115,10 @@ function renderModal(options: RenderModalOptions = {}) {
   };
 }
 
-async function waitForInitialLoad(userId = 1, taskText = "run") {
+async function waitForInitialLoad(taskText = "run") {
   await waitFor(() => {
-    expect(mockedGetTemplates).toHaveBeenCalledWith(userId);
-    expect(mockedFindMatchingTemplateWithDetails).toHaveBeenCalledWith(userId, taskText);
+    expect(mockedGetTemplates).toHaveBeenCalledWith();
+    expect(mockedFindMatchingTemplateWithDetails).toHaveBeenCalledWith(taskText);
   });
 
   await waitFor(() => {
@@ -361,7 +361,7 @@ describe("TemplateConstructorModal", () => {
       taskText: "Тренировка: 12x400 м-с.к",
     });
 
-    await waitForInitialLoad(1, "Тренировка: 12x400 м-с.к");
+    await waitForInitialLoad("Тренировка: 12x400 м-с.к");
 
     await waitFor(() => {
       const listInputs = getListInputsByFieldLabel("Splits");
@@ -404,7 +404,7 @@ describe("TemplateConstructorModal", () => {
       taskText: "Тренировка: 6x400 м-с.к + 5x200 м-с.к",
     });
 
-    await waitForInitialLoad(1, "Тренировка: 6x400 м-с.к + 5x200 м-с.к");
+    await waitForInitialLoad("Тренировка: 6x400 м-с.к + 5x200 м-с.к");
 
     await waitFor(() => {
       const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
@@ -456,7 +456,7 @@ describe("TemplateConstructorModal", () => {
       taskText,
     });
 
-    await waitForInitialLoad(1, taskText);
+    await waitForInitialLoad(taskText);
 
     await waitFor(() => {
       const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
@@ -508,7 +508,7 @@ describe("TemplateConstructorModal", () => {
       taskText,
     });
 
-    await waitForInitialLoad(1, taskText);
+    await waitForInitialLoad(taskText);
 
     await waitFor(() => {
       const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
@@ -551,7 +551,7 @@ describe("TemplateConstructorModal", () => {
       taskText: "1км(200+200+600)+5x400",
     });
 
-    await waitForInitialLoad(1, "1км(200+200+600)+5x400");
+    await waitForInitialLoad("1км(200+200+600)+5x400");
 
     await waitFor(() => {
       const firstBlockInputs = getListInputsByFieldLabelAndIndex("Splits", 0);
@@ -908,7 +908,7 @@ describe("TemplateConstructorModal", () => {
       ],
     });
 
-    await waitForInitialLoad(1, taskText);
+    await waitForInitialLoad(taskText);
 
     await waitFor(() => {
       const valueNodes = Array.from(
@@ -946,7 +946,7 @@ describe("TemplateConstructorModal", () => {
     });
     mockedProcessTemplate.mockReturnValue("200 block");
 
-    await waitForInitialLoad(1, "Training: 12x200");
+    await waitForInitialLoad("Training: 12x200");
 
     fireEvent.click(getApplyButton());
 
@@ -971,7 +971,7 @@ describe("TemplateConstructorModal", () => {
     });
     mockedProcessTemplate.mockReturnValue("Один блок");
 
-    await waitForInitialLoad(1, "6x200");
+    await waitForInitialLoad("6x200");
 
     fireEvent.click(getApplyButton());
     await waitFor(() => {
@@ -1033,7 +1033,7 @@ describe("TemplateConstructorModal", () => {
       taskText,
     });
 
-    await waitForInitialLoad(1, taskText);
+    await waitForInitialLoad(taskText);
     fireEvent.click(getApplyButton());
 
     await waitFor(() => {
@@ -1048,7 +1048,7 @@ describe("TemplateConstructorModal", () => {
       taskText,
     });
 
-    await waitForInitialLoad(1, taskText);
+    await waitForInitialLoad(taskText);
     fireEvent.click(getApplyButton());
 
     await waitFor(() => {

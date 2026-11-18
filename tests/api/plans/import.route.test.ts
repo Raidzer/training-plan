@@ -121,6 +121,47 @@ describe("POST /api/plans/import", () => {
     expect(createPlanImportMock).not.toHaveBeenCalled();
   });
 
+  it("отклоняет книгу со слишком большим количеством частей до загрузки ExcelJS", async () => {
+    const workbook = new ExcelJS.Workbook();
+    for (let index = 0; index < 513; index += 1) {
+      workbook.addWorksheet(`Sheet ${index}`);
+    }
+    const buffer = await writeWorkbookBuffer(workbook);
+    const load = vi
+      .spyOn(Object.getPrototypeOf(workbook.xlsx), "load")
+      .mockResolvedValue(undefined);
+    try {
+      const response = await POST(createImportRequest(buffer));
+      expect(load).not.toHaveBeenCalled();
+      expect(response.status).toBe(413);
+      expect(createPlanImportMock).not.toHaveBeenCalled();
+    } finally {
+      load.mockRestore();
+    }
+  });
+
+  it("сохраняет текст ячеек с угловыми скобками и амперсандом как текст", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Plan");
+    sheet.addRow(["Дата", "Задание", "Комментарий"]);
+    sheet.addRow(["01.01.2026", "Пульс < 150", { formula: '"А & Б"', result: "А & Б" }]);
+    sheet.addRow(["02.01.2026", { text: "Темп > 5:00", hyperlink: "https://example.com" }]);
+
+    await expectJsonSuccess(
+      await POST(createImportRequest(await writeWorkbookBuffer(workbook))),
+      200
+    );
+
+    expect(createPlanImportMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entries: [
+          expect.objectContaining({ taskText: "Пульс &lt; 150", commentText: "А &amp; Б" }),
+          expect.objectContaining({ taskText: "Темп &gt; 5:00" }),
+        ],
+      })
+    );
+  });
+
   it("ограничивает число тренировок после разделения строки", async () => {
     const tasks = Array.from({ length: 10_001 }, (_, index) => `${index + 1}) Run`).join("\n");
     const buffer = await createWorkbookBuffer({ rows: [{ date: "01.01.2026", task: tasks }] });

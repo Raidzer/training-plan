@@ -17,16 +17,11 @@ export type AliceSleepCommand = {
 export type AliceExpectedEntry = "sleep";
 
 export type AliceRequest = {
-  meta: {
-    client_id: string;
-    locale: string;
-    timezone: string;
-  };
   session: {
     message_id: number;
     session_id: string;
     skill_id: string;
-    user: {
+    user?: {
       user_id: string;
     };
     new: boolean;
@@ -34,11 +29,6 @@ export type AliceRequest = {
   request: {
     command: string;
     original_utterance: string;
-    nlu: {
-      tokens: string[];
-      entities: any[];
-      intents: Record<string, any>;
-    };
   };
   state?: {
     session?: {
@@ -51,6 +41,7 @@ export type AliceRequest = {
 
 export type AliceResponse = {
   version: string;
+  session?: Pick<AliceRequest["session"], "session_id" | "message_id">;
   response: {
     text: string;
     end_session: boolean;
@@ -64,4 +55,9 @@ export type AliceResponse = {
 export type AliceSessionData = {
   expectedEntry?: AliceExpectedEntry;
   expectedPeriod?: AliceWeightPeriod;
+};
+
+export type AliceReplayEntry = {
+  expiresAt: number;
+  response: Promise<AliceResponse>;
 };

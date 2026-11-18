@@ -1,3 +1,4 @@
+import { WorkoutText } from "@/components/WorkoutText";
 import { PLAN_TEXT } from "../../constants/planText";
 import type { PlanDayWorkout } from "../../types/planTypes";
 import styles from "./PlanWorkoutBlock.module.scss";
@@ -19,15 +20,16 @@ export function PlanWorkoutBlock({ workout, index, workoutsCount }: PlanWorkoutB
       <div className={styles.content}>
         <div className={styles.field}>
           <span className={styles.label}>{PLAN_TEXT.day.task}</span>
-          <div className={styles.richText} dangerouslySetInnerHTML={{ __html: workout.taskText }} />
+          <div className={styles.richText}>
+            <WorkoutText value={workout.taskText} />
+          </div>
         </div>
         <div className={styles.field}>
           <span className={styles.label}>{PLAN_TEXT.day.comment}</span>
           {workout.commentText ? (
-            <div
-              className={styles.richText}
-              dangerouslySetInnerHTML={{ __html: workout.commentText }}
-            />
+            <div className={styles.richText}>
+              <WorkoutText value={workout.commentText} />
+            </div>
           ) : (
             <span className={styles.emptyComment}>{PLAN_TEXT.day.noComment}</span>
           )}

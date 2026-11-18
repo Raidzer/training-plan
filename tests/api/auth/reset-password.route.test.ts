@@ -1,21 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createJsonRequest, expectJsonError, expectJsonSuccess } from "@tests/helpers";
 
-const {
-  getVerificationTokenByTokenMock,
-  getUserByEmailMock,
-  updateUserPasswordByIdMock,
-  deleteVerificationTokenByIdMock,
-  hashMock,
-} = vi.hoisted(() => {
-  return {
+const { getVerificationTokenByTokenMock, getUserByEmailMock, resetUserPasswordMock, hashMock } =
+  vi.hoisted(() => ({
     getVerificationTokenByTokenMock: vi.fn(),
     getUserByEmailMock: vi.fn(),
-    updateUserPasswordByIdMock: vi.fn(),
-    deleteVerificationTokenByIdMock: vi.fn(),
+    resetUserPasswordMock: vi.fn(),
     hashMock: vi.fn(),
-  };
-});
+  }));
 
 vi.mock("@/server/tokens", () => {
   return {
@@ -26,8 +18,7 @@ vi.mock("@/server/tokens", () => {
 vi.mock("@/server/auth", () => {
   return {
     getUserByEmail: getUserByEmailMock,
-    updateUserPasswordById: updateUserPasswordByIdMock,
-    deleteVerificationTokenById: deleteVerificationTokenByIdMock,
+    resetUserPassword: resetUserPasswordMock,
   };
 });
 
@@ -62,8 +53,7 @@ describe("POST /api/auth/reset-password", () => {
       email: "user@example.com",
     });
     hashMock.mockResolvedValue("hashed-password");
-    updateUserPasswordByIdMock.mockResolvedValue(undefined);
-    deleteVerificationTokenByIdMock.mockResolvedValue(undefined);
+    resetUserPasswordMock.mockResolvedValue(true);
   });
 
   it("должен возвращать 500 при невалидном payload", async () => {
@@ -141,7 +131,7 @@ describe("POST /api/auth/reset-password", () => {
     );
 
     await expectJsonError(response, 400, "User not found");
-    expect(updateUserPasswordByIdMock).not.toHaveBeenCalled();
+    expect(resetUserPasswordMock).not.toHaveBeenCalled();
   });
 
   it("должен обновлять пароль и удалять токен при валидном запросе", async () => {
@@ -155,12 +145,28 @@ describe("POST /api/auth/reset-password", () => {
     const payload = await expectJsonSuccess<{ success: boolean }>(response, 200);
     expect(payload.success).toBe(true);
     expect(hashMock).toHaveBeenCalledWith("new-password-123", 10);
-    expect(updateUserPasswordByIdMock).toHaveBeenCalledWith(42, "hashed-password");
-    expect(deleteVerificationTokenByIdMock).toHaveBeenCalledWith(7);
+    expect(resetUserPasswordMock).toHaveBeenCalledWith(
+      42,
+      "user@example.com",
+      7,
+      "hashed-password"
+    );
+  });
+
+  it("отклоняет запрос, если токен больше недоступен на момент записи", async () => {
+    resetUserPasswordMock.mockResolvedValue(false);
+    const response = await POST(
+      createResetPasswordRequest({
+        token: "replaced-token",
+        password: "new-password-123",
+      }) as any
+    );
+
+    await expectJsonError(response, 400, "Invalid token");
   });
 
   it("должен возвращать 500, когда обновление пароля завершается ошибкой", async () => {
-    updateUserPasswordByIdMock.mockRejectedValue(new Error("db-failed"));
+    resetUserPasswordMock.mockRejectedValue(new Error("db-failed"));
 
     const response = await POST(
       createResetPasswordRequest({

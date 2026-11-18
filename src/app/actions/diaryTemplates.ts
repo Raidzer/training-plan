@@ -13,12 +13,25 @@ import {
 } from "@/server/diaryTemplates";
 import { auth } from "@/auth";
 
-export async function getTemplates(userId: number) {
+async function getSessionUserId(): Promise<number> {
+  const session = await auth();
+  const userId = Number(session?.user?.id);
+
+  if (!session || !Number.isSafeInteger(userId) || userId <= 0) {
+    throw new Error("Unauthorized");
+  }
+
+  return userId;
+}
+
+export async function getTemplates() {
+  const userId = await getSessionUserId();
   return await getTemplatesForUser(userId);
 }
 
 export async function getTemplateById(id: number) {
-  return await getTemplateByIdFromDb(id);
+  const userId = await getSessionUserId();
+  return await getTemplateByIdFromDb(id, userId);
 }
 
 export async function createTemplate(data: NewDiaryResultTemplate) {
@@ -49,10 +62,12 @@ export async function deleteTemplate(id: number) {
   revalidatePath("/tools/templates");
 }
 
-export async function findMatchingTemplate(userId: number, taskText: string) {
+export async function findMatchingTemplate(taskText: string) {
+  const userId = await getSessionUserId();
   return await findMatchingTemplates(userId, taskText);
 }
 
-export async function findMatchingTemplateWithDetails(userId: number, taskText: string) {
+export async function findMatchingTemplateWithDetails(taskText: string) {
+  const userId = await getSessionUserId();
   return await findMatchingTemplatesWithDetails(userId, taskText);
 }

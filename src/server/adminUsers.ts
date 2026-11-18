@@ -1,6 +1,7 @@
 import { eq, inArray, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { lockTrainingData } from "@/server/trainingDataLock";
+import { updateUserPasswordHashById as updatePasswordHash } from "@/server/services/users";
 import {
   aliceAccounts,
   aliceLinkCodes,
@@ -39,13 +40,7 @@ export async function updateUserPasswordHashById(
   userId: number,
   passwordHash: string
 ): Promise<boolean> {
-  const [updated] = await db
-    .update(users)
-    .set({ passwordHash })
-    .where(eq(users.id, userId))
-    .returning({ id: users.id });
-
-  return Boolean(updated);
+  return Boolean(await updatePasswordHash(userId, passwordHash));
 }
 
 export async function updateUserRoleById(userId: number, role: UserRole) {

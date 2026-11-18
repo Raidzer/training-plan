@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
+import { passwordHashUpdate } from "@/server/services/users";
 import { ROLES } from "@/shared/constants";
 import { hash } from "bcryptjs";
 
@@ -26,7 +27,7 @@ async function main() {
     .onConflictDoUpdate({
       target: users.login,
       set: {
-        passwordHash,
+        ...passwordHashUpdate(passwordHash),
         role: ROLES.ADMIN,
         isActive: true,
         emailVerified,

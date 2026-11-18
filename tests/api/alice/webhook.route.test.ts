@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createJsonRequest, expectJsonSuccess, readJsonResponse } from "@tests/helpers";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  createJsonRequest as createJsonRequestBase,
+  expectJsonSuccess,
+  readJsonResponse,
+} from "@tests/helpers";
 
 const {
   getUserIdByAliceIdMock,
@@ -71,6 +75,7 @@ type AliceRequestOverrides = {
   command?: string;
   originalUtterance?: string;
   sessionId?: string;
+  messageId?: number;
   isNewSession?: boolean;
   stateExpectedEntry?: "sleep";
   stateExpectedPeriod?: "morning" | "evening";
@@ -97,7 +102,7 @@ function createAliceRequestBody(overrides: AliceRequestOverrides = {}) {
       timezone: "Europe/Moscow",
     },
     session: {
-      message_id: 1,
+      message_id: overrides.messageId ?? 1,
       session_id: overrides.sessionId ?? "session-1",
       skill_id: "skill",
       user: {
@@ -125,11 +130,22 @@ function createAliceRequestBody(overrides: AliceRequestOverrides = {}) {
   };
 }
 
+function createJsonRequest(options: Parameters<typeof createJsonRequestBase>[0]) {
+  const headers = new Headers(options.headers);
+  headers.set("x-alice-webhook-secret", "test-alice-secret");
+  return createJsonRequestBase({ ...options, headers });
+}
+
 describe("POST /api/alice/webhook", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("ALICE_WEBHOOK_SECRET", "test-alice-secret");
+    vi.stubEnv("ALICE_SKILL_ID", "skill");
     const store = (globalThis as { sessionStore?: Map<string, unknown> }).sessionStore;
     store?.clear();
+    const replayCache = (globalThis as { aliceReplayCache?: Map<string, unknown> })
+      .aliceReplayCache;
+    replayCache?.clear();
 
     getUserIdByAliceIdMock.mockResolvedValue(null);
     linkAliceAccountMock.mockResolvedValue(false);
@@ -143,10 +159,118 @@ describe("POST /api/alice/webhook", () => {
     isValidTimeZoneMock.mockReturnValue(true);
   });
 
-  it("должен отвечать pong на ping-команду", async () => {
-    const request = createJsonRequest({
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("должен отклонять запрос без серверного заголовка до обработки тела", async () => {
+    const request = { headers: new Headers(), json: vi.fn() };
+
+    const response = await POST(request as any);
+
+    expect(response.status).toBe(401);
+    expect(request.json).not.toHaveBeenCalled();
+    expect(getUserIdByAliceIdMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["ALICE_WEBHOOK_SECRET", "ALICE_SKILL_ID"])(
+    "не принимает запрос без настройки %s",
+    async (name) => {
+      vi.stubEnv(name, "");
+      const response = await POST(
+        createJsonRequest({
+          url: "http://localhost/api/alice/webhook",
+          body: createAliceRequestBody({ originalUtterance: "ping" }),
+        }) as any
+      );
+
+      expect(response.status).toBe(401);
+      expect(getUserIdByAliceIdMock).not.toHaveBeenCalled();
+    }
+  );
+
+  it("должен отклонять запрос с неверным серверным секретом", async () => {
+    const request = createJsonRequestBase({
       url: "http://localhost/api/alice/webhook",
       body: createAliceRequestBody({ originalUtterance: "ping" }),
+      headers: { "x-alice-webhook-secret": "wrong-secret" },
+    });
+
+    const response = await POST(request as any);
+
+    expect(response.status).toBe(401);
+    expect(getUserIdByAliceIdMock).not.toHaveBeenCalled();
+  });
+
+  it("отклоняет запрос от другого навыка даже с секретом ingress", async () => {
+    vi.stubEnv("ALICE_SKILL_ID", "another-skill");
+    const response = await POST(
+      createJsonRequest({
+        url: "http://localhost/api/alice/webhook",
+        body: createAliceRequestBody({ command: "помощь" }),
+      }) as any
+    );
+
+    expect(response.status).toBe(401);
+    expect(getUserIdByAliceIdMock).not.toHaveBeenCalled();
+  });
+
+  it("должен вернуть сохраненный ответ и не повторить side effect для replay сообщения", async () => {
+    getUserIdByAliceIdMock.mockResolvedValue({ userId: 9, timezone: "Europe/Moscow" });
+    parseWeightCommandMock.mockReturnValue({ weight: 75.5, period: "morning" });
+    const body = createAliceRequestBody({ command: "вес утро 75.5", messageId: 7 });
+
+    const firstResponse = await POST(
+      createJsonRequest({ url: "http://localhost/api/alice/webhook", body }) as any
+    );
+    const replayResponse = await POST(
+      createJsonRequest({
+        url: "http://localhost/api/alice/webhook",
+        body: createAliceRequestBody({ command: "вес утро 99", messageId: 7 }),
+      }) as any
+    );
+
+    expect(firstResponse.status).toBe(200);
+    expect(
+      (await readJsonResponse<{ response: { text: string } }>(replayResponse)).response.text
+    ).toContain("75.5");
+    expect(upsertWeightEntryMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("должен отклонять невалидный JSON-контракт", async () => {
+    const response = await POST(
+      createJsonRequest({ url: "http://localhost/api/alice/webhook", body: null }) as any
+    );
+
+    expect(response.status).toBe(400);
+    expect(getUserIdByAliceIdMock).not.toHaveBeenCalled();
+  });
+
+  it("не должен использовать устаревший session.user_id без session.user", async () => {
+    const body: any = createAliceRequestBody({ command: "связать 123456" });
+    delete body.session.user;
+    body.session.user_id = "alice-user-1";
+
+    const response = await POST(
+      createJsonRequest({ url: "http://localhost/api/alice/webhook", body }) as any
+    );
+    const payload = await readJsonResponse<{ response: { text: string } }>(response);
+
+    expect(response.status).toBe(200);
+    expect(payload.response.text).toContain("Не удалось определить пользователя");
+    expect(getUserIdByAliceIdMock).not.toHaveBeenCalled();
+    expect(linkAliceAccountMock).not.toHaveBeenCalled();
+  });
+
+  it("должен отвечать pong на ping-команду", async () => {
+    const { session, version } = createAliceRequestBody();
+    const request = createJsonRequest({
+      url: "http://localhost/api/alice/webhook",
+      body: {
+        version,
+        session: { ...session, user: undefined },
+        request: { command: "ping", original_utterance: "ping", type: "SimpleUtterance" },
+      },
     });
 
     const response = await POST(request as any);
@@ -158,6 +282,7 @@ describe("POST /api/alice/webhook", () => {
       text: "pong",
       end_session: true,
     });
+    expect(getUserIdByAliceIdMock).not.toHaveBeenCalled();
   });
 
   it("должен возвращать текст помощи для несвязанного пользователя", async () => {
@@ -484,6 +609,7 @@ describe("POST /api/alice/webhook", () => {
   it("должен возвращать общий ответ об ошибке, когда парсинг тела завершается ошибкой", async () => {
     const brokenRequest = {
       json: vi.fn().mockRejectedValue(new Error("broken-json")),
+      headers: new Headers({ "x-alice-webhook-secret": "test-alice-secret" }),
     } as any;
 
     const response = await POST(brokenRequest);

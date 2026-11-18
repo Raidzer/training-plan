@@ -10,10 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatesPage() {
-  const session = await requireAdmin();
+  await requireAdmin();
 
-  const userId = Number(session.user.id);
-  const templates = await getTemplates(userId);
+  const templates = await getTemplates();
   const templateSummaries: TemplateSummary[] = templates.map((template) => ({
     id: template.id,
     userId: template.userId,

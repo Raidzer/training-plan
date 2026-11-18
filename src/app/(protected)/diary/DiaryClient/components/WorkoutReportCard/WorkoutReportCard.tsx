@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
+import { WorkoutText } from "@/components/WorkoutText";
 import { AutoComplete, Button, Collapse, Input, InputNumber, Select, Tag, Tooltip } from "antd";
 import {
   BuildOutlined,
@@ -278,18 +279,16 @@ export function WorkoutReportCard({
         <header className={styles.header}>
           <div className={styles.taskBlock}>
             <h4 id={titleId} className={styles.taskTitle}>
-              <span
-                className={styles.multilineText}
-                dangerouslySetInnerHTML={{ __html: entry.taskText }}
-              />
+              <span className={styles.multilineText}>
+                <WorkoutText value={entry.taskText} />
+              </span>
             </h4>
             {entry.commentText ? (
               <div className={styles.coachComment}>
                 <span className={styles.coachCommentLabel}>{WORKOUT_LABELS.coachCommentLabel}</span>
-                <span
-                  className={styles.multilineText}
-                  dangerouslySetInnerHTML={{ __html: entry.commentText }}
-                />
+                <span className={styles.multilineText}>
+                  <WorkoutText value={entry.commentText} />
+                </span>
               </div>
             ) : null}
           </div>
