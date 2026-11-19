@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Modal, Slider, Spin } from "antd";
+import { Alert, Button, Modal, Slider, Spin } from "antd";
 import { useId, useRef, useState } from "react";
 import Cropper, { type Area, type Point } from "react-easy-crop";
 import { AVATAR_LABELS, AVATAR_MAX_ZOOM } from "../../constants/avatarConstants";
@@ -10,12 +10,24 @@ import styles from "./AvatarCropModal.module.scss";
 type AvatarCropModalProps = {
   source: AvatarSource;
   saving: boolean;
+  deleting?: boolean;
+  canDelete?: boolean;
   error: string | null;
   onCancel: () => void;
   onSave: (area: Area) => Promise<void>;
+  onDelete?: () => Promise<void>;
 };
 
-export function AvatarCropModal({ source, saving, error, onCancel, onSave }: AvatarCropModalProps) {
+export function AvatarCropModal({
+  source,
+  saving,
+  deleting = false,
+  canDelete = false,
+  error,
+  onCancel,
+  onSave,
+  onDelete = async () => {},
+}: AvatarCropModalProps) {
   const instructionsId = useId();
   const zoomLabelId = useId();
   const [ready, setReady] = useState(false);
@@ -65,27 +77,45 @@ export function AvatarCropModal({ source, saving, error, onCancel, onSave }: Ava
       width={560}
       destroyOnHidden
       mask={{ closable: false }}
-      keyboard={!saving}
-      closable={!saving}
+      keyboard={!saving && !deleting}
+      closable={!saving && !deleting}
       onCancel={onCancel}
       afterOpenChange={setReady}
-      confirmLoading={saving}
-      okText={AVATAR_LABELS.save}
-      cancelText={AVATAR_LABELS.cancel}
-      okButtonProps={{
-        size: "large",
-        disabled: !ready || !hasCrop || saving,
-        "aria-label": AVATAR_LABELS.save,
-        "aria-busy": saving,
-      }}
-      cancelButtonProps={{ size: "large", disabled: saving }}
+      footer={[
+        <Button key="cancel" size="large" disabled={saving || deleting} onClick={onCancel}>
+          {AVATAR_LABELS.cancel}
+        </Button>,
+        canDelete ? (
+          <Button
+            key="delete"
+            size="large"
+            danger
+            loading={deleting}
+            disabled={saving || deleting}
+            onClick={() => void onDelete()}
+          >
+            {AVATAR_LABELS.remove}
+          </Button>
+        ) : null,
+        <Button
+          key="save"
+          type="primary"
+          size="large"
+          loading={saving}
+          disabled={!ready || !hasCrop || saving || deleting}
+          aria-label={AVATAR_LABELS.save}
+          aria-busy={saving}
+          onClick={() => {
+            if (areaRef.current && !saving && !deleting) {
+              void onSave(areaRef.current);
+            }
+          }}
+        >
+          {AVATAR_LABELS.save}
+        </Button>,
+      ]}
       classNames={{ close: styles.close }}
       rootClassName={styles.modalRoot}
-      onOk={() => {
-        if (areaRef.current && !saving) {
-          void onSave(areaRef.current);
-        }
-      }}
     >
       <div className={styles.content}>
         <p id={instructionsId} className={styles.instructions}>

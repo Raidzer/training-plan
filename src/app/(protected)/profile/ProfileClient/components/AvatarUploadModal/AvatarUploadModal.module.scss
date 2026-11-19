@@ -1,0 +1,155 @@
+.content {
+  display: grid;
+  gap: 16px;
+  padding-block-start: 8px;
+}
+
+.description,
+.status {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-block-start: 4px;
+}
+
+@media (max-width: 639px) {
+  .footer {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.fileFieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.dropzone :global(.ant-upload-drag) {
+  min-height: 260px;
+  overflow: hidden;
+  border-color: var(--control-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--control-bg) !important;
+  transition:
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+}
+
+.dropzone :global(.ant-upload-drag:hover),
+.dropzone :global(.ant-upload-drag-hover),
+.dropzone :global(.ant-upload-drag:focus-within) {
+  border-color: var(--control-border-hover) !important;
+  background: var(--interactive-hover) !important;
+}
+
+.dropzone :global(.ant-upload-disabled) {
+  cursor: wait !important;
+  opacity: 0.72;
+}
+
+.dropzone :global(.ant-upload-btn) {
+  display: grid !important;
+  place-items: center;
+  align-content: center;
+  min-height: 260px;
+  padding: 32px 20px !important;
+}
+
+.dropzone :global(.ant-upload-drag-container) {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.uploadIcon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-block-end: 18px;
+  border: 1px solid var(--surface-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  background: var(--surface-bg);
+  font-size: 1.375rem;
+}
+
+.dragTitle,
+.dragAction,
+.hint {
+  display: block;
+  max-width: 48ch;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.dragTitle {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.dragAction {
+  margin-block-start: 4px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.hint {
+  margin-block-start: 14px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 639px) {
+  .dropzone :global(.ant-upload-drag),
+  .dropzone :global(.ant-upload-btn) {
+    min-height: 224px;
+  }
+
+  .dropzone :global(.ant-upload-btn) {
+    padding: 24px 16px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropzone :global(.ant-upload-drag) {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .dropzone :global(.ant-upload-drag),
+  .uploadIcon {
+    border-color: CanvasText !important;
+  }
+}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ConfigProvider } from "antd";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,6 +14,8 @@ describe("ProfileAvatar", () => {
   const originalGetComputedStyle = window.getComputedStyle.bind(window);
 
   beforeEach(() => {
+    imageMocks.load.mockReset();
+    imageMocks.crop.mockReset();
     vi.spyOn(window, "getComputedStyle").mockImplementation((element) =>
       originalGetComputedStyle(element)
     );
@@ -26,52 +28,119 @@ describe("ProfileAvatar", () => {
     vi.unstubAllGlobals();
   });
 
-  it("показывает инициалы без запроса отсутствующего аватара", () => {
+  it("открывает окно загрузки по клику на аватар без фото", () => {
     render(<ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion={null} />);
-    expect(screen.getByRole("img", { name: /Иван Петров/ }).textContent).toBe("ИП");
-    expect(document.querySelector("img")).toBeNull();
-    expect(screen.getByRole("button", { name: "Выбрать фото" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Удалить фото" })).toBeNull();
+
+    const avatarButton = screen.getByRole("button", { name: "Добавить фото" });
+    expect(avatarButton).toBeInstanceOf(HTMLButtonElement);
+    expect(within(avatarButton).getByText("ИП")).toBeTruthy();
+    expect(screen.getByText("Нажмите на аватар, чтобы добавить фото")).toBeTruthy();
+
+    fireEvent.click(avatarButton);
+
+    expect(screen.getByRole("dialog", { name: "Добавить фото профиля" })).toBeTruthy();
+    expect(screen.getByText("Перетащите фото сюда")).toBeTruthy();
   });
 
-  it("возвращается к инициалам при ошибке изображения и позволяет удалить аватар", async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ success: true })));
-    render(<ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion="version-1" />);
-    const image = screen.getByRole("img", { name: /Иван Петров/ });
-    expect(image.getAttribute("src")).toMatch(/\/api\/profile\/avatar\?v=version-1$/);
-    fireEvent.error(image);
-    expect(screen.getByRole("img", { name: /Иван Петров/ }).textContent).toBe("ИП");
-    fireEvent.click(screen.getByRole("button", { name: "Удалить фото" }));
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Удалить фото" })).toBeNull());
-  });
-
-  it("сбрасывает выбор файла, показывает ошибку и принимает тот же файл повторно", async () => {
-    imageMocks.load.mockRejectedValue(new Error("Не удалось открыть фотографию"));
-    render(<ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion={null} />);
-    const input = screen.getByLabelText("Файл фотографии профиля") as HTMLInputElement;
-    const file = new File(["image"], "photo.jpg", { type: "image/jpeg" });
-    fireEvent.change(input, { target: { files: [file] } });
-    await screen.findByRole("alert");
-    expect(input.value).toBe("");
-    fireEvent.change(input, { target: { files: [file] } });
-    await waitFor(() => expect(imageMocks.load).toHaveBeenCalledTimes(2));
-  });
-
-  it("открывает кадрирование и отменяет его без серверного запроса", async () => {
-    imageMocks.load.mockResolvedValueOnce({ url: "blob:source", image: {} });
+  it("передаёт файл из dropzone в загрузку и открывает кадрирование", async () => {
+    imageMocks.load.mockResolvedValueOnce({
+      url: "blob:source",
+      image: {} as HTMLImageElement,
+    });
     render(
       <ConfigProvider theme={{ token: { motion: false } }}>
         <ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion={null} />
       </ConfigProvider>
     );
-    fireEvent.change(screen.getByLabelText("Файл фотографии профиля"), {
-      target: { files: [new File(["image"], "photo.jpg", { type: "image/jpeg" })] },
-    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Добавить фото" }));
+    const dialog = screen.getByRole("dialog", { name: "Добавить фото профиля" });
+    const input = dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["image"], "photo.jpg", { type: "image/jpeg" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
     expect(await screen.findByRole("dialog", { name: "Кадрирование фотографии" })).toBeTruthy();
+    expect(screen.queryByRole("dialog", { name: "Добавить фото профиля" })).toBeNull();
+    expect(imageMocks.load).toHaveBeenCalledWith(file);
+  });
+
+  it("открывает выбор файла по Space на dropzone", () => {
+    render(<ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion={null} />);
+    fireEvent.click(screen.getByRole("button", { name: "Добавить фото" }));
+    const dropzone = screen.getByRole("button", { name: /Перетащите фото сюда/ });
+    const input = screen
+      .getByRole("dialog", { name: "Добавить фото профиля" })
+      .querySelector('input[type="file"]') as HTMLInputElement;
+    const inputClick = vi.spyOn(input, "click");
+
+    fireEvent.keyDown(dropzone, { key: " " });
+
+    expect(inputClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("открывает кадрирование текущего фото и удаляет его из окна", async () => {
+    const response = new Response(new Blob(["image"], { type: "image/webp" }));
+    vi.mocked(fetch).mockResolvedValueOnce(response);
+    imageMocks.load.mockResolvedValueOnce({
+      url: "blob:current",
+      image: {} as HTMLImageElement,
+    });
+    render(<ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion="version-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Открыть кадрирование фото" }));
+
+    const cropDialog = await screen.findByRole("dialog", { name: "Кадрирование фотографии" });
+    expect(cropDialog).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Удалить фото" })).toBeTruthy();
+
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ success: true })));
+    fireEvent.click(screen.getByRole("button", { name: "Удалить фото" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Добавить фото" })).toBeTruthy();
+    });
+  });
+
+  it("оставляет удаление доступным, если сохранённое фото не удалось открыть", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 404 }));
+    render(<ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion="version-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Открыть кадрирование фото" }));
+
+    const uploadDialog = await screen.findByRole("dialog", { name: "Добавить фото профиля" });
+    expect(within(uploadDialog).getByRole("button", { name: "Удалить фото" })).toBeTruthy();
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ success: true })));
+    fireEvent.click(within(uploadDialog).getByRole("button", { name: "Удалить фото" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Добавить фото" })).toBeTruthy();
+    });
+  });
+
+  it("возвращает фокус на аватар после отмены кадрирования", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(new Blob(["image"], { type: "image/webp" }))
+    );
+    imageMocks.load.mockResolvedValueOnce({
+      url: "blob:source",
+      image: {} as HTMLImageElement,
+    });
+    render(
+      <ConfigProvider theme={{ token: { motion: false } }}>
+        <ProfileAvatar initials="ИП" displayName="Иван Петров" initialVersion="version-1" />
+      </ConfigProvider>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Открыть кадрирование фото" }));
+    await screen.findByRole("dialog", { name: "Кадрирование фотографии" });
     fireEvent.click(screen.getByRole("button", { name: "Отмена" }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Выбрать фото" }));
-    expect(fetch).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Открыть кадрирование фото" })
+      );
+    });
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:source");
   });
 });
