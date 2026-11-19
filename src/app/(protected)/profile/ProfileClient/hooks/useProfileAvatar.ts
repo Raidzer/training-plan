@@ -42,9 +42,9 @@ export function useProfileAvatar(initialVersion?: string | null) {
     };
   }, []);
 
-  const selectFile = async (file: File) => {
-    if (operationRef.current === "saving" || operationRef.current === "deleting") {
-      return;
+  const selectFile = async (file: File): Promise<boolean> => {
+    if (operationRef.current) {
+      return false;
     }
     const selection = ++selectionRef.current;
     setCurrentOperation("loading");
@@ -54,15 +54,58 @@ export function useProfileAvatar(initialVersion?: string | null) {
       const nextSource = await loadAvatarImage(file);
       if (selection !== selectionRef.current) {
         URL.revokeObjectURL(nextSource.url);
-        return;
+        return false;
       }
       clearSource();
       sourceRef.current = nextSource;
       setSource(nextSource);
+      return true;
     } catch (cause) {
       if (selection === selectionRef.current) {
         setError(cause instanceof Error ? cause.message : AVATAR_ERRORS.decode);
       }
+      return false;
+    } finally {
+      if (selection === selectionRef.current) {
+        setCurrentOperation(null);
+      }
+    }
+  };
+
+  const openCurrentAvatar = async (): Promise<boolean> => {
+    if (operationRef.current || sourceRef.current || !version) {
+      return false;
+    }
+    const selection = ++selectionRef.current;
+    setCurrentOperation("loading");
+    setError(null);
+    setStatus(null);
+    try {
+      const response = await fetch(`/api/profile/avatar?v=${encodeURIComponent(version)}`, {
+        cache: "no-store",
+      }).catch(() => {
+        throw new Error(AVATAR_ERRORS.network);
+      });
+      if (!response.ok) {
+        throw new Error(AVATAR_ERRORS.decode);
+      }
+      const blob = await response.blob();
+      const file = new File([blob], "profile-avatar.webp", {
+        type: blob.type || "image/webp",
+      });
+      const nextSource = await loadAvatarImage(file);
+      if (selection !== selectionRef.current) {
+        URL.revokeObjectURL(nextSource.url);
+        return false;
+      }
+      sourceRef.current = nextSource;
+      setSource(nextSource);
+      return true;
+    } catch (cause) {
+      if (selection === selectionRef.current) {
+        setError(cause instanceof Error ? cause.message : AVATAR_ERRORS.decode);
+      }
+      return false;
     } finally {
       if (selection === selectionRef.current) {
         setCurrentOperation(null);
@@ -109,9 +152,9 @@ export function useProfileAvatar(initialVersion?: string | null) {
     }
   };
 
-  const deleteAvatar = async () => {
-    if (operationRef.current || !version || sourceRef.current) {
-      return;
+  const deleteAvatar = async (): Promise<boolean> => {
+    if (operationRef.current || !version) {
+      return false;
     }
     setCurrentOperation("deleting");
     setError(null);
@@ -125,9 +168,12 @@ export function useProfileAvatar(initialVersion?: string | null) {
         throw new Error(data?.error || AVATAR_ERRORS.remove);
       }
       setVersion(null);
+      clearSource();
       setStatus(AVATAR_LABELS.removed);
+      return true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : AVATAR_ERRORS.remove);
+      return false;
     } finally {
       setCurrentOperation(null);
     }
@@ -140,6 +186,7 @@ export function useProfileAvatar(initialVersion?: string | null) {
     error,
     status,
     selectFile,
+    openCurrentAvatar,
     cancelCrop,
     saveCrop,
     deleteAvatar,

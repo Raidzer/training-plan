@@ -115,6 +115,27 @@ describe("useProfileAvatar", () => {
     expect(fetchMock).toHaveBeenLastCalledWith("/api/profile/avatar", { method: "DELETE" });
   });
 
+  it("загружает сохранённое фото перед открытием кадрирования", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(new Blob(["image"], { type: "image/webp" }), { status: 200 })
+    );
+    imageMocks.load.mockResolvedValueOnce({ url: "blob:current", image: {} });
+    const { result } = renderHook(() => useProfileAvatar("old-version"));
+
+    let opened = false;
+    await act(async () => {
+      opened = await result.current.openCurrentAvatar();
+    });
+
+    expect(opened).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith("/api/profile/avatar?v=old-version", {
+      cache: "no-store",
+    });
+    expect(imageMocks.load).toHaveBeenCalledWith(expect.any(File));
+    expect(result.current.source).toEqual({ url: "blob:current", image: {} });
+    expect(result.current.operation).toBeNull();
+  });
+
   it("освобождает поздно декодированный исходник после отмены", async () => {
     let resolveLoad: (source: { url: string; image: object }) => void = () => {};
     imageMocks.load.mockReturnValueOnce(
@@ -123,7 +144,7 @@ describe("useProfileAvatar", () => {
       })
     );
     const { result } = renderHook(() => useProfileAvatar(null));
-    let loading: Promise<void>;
+    let loading: Promise<boolean>;
     act(() => {
       loading = result.current.selectFile(FILE);
     });
