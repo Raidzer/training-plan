@@ -182,10 +182,6 @@
   font-weight: 500;
 }
 
-.collapse :global(.ant-collapse-content-box) {
-  padding: 4px 4px 20px !important;
-}
-
 .actions {
   justify-content: flex-end;
 }
@@ -197,7 +193,11 @@
 @media (max-width: 639px) {
   .form {
     gap: 16px;
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .collapse :global(.ant-collapse-body) {
+    padding: 4px 0 12px !important;
   }
 
   .header {
