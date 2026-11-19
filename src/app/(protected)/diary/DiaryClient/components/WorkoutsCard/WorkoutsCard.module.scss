@@ -113,7 +113,9 @@
 @media (max-width: 639px) {
   .sectionPanel {
     gap: 12px;
-    padding: 16px;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
 
   .tabs :global(.ant-tabs-tab) {
