@@ -10,7 +10,10 @@ if (!token) {
 }
 
 const webAppUrl = buildToolsWebAppUrl();
-const bot = new Bot(token);
+const bot = new Bot(token, {
+  // Глобальный агент Node.js учитывает переменные прокси.
+  client: { baseFetchConfig: { agent: undefined } },
+});
 
 registerToolsCommands(bot, { webAppUrl });
 

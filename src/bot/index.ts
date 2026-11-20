@@ -9,7 +9,10 @@ if (!token) {
   throw new Error("TELEGRAM_BOT_TOKEN не задан");
 }
 
-const bot = new Bot(token);
+const bot = new Bot(token, {
+  // Глобальный агент Node.js учитывает переменные прокси.
+  client: { baseFetchConfig: { agent: undefined } },
+});
 
 registerCommands(bot);
 
