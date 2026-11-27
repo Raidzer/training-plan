@@ -65,6 +65,19 @@
   min-height: 44px;
 }
 
+.documentLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 4px;
+}
+
+.documentLinks a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .submitButton {
   min-height: 46px;
   margin-top: 2px;
@@ -112,6 +125,7 @@
 }
 
 @media (forced-colors: active) {
+  .documentLinks a,
   .loginPrompt a {
     color: LinkText;
   }

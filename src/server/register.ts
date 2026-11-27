@@ -28,6 +28,7 @@ type RegisterInput = {
   email: string;
   password: string;
   inviteToken: string;
+  consentVersion: string;
   timezone?: string | null;
 };
 
@@ -96,6 +97,8 @@ export async function registerUserWithInvite(input: RegisterInput): Promise<Regi
         gender: input.gender,
         role: invite.role,
         timezone: input.timezone ?? "Europe/Moscow",
+        personalDataConsentVersion: input.consentVersion,
+        personalDataConsentAt: now,
       })
       .returning({ id: users.id, email: users.email, name: users.name });
 

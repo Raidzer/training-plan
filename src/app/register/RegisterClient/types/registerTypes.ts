@@ -8,15 +8,14 @@ export type RegisterFields = {
   email: string;
   password: string;
   timezone: string;
+  consentAccepted: boolean;
 };
 
 export type RegisterApiResponse = {
   error?: unknown;
 };
 
-export type RegisterPayload = Omit<RegisterFields, "lastName"> & {
-  lastName?: string;
-};
+export type RegisterPayload = RegisterFields & { consentVersion: string };
 
 export type RegisterSubmitHandler = NonNullable<FormProps<RegisterFields>["onFinish"]>;
 

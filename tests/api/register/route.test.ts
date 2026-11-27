@@ -62,6 +62,8 @@ function createValidRegisterBody(overrides: Record<string, unknown> = {}) {
     email: "runner@example.com",
     password: "password123",
     inviteToken: "invite-token-12345",
+    consentAccepted: true,
+    consentVersion: "2026-11-27",
     ...overrides,
   };
 }
@@ -95,6 +97,23 @@ describe("POST /api/register", () => {
     expect(payload.error).toBeTruthy();
   });
 
+  it.each([
+    { consentAccepted: undefined },
+    { consentAccepted: false },
+    { consentAccepted: "true" },
+    { consentVersion: undefined },
+    { consentVersion: "2025-11-27" },
+  ])("отклоняет регистрацию с некорректным согласием %j", async (overrides) => {
+    const request = createJsonRequest({
+      url: "http://localhost/api/register",
+      body: createValidRegisterBody(overrides),
+    });
+
+    await expectJsonError(await POST(request), 400, "consent_required");
+    expect(registerUserWithInviteMock).not.toHaveBeenCalled();
+    expect(generateVerificationTokenMock).not.toHaveBeenCalled();
+  });
+
   it("должен регистрировать пользователя и отправлять подтверждение email", async () => {
     const request = createJsonRequest({
       url: "http://localhost/api/register",
@@ -116,6 +135,7 @@ describe("POST /api/register", () => {
       password: "password123",
       inviteToken: "invite-token-12345",
       timezone: null,
+      consentVersion: "2026-11-27",
     });
     expect(generateVerificationTokenMock).toHaveBeenCalledWith("runner@example.com");
     expect(sendVerificationEmailMock).toHaveBeenCalledWith("runner@example.com", "verify-token");

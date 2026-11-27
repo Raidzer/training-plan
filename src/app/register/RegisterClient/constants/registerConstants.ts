@@ -32,6 +32,11 @@ export const REGISTER_TEXT = {
   passwordHint: "Используйте не менее 6 символов. Пароль можно показать кнопкой в поле.",
   passwordRequired: "Введите пароль",
   passwordMin: "Минимум 6 символов",
+  consentLabel: "Даю согласие на обработку персональных данных",
+  consentRequired: "Подтвердите согласие на обработку персональных данных",
+  consentCurrentRequired: "Обновите страницу и подтвердите согласие на актуальную редакцию",
+  consentDocument: "Текст согласия",
+  privacyPolicy: "Политика обработки персональных данных",
   submit: "Создать аккаунт",
   existingAccount: "Уже есть аккаунт?",
   login: "Войти",
@@ -67,6 +72,7 @@ export const REGISTER_FIELD_IDS = {
   email: "register-email",
   timezone: "register-timezone",
   password: "register-password",
+  consent: "register-consent",
 } as const;
 
 export const REGISTER_TITLE_ID = "register-title";

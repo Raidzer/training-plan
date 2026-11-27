@@ -39,6 +39,8 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastActiveAt: timestamp("last_active_at"),
   emailVerified: timestamp("email_verified"),
+  personalDataConsentVersion: text("personal_data_consent_version"),
+  personalDataConsentAt: timestamp("personal_data_consent_at", { withTimezone: true }),
 });
 
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({

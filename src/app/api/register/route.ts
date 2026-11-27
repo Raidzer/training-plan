@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { PERSONAL_DATA_CONSENT_VERSION } from "@/shared/constants/personalData";
 import { maxStringLength, minStringLength } from "@/shared/utils/stringValidation";
 import { RegisterError, registerUserWithInvite } from "@/server/register";
 
@@ -22,11 +23,21 @@ const schema = z.object({
   timezone: z.string().check(minStringLength(1, "Выберите часовой пояс")).optional(),
 });
 
+const consentSchema = z.object({
+  consentAccepted: z.literal(true),
+  consentVersion: z.literal(PERSONAL_DATA_CONSENT_VERSION),
+});
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
+  }
+
+  const consent = consentSchema.safeParse(body);
+  if (!consent.success) {
+    return NextResponse.json({ error: "consent_required" }, { status: 400 });
   }
 
   const { name, lastName, gender, email, login, password, inviteToken, timezone } = parsed.data;
@@ -43,6 +54,7 @@ export async function POST(req: Request) {
       password,
       inviteToken,
       timezone: timezone ?? null,
+      consentVersion: consent.data.consentVersion,
     });
 
     try {
