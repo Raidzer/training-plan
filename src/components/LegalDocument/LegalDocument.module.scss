@@ -1,0 +1,52 @@
+.document {
+  inline-size: min(100%, 78ch);
+  margin-inline: auto;
+  padding: clamp(24px, 6vw, 64px) var(--page-gutter);
+  color: var(--text-primary);
+  font-size: 1rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+
+  h1,
+  h2 {
+    font-weight: 650;
+    line-height: 1.25;
+  }
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+  }
+
+  h2 {
+    margin: 1.75rem 0 0.5rem;
+    font-size: 1.25rem;
+  }
+
+  p,
+  ul {
+    margin: 0 0 0.75rem;
+  }
+
+  ul {
+    padding-inline-start: 1.5rem;
+  }
+
+  li + li {
+    margin-block-start: 0.5rem;
+  }
+
+  a {
+    color: var(--accent-color);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+}
+
+.heading {
+  margin-block-end: 1.5rem;
+
+  p {
+    color: var(--text-secondary);
+  }
+}

@@ -109,7 +109,7 @@ describe("RegisterForm", () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 
-  it("отправляет корректные данные без подтверждения пароля", async () => {
+  it("требует отдельного согласия и показывает ссылки на документы", async () => {
     const { onFinish } = renderRegisterForm();
 
     fireEvent.change(screen.getByLabelText(REGISTER_TEXT.nameLabel), {
@@ -124,6 +124,26 @@ describe("RegisterForm", () => {
     fireEvent.change(screen.getByLabelText(REGISTER_TEXT.passwordLabel), {
       target: { value: "secret123" },
     });
+    const consent = screen.getByRole<HTMLInputElement>("checkbox", {
+      name: "Даю согласие на обработку персональных данных",
+    });
+    expect(consent.checked).toBe(false);
+    const policyLink = screen.getByRole<HTMLAnchorElement>("link", {
+      name: "Политика обработки персональных данных",
+    });
+    const consentLink = screen.getByRole<HTMLAnchorElement>("link", { name: "Текст согласия" });
+    expect(policyLink.getAttribute("href")).toBe("/privacy");
+    expect(consentLink.getAttribute("href")).toBe("/personal-data-consent");
+    expect(policyLink.target).toBe("_blank");
+    expect(consentLink.target).toBe("_blank");
+
+    fireEvent.click(screen.getByRole("button", { name: REGISTER_TEXT.submit }));
+    expect(
+      await screen.findByText("Подтвердите согласие на обработку персональных данных")
+    ).toBeTruthy();
+    expect(onFinish).not.toHaveBeenCalled();
+
+    fireEvent.click(consent);
     fireEvent.click(screen.getByRole("button", { name: REGISTER_TEXT.submit }));
 
     await waitFor(() => {
@@ -134,6 +154,7 @@ describe("RegisterForm", () => {
         email: "runner@example.com",
         timezone: "Europe/Moscow",
         password: "secret123",
+        consentAccepted: true,
       });
     });
   });

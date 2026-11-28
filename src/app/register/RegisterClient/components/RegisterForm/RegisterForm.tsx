@@ -7,8 +7,9 @@ import {
   UserAddOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Button, Form, Input, Radio, Select } from "antd";
+import { Button, Checkbox, Form, Input, Radio, Select } from "antd";
 import Link from "next/link";
+import { PERSONAL_DATA_CONSENT_PATH, PRIVACY_POLICY_PATH } from "@/shared/constants/personalData";
 import { DEFAULT_TIMEZONE, filterTimezoneOption } from "@/shared/constants/timezones";
 import type { TimezoneSelectOption } from "@/shared/constants/timezones";
 import {
@@ -272,6 +273,38 @@ export function RegisterForm({ loading, timezoneOptions, onFinish }: RegisterFor
           />
         </Form.Item>
       </div>
+
+      <Form.Item
+        className={styles.field}
+        name="consentAccepted"
+        valuePropName="checked"
+        validateTrigger="onChange"
+        rules={[
+          {
+            validator: (_, value: unknown) => {
+              if (value !== true) {
+                return Promise.reject(new Error(REGISTER_TEXT.consentRequired));
+              }
+
+              return Promise.resolve();
+            },
+          },
+        ]}
+        extra={
+          <div className={styles.documentLinks}>
+            <Link href={PERSONAL_DATA_CONSENT_PATH} target="_blank" rel="noreferrer">
+              {REGISTER_TEXT.consentDocument}
+            </Link>
+            <Link href={PRIVACY_POLICY_PATH} target="_blank" rel="noreferrer">
+              {REGISTER_TEXT.privacyPolicy}
+            </Link>
+          </div>
+        }
+      >
+        <Checkbox id={REGISTER_FIELD_IDS.consent} aria-required="true">
+          {REGISTER_TEXT.consentLabel}
+        </Checkbox>
+      </Form.Item>
 
       <Button
         className={styles.submitButton}

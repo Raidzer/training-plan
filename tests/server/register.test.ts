@@ -136,6 +136,7 @@ function createRegisterInput(overrides: Record<string, unknown> = {}) {
     email: "new@example.com",
     password: "password123",
     inviteToken: "invite-token-123",
+    consentVersion: "2026-11-27",
     timezone: null,
     ...overrides,
   };
@@ -262,6 +263,8 @@ describe("server/register", () => {
         timezone: "Europe/Moscow",
         passwordHash: "hashed-password",
         role: "athlete",
+        personalDataConsentVersion: "2026-11-27",
+        personalDataConsentAt: expect.any(Date),
       })
     );
   });

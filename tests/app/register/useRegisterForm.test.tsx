@@ -53,6 +53,7 @@ function createRegisterFields(overrides: Partial<RegisterFields> = {}): Register
     email: "runner@example.com",
     password: "secret123",
     timezone: "Europe/Moscow",
+    consentAccepted: true,
     ...overrides,
   };
 }
@@ -130,6 +131,8 @@ describe("useRegisterForm", () => {
       password: " secret123 ",
       timezone: "Europe/Moscow",
       inviteToken: "invite-token-123",
+      consentAccepted: true,
+      consentVersion: "2026-11-27",
     });
     expect(registerBody.confirmPassword).toBeUndefined();
     expect(messageApi.success).toHaveBeenCalledWith(REGISTER_TEXT.registerSuccess);
@@ -147,6 +150,7 @@ describe("useRegisterForm", () => {
     ["invite_used", REGISTER_TEXT.inviteUsed],
     ["invite_expired", REGISTER_TEXT.inviteExpired],
     ["user_exists", REGISTER_TEXT.userExists],
+    ["consent_required", "Обновите страницу и подтвердите согласие на актуальную редакцию"],
     ["Email or login already in use", REGISTER_TEXT.userExists],
     ["unexpected backend detail", REGISTER_TEXT.registerFailed],
   ])("безопасно отображает ошибку API %s", async (apiError, expectedMessage) => {

@@ -1,7 +1,9 @@
+import { PERSONAL_DATA_CONSENT_VERSION } from "@/shared/constants/personalData";
 import { REGISTER_TEXT } from "../constants/registerConstants";
 import type { RegisterFields, RegisterPayload } from "../types/registerTypes";
 
 const REGISTER_API_ERROR_MESSAGES: Record<string, string> = {
+  consent_required: REGISTER_TEXT.consentCurrentRequired,
   invite_invalid: REGISTER_TEXT.inviteInvalid,
   invite_used: REGISTER_TEXT.inviteUsed,
   invite_expired: REGISTER_TEXT.inviteExpired,
@@ -21,6 +23,8 @@ export function normalizeRegisterPayload(values: RegisterFields): RegisterPayloa
     email: trimRegisterField(values.email),
     password: values.password,
     timezone: trimRegisterField(values.timezone),
+    consentAccepted: values.consentAccepted,
+    consentVersion: PERSONAL_DATA_CONSENT_VERSION,
   };
 
   if (values.lastName !== undefined) {
